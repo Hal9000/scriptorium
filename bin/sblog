@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+
+require 'scriptorium'
+require 'rubytext'
+
+puts "sblog: Nothing here yet."
+puts
+~
