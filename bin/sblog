@@ -3,6 +3,9 @@
 require 'scriptorium'
 require 'rubytext'
 
-puts "sblog: Nothing here yet."
+puts "sblog: Attempting .new"
+
+$blog = Scriptorium.new
+
 puts
-~
+

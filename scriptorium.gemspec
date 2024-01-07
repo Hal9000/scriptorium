@@ -13,14 +13,14 @@ end
 
 spec = Gem::Specification.new do |s|
   system("rm -f *.gem")
-  s.name        = 'runeblog'
+  s.name        = 'scriptorium'
   s.version     = Scriptorium::VERSION
   s.date        = Date.today.strftime("%Y-%m-%d")
   s.summary     = "A command-line blogging system"
   s.description = "A blog system based on Ruby and Livetext"
   s.authors     = ["Hal Fulton"]
   s.email       = 'rubyhacker@gmail.com'
-  s.executables << "blog"
+  s.executables << "sblog"
 
   s.add_runtime_dependency 'livetext', '~> 0.9',  '>= 0.9.41'
   s.add_runtime_dependency 'rubytext', '~> 0.1',  '>= 0.1.26'
@@ -32,10 +32,10 @@ spec = Gem::Specification.new do |s|
 
   main = Find.find("bin").to_a + 
          Find.find("lib").to_a + 
-         Find.find("readme").to_a
+         Find.find("doc").to_a 
   test = Find.find("test").to_a
 
-  misc = %w[./README.lt3 ./README.md ./runeblog.gemspec]
+  misc = %w[./README.lt3 ./README.md ./scriptorium.gemspec]
 
   s.files       =  main + misc + test
   s.homepage    = 'https://github.com/Hal9000/scriptorium'
