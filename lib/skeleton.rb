@@ -1,6 +1,9 @@
 class Scriptorium
 
-  class Engine
+  module Exceptions
+  end
+
+  module Engine
   end
 
   class UI
