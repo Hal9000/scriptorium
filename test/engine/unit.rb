@@ -11,6 +11,8 @@ class TestScriptoriumEngine < Minitest::Test
   end
 
   def teardown
+    root = Scriptorium.root
+    puts "root = #{root}"
   end
 
   def test_version
@@ -26,7 +28,7 @@ class TestScriptoriumEngine < Minitest::Test
     t0 = Scriptorium.exist?
     refute t0, "Repo should not exist yet"
 
-    repo = Scriptorium.create(true)  # testing
+    Scriptorium.create(true)  # testing
 
     t1 = Scriptorium.exist?
     assert t1, "Repo should exist"
@@ -41,7 +43,6 @@ class TestScriptoriumEngine < Minitest::Test
     puts __method__
     Scriptorium.testing = false
     assert_raises(TestModeOnly) { Scriptorium.destroy }
-    # @repo.destroy_repo
   end
 
 end

@@ -13,7 +13,7 @@ module Scriptorium::Engine
   def create(testing = false)
     Scriptorium.testing = testing
     home = ENV['HOME']
-    @root = testing ? "#{home}/.scriptorium" : "scriptorium-TEST"
+    @root = testing ? "scriptorium-TEST" : "#{home}/.scriptorium"
     # Test for existence!!  FIXME
     raise RepoDirAlreadyExists if Dir.exist?(@root)
     Dir.mkdir(@root)
