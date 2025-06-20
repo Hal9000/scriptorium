@@ -1,0 +1,17 @@
+Structure...
+
+  Scriptorium/
+     config/
+        global.lt3
+     posts/
+     views/
+        view1/
+           data.lt3
+           template/     # ??
+              tfront.lt3
+              tview.lt3
+              tpost.lt3
+## ?? How do posts, contents, source, target, templates... fit together?
+           assets/
+           posts/
+              0001/

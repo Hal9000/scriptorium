@@ -1,0 +1,19 @@
+create_   - means to create a new thing (on disk)
+open_     - means to open something existing (from disk)
+new_      - ? means to get data from user for create
+
+thing?    - means "does <thing> exist?"
+
+
+.view       - current view (getter)
+.view(val)  - set current view 
+.view?(val) - does view exist?
+
+** Think about themes and templates!
+   Ditch the old paradigm of stashing files in standard/ tree
+   A layout is just a template?
+
+Idea: dot command to check variables are defined? (error if not)
+
+
+
