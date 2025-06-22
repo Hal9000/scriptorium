@@ -4,6 +4,7 @@ class Scriptorium::View
 
   def initialize(name, title, subtitle = "")
     @name, @title, @subtitle = name, title, subtitle
+    root = Scriptorium::Repo.root
     @viewdir = "#{root}/views/#{name}"
   end
 

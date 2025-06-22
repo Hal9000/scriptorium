@@ -11,4 +11,8 @@ module Scriptorium::Helpers
     end
     vhash
   end
+
+  def d4(num)
+    "%04d" % num
+  end
 end

@@ -30,7 +30,7 @@ class TestScriptoriumRepo < Minitest::Test
     t0 = Repo.exist?
     refute t0, "Repo should not exist yet"
 
-    Repo.create(true)  # testing
+    create_test_repo
 
     t1 = Repo.exist?
     assert t1, "Repo should exist"
@@ -48,29 +48,29 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_004_repo_structure
-    Repo.create(true)  # testing
+    create_test_repo
     root = Repo.root
-    dir_exist?("#{root}/config")
-    dir_exist?("#{root}/views")
-    dir_exist?("#{root}/views/sample")
-    dir_exist?("#{root}/posts")
-    dir_exist?("#{root}/posts/meta")
-    dir_exist?("#{root}/drafts")
-    dir_exist?("#{root}/themes")
-    dir_exist?("#{root}/themes/standard")
-    dir_exist?("#{root}/assets")
+    assert_dir_exist?("#{root}/config")
+    assert_dir_exist?("#{root}/views")
+    assert_dir_exist?("#{root}/views/sample")
+    assert_dir_exist?("#{root}/posts")
+    assert_dir_exist?("#{root}/posts/meta")
+    assert_dir_exist?("#{root}/drafts")
+    assert_dir_exist?("#{root}/themes")
+    assert_dir_exist?("#{root}/themes/standard")
+    assert_dir_exist?("#{root}/assets")
   end
 
   def test_005_create_view
     puts __method__
-    repo = Repo.create(true)  # testing
-    name = "myview"
-    t0 = repo.view_exist?(name)
+    repo = create_test_repo
+    vname = "testview"
+    t0 = repo.view_exist?(vname)
     refute t0, "View should not exist yet"
 
-    repo.create_view(name, "My Title", "Just a subtitle here")  # testing
+    repo.create_view(vname, "My Title", "Just a subtitle here")  # testing
 
-    t1 = repo.view_exist?(name)
+    t1 = repo.view_exist?(vname)
     assert t1, "View should exist"
 
     # Add check: already exists
@@ -78,13 +78,36 @@ class TestScriptoriumRepo < Minitest::Test
 
   def test_006_open_view
     puts __method__
-    repo = Repo.create(true)  # testing
-    name = "myview2"
-    repo.create_view(name, "My Awesome Title", "Just another subtitle")
-    t0 = repo.view_exist?(name)
+    repo = create_test_repo
+    vname = "testview"
+    repo.create_view(vname, "My Awesome Title", "Just another subtitle")
+    t0 = repo.view_exist?(vname)
     assert t0, "View should exist"
 
-    repo.open_view(name)
+    view = repo.open_view(vname)
+    assert view.title == "My Awesome Title", "View title missing"
+    assert view.subtitle == "Just another subtitle", "View subtitle missing"
+    # FIXME finish
+  end
+
+  def test_007_create_draft
+    puts __method__
+    repo = create_test_repo("testview")  # View should exist to create draft?
+    fname = repo.create_draft
+    assert_file_exist?(fname)
+  end
+
+  def test_008_publish_draft
+    puts __method__
+    repo = create_test_repo("testview")  # View should exist to create draft?
+    fname = repo.create_draft
+
+    repo.publish_draft(fname)
+    postnum = "0001"  # Assumes testing started with 0
+    postdir = "#{repo.root}/posts/#{postnum}" 
+    assert_dir_exist?("#{postdir}/assets")
+    assert_file_exist?("#{postdir}/meta.lt3") 
+    assert_file_exist?("#{postdir}/draft.lt3") 
   end
 
 end

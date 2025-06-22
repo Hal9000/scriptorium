@@ -1,14 +1,14 @@
-# require "scriptorium/helpers"
-
 class Scriptorium::Repo
   include Scriptorium::Exceptions
-  # extend  Engine
   include Scriptorium::Helpers
+
 
   class << self
     attr_accessor :testing
-    attr_reader   :root
+    attr_reader   :root     # class level
   end
+
+  attr_reader   :root       # instance
 
   def self.exist?
     dir = Scriptorium::Repo.root
@@ -30,6 +30,8 @@ class Scriptorium::Repo
     Dir.mkdir("#@root/posts/meta")
     Dir.mkdir("#@root/themes/standard")
     Dir.mkdir("#@root/views/sample")
+
+    File.open("#@root/config/last_post_num.txt", "w") {|f| f.puts 0 }
     self.open(@root)
   end
 
@@ -42,7 +44,13 @@ class Scriptorium::Repo
     system("rm -rf #@root")
   end
 
-  ### Instance...
+  def initialize(root)    # repo
+    @root = root
+    Scriptorium::Repo.class_eval { @root = root }
+    @postnum_file = "#@root/config/last_post_num.txt"
+  end
+
+  ### View methods...
 
   def view_exist?(name)
     Dir.exist?("#@root/views/#{name}")
@@ -67,12 +75,33 @@ class Scriptorium::Repo
     Scriptorium::View.new(name, title, subtitle)
   end
 
-  def initialize(root)    # repo
-    @root = root
-    # Read relevant info...
-    Scriptorium::View.class_eval do
-      @root = root
-      attr_reader :root
-    end
+  def create_draft
+    ts = Time.now.strftime("%Y%m%d-%H%M%S")
+    name = "#@root/drafts/#{ts}-draft.lt3"
+    File.new(name, "w")
+    # FIXME add boilerplate
+    name
   end
+
+  def last_post_num
+    File.read(@postnum_file).to_i   
+  end
+
+  def incr_post_num
+    num = last_post_num + 1
+    File.open(@postnum_file, "w") {|f| f.puts num }
+    num
+  end
+
+  def publish_draft(name)
+    id = d4(incr_post_num)
+    dir = "#@root/posts/#{id}"
+    system("find #{@root}/posts")
+    Dir.mkdir(dir)
+    Dir.mkdir("#{dir}/assets")
+    File.new("#{dir}/meta.lt3", "w")
+    FileUtils.mv(name, "#{dir}/draft.lt3")
+    system("find #{@root}/posts")
+  end
+
 end
