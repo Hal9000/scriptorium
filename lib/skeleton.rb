@@ -1,9 +1,15 @@
-class Scriptorium
+module Scriptorium
 
   module Exceptions
   end
 
-  module Engine
+  class Repo
+  end
+
+  class View
+  end
+
+  module Helpers
   end
 
   class UI

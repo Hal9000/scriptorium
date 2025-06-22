@@ -1,14 +1,22 @@
-module Scriptorium::Engine
+# require "scriptorium/helpers"
 
+class Scriptorium::Repo
   include Scriptorium::Exceptions
+  # extend  Engine
+  include Scriptorium::Helpers
 
-  def exist?
+  class << self
+    attr_accessor :testing
+    attr_reader   :root
+  end
+
+  def self.exist?
     dir = Scriptorium::Repo.root
     return false if dir.nil?
     Dir.exist?(dir)
   end
 
-  def create(testing = false)
+  def self.create(testing = false)
     Scriptorium::Repo.testing = testing
     home = ENV['HOME']
     @root = testing ? "scriptorium-TEST" : "#{home}/.scriptorium"
@@ -25,14 +33,16 @@ module Scriptorium::Engine
     self.open(@root)
   end
 
-  def open(root)
+  def self.open(root)
     Scriptorium::Repo.new(root)
   end
 
-  def destroy
+  def self.destroy
     raise TestModeOnly unless Scriptorium::Repo.testing
     system("rm -rf #@root")
   end
+
+  ### Instance...
 
   def view_exist?(name)
     Dir.exist?("#@root/views/#{name}")
@@ -46,9 +56,23 @@ module Scriptorium::Engine
     Dir.chdir(dir) do 
       File.open("config.txt", "w") do |f|
         f.puts "title #{title}"
-        f.puts "subtitle #{subtitle}" unless subtitle.emprt?
+        f.puts "subtitle #{subtitle}" unless subtitle.empty?
       end
     end
   end
 
+  def open_view(name)
+    vhash = getvars("#@root/views/#{name}/config.txt")
+    title, subtitle = vhash.values_at("title", "subtitle")
+    Scriptorium::View.new(name, title, subtitle)
+  end
+
+  def initialize(root)    # repo
+    @root = root
+    # Read relevant info...
+    Scriptorium::View.class_eval do
+      @root = root
+      attr_reader :root
+    end
+  end
 end
