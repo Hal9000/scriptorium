@@ -1,7 +1,7 @@
 class Scriptorium::Repo
   include Scriptorium::Exceptions
   include Scriptorium::Helpers
-
+  extend  Scriptorium::Helpers
 
   class << self
     attr_accessor :testing
@@ -23,15 +23,13 @@ class Scriptorium::Repo
     # Test for existence!!  FIXME
     raise RepoDirAlreadyExists if Dir.exist?(@root)
     Dir.mkdir(@root)
-    Dir.chdir(@root) do
-      subs = %w[config views posts drafts themes assets]
-      subs.each {|sub| Dir.mkdir(sub) }
-    end
-    Dir.mkdir("#@root/posts/meta")
-    Dir.mkdir("#@root/themes/standard")
-    Dir.mkdir("#@root/views/sample")
+    make_dirs(*%w[config views posts drafts themes assets], top: @root)
+    make_dirs("posts/meta", "themes/standard", "views/sample", top: @root)
+    postnum_file = "#@root/config/last_post_num.txt"
 
-    File.open("#@root/config/last_post_num.txt", "w") {|f| f.puts 0 }
+    write_file(postnum_file, "0")
+    # puts "postnum file = #postnum_file"
+    # sleep 10
     self.open(@root)
   end
 
@@ -41,13 +39,17 @@ class Scriptorium::Repo
 
   def self.destroy
     raise TestModeOnly unless Scriptorium::Repo.testing
+    # system("mv #@root deleted.scriptorium")
     system("rm -rf #@root")
+  end
+
+  def postnum_file
+    "#@root/config/last_post_num.txt"
   end
 
   def initialize(root)    # repo
     @root = root
     Scriptorium::Repo.class_eval { @root = root }
-    @postnum_file = "#@root/config/last_post_num.txt"
   end
 
   ### View methods...
@@ -61,16 +63,11 @@ class Scriptorium::Repo
     raise ViewDirAlreadyExists if view_exist?(name)
     dir = "#@root/views/#{name}"
     Dir.mkdir(dir)
-    Dir.chdir(dir) do 
-      File.open("config.txt", "w") do |f|
-        f.puts "title #{title}"
-        f.puts "subtitle #{subtitle}" unless subtitle.empty?
-      end
-    end
+    write_file(dir/"config.txt", "title #{title}", "subtitle #{subtitle}")
   end
 
   def open_view(name)
-    vhash = getvars("#@root/views/#{name}/config.txt")
+    vhash = getvars(view_dir(name)/"config.txt")
     title, subtitle = vhash.values_at("title", "subtitle")
     Scriptorium::View.new(name, title, subtitle)
   end
@@ -78,30 +75,27 @@ class Scriptorium::Repo
   def create_draft
     ts = Time.now.strftime("%Y%m%d-%H%M%S")
     name = "#@root/drafts/#{ts}-draft.lt3"
-    File.new(name, "w")
+    make_empty_file(name)
     # FIXME add boilerplate
     name
   end
 
   def last_post_num
-    File.read(@postnum_file).to_i   
+    File.read(postnum_file).to_i   
   end
 
   def incr_post_num
     num = last_post_num + 1
-    File.open(@postnum_file, "w") {|f| f.puts num }
+    write_file(postnum_file, num)
     num
   end
 
   def publish_draft(name)
     id = d4(incr_post_num)
-    dir = "#@root/posts/#{id}"
-    system("find #{@root}/posts")
-    Dir.mkdir(dir)
-    Dir.mkdir("#{dir}/assets")
-    File.new("#{dir}/meta.lt3", "w")
-    FileUtils.mv(name, "#{dir}/draft.lt3")
-    system("find #{@root}/posts")
+    posts = @root/:posts
+    make_dirs(id, id/:assets, top: posts)
+    make_empty_file(posts/id/"meta.lt3")
+    FileUtils.mv(name, posts/id/"draft.lt3")
   end
 
 end

@@ -50,15 +50,15 @@ class TestScriptoriumRepo < Minitest::Test
   def test_004_repo_structure
     create_test_repo
     root = Repo.root
-    assert_dir_exist?("#{root}/config")
-    assert_dir_exist?("#{root}/views")
-    assert_dir_exist?("#{root}/views/sample")
-    assert_dir_exist?("#{root}/posts")
-    assert_dir_exist?("#{root}/posts/meta")
-    assert_dir_exist?("#{root}/drafts")
-    assert_dir_exist?("#{root}/themes")
-    assert_dir_exist?("#{root}/themes/standard")
-    assert_dir_exist?("#{root}/assets")
+    assert_dir_exist?(root/"config")
+    assert_dir_exist?(root/"views")
+    assert_dir_exist?(root/"views/sample")
+    assert_dir_exist?(root/"posts")
+    assert_dir_exist?(root/"posts/meta")
+    assert_dir_exist?(root/"drafts")
+    assert_dir_exist?(root/"themes")
+    assert_dir_exist?(root/"themes/standard")
+    assert_dir_exist?(root/"assets")
   end
 
   def test_005_create_view
@@ -80,13 +80,14 @@ class TestScriptoriumRepo < Minitest::Test
     puts __method__
     repo = create_test_repo
     vname = "testview"
-    repo.create_view(vname, "My Awesome Title", "Just another subtitle")
+    title, sub = "My Awesome Title", "Just another subtitle"
+    repo.create_view(vname, title, sub)
     t0 = repo.view_exist?(vname)
     assert t0, "View should exist"
 
     view = repo.open_view(vname)
-    assert view.title == "My Awesome Title", "View title missing"
-    assert view.subtitle == "Just another subtitle", "View subtitle missing"
+    assert view.title    == title, "View title missing"
+    assert view.subtitle == sub,   "View subtitle missing"
     # FIXME finish
   end
 
@@ -99,15 +100,17 @@ class TestScriptoriumRepo < Minitest::Test
 
   def test_008_publish_draft
     puts __method__
+    $debug = true
     repo = create_test_repo("testview")  # View should exist to create draft?
     fname = repo.create_draft
 
     repo.publish_draft(fname)
     postnum = "0001"  # Assumes testing started with 0
-    postdir = "#{repo.root}/posts/#{postnum}" 
-    assert_dir_exist?("#{postdir}/assets")
-    assert_file_exist?("#{postdir}/meta.lt3") 
-    assert_file_exist?("#{postdir}/draft.lt3") 
+    postdir = repo.root/:posts/postnum 
+    assert_dir_exist?(postdir/:assets)
+    assert_file_exist?(postdir/"meta.lt3") 
+    assert_file_exist?(postdir/"draft.lt3") 
+    $debug = false
   end
 
 end
