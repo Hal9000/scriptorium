@@ -55,5 +55,15 @@ module Scriptorium::Helpers
       lines.each {|line| f.puts line }
     end
   end
+
+  def write_predef(sym)
+    path = @predef.send(sym, :name)
+    contents = @predef.send(sym, :raw)
+    write_file(@root/path, [contents])
+  end
+ 
+  def ymdhms
+    Time.now.strftime("%Y-%m-%d-%H-%M-%S")
+  end
 end
 

@@ -19,6 +19,7 @@ class Scriptorium::Repo
   def self.create(testing = false)
     Scriptorium::Repo.testing = testing
     home = ENV['HOME']
+    @predef = Scriptorium::StandardFiles.new
     @root = testing ? "scriptorium-TEST" : "#{home}/.scriptorium"
     # Test for existence!!  FIXME
     raise RepoDirAlreadyExists if Dir.exist?(@root)
@@ -28,8 +29,10 @@ class Scriptorium::Repo
     postnum_file = "#@root/config/last_post_num.txt"
 
     write_file(postnum_file, "0")
-    # puts "postnum file = #postnum_file"
-    # sleep 10
+
+    # Theme: templates, etc.
+    write_predef(:post_template)
+
     self.open(@root)
   end
 
@@ -49,6 +52,7 @@ class Scriptorium::Repo
 
   def initialize(root)    # repo
     @root = root
+    @predef = Scriptorium::StandardFiles.new
     Scriptorium::Repo.class_eval { @root = root }
   end
 

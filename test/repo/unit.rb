@@ -113,4 +113,27 @@ class TestScriptoriumRepo < Minitest::Test
     $debug = false
   end
 
+  def test_009_check_initial_post_template
+    puts __method__
+    create_test_repo
+    root = Repo.root
+    file = "#{root}/themes/standard/post_template.lt3"
+    assert_file_exist?(file)
+
+    lines = File.readlines(file)
+    assert lines.size == 13, "Expected 13 lines in post template"
+  end
+
+  def test_010_check_interpolated_post_template
+    puts __method__
+    repo = create_test_repo
+    predef = repo.instance_eval { @predef }
+    str = predef.post_template
+    lines = str.split("\n")
+    assert lines[2] == ".id 0000", "Expected '.id 0000' with unspecified num"
+    str2 = predef.post_template(num: 237)
+    lines = str2.split("\n")
+    assert lines[2] == ".id 0237", "Expected 'num' to be filled in (found '#{lines[2]}')"
+  end
+
 end

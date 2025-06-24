@@ -47,6 +47,10 @@ def tags
   setvar("this.tags", api.data.strip.split(","))
 end
 
+def body
+  setvar("this.body", api.body)
+end
+
 
 
 # Old liveblog code:
