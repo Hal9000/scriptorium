@@ -95,8 +95,9 @@ class TestScriptoriumRepo < Minitest::Test
     tv2 = "testview2"
     view = repo.create_view(tv2, "My 2nd Title", "Just another subtitle here")
     assert repo.views.size == 2, "Expected 2 views, not #{repo.views.size}"
-    assert repo.views.include?(view), "Expected to find '#{tv2}' in views"
-    assert repo.current_view == view, "Expected '#{tv2}' as current view"
+    vnames = repo.views.map {|v| v.name }
+    assert vnames.include?(tv2), "Expected to find '#{tv2}' in views"
+    assert repo.current_view.name == view.name, "Expected '#{tv2}' as current view"
   end
 
   def test_106_open_view

@@ -56,8 +56,18 @@ class Scriptorium::Repo
     @root = root
     @predef = Scriptorium::StandardFiles.new
     Scriptorium::Repo.class_eval { @root = root }
+    load_views
+  end
+
+  private def load_views
     @views = []
+    list = Dir.entries(@root/:views) - %w[. .. config.txt]
+    list.each {|dir| open_view(dir) }
+    cview_file = @root/"currentview.txt"
     @current_view = nil
+    if File.exist?(cview_file)
+      @current_view = File.read(cview_file).chomp
+    end
   end
 
   ### View methods...
@@ -80,6 +90,8 @@ class Scriptorium::Repo
     @views -= [view]
     @views << view
     @current_view = view
+    write_file(@root/"currentview.txt", view.name)
+    view
   end
 
   def open_view(name)
@@ -89,6 +101,8 @@ class Scriptorium::Repo
     @views -= [view]
     @views << view
     @current_view = view
+    write_file(@root/"currentview.txt", view.name)
+    view
   end
 
   def create_draft

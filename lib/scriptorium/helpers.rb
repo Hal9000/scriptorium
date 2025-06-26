@@ -64,5 +64,12 @@ module Scriptorium::Helpers
   def ymdhms
     Time.now.strftime("%Y-%m-%d-%H-%M-%S")
   end
+
+  def see_file(file)   # Really from TestHelpers
+    puts "----- File: #{file}"
+    system("cat #{file}")
+    puts "-----"
+  end
+
 end
 
