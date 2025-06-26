@@ -7,7 +7,7 @@ class Scriptorium::StandardFiles
   def initialize   # remove?
   end
 
-  def post_template(mode = :filled, 
+  def initial_post(mode = :filled, 
                     num:   "0", 
                     title: "ADD TITLE HERE", 
                     views: %w[BLOG1 BLOG2 BLOG3],

@@ -8,7 +8,9 @@ class Scriptorium::Repo
     attr_reader   :root     # class level
   end
 
-  attr_reader   :root       # instance
+  # instance attrs
+
+  attr_reader   :root, :views, :current_view
 
   def self.exist?
     dir = Scriptorium::Repo.root
@@ -25,15 +27,15 @@ class Scriptorium::Repo
     raise RepoDirAlreadyExists if Dir.exist?(@root)
     Dir.mkdir(@root)
     make_dirs(*%w[config views posts drafts themes assets], top: @root)
-    make_dirs("posts/meta", "themes/standard", "views/sample", top: @root)
+    make_dirs("posts/meta", top: @root)
     postnum_file = "#@root/config/last_post_num.txt"
 
     write_file(postnum_file, "0")
 
-    # Theme: templates, etc.
-    write_predef(:post_template)
-
-    self.open(@root)
+    Scriptorium::Theme.create_standard(@root)   # Theme: templates, etc.
+    repo = self.open(@root)
+    Scriptorium::View.create_sample_view(repo)
+    return repo
   end
 
   def self.open(root)
@@ -54,6 +56,8 @@ class Scriptorium::Repo
     @root = root
     @predef = Scriptorium::StandardFiles.new
     Scriptorium::Repo.class_eval { @root = root }
+    @views = []
+    @current_view = nil
   end
 
   ### View methods...
@@ -62,18 +66,29 @@ class Scriptorium::Repo
     Dir.exist?("#@root/views/#{name}")
   end
 
-  def create_view(name, title, subtitle = "")
+  def create_view(name, title, subtitle = "", theme: "standard")
     # FIXME finish
     raise ViewDirAlreadyExists if view_exist?(name)
     dir = "#@root/views/#{name}"
     Dir.mkdir(dir)
-    write_file(dir/"config.txt", "title #{title}", "subtitle #{subtitle}")
+    make_dirs("output", top: dir)
+    write_file(dir/"config.txt", 
+               "title    #{title}", 
+               "subtitle #{subtitle}",
+               "theme    #{theme}")
+    view = open_view(name)
+    @views -= [view]
+    @views << view
+    @current_view = view
   end
 
   def open_view(name)
     vhash = getvars(view_dir(name)/"config.txt")
-    title, subtitle = vhash.values_at("title", "subtitle")
-    Scriptorium::View.new(name, title, subtitle)
+    title, subtitle, theme = vhash.values_at("title", "subtitle", "theme")
+    view = Scriptorium::View.new(name, title, subtitle, theme)
+    @views -= [view]
+    @views << view
+    @current_view = view
   end
 
   def create_draft

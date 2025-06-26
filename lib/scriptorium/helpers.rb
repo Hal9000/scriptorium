@@ -56,8 +56,7 @@ module Scriptorium::Helpers
     end
   end
 
-  def write_predef(sym)
-    path = @predef.send(sym, :name)
+  def write_predef(sym, path)
     contents = @predef.send(sym, :raw)
     write_file(@root/path, [contents])
   end

@@ -16,4 +16,10 @@ module TestHelpers
     repo
   end
 
+  def see_file(file)
+    puts "----- File: #{file}"
+    system("cat #{file}")
+    puts "-----"
+  end
+
 end
