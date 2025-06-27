@@ -72,6 +72,19 @@ class Scriptorium::Repo
 
   ### View methods...
 
+  def lookup_view(target)
+    list = @views.select {|v| v.name == target }
+    raise CannotLookupView if list.empty?
+    raise MoreThanOneResult if list.size > 1
+    return list[0]
+  end
+
+  def view(change = nil)   # get/set current view
+    return @current_view if change.nil?
+    vnew = change.is_a?(Scriptorium::View) ? change : lookup_view(change)
+    @current_view = vnew
+  end
+
   def view_exist?(name)
     Dir.exist?("#@root/views/#{name}")
   end
@@ -105,10 +118,12 @@ class Scriptorium::Repo
     view
   end
 
-  def create_draft
+  def create_draft(title: nil, views: nil, tags: nil)
     ts = Time.now.strftime("%Y%m%d-%H%M%S")
     name = "#@root/drafts/#{ts}-draft.lt3"
-    make_empty_file(name)
+    theme = @current_view.theme
+    initial = @predef.initial_post(title: title, views: views, tags: tags)
+    write_file(name, initial)
     # FIXME add boilerplate
     name
   end
@@ -123,12 +138,14 @@ class Scriptorium::Repo
     num
   end
 
-  def publish_draft(name)
+  def finish_draft(name, view: nil)
     id = d4(incr_post_num)
     posts = @root/:posts
     make_dirs(id, id/:assets, top: posts)
     make_empty_file(posts/id/"meta.lt3")
     FileUtils.mv(name, posts/id/"draft.lt3")
+    # FIXME now must generate
+    # adds meta.lt3 incl pubdate, etc.
   end
 
 end

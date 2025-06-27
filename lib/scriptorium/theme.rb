@@ -2,6 +2,7 @@ class Scriptorium::Theme
 
   include Scriptorium::Helpers
   extend  Scriptorium::Helpers
+  include Scriptorium::Exceptions
 
   attr_accessor :name
 
@@ -21,6 +22,24 @@ class Scriptorium::Theme
     # navbar falls back to nothingScriptorium
     empties.each_pair {|dir, files| files.each {|file| make_empty_file(std/dir/file) } }
     write_file(std/:initial/"post.lt3", predef.initial_post(:raw))
+    write_file(std/:templates/"post.lt3", predef.post_template)
+  end
+
+  def file(portion)
+    paths = Find.find(@root/:themes/name)
+    found = paths.find_all {|x| x.include?(portion) }
+    if found.size == 1
+      return found[0]
+    else
+      # puts "Search for #{portion} found"
+      # found.each {|x| puts "  #{x}"}
+      raise MoreThanOneResult
+    end
+  end
+
+  def initialize(root, name)
+    @root = root
+    @name = name
   end
 
 end

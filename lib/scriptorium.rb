@@ -1,4 +1,5 @@
 require 'livetext'
+require 'find'
 
 require_relative "skeleton"
 require_relative "scriptorium/version"

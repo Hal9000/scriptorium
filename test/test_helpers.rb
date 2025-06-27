@@ -16,6 +16,11 @@ module TestHelpers
     repo
   end
 
+  def assert_file_contains?(file, str)
+    text = File.read(file)
+    text.include?(str)
+  end
+
   def see_file(file)
     puts "----- File: #{file}"
     system("cat #{file}")

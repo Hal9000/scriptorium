@@ -12,8 +12,10 @@ class Scriptorium::StandardFiles
                     title: "ADD TITLE HERE", 
                     views: %w[BLOG1 BLOG2 BLOG3],
                     tags:  %w[sample tags])
-    fname = "themes/standard/post_template.lt3"
-    return fname if mode == :name
+    title ||= "standard/post_template.lt3"
+    views ||= %w[BLOG1 BLOG2 BLOG3]
+    tags  ||= %w[sample tags]
+    
     str = 
     <<~EOS
       . Initial file created by StandardFiles#post_template(num)
@@ -36,6 +38,19 @@ class Scriptorium::StandardFiles
     str2 = str % {num: d4(num.to_i), created: ymdhms, title: title, 
                   views: views.join(" "), tags: tags.join(", ")}
     return str2
+  end
+
+  def post_template
+    str = <<~EOS
+      <div style="display: flex; justify-content: space-between;">
+        <span style="text-align: left; font-size: 1.2em;">%{title}</span>
+        <span style="text-align: right; font-size: 0.9em;">%{pubdate}</span>
+      </div>
+      <hr>
+      %{body}
+      <hr>
+      <span style="text-align: right; font-size: 0.9em;">%{tags}</span>
+    EOS
   end
 
 end
