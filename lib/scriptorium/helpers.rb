@@ -60,7 +60,31 @@ module Scriptorium::Helpers
     contents = @predef.send(sym, :raw)
     write_file(@root/path, [contents])
   end
- 
+
+  def change_config(file_path, target_key, new_value)
+    pattern = /
+      ^(?<leading>\s*#{Regexp.escape(target_key)}\s+)  # key and spacing
+      (?<old_value>[^\#]*?)                            # value (non-greedy up to comment)
+      (?<trailing>\s*)                                 # trailing space
+      (?<comment>\#.*)?$                               # optional comment
+    /x
+  
+    lines = File.readlines(file_path)
+    updated_lines = lines.map do |line|
+      if match = pattern.match(line)
+        leading  = match[:leading]
+        trailing = match[:trailing]
+        comment  = match[:comment] || ''
+        "#{leading}#{new_value}#{trailing}#{comment}\n"
+      else
+        line
+      end
+    end
+  
+    File.write(file_path, updated_lines.join)
+  end
+  
+
   def ymdhms
     Time.now.strftime("%Y-%m-%d-%H-%M-%S")
   end

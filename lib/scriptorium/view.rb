@@ -1,4 +1,5 @@
 class Scriptorium::View
+  include Scriptorium::Exceptions
 
   attr_reader :name, :title, :subtitle, :theme, :dir
 
@@ -12,29 +13,44 @@ class Scriptorium::View
     @dir = "#@root/views/#{name}"
   end
 
-private def generate_empty_containers
-  layout_file = @dir/:config/"layout.txt"
-  return unless File.exist?(layout_file)
-
-  lines = File.readlines(layout_file).map(&:strip)
-  lines.reject! { |line| line.empty? || line.start_with?('#') }
-  lines.map! {|line| line.sub(/# .*$/, "") }
-
-  lines.each do |section|
-    filename = @dir/:output/"#{section}.html"
-    tag = section   # header, footer, main
-    tag = "aside" if section == 'left' || tag == 'right'
-  
-    content = <<~HTML
-      <#{tag} class="#{section}">
-        <!-- #{section.upcase} CONTENT -->
-      </#{tag}>
-    HTML
-
-    File.write(filename, content)
+  def read_layout(file)
+    lines = File.readlines(file).map(&:strip)
+    lines.reject! { |line| line.empty? || line.start_with?('#') }
+    lines.map! {|line| line.sub(/ .*$/, "") }
+    diff = lines - %w[header footer left right main]
+    raise LayoutHasUnknownTag unless diff.empty?
+    raise LayoutHasDuplicateTags if lines.uniq != lines
+    lines
   end
-end
 
+  private def generate_empty_containers
+    layout_file = @dir/:config/"layout.txt"
+    return unless File.exist?(layout_file)
+
+    lines = read_layout(layout_file)
+    lines.each do |section|
+      filename = @dir/:output/"#{section}.html"
+      tag = section   # header, footer, main
+      tag = "aside" if section == 'left' || tag == 'right'
+    
+      content = <<~HTML
+        <#{tag} class="#{section}">
+          <!-- #{section.upcase} CONTENT -->
+        </#{tag}>
+      HTML
+
+      File.write(filename, content)
+    end
+  end
+
+  def theme(change = nil)
+    return @theme if change.nil?
+    # what if it doesn't exist?
+    raise ThemeDoesntExist unless Dir.exist?(@root/:themes/change)
+    @theme = change
+    change_config(@dir/"config.txt", "theme", change)
+    apply_theme(change)
+  end
 
   def apply_theme(theme)
     # check to see if ever done before?

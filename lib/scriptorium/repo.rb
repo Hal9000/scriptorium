@@ -94,7 +94,7 @@ class Scriptorium::Repo
     raise ViewDirAlreadyExists if view_exist?(name)
     dir = "#@root/views/#{name}"
     Dir.mkdir(dir)
-    make_dirs("config", "layout", "output", top: dir)
+    make_dirs("config", "layout", "output", "staging", top: dir)
     write_file(dir/"config.txt", 
                "title    #{title}", 
                "subtitle #{subtitle}",
@@ -152,6 +152,12 @@ class Scriptorium::Repo
     FileUtils.mv(name, posts/id/"draft.lt3")
     # FIXME now must generate
     # adds meta.lt3 incl pubdate, etc.
+  end
+
+  def tree(file = nil)
+    cmd = "tree #@root"
+    cmd << " >#{file}" if file
+    system(cmd) 
   end
 
 end

@@ -21,6 +21,11 @@ module TestHelpers
     text.include?(str)
   end
 
+  def assert_file_lines(file, num)
+    lines = File.readlines(file)
+    assert lines.size == num, "Expected #{num} lines in #{file}"
+  end
+
   def see_file(file)
     puts "----- File: #{file}"
     system("cat #{file}")

@@ -6,6 +6,7 @@ require_relative '../test_helpers'
 class TestScriptoriumRepo < Minitest::Test
 
   include Scriptorium::Exceptions
+  include Scriptorium::Helpers
   include TestHelpers
 
   Repo = Scriptorium::Repo
@@ -153,9 +154,7 @@ class TestScriptoriumRepo < Minitest::Test
     root = repo.root
     file = "#{root}/themes/standard/initial/post.lt3" # FIXME hardcoded
     assert_file_exist?(file)
-
-    lines = File.readlines(file)
-    assert lines.size == 13, "Expected 13 lines in initial post"
+    assert_file_lines(file, 13)
   end
 
   def test_012_check_interpolated_initial_post
@@ -183,8 +182,8 @@ class TestScriptoriumRepo < Minitest::Test
     want2 = "scriptorium-TEST/themes/standard/config.lt3"
     assert path2 == want2, "Expected: #{want2}"
 
-    path3 = t.file("sidebar.lt3")
-    want3 = "scriptorium-TEST/themes/standard/partials/sidebar.lt3"
+    path3 = t.file("right.txt")
+    want3 = "scriptorium-TEST/themes/standard/layout/right.txt"
     assert path3 == want3, "Expected: #{want3}"
 
     assert_raises(MoreThanOneResult) { t.file("post.lt3") }
@@ -196,9 +195,7 @@ class TestScriptoriumRepo < Minitest::Test
     root = repo.root
     file = "#{root}/themes/standard/templates/post.lt3" # FIXME hardcoded
     assert_file_exist?(file)
-
-    lines = File.readlines(file)
-    assert lines.size == 8, "Expected 8 lines in initial post"
+    assert_file_lines(file, 9)
   end
 
   def test_015_change_view
@@ -231,7 +228,120 @@ class TestScriptoriumRepo < Minitest::Test
     v0 = repo.lookup_view('sample')
     assert v0.name == 'sample', "Expected view to be 'sample'"
     assert_raises(CannotLookupView) { repo.lookup_view('view99')}
+    repo.create_view("newview", "My Title", "Nothing here")  # testing
+    v2 = repo.view
+    v3 = repo.lookup_view(v2.name)
+    assert v3.name == v2.name, "Expected new view '#{v2.name}' found as '#{v3.name}"
+  end
 
+  def test_017_tree_method
+    puts __method__
+    repo = create_test_repo
+    repo.tree("/tmp/tree.txt")
+    assert_file_exist?("/tmp/tree.txt")
+    num = File.readlines("/tmp/tree.txt").size
+    assert num > 0, "Tree file appears too short"  
+  end
+
+  def test_018_change_config
+    puts __method__
+    cfg_file = "/tmp/myconfig.txt"
+    File.open(cfg_file, "w") do |f|
+      f.puts <<~EOS
+        alpha foo  # nothing much
+        beta  bar  # meh again
+        gamma baz  # whatever
+      EOS
+    end
+    change_config(cfg_file, "beta", "new-value")
+    lines = File.readlines(cfg_file).map(&:chomp)
+    assert lines[0] == "alpha foo  # nothing much",     "Expected alpha text"
+    assert lines[1] == "beta  new-value  # meh again",  "Expected beta text"
+    assert lines[2] == "gamma baz  # whatever",         "Expected gamma text"
+  end
+
+  def test_019_mock_vars_into_template
+    puts __method__  
+    title   = "This is my title"
+    pubdate = "August 2, 2024"
+    tags    = "history, journal, birthday"
+    body    = 
+      <<~EOS
+      This is just a fake blog post.
+    
+      <p>
+      If it had been an <i>actual</i> post, it
+      might have said something.
+  
+      <p>
+      That's all.
+      EOS
+    vars = {title: title, pubdate: pubdate, tags: tags, body: body}
+    predef = Scriptorium::StandardFiles.new
+    template = predef.post_template("standard")
+    result = template % vars
+    assert result =~ /August 2, 2024/
+    File.open("/tmp/mock.html", "w") do |f|
+      f.puts result
+    end
+    assert_file_lines("/tmp/mock.html", 17)
+  end
+
+  def test_020_check_html_stubs
+    puts __method__
+    repo = create_test_repo
+    out = repo.root/:views/:sample/:output
+    assert_file_exist?(out/"header.html")
+    assert_file_exist?(out/"footer.html")
+    assert_file_exist?(out/"left.html")
+    assert_file_exist?(out/"right.html")
+    assert_file_exist?(out/"main.html")
+
+    assert_file_contains?(out/"header.html", "<!-- HEADER CONTENT -->")
+    assert_file_contains?(out/"footer.html", "<!-- FOOTER CONTENT -->")
+    assert_file_contains?(out/"left.html",   "<!-- LEFT CONTENT -->")
+    assert_file_contains?(out/"right.html",  "<!-- RIGHT CONTENT -->")
+    assert_file_contains?(out/"main.html",   "<!-- MAIN CONTENT -->")
+  end
+
+  def test_021_check_layout_parsing
+    puts __method__
+    repo = create_test_repo
+    File.open("/tmp/layout.txt", "w") do |f|
+      f.puts <<~EOS
+        main     # Center pane
+        header
+        left   15%
+        right  20%  # Right sidebar
+        footer
+      EOS
+    end
+    results = repo.view.read_layout("/tmp/layout.txt")
+    assert results == %w[main header left right footer], "Error reading layout file"
+
+    File.open("/tmp/layout.txt", "w") do |f|
+      f.puts <<~EOS
+        main     # Center pane
+        header
+        banana
+        left   15%
+        right  20%  # Right sidebar
+        footer
+      EOS
+    end
+    assert_raises(LayoutHasUnknownTag) { repo.view.read_layout("/tmp/layout.txt") }
+
+    File.open("/tmp/layout.txt", "w") do |f|
+      f.puts <<~EOS
+        main     # Center pane
+        header
+        main
+        left   15%
+        right  20%  # Right sidebar
+        footer
+      EOS
+    end
+    assert_raises(LayoutHasDuplicateTags) { repo.view.read_layout("/tmp/layout.txt") }
   end
 
 end
