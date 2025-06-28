@@ -63,7 +63,7 @@ class Scriptorium::Repo
     @views = []
     list = Dir.entries(@root/:views) - %w[. .. config.txt]
     list.each {|dir| open_view(dir) }
-    cview_file = @root/"currentview.txt"
+    cview_file = @root/:config/"currentview.txt"
     @current_view = nil
     if File.exist?(cview_file)
       @current_view = File.read(cview_file).chomp
@@ -94,7 +94,7 @@ class Scriptorium::Repo
     raise ViewDirAlreadyExists if view_exist?(name)
     dir = "#@root/views/#{name}"
     Dir.mkdir(dir)
-    make_dirs("output", top: dir)
+    make_dirs("config", "layout", "output", top: dir)
     write_file(dir/"config.txt", 
                "title    #{title}", 
                "subtitle #{subtitle}",
@@ -103,7 +103,13 @@ class Scriptorium::Repo
     @views -= [view]
     @views << view
     @current_view = view
-    write_file(@root/"currentview.txt", view.name)
+    write_file(@root/:config/"currentview.txt", view.name)
+    cfg = dir/:config  # Should these be copied from theme??
+    write_file(cfg/"header.txt", "# Specify contents of header")
+    write_file(cfg/"footer.txt", "# Specify contents of footer")
+    write_file(cfg/"left.txt",   "# Specify contents of left sidebar")
+    write_file(cfg/"right.txt",  "# Specify contents of right sidebar")
+    view.apply_theme(theme)
     view
   end
 
@@ -114,7 +120,7 @@ class Scriptorium::Repo
     @views -= [view]
     @views << view
     @current_view = view
-    write_file(@root/"currentview.txt", view.name)
+    write_file(@root/:config/"currentview.txt", view.name)
     view
   end
 

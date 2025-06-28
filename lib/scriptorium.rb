@@ -9,4 +9,4 @@ require_relative "scriptorium/view"
 require_relative "scriptorium/exceptions"
 require_relative "scriptorium/helpers"
 require_relative "scriptorium/standard_files"
-
+require_relative "scriptorium/layout"
