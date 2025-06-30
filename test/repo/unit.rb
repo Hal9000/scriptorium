@@ -154,7 +154,7 @@ class TestScriptoriumRepo < Minitest::Test
     root = repo.root
     file = "#{root}/themes/standard/initial/post.lt3" # FIXME hardcoded
     assert_file_exist?(file)
-    assert_file_lines(file, 13)
+    assert_file_lines(file, 12)
   end
 
   def test_012_check_interpolated_initial_post
@@ -237,7 +237,7 @@ class TestScriptoriumRepo < Minitest::Test
   def test_017_tree_method
     puts __method__
     repo = create_test_repo
-    repo.tree("/tmp/tree.txt")
+    repo.tree("/tmp/test-tree.txt")
     assert_file_exist?("/tmp/tree.txt")
     num = File.readlines("/tmp/tree.txt").size
     assert num > 0, "Tree file appears too short"  
@@ -290,18 +290,18 @@ class TestScriptoriumRepo < Minitest::Test
   def test_020_check_html_stubs
     puts __method__
     repo = create_test_repo
-    out = repo.root/:views/:sample/:output
-    assert_file_exist?(out/"header.html")
-    assert_file_exist?(out/"footer.html")
-    assert_file_exist?(out/"left.html")
-    assert_file_exist?(out/"right.html")
-    assert_file_exist?(out/"main.html")
+    panes = repo.root/:views/:sample/:output/:panes
+    assert_file_exist?(panes/"header.html")
+    assert_file_exist?(panes/"footer.html")
+    assert_file_exist?(panes/"left.html")
+    assert_file_exist?(panes/"right.html")
+    assert_file_exist?(panes/"main.html")
 
-    assert_file_contains?(out/"header.html", "<!-- HEADER CONTENT -->")
-    assert_file_contains?(out/"footer.html", "<!-- FOOTER CONTENT -->")
-    assert_file_contains?(out/"left.html",   "<!-- LEFT CONTENT -->")
-    assert_file_contains?(out/"right.html",  "<!-- RIGHT CONTENT -->")
-    assert_file_contains?(out/"main.html",   "<!-- MAIN CONTENT -->")
+    assert_file_contains?(panes/"header.html", "<!-- HEADER CONTENT -->")
+    assert_file_contains?(panes/"footer.html", "<!-- FOOTER CONTENT -->")
+    assert_file_contains?(panes/"left.html",   "<!-- LEFT CONTENT -->")
+    assert_file_contains?(panes/"right.html",  "<!-- RIGHT CONTENT -->")
+    assert_file_contains?(panes/"main.html",   "<!-- MAIN CONTENT -->")
   end
 
   def test_021_check_layout_parsing
@@ -344,4 +344,29 @@ class TestScriptoriumRepo < Minitest::Test
     assert_raises(LayoutHasDuplicateTags) { repo.view.read_layout("/tmp/layout.txt") }
   end
 
+def test_022_simple_generate_post
+  puts __method__
+  repo = create_test_repo
+  dname = repo.create_draft(title: "My first post", tags: %w[things stuff])
+  body    = 
+  <<~EOS
+  This is just another fake blog post.
+
+  <p>
+  If it had been an _actual post, it might have 
+  said something meaninful.
+
+  <p>
+  But here we are.
+  EOS
+  text = File.read(dname)
+  text.sub!(/BEGIN HERE.../, body)
+  write_file(dname, text)
+  num = repo.finish_draft(dname)
+  repo.generate_post(num, "sample")
+  repo.tree("/tmp/tree.txt")
+  assert_file_exist?(repo.root/:posts/d4(num)/"body.html")
+  assert_file_exist?(repo.root/:posts/d4(num)/"meta.txt")
+  assert_file_exist?(repo.root/:views/:sample/:output/:posts/"#{num}-my-first-post.html")
+end
 end

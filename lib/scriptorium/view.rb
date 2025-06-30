@@ -29,7 +29,7 @@ class Scriptorium::View
 
     lines = read_layout(layout_file)
     lines.each do |section|
-      filename = @dir/:output/"#{section}.html"
+      filename = @dir/:output/:panes/"#{section}.html"
       tag = section   # header, footer, main
       tag = "aside" if section == 'left' || tag == 'right'
     

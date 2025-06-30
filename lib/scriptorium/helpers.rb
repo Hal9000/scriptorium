@@ -40,9 +40,12 @@ module Scriptorium::Helpers
   def make_dirs(*dirs, top: nil)
     dir0 = top ? "#{top}/" : ""
     Dir.mkdir(dir0) unless Dir.exist?(dir0)
+    dir = nil
     dirs.each do |dir|
       Dir.mkdir(dir0/dir)
     end
+  rescue => e
+    puts "-- Problem dir0, dir =  #{dir0.inspect}  #{e.message}"
   end
 
   def make_empty_file(file)
@@ -84,7 +87,14 @@ module Scriptorium::Helpers
     File.write(file_path, updated_lines.join)
   end
   
-
+  def slugify(id, title)
+    slug = title.downcase.strip
+               .gsub(/[^a-z0-9\s_-]/, '')  # remove punctuation
+               .gsub(/[\s_-]+/, '-')       # replace spaces and underscores with hyphen
+               .gsub(/^-+|-+$/, '')        # trim leading/trailing hyphens
+    format("%04d-%s", id, slug)
+  end
+  
   def ymdhms
     Time.now.strftime("%Y-%m-%d-%H-%M-%S")
   end

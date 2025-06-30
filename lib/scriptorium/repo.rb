@@ -95,6 +95,7 @@ class Scriptorium::Repo
     dir = "#@root/views/#{name}"
     Dir.mkdir(dir)
     make_dirs("config", "layout", "output", "staging", top: dir)
+    make_dirs("output/posts", "output/panes", top: dir)
     write_file(dir/"config.txt", 
                "title    #{title}", 
                "subtitle #{subtitle}",
@@ -128,7 +129,8 @@ class Scriptorium::Repo
     ts = Time.now.strftime("%Y%m%d-%H%M%S")
     name = "#@root/drafts/#{ts}-draft.lt3"
     theme = @current_view.theme
-    initial = @predef.initial_post(title: title, views: views, tags: tags)
+    id = incr_post_num
+    initial = @predef.initial_post(num: id, title: title, views: views, tags: tags)
     write_file(name, initial)
     # FIXME add boilerplate
     name
@@ -145,19 +147,74 @@ class Scriptorium::Repo
   end
 
   def finish_draft(name, view: nil)
-    id = d4(incr_post_num)
+    id = d4(last_post_num)
     posts = @root/:posts
     make_dirs(id, id/:assets, top: posts)
     make_empty_file(posts/id/"meta.lt3")
     FileUtils.mv(name, posts/id/"draft.lt3")
-    # FIXME now must generate
-    # adds meta.lt3 incl pubdate, etc.
+    id
   end
 
   def tree(file = nil)
     cmd = "tree #@root"
     cmd << " >#{file}" if file
     system(cmd) 
+  end
+
+  private def adjust_vars(v1, text)
+    keys = v1.keys.select {|k| k.to_s.start_with?("post.") }
+    v2 = {}
+    keys.each {|k| v2[k] = v1[k] }
+    puts "V2 = "
+    v2.each_pair {|k,v| puts "  #{k}  => #{v}"}
+    # puts "TAGS = #{v2[:"post.tags"]}  eval = #{eval(v2[:"post.tags"]).join(', ')}"
+    v2[:"post.body"] = text
+    data = {}
+    v2.each_pair do |k, v| 
+      short = k.to_s.sub(/^post./, "").to_sym
+      data[short] = v
+    end
+    data
+  end
+
+  private def write_post_metadata(data, view)
+    num, title = data.values_at(:id, :title)
+    File.open(@root/:posts/d4(num)/"meta.txt", "w") do |f|
+      data.each_pair {|k,v| f.printf "%-12s  %s\n", "post.#{k}", v }
+      # FIXME - standardize key names!
+    end
+  end
+
+  private def write_generated_post(data, view, final)
+    num, title = data.values_at(:id, :title)
+    slug  = slugify(num, title) + ".html"
+    # Write to:
+    #   root/posts/0123/body.html  meta.txt  (assets/  draft.lt3)
+    top = @root/:posts/d4(num)/"body.html"
+    write_file(top, final)  
+    write_post_metadata(data, view)
+    #   view/.../output/posts/0123-this-is-me.html
+    path  = view.dir/:output/:posts/slug    
+    write_file(path, final)
+    write_file("/tmp"/slug)  # for debugging
+  end
+
+  def generate_post(num, view)
+    view = lookup_view(view)
+    draft = @root/:posts/d4(num)/"draft.lt3"
+    live = Livetext.customize(call: ".nopara") # vars??
+    theme = view.theme 
+    input = @predef.scriptor
+    input << File.read(draft)
+    write_file("/tmp/test.lt3", input)
+    text = live.xform_file("/tmp/test.lt3")
+    vars, body = live.vars.vars, live.body
+    data = adjust_vars(vars, text)
+    template = @predef.post_template("standard")
+    data[:pubdate] = Time.now.strftime("%Y-%m-%D")   # write to meta.txt (lt3?)
+    final = template % data
+tree("/tmp/tree.txt")
+    write_generated_post(data, view, final)
   end
 
 end
