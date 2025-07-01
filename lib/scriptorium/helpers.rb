@@ -105,5 +105,43 @@ module Scriptorium::Helpers
     puts "-----"
   end
 
+  def make_tree(base, text)
+    lines = text.split("\n").map(&:chomp)
+    entries = []
+  
+    # Determine the root name
+    first_line = lines.shift
+    root = first_line.strip.sub(/\/$/, "") # remove trailing slash
+    root_path = File.join(base, root)
+    Dir.mkdir(root_path) unless File.exist?(root_path)
+  
+    # Prepare stack starting from root
+    stack = [root_path]
+  
+    # Parse the remaining lines
+    lines.each do |line|
+      if (i = line.index(/ [a-zA-Z0-9_.]/))
+        name = line[(i + 1)..-1]
+        level = i / 4
+      else
+        name = line.strip
+        level = 0
+      end
+      entries << [level, name]
+    end
+  
+    entries.each do |level, name|
+      stack = stack[0..level]
+      full_path = File.join(stack.last, name)
+  
+      if name.end_with?("/")
+        Dir.mkdir(full_path) unless File.exist?(full_path)
+        stack << full_path
+      else
+        File.write(full_path, "Empty file generated at #{Time.now}\n")
+      end
+    end
+  end            
+
 end
 

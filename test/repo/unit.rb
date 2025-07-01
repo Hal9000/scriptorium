@@ -57,7 +57,6 @@ class TestScriptoriumRepo < Minitest::Test
     assert_dir_exist?(root/"views")
     assert_dir_exist?(root/"views/sample")
     assert_dir_exist?(root/"posts")
-    assert_dir_exist?(root/"posts/meta")
     assert_dir_exist?(root/"drafts")
     assert_dir_exist?(root/"themes")
     assert_dir_exist?(root/"themes/standard")
@@ -143,7 +142,6 @@ class TestScriptoriumRepo < Minitest::Test
     postnum = "0001"  # Assumes testing started with 0
     postdir = repo.root/:posts/postnum 
     assert_dir_exist?(postdir/:assets)
-    assert_file_exist?(postdir/"meta.lt3") 
     assert_file_exist?(postdir/"draft.lt3") 
     $debug = false
   end
@@ -175,16 +173,11 @@ class TestScriptoriumRepo < Minitest::Test
     t = Scriptorium::Theme.new(repo.root, "standard")
 
     path1 = t.file("initial/post.lt3")
-    want1 = "scriptorium-TEST/themes/standard/initial/post.lt3"
+    want1 = "./scriptorium-TEST/themes/standard/initial/post.lt3"
     assert path1 == want1, "Expected: #{want1}"
-
-    path2 = t.file("config.lt3")
-    want2 = "scriptorium-TEST/themes/standard/config.lt3"
+    path2 = t.file("right.txt")
+    want2 = "./scriptorium-TEST/themes/standard/layout/config/right.txt"
     assert path2 == want2, "Expected: #{want2}"
-
-    path3 = t.file("right.txt")
-    want3 = "scriptorium-TEST/themes/standard/layout/right.txt"
-    assert path3 == want3, "Expected: #{want3}"
 
     assert_raises(MoreThanOneResult) { t.file("post.lt3") }
   end
@@ -344,29 +337,29 @@ class TestScriptoriumRepo < Minitest::Test
     assert_raises(LayoutHasDuplicateTags) { repo.view.read_layout("/tmp/layout.txt") }
   end
 
-def test_022_simple_generate_post
-  puts __method__
-  repo = create_test_repo
-  dname = repo.create_draft(title: "My first post", tags: %w[things stuff])
-  body    = 
-  <<~EOS
-  This is just another fake blog post.
+  def test_022_simple_generate_post
+    puts __method__
+    repo = create_test_repo
+    dname = repo.create_draft(title: "My first post", tags: %w[things stuff])
+    body    = 
+    <<~EOS
+    This is just another fake blog post.
 
-  <p>
-  If it had been an _actual post, it might have 
-  said something meaninful.
+    <p>
+    If it had been an _actual post, it might have 
+    said something meaninful.
 
-  <p>
-  But here we are.
-  EOS
-  text = File.read(dname)
-  text.sub!(/BEGIN HERE.../, body)
-  write_file(dname, text)
-  num = repo.finish_draft(dname)
-  repo.generate_post(num, "sample")
-  repo.tree("/tmp/tree.txt")
-  assert_file_exist?(repo.root/:posts/d4(num)/"body.html")
-  assert_file_exist?(repo.root/:posts/d4(num)/"meta.txt")
-  assert_file_exist?(repo.root/:views/:sample/:output/:posts/"#{num}-my-first-post.html")
-end
+    <p>
+    But here we are.
+    EOS
+    text = File.read(dname)
+    text.sub!(/BEGIN HERE.../, body)
+    write_file(dname, text)
+    num = repo.finish_draft(dname)
+    repo.generate_post(num, "sample")
+    repo.tree("/tmp/tree.txt")
+    assert_file_exist?(repo.root/:posts/d4(num)/"body.html")
+    assert_file_exist?(repo.root/:posts/d4(num)/"meta.txt")
+    assert_file_exist?(repo.root/:views/:sample/:output/:posts/"#{num}-my-first-post.html")
+  end
 end

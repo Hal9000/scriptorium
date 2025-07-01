@@ -23,15 +23,24 @@ class Scriptorium::Repo
     home = ENV['HOME']
     @predef = Scriptorium::StandardFiles.new
     @root = testing ? "scriptorium-TEST" : "#{home}/.scriptorium"
-    # Test for existence!!  FIXME
+    parent = testing ? "." : home
+    file = testing ? "scriptorium-TEST" : ".scriptorium"
+    @root = parent/file
     raise RepoDirAlreadyExists if Dir.exist?(@root)
-    Dir.mkdir(@root)
-    make_dirs(*%w[config views posts drafts themes assets], top: @root)
-    make_dirs("posts/meta", top: @root)
+    make_tree(parent, <<~EOS)
+      #@root
+      ├── assets/
+      ├── config/
+      ├── drafts/
+      ├── posts/
+      ├── themes/
+      └── views/
+    EOS
+
+    # r.mkdir(@root)
+    # make_dirs(*%w[config views posts drafts themes assets], top: @root)
     postnum_file = "#@root/config/last_post_num.txt"
-
     write_file(postnum_file, "0")
-
     Scriptorium::Theme.create_standard(@root)   # Theme: templates, etc.
     repo = self.open(@root)
     Scriptorium::View.create_sample_view(repo)
@@ -90,12 +99,32 @@ class Scriptorium::Repo
   end
 
   def create_view(name, title, subtitle = "", theme: "standard")
-    # FIXME finish
     raise ViewDirAlreadyExists if view_exist?(name)
+    make_tree(@root/:views, <<~EOS)
+    #{name}/
+    ├── config/
+    │   ├── footer.txt
+    │   ├── header.txt
+    │   ├── layout.txt
+    │   ├── left.txt
+    │   ├── main.txt
+    │   └── right.txt
+    ├── config.txt
+    ├── layout/
+    ├── output/
+    │   ├── panes/
+    │   │   ├── footer.html
+    │   │   ├── header.html
+    │   │   ├── left.html
+    │   │   ├── main.html
+    │   │   └── right.html
+    │   └── posts/
+    └── staging/
+    EOS
+
+    ### 
+
     dir = "#@root/views/#{name}"
-    Dir.mkdir(dir)
-    make_dirs("config", "layout", "output", "staging", top: dir)
-    make_dirs("output/posts", "output/panes", top: dir)
     write_file(dir/"config.txt", 
                "title    #{title}", 
                "subtitle #{subtitle}",
@@ -106,12 +135,12 @@ class Scriptorium::Repo
     @current_view = view
     write_file(@root/:config/"currentview.txt", view.name)
     cfg = dir/:config  # Should these be copied from theme??
-    write_file(cfg/"header.txt", "# Specify contents of header")
-    write_file(cfg/"footer.txt", "# Specify contents of footer")
-    write_file(cfg/"left.txt",   "# Specify contents of left sidebar")
-    write_file(cfg/"right.txt",  "# Specify contents of right sidebar")
+    write_file(cfg/"header.txt", "Specify contents of header")
+    write_file(cfg/"footer.txt", "Specify contents of footer")
+    write_file(cfg/"left.txt",   "Specify contents of left sidebar")
+    write_file(cfg/"right.txt",  "Specify contents of right sidebar")
     view.apply_theme(theme)
-    view
+    return view
   end
 
   def open_view(name)
@@ -150,7 +179,6 @@ class Scriptorium::Repo
     id = d4(last_post_num)
     posts = @root/:posts
     make_dirs(id, id/:assets, top: posts)
-    make_empty_file(posts/id/"meta.lt3")
     FileUtils.mv(name, posts/id/"draft.lt3")
     id
   end
@@ -165,9 +193,6 @@ class Scriptorium::Repo
     keys = v1.keys.select {|k| k.to_s.start_with?("post.") }
     v2 = {}
     keys.each {|k| v2[k] = v1[k] }
-    puts "V2 = "
-    v2.each_pair {|k,v| puts "  #{k}  => #{v}"}
-    # puts "TAGS = #{v2[:"post.tags"]}  eval = #{eval(v2[:"post.tags"]).join(', ')}"
     v2[:"post.body"] = text
     data = {}
     v2.each_pair do |k, v| 

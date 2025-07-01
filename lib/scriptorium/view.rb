@@ -61,7 +61,7 @@ class Scriptorium::View
     names = %w[header footer left right main]
     lay = @root/:themes/theme/:layout
     names.each do |name|
-      f1, f2 = lay/"#{name}.txt", dir/:config
+      f1, f2 = lay/:config/"#{name}.txt", dir/:config
       FileUtils.cp(f1, f2)
     end
     generate_empty_containers
