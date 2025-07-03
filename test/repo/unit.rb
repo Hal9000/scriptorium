@@ -269,7 +269,8 @@ class TestScriptoriumRepo < Minitest::Test
       <p>
       That's all.
       EOS
-    vars = {title: title, pubdate: pubdate, tags: tags, body: body}
+    vars = {:"post.title" => title, :"post.pubdate" => pubdate, 
+            :"post.tags" => tags, :"post.body" => body}
     predef = Scriptorium::StandardFiles.new
     template = predef.post_template("standard")
     result = template % vars
@@ -356,10 +357,11 @@ class TestScriptoriumRepo < Minitest::Test
     text.sub!(/BEGIN HERE.../, body)
     write_file(dname, text)
     num = repo.finish_draft(dname)
+    id4 = d4(num)
     repo.generate_post(num, "sample")
     repo.tree("/tmp/tree.txt")
-    assert_file_exist?(repo.root/:posts/d4(num)/"body.html")
-    assert_file_exist?(repo.root/:posts/d4(num)/"meta.txt")
-    assert_file_exist?(repo.root/:views/:sample/:output/:posts/"#{num}-my-first-post.html")
+    assert_file_exist?(repo.root/:posts/id4/"body.html")
+    assert_file_exist?(repo.root/:posts/id4/"meta.txt")
+    assert_file_exist?(repo.root/:views/:sample/:output/:posts/"#{id4}-my-first-post.html")
   end
 end

@@ -31,6 +31,7 @@ class Scriptorium::Theme
       └── templates/
           ├── index.lt3
           ├── post.lt3
+          ├── index_entry.lt3
           └── widget.lt3
     EOS
     write_file("/tmp/ttree.txt", `tree`)
@@ -38,6 +39,7 @@ class Scriptorium::Theme
     std = root/:themes/:standard
     write_file(std/:initial/"post.lt3", predef.initial_post(:raw))
     write_file(std/:templates/"post.lt3", predef.post_template("standard"))
+    write_file(std/:templates/"index_entry.lt3", predef.index_entry)
     layout_text = std/:layout/"layout.txt"
     write_file(layout_text, predef.layout_text)
     layout = Scriptorium::Layout.new(layout_text)

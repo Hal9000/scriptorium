@@ -102,24 +102,24 @@ class Scriptorium::Repo
     raise ViewDirAlreadyExists if view_exist?(name)
     make_tree(@root/:views, <<~EOS)
     #{name}/
-    ├── config/
-    │   ├── footer.txt
-    │   ├── header.txt
-    │   ├── layout.txt
-    │   ├── left.txt
-    │   ├── main.txt
-    │   └── right.txt
-    ├── config.txt
-    ├── layout/
-    ├── output/
-    │   ├── panes/
-    │   │   ├── footer.html
-    │   │   ├── header.html
-    │   │   ├── left.html
-    │   │   ├── main.html
-    │   │   └── right.html
-    │   └── posts/
-    └── staging/
+    ├── config/              # View-specific config files (FIXME rename?)
+    │   ├── layout.txt       # Overall layout for front page
+    │   ├── footer.txt       # Content for footer.html
+    │   ├── header.txt       # Content for header.html
+    │   ├── left.txt         # Content for left.html
+    │   ├── main.txt         # Content for main.html
+    │   └── right.txt        # Content for right.html
+    ├── config.txt           # View-specific config file
+    ├── layout/              # Unused?
+    ├── output/              # Output files (generated HTML)
+    │   ├── panes/           # Containers from layout.txt
+    │   │   ├── footer.html  # Generated from footer.txt
+    │   │   ├── header.html  # Generated from header.txt
+    │   │   ├── left.html    # Generated from left.txt
+    │   │   ├── main.html    # Generated from main.txt
+    │   │   └── right.html   # Generated from right.txt
+    │   └── posts/           # Generated posts for view (slug.html)
+    └── staging/             # Staging area prior to deployment
     EOS
 
     ### 
@@ -176,10 +176,11 @@ class Scriptorium::Repo
   end
 
   def finish_draft(name, view: nil)
-    id = d4(last_post_num)
+    id = last_post_num
+    id4 = d4(id)
     posts = @root/:posts
-    make_dirs(id, id/:assets, top: posts)
-    FileUtils.mv(name, posts/id/"draft.lt3")
+    make_dirs(id4, id4/:assets, top: posts)
+    FileUtils.mv(name, posts/id4/"draft.lt3")
     id
   end
 
@@ -203,19 +204,23 @@ class Scriptorium::Repo
   end
 
   private def write_post_metadata(data, view)
-    num, title = data.values_at(:id, :title)
+    num, title = data.values_at(:"post.id", :"post.title")
+    data = data.select {|k,v| k.to_s.start_with?("post.") }
+    data.delete(:"post.body")
+    data[:"post.slug"] = slugify(d4(num), title) + ".html"
     File.open(@root/:posts/d4(num)/"meta.txt", "w") do |f|
-      data.each_pair {|k,v| f.printf "%-12s  %s\n", "post.#{k}", v }
+      data.each_pair {|k,v| f.printf "%-12s  %s\n", k, v }
       # FIXME - standardize key names!
     end
   end
 
   private def write_generated_post(data, view, final)
-    num, title = data.values_at(:id, :title)
-    slug  = slugify(num, title) + ".html"
+    num, title = data.values_at(:"post.id", :"post.title")
+    id4 = d4(num)
+    slug  = slugify(id4, title) + ".html"
     # Write to:
     #   root/posts/0123/body.html  meta.txt  (assets/  draft.lt3)
-    top = @root/:posts/d4(num)/"body.html"
+    top = @root/:posts/id4/"body.html"
     write_file(top, final)  
     write_post_metadata(data, view)
     #   view/.../output/posts/0123-this-is-me.html
@@ -234,12 +239,23 @@ class Scriptorium::Repo
     write_file("/tmp/test.lt3", input)
     text = live.xform_file("/tmp/test.lt3")
     vars, body = live.vars.vars, live.body
-    data = adjust_vars(vars, text)
+    # data = adjust_vars(vars, text)
+    vars[:"post.id"] = num
+    vars[:"post.body"] = text
     template = @predef.post_template("standard")
-    data[:pubdate] = Time.now.strftime("%Y-%m-%D")   # write to meta.txt (lt3?)
-    final = template % data
-tree("/tmp/tree.txt")
-    write_generated_post(data, view, final)
+    vars[:"post.pubdate"] = Time.now.strftime("%Y-%m-%d") 
+    final = substitute(vars, template)
+    tree("/tmp/tree.txt")
+    write_generated_post(vars, view, final)
   end
 
+  def generate_index(view)
+    posts = collect_posts(view)  # sort by pubdate
+    str = ""
+    # FIXME - many decisions to make here...
+    posts.each do |post|
+      str << live.xform_file(post)
+    end
+    # FIXME 
+  end
 end

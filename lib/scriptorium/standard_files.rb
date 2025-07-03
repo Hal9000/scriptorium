@@ -43,13 +43,13 @@ class Scriptorium::StandardFiles
     str = <<~EOS
       <!-- theme: #{theme} -->
       <div style="display: flex; justify-content: space-between; align-items: baseline;">
-        <span style="text-align: left; font-size: 1.5em;">%{title}</span>
-        <span style="text-align: right; font-size: 0.9em;">%{pubdate}</span>
+        <span style="text-align: left; font-size: 1.5em;">%{post.title}</span>
+        <span style="text-align: right; font-size: 0.9em;">%{post.pubdate}</span>
       </div>
       <hr>
-      %{body}
+      %{post.body}
       <hr>
-      <div style="text-align: right; font-size: 0.8em;">%{tags}</div>
+      <div style="text-align: right; font-size: 0.8em;">%{post.tags}</div>
     EOS
   end
 
@@ -61,6 +61,16 @@ def layout_text
   right  20%  # Right sidebar, 20% width
   footer      # Footer (copyright? mail? social media? etc.)
 TXT
+end
+
+def index_entry
+  <<~EOS
+    <div class="index-entry">
+      <div style="font-size: 0.8em">$post.pubdate</div>
+      <div class="post-title" style="font-size: 1.2em">$post.title</div>
+      <div class="post-blurb" style="font-size: 0.8em">$post.blurb</div>
+    </div>
+  EOS
 end
 
 def theme_header     # Add theme name to these files??

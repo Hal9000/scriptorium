@@ -107,6 +107,7 @@ module Scriptorium::Helpers
 
   def make_tree(base, text)
     lines = text.split("\n").map(&:chomp)
+    lines.each {|line| line.gsub!(/ *#.*$/, "") }
     entries = []
   
     # Determine the root name
@@ -142,6 +143,10 @@ module Scriptorium::Helpers
       end
     end
   end            
+
+  def substitute(vars, text)
+    text % vars
+  end
 
 end
 
