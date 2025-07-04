@@ -270,7 +270,7 @@ class TestScriptoriumRepo < Minitest::Test
       That's all.
       EOS
     vars = {:"post.title" => title, :"post.pubdate" => pubdate, 
-            :"post.tags" => tags, :"post.body" => body}
+            :"post.tags" => tags,   :"post.body" => body}
     predef = Scriptorium::StandardFiles.new
     template = predef.post_template("standard")
     result = template % vars
@@ -357,11 +357,40 @@ class TestScriptoriumRepo < Minitest::Test
     text.sub!(/BEGIN HERE.../, body)
     write_file(dname, text)
     num = repo.finish_draft(dname)
-    id4 = d4(num)
     repo.generate_post(num)
     repo.tree("/tmp/tree.txt")
-    assert_file_exist?(repo.root/:posts/id4/"body.html")
-    assert_file_exist?(repo.root/:posts/id4/"meta.txt")
-    assert_file_exist?(repo.root/:views/:sample/:output/:posts/"#{id4}-my-first-post.html")
+    assert_file_exist?(repo.root/:posts/d4(num)/"body.html")
+    assert_file_exist?(repo.root/:posts/d4(num)/"meta.txt")
+    assert_file_exist?(repo.root/:views/:sample/:output/:posts/"#{d4(num)}-my-first-post.html")
   end
+
+  def test_023_advanced_posts_with_views
+    puts __method__
+    repo = create_test_repo
+    repo.create_view("blog1", "Blog 1", "nothing (1)")
+    repo.create_view("blog2", "Blog 2", "nothing (2)")
+    repo.create_view("blog3", "Blog 3", "nothing (3)")
+
+    n0 = repo.all_posts.size
+    try_post_with_views(repo, "blog1")
+    try_post_with_views(repo, "blog2")
+    try_post_with_views(repo, "blog3")
+    try_post_with_views(repo, %w[blog1 blog2])
+    try_post_with_views(repo, %w[blog2 blog3])
+    try_post_with_views(repo, %w[blog1 blog3])
+    try_post_with_views(repo, %w[blog1 blog2 blog3])
+    try_post_with_views(repo, "blog1")
+    try_post_with_views(repo, "blog1")
+    try_post_with_views(repo, "blog1")
+    try_post_with_views(repo, "blog2")
+    try_post_with_views(repo, "blog2")
+    try_post_with_views(repo, "blog3")
+    n1 = repo.all_posts.size
+    assert n1 == n0 + 13, "Expected 13 posts, found #{n1 - n0}"
+
+    num_posts_per_view(repo, "blog1", 7)
+    num_posts_per_view(repo, "blog2", 6)
+    num_posts_per_view(repo, "blog3", 5)
+  end
+
 end

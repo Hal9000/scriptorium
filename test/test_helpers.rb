@@ -32,13 +32,40 @@ module TestHelpers
     puts "-----"
   end
 
-  def random_post(repo, num = 1, views: nil)
+  def assert_wildcard_exist?(pattern)
+    glob = Dir.glob(pattern)
+    assert glob.size == 1, "Wildcard '#{pattern}' - expected 1 entry"
+  end
+
+  def assert_generated_post_found?(repo, num, views)
+    id4 = d4(num)
+    views = [views] if views.is_a?(String)
+    assert_file_exist?(repo.root/:posts/id4/"body.html")
+    assert_file_exist?(repo.root/:posts/id4/"meta.txt")
+    views.each do |view|
+      assert_wildcard_exist?(repo.root/:views/view/:output/:posts/"#{id4}-*.html")
+    end
+  end
+
+  def random_post(repo, views: nil)
     views ||= []
-    name = repo.create_draft(title: "Random Post #{num}", 
+    views = [views] if views.is_a?(String)
+    rnum = rand(10000).to_i
+    name = repo.create_draft(title: "Random Post #{rnum}", 
                              body:  "Just a (#{rand(10000).to_i}) random post",
                              views: views)
     num = repo.finish_draft(name)
-    repo.generate_post(num)
     num
+  end
+
+  def try_post_with_views(repo, views)
+    num = random_post(repo, views: views)
+    repo.generate_post(num)
+    assert_generated_post_found?(repo, num, views)
+  end
+
+  def num_posts_per_view(repo, view, exp)
+    posts = repo.all_posts(view)
+    assert posts.size == exp, "Expected #{exp} #{view} posts, found #{posts.size}"
   end
 end

@@ -24,7 +24,7 @@ module Scriptorium::Helpers
     vhash = Hash.new("")
     lines.each do |line|
       var, val = line.split(" ", 2)
-      vhash[var] = val
+      vhash[var.to_sym] = val
     end
     vhash
   end

@@ -142,7 +142,7 @@ class Scriptorium::Repo
 
   def open_view(name)
     vhash = getvars(view_dir(name)/"config.txt")
-    title, subtitle, theme = vhash.values_at("title", "subtitle", "theme")
+    title, subtitle, theme = vhash.values_at(:title, :subtitle, :theme)
     view = Scriptorium::View.new(name, title, subtitle, theme)
     @views -= [view]
     @views << view
@@ -206,7 +206,7 @@ class Scriptorium::Repo
     num, title = data.values_at(:"post.id", :"post.title")
     data = data.select {|k,v| k.to_s.start_with?("post.") }
     data.delete(:"post.body")
-    data[:"post.slug"] = slugify(d4(num), title) + ".html"
+    data[:"post.slug"] = slugify(num, title) + ".html"
     File.open(@root/:posts/d4(num)/"meta.txt", "w") do |f|
       data.each_pair {|k,v| f.printf "%-12s  %s\n", k, v }
       # FIXME - standardize key names!
@@ -216,7 +216,7 @@ class Scriptorium::Repo
   private def write_generated_post(data, view, final)
     num, title = data.values_at(:"post.id", :"post.title")
     id4 = d4(num)
-    slug  = slugify(id4, title) + ".html"
+    slug  = slugify(num, title) + ".html"
     # Write to:
     #   root/posts/0123/body.html  meta.txt  (assets/  draft.lt3)
     top = @root/:posts/id4/"body.html"
@@ -271,14 +271,14 @@ class Scriptorium::Repo
     end
   end
 
-
-
-  def all_posts
+  def all_posts(view = nil)
     posts = []
-    Dir.entries(@root/:posts).each do |id4|
+    dirs = Dir.children(@root/:posts)
+    dirs.each do |id4|
       posts << getvars(@root/:posts/id4/"meta.txt")
     end
-    posts
+    return posts if view.nil?
+    posts.select {|x| x[:"post.views"].include?(view) }
   end
 
   def generate_index(view)
