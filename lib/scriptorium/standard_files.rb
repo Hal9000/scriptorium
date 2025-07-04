@@ -9,13 +9,17 @@ class Scriptorium::StandardFiles
 
   def initial_post(mode = :filled, 
                     num:   "0", 
-                    title: "ADD TITLE HERE", 
-                    views: %w[BLOG1 BLOG2 BLOG3],
-                    tags:  %w[sample tags])
-    title ||= "standard/post_template.lt3"
-    views ||= %w[BLOG1 BLOG2 BLOG3]
+                    title: nil, 
+                    views: nil,
+                    tags:  nil,
+                    body:  nil)
+
+    # FIXME - screwed up?
+    title ||= "ADD TITLE HERE"
+    views ||= %w[sample]
     tags  ||= %w[sample tags]
-    
+    body  ||= "BEGIN HERE..."
+
     str = 
     <<~EOS
       . Initial file created by StandardFiles#post_template(num)
@@ -29,11 +33,10 @@ class Scriptorium::StandardFiles
       .tags  %{tags}   
       
       . Start of post body:
-      BEGIN HERE...
+      #{body}
     EOS
 
     return str if mode == :raw
-
     str2 = str % {num: d4(num.to_i), created: ymdhms, title: title, 
                   views: views.join(" "), tags: tags.join(", ")}
     return str2

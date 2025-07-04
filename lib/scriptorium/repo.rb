@@ -29,16 +29,14 @@ class Scriptorium::Repo
     raise RepoDirAlreadyExists if Dir.exist?(@root)
     make_tree(parent, <<~EOS)
       #@root
-      ├── assets/
-      ├── config/
-      ├── drafts/
-      ├── posts/
-      ├── themes/
-      └── views/
+      ├── assets/  # Images, etc.
+      ├── config/  # Global config files
+      ├── drafts/  # Draft posts (global)
+      ├── posts/   # Global generated posts (slug.html)
+      ├── themes/  # Themes
+      └── views/   # Views
     EOS
 
-    # r.mkdir(@root)
-    # make_dirs(*%w[config views posts drafts themes assets], top: @root)
     postnum_file = "#@root/config/last_post_num.txt"
     write_file(postnum_file, "0")
     Scriptorium::Theme.create_standard(@root)   # Theme: templates, etc.
@@ -53,7 +51,6 @@ class Scriptorium::Repo
 
   def self.destroy
     raise TestModeOnly unless Scriptorium::Repo.testing
-    # system("mv #@root deleted.scriptorium")
     system("rm -rf #@root")
   end
 
@@ -154,12 +151,12 @@ class Scriptorium::Repo
     view
   end
 
-  def create_draft(title: nil, views: nil, tags: nil)
+  def create_draft(title: nil, views: nil, tags: nil, body: nil)
     ts = Time.now.strftime("%Y%m%d-%H%M%S")
     name = "#@root/drafts/#{ts}-draft.lt3"
     theme = @current_view.theme
     id = incr_post_num
-    initial = @predef.initial_post(num: id, title: title, views: views, tags: tags)
+    initial = @predef.initial_post(num: id, title: title, views: views, tags: tags, body: body)
     write_file(name, initial)
     # FIXME add boilerplate
     name
@@ -175,12 +172,14 @@ class Scriptorium::Repo
     num
   end
 
-  def finish_draft(name, view: nil)
+  def finish_draft(name)
     id = last_post_num
     id4 = d4(id)
     posts = @root/:posts
-    make_dirs(id4, id4/:assets, top: posts)
+    Dir.mkdir(posts/id4)
+    Dir.mkdir(posts/id4/:assets)
     FileUtils.mv(name, posts/id4/"draft.lt3")
+    # FIXME - what about views?
     id
   end
 
@@ -229,7 +228,7 @@ class Scriptorium::Repo
     write_file("/tmp"/slug)  # for debugging
   end
 
-  def generate_post(num, view)
+  def xxxgenerate_post(num, view)
     view = lookup_view(view)
     draft = @root/:posts/d4(num)/"draft.lt3"
     live = Livetext.customize(call: ".nopara") # vars??
@@ -247,6 +246,39 @@ class Scriptorium::Repo
     final = substitute(vars, template)
     tree("/tmp/tree.txt")
     write_generated_post(vars, view, final)
+  end
+
+  def generate_post(num)
+    draft = @root/:posts/d4(num)/"draft.lt3"
+    live = Livetext.customize(call: ".nopara") # vars??
+    input = @predef.scriptor
+    input << File.read(draft)
+    write_file("/tmp/test.lt3", input)
+    text = live.xform_file("/tmp/test.lt3")
+    vars, body = live.vars.vars, live.body
+    views = vars[:"post.views"].strip.split(/\s+/)
+    views.each do |view|  
+      view = lookup_view(view)
+      theme = view.theme 
+      # data = adjust_vars(vars, text)
+      vars[:"post.id"] = num
+      vars[:"post.body"] = text
+      template = @predef.post_template("standard")
+      vars[:"post.pubdate"] = Time.now.strftime("%Y-%m-%d") 
+      final = substitute(vars, template)
+      tree("/tmp/tree.txt")
+      write_generated_post(vars, view, final)
+    end
+  end
+
+
+
+  def all_posts
+    posts = []
+    Dir.entries(@root/:posts).each do |id4|
+      posts << getvars(@root/:posts/id4/"meta.txt")
+    end
+    posts
   end
 
   def generate_index(view)

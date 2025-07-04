@@ -37,21 +37,6 @@ module Scriptorium::Helpers
     @root/:views/name
   end
 
-  def make_dirs(*dirs, top: nil)
-    dir0 = top ? "#{top}/" : ""
-    Dir.mkdir(dir0) unless Dir.exist?(dir0)
-    dir = nil
-    dirs.each do |dir|
-      Dir.mkdir(dir0/dir)
-    end
-  rescue => e
-    puts "-- Problem dir0, dir =  #{dir0.inspect}  #{e.message}"
-  end
-
-  def make_empty_file(file)
-    FileUtils.touch(file)
-  end
-
   def write_file(file, *lines)
     # dir = file.sub(/\/[a-zA-Z_\.]+$/, "") rescue "."
     File.open(file, "w") do |f|

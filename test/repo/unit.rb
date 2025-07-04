@@ -358,7 +358,7 @@ class TestScriptoriumRepo < Minitest::Test
     write_file(dname, text)
     num = repo.finish_draft(dname)
     id4 = d4(num)
-    repo.generate_post(num, "sample")
+    repo.generate_post(num)
     repo.tree("/tmp/tree.txt")
     assert_file_exist?(repo.root/:posts/id4/"body.html")
     assert_file_exist?(repo.root/:posts/id4/"meta.txt")

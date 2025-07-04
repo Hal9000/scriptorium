@@ -32,4 +32,13 @@ module TestHelpers
     puts "-----"
   end
 
+  def random_post(repo, num = 1, views: nil)
+    views ||= []
+    name = repo.create_draft(title: "Random Post #{num}", 
+                             body:  "Just a (#{rand(10000).to_i}) random post",
+                             views: views)
+    num = repo.finish_draft(name)
+    repo.generate_post(num)
+    num
+  end
 end
