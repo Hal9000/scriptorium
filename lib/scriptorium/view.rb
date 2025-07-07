@@ -10,6 +10,7 @@ class Scriptorium::View
   def initialize(name, title, subtitle = "", theme = "standard")
     @name, @title, @subtitle, @theme = name, title, subtitle, theme
     @root = Scriptorium::Repo.root
+    @repo = Scriptorium::Repo.repo
     @dir = "#@root/views/#{name}"
   end
 
@@ -66,4 +67,5 @@ class Scriptorium::View
     end
     generate_empty_containers
   end
+
 end

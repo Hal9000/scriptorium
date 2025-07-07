@@ -18,8 +18,9 @@ Symbol.include(PathSep)
 
 module Scriptorium::Helpers
   def getvars(file)
-    lines = File.readlines(file)
+    lines = File.readlines(file).map(&:chomp)
     lines.map! {|line| line.sub(/ #.*$/, "").strip }
+    lines.reject! {|line| line.empty? }
     # FIXME - what if variable value has a # in it?
     vhash = Hash.new("")
     lines.each do |line|

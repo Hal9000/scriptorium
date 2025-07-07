@@ -5,7 +5,7 @@ class Scriptorium::Repo
 
   class << self
     attr_accessor :testing
-    attr_reader   :root     # class level
+    attr_reader   :root, :repo     # class level
   end
 
   # instance attrs
@@ -61,7 +61,7 @@ class Scriptorium::Repo
   def initialize(root)    # repo
     @root = root
     @predef = Scriptorium::StandardFiles.new
-    Scriptorium::Repo.class_eval { @root = root }
+    Scriptorium::Repo.class_eval { @root, @repo = root, self }
     load_views
   end
 
@@ -79,6 +79,7 @@ class Scriptorium::Repo
   ### View methods...
 
   def lookup_view(target)
+    return target if target.is_a?(Scriptorium::View)
     list = @views.select {|v| v.name == target }
     raise CannotLookupView if list.empty?
     raise MoreThanOneResult if list.size > 1
@@ -278,16 +279,42 @@ class Scriptorium::Repo
       posts << getvars(@root/:posts/id4/"meta.txt")
     end
     return posts if view.nil?
-    posts.select {|x| x[:"post.views"].include?(view) }
+    view = lookup_view(view)
+    posts.select {|x| x[:"post.views"].include?(view.name) }
+  end
+
+  def recent_posts(view)
+    view = lookup_view(view)
+    posts = all_posts(view.name)
+    recent = posts.sort_by {|x| x[:"post.pubdate"] }.reverse
+    recent
   end
 
   def generate_index(view)
-    posts = collect_posts(view)  # sort by pubdate
+    view = lookup_view(view)
+    posts = all_posts(view)  # sort by pubdate
     str = ""
     # FIXME - many decisions to make here...
     posts.each do |post|
-      str << live.xform_file(post)
+      num, title, pubdate, blurb = post.values_at(:"post.id", :"post.title", :"post.pubdate", :"post.blurb")
+      template = @predef.index_entry
+      entry = substitute(post, template)
+      str << entry
+      # grab index-entry template
+      # generate index-entry for each post
+      # append to str
     end
-    # FIXME 
+    # write to view/output/recent.html
+    write_file(view.dir/:output/:recent, str)
+    write_file("/tmp/recent.html", str)
+    
   end
+
+  def alter_pubdate(id, ymd)
+    raise TestModeOnly unless Scriptorium::Repo.testing
+    meta = @root/:posts/d4(id)/"meta.txt"
+    change_config(meta, "post.pubdate", ymd)
+  end
+
+
 end

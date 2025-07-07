@@ -69,9 +69,9 @@ end
 def index_entry
   <<~EOS
     <div class="index-entry">
-      <div style="font-size: 0.8em">$post.pubdate</div>
-      <div class="post-title" style="font-size: 1.2em">$post.title</div>
-      <div class="post-blurb" style="font-size: 0.8em">$post.blurb</div>
+      <div style="font-size: 0.8em">%{post.pubdate}</div>
+      <div class="post-title" style="font-size: 1.2em">%{post.title}</div>
+      <div class="post-blurb" style="font-size: 0.8em">%{post.blurb}</div>
     </div>
   EOS
 end
