@@ -26,6 +26,18 @@ module TestHelpers
     assert lines.size == num, "Expected #{num} lines in #{file}"
   end
 
+  def assert_file_newer?(f1, f2)
+    assert File.mtime(f1) > File.mtime(f2), "File #{f1} is not newer than #{f2}"
+  end
+
+  def assert_file_older?(f1, f2)
+    assert File.mtime(f1) < File.mtime(f2), "File #{f1} is not older than #{f2}"
+  end
+
+  def assert_class(obj, klass)
+    assert obj.is_a?(klass), "Expected a #{klass}, got #{obj.class}"
+  end
+
   def see_file(file)
     puts "----- File: #{file}"
     system("cat #{file}")
@@ -68,4 +80,12 @@ module TestHelpers
     posts = repo.all_posts(view)
     assert posts.size == exp, "Expected #{exp} #{view} posts, found #{posts.size}"
   end
+
+  def create_post(repo, title: "Test Post", views: ["sample"], body: "Hello")
+    draft = repo.create_draft(title: title, views: views, body: body)
+    num = repo.finish_draft(draft)
+    repo.generate_post(num)
+    Scriptorium::Post.new(repo, num)
+  end
+  
 end

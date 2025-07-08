@@ -289,7 +289,7 @@ class Scriptorium::Repo
   end
 
   def post(id)
-    Scriptorium::Post.new(self, num)
+    Scriptorium::Post.new(self, id)
   end
 
 end

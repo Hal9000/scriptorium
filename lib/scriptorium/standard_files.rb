@@ -37,8 +37,10 @@ class Scriptorium::StandardFiles
     EOS
 
     return str if mode == :raw
+    mytags = tags
+    mytags = tags.join(", ") if tags.is_a?(Array)
     str2 = str % {num: d4(num.to_i), created: ymdhms, title: title, 
-                  views: views.join(" "), tags: tags.join(", ")}
+                  views: views.join(" "), tags: mytags}
     return str2
   end
 
