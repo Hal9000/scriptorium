@@ -134,5 +134,13 @@ module Scriptorium::Helpers
     text % vars
   end
 
+  def escape_html(str)
+    str.gsub(/&/, '&amp;')
+       .gsub(/</, '&lt;')
+       .gsub(/>/, '&gt;')
+       .gsub(/"/, '&quot;')
+       .gsub(/'/, '&#39;')
+  end
+  
 end
 

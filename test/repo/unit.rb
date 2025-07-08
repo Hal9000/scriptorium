@@ -18,7 +18,7 @@ class TestScriptoriumRepo < Minitest::Test
     system("rm -rf scriptorium-TEST")
   end
 
-  def xxxtest_001_version
+  def test_001_version
     puts __method__
     ver = Scriptorium::VERSION
     pieces = ver.split(".")
@@ -27,7 +27,7 @@ class TestScriptoriumRepo < Minitest::Test
     end
   end
 
-  def xxxtest_002_repo_create_destroy
+  def test_002_repo_create_destroy
     puts __method__
     t0 = Repo.exist?
     refute t0, "Repo should not exist yet"
@@ -43,13 +43,13 @@ class TestScriptoriumRepo < Minitest::Test
     refute t2, "Repo should have been destroyed"
   end
 
-  def xxxtest_003_illegal_destroy
+  def test_003_illegal_destroy
     puts __method__
     Repo.testing = false
     assert_raises(TestModeOnly) { Repo.destroy }
   end
 
-  def xxxtest_004_repo_structure
+  def test_004_repo_structure
     puts __method__
     create_test_repo
     root = Repo.root
@@ -63,7 +63,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert_dir_exist?(root/"assets")
   end
 
-  def xxxtest_005_check_sample_view
+  def test_005_check_sample_view
     puts __method__
     repo = create_test_repo
     assert repo.views.is_a?(Array), "Expected array of Views"
@@ -72,7 +72,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert repo.current_view.name == "sample", "Expected current view to be 'sample'"
   end
 
-  def xxxtest_006_create_view
+  def test_006_create_view
     puts __method__
     repo = create_test_repo
     vname = "testview"
@@ -89,7 +89,7 @@ class TestScriptoriumRepo < Minitest::Test
     end
   end
 
-  def xxxtest_007_new_view_becomes_current
+  def test_007_new_view_becomes_current
     puts __method__
     repo = create_test_repo
     tv2 = "testview2"
@@ -100,7 +100,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert repo.current_view.name == view.name, "Expected '#{tv2}' as current view"
   end
 
-  def xxxtest_008_open_view
+  def test_008_open_view
     puts __method__
     repo = create_test_repo
     vname = "testview"
@@ -116,7 +116,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert repo.current_view.name == vname, "Expected '#{vname}' in views"
   end
 
-  def xxxtest_009_create_draft
+  def test_009_create_draft
     puts __method__
     repo = create_test_repo("testview")  # View should exist to create draft?
     fname = repo.create_draft
@@ -132,7 +132,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert_file_contains?(f2, ".tags  things, stuff")
   end
 
-  def xxxtest_010_finish_draft
+  def test_010_finish_draft
     puts __method__
     $debug = true
     repo = create_test_repo("testview")  # View should exist to create draft?
@@ -146,7 +146,7 @@ class TestScriptoriumRepo < Minitest::Test
     $debug = false
   end
 
-  def xxxtest_011_check_initial_post
+  def test_011_check_initial_post
     puts __method__
     repo = create_test_repo
     root = repo.root
@@ -155,7 +155,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert_file_lines(file, 12)
   end
 
-  def xxxtest_012_check_interpolated_initial_post
+  def test_012_check_interpolated_initial_post
     puts __method__
     repo = create_test_repo
     predef = repo.instance_eval { @predef }
@@ -167,7 +167,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert lines[2] == ".id 0237", "Expected 'num' to be filled in (found '#{lines[2]}')"
   end
 
-  def xxxtest_013_find_theme_file
+  def test_013_find_theme_file
     puts __method__
     repo = create_test_repo
     t = Scriptorium::Theme.new(repo.root, "standard")
@@ -182,7 +182,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert_raises(MoreThanOneResult) { t.file("post.lt3") }
   end
 
-  def xxxtest_014_check_post_template
+  def test_014_check_post_template
     puts __method__
     repo = create_test_repo
     root = repo.root
@@ -191,7 +191,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert_file_lines(file, 9)
   end
 
-  def xxxtest_015_change_view
+  def test_015_change_view
     puts __method__
     repo = create_test_repo
     root = repo.root
@@ -214,7 +214,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert v4.name == 'testing', "Expected view to be 'sample'"
   end
 
-  def xxxtest_016_lookup_view
+  def test_016_lookup_view
     puts __method__
     repo = create_test_repo
     root = repo.root
@@ -227,7 +227,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert v3.name == v2.name, "Expected new view '#{v2.name}' found as '#{v3.name}"
   end
 
-  def xxxtest_017_tree_method
+  def test_017_tree_method
     puts __method__
     repo = create_test_repo
     repo.tree("/tmp/test-tree.txt")
@@ -236,7 +236,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert num > 0, "Tree file appears too short"  
   end
 
-  def xxxtest_018_change_config
+  def test_018_change_config
     puts __method__
     cfg_file = "/tmp/myconfig.txt"
     File.open(cfg_file, "w") do |f|
@@ -253,7 +253,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert lines[2] == "gamma baz  # whatever",         "Expected gamma text"
   end
 
-  def xxxtest_019_mock_vars_into_template
+  def test_019_mock_vars_into_template
     puts __method__  
     title   = "This is my title"
     pubdate = "August 2, 2024"
@@ -281,7 +281,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert_file_lines("/tmp/mock.html", 17)
   end
 
-  def xxxtest_020_check_html_stubs
+  def test_020_check_html_stubs
     puts __method__
     repo = create_test_repo
     panes = repo.root/:views/:sample/:output/:panes
@@ -298,7 +298,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert_file_contains?(panes/"main.html",   "<!-- MAIN CONTENT -->")
   end
 
-  def xxxtest_021_check_layout_parsing
+  def test_021_check_layout_parsing
     puts __method__
     repo = create_test_repo
     File.open("/tmp/layout.txt", "w") do |f|
@@ -338,7 +338,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert_raises(LayoutHasDuplicateTags) { repo.view.read_layout("/tmp/layout.txt") }
   end
 
-  def xxxtest_022_simple_generate_post
+  def test_022_simple_generate_post
     puts __method__
     repo = create_test_repo
     dname = repo.create_draft(title: "My first post", tags: %w[things stuff])
@@ -364,7 +364,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert_file_exist?(repo.root/:views/:sample/:output/:posts/"#{d4(num)}-my-first-post.html")
   end
 
-  def test_023_advanced_posts_with_views
+  def xxxtest_023_advanced_posts_with_views
     puts __method__
     repo = create_test_repo
     repo.create_view("blog1", "Blog 1", "nothing (1)")

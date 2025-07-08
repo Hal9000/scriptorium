@@ -133,10 +133,11 @@ class Scriptorium::Repo
     @current_view = view
     write_file(@root/:config/"currentview.txt", view.name)
     cfg = dir/:config  # Should these be copied from theme??
-    write_file(cfg/"header.txt", "Specify contents of header")
-    write_file(cfg/"footer.txt", "Specify contents of footer")
-    write_file(cfg/"left.txt",   "Specify contents of left sidebar")
-    write_file(cfg/"right.txt",  "Specify contents of right sidebar")
+    theme_config = @root/:themes/theme/:layout/:config
+    containers = %w[header.txt footer.txt left.txt right.txt main.txt]
+    containers.each do |container|
+      FileUtils.cp(theme_config/container, cfg/container)  # from theme to view
+    end
     view.apply_theme(theme)
     return view
   end
@@ -229,25 +230,6 @@ class Scriptorium::Repo
     write_file("/tmp"/slug)  # for debugging
   end
 
-  def xxxgenerate_post(num, view)
-    view = lookup_view(view)
-    draft = @root/:posts/d4(num)/"draft.lt3"
-    live = Livetext.customize(call: ".nopara") # vars??
-    theme = view.theme 
-    input = @predef.scriptor
-    input << File.read(draft)
-    write_file("/tmp/test.lt3", input)
-    text = live.xform_file("/tmp/test.lt3")
-    vars, body = live.vars.vars, live.body
-    # data = adjust_vars(vars, text)
-    vars[:"post.id"] = num
-    vars[:"post.body"] = text
-    template = @predef.post_template("standard")
-    vars[:"post.pubdate"] = Time.now.strftime("%Y-%m-%d") 
-    final = substitute(vars, template)
-    tree("/tmp/tree.txt")
-    write_generated_post(vars, view, final)
-  end
 
   def generate_post(num)
     draft = @root/:posts/d4(num)/"draft.lt3"
@@ -283,14 +265,7 @@ class Scriptorium::Repo
     posts.select {|x| x[:"post.views"].include?(view.name) }
   end
 
-  def recent_posts(view)
-    view = lookup_view(view)
-    posts = all_posts(view.name)
-    recent = posts.sort_by {|x| x[:"post.pubdate"] }.reverse
-    recent
-  end
-
-  def generate_index(view)
+  def generate_post_index(view)
     view = lookup_view(view)
     posts = all_posts(view)  # sort by pubdate
     str = ""
@@ -304,10 +279,7 @@ class Scriptorium::Repo
       # generate index-entry for each post
       # append to str
     end
-    # write to view/output/recent.html
-    write_file(view.dir/:output/:recent, str)
-    write_file("/tmp/recent.html", str)
-    
+    write_file(view.dir/:output/"post_index.html", str)    
   end
 
   def alter_pubdate(id, ymd)
@@ -316,5 +288,8 @@ class Scriptorium::Repo
     change_config(meta, "post.pubdate", ymd)
   end
 
+  def post(id)
+    Scriptorium::Post.new(self, num)
+  end
 
 end
