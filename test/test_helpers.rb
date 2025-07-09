@@ -87,5 +87,25 @@ module TestHelpers
     repo.generate_post(num)
     Scriptorium::Post.new(repo, num)
   end
+
+  def assert_ordered(str, *targets)
+    located = []
+    targets.each do |t|
+      located << str.index(t)
+    end
+    assert located == located.sort, "Targets out of order (#{located})"
+  end
+
+  def assert_present(str, *targets)
+    result = true
+    missing = []
+    targets.each do |t|
+      if ! str.include?(t)
+        result = false
+        missing << t
+      end
+    end
+    assert result, "Targets missing: #{missing.join(", ").inspect}"
+  end
   
 end

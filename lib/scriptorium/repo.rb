@@ -29,18 +29,18 @@ class Scriptorium::Repo
     raise RepoDirAlreadyExists if Dir.exist?(@root)
     make_tree(parent, <<~EOS)
       #@root
-      ├── assets/  # Images, etc.
       ├── config/  # Global config files
+      ├── views/   # Views
       ├── drafts/  # Draft posts (global)
       ├── posts/   # Global generated posts (slug.html)
-      ├── themes/  # Themes
-      └── views/   # Views
+      ├── assets/  # Images, etc.
+      └── themes/  # Themes
     EOS
 
     postnum_file = "#@root/config/last_post_num.txt"
     write_file(postnum_file, "0")
     Scriptorium::Theme.create_standard(@root)   # Theme: templates, etc.
-    repo = self.open(@root)
+    @repo = self.open(@root)
     Scriptorium::View.create_sample_view(repo)
     return repo
   end
@@ -267,19 +267,7 @@ class Scriptorium::Repo
 
   def generate_post_index(view)
     view = lookup_view(view)
-    posts = all_posts(view)  # sort by pubdate
-    str = ""
-    # FIXME - many decisions to make here...
-    posts.each do |post|
-      num, title, pubdate, blurb = post.values_at(:"post.id", :"post.title", :"post.pubdate", :"post.blurb")
-      template = @predef.index_entry
-      entry = substitute(post, template)
-      str << entry
-      # grab index-entry template
-      # generate index-entry for each post
-      # append to str
-    end
-    write_file(view.dir/:output/"post_index.html", str)    
+    view.generate_post_index
   end
 
   def alter_pubdate(id, ymd)
@@ -296,22 +284,7 @@ class Scriptorium::Repo
   
   def generate_front_page(view)
     view = lookup_view(view)
-    layout = view.read_layout
-    html = +"<html>\n<head>\n  <title>#{view.title}</title>\n</head>\n<body>\n"
-  
-    layout.each do |pane|
-      pane_file = view.dir/:output/:panes/"#{pane}.html"
-      content = if File.exist?(pane_file)
-                  File.read(pane_file)
-                else
-                  "<!-- Missing #{pane}.html -->"  # Handle missing sections
-                end
-      html << "  <div class=\"#{pane}\">\n#{content}\n  </div>\n"
-    end
-  
-    html << "</body>\n</html>\n"
-    output_file = view.dir/:output/"index.html"
-    File.write(output_file, html)
+    view.generate_front_page
   end
     
 end

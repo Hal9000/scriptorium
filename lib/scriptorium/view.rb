@@ -14,6 +14,7 @@ class Scriptorium::View
     @root = Scriptorium::Repo.root
     @repo = Scriptorium::Repo.repo
     @dir = "#@root/views/#{name}"
+    @predef = Scriptorium::StandardFiles.new
   end
 
 =begin
@@ -115,6 +116,7 @@ But overall, the process is robust and well thought-out. No major changes needed
     content = File.read(template)
     content.sub!(target, text)
     write_file(output, content)
+    content
   end
 
   def placeholder_text(str)
@@ -127,6 +129,7 @@ But overall, the process is robust and well thought-out. No major changes needed
   end
 
   def build_header
+    result = ["<!-- Section: header -->\n"]
     build_section("header") do |lines|
       html = lines.map do |line|
         component, arg = line.split(/\s+/, 2)  # FIXME - what if no arg?
@@ -140,11 +143,12 @@ But overall, the process is robust and well thought-out. No major changes needed
           nil
         end
       end
-      html.compact
+      result << html.compact  
     end
   end
   
   def build_footer
+    result = ["<!-- Section: footer -->\n"]
     build_section("footer") do |lines|
       html = lines.map do |line|
         component, arg = line.split(/\s+/, 2)  # FIXME - what if no arg?
@@ -156,11 +160,12 @@ But overall, the process is robust and well thought-out. No major changes needed
           nil
         end
       end
-      html.compact
+      result << html.compact
     end
   end
   
   def build_left
+    result = ["<!-- Section: left -->\n"]
     build_section("left") do |lines|
       html = lines.map do |line|
         component, arg = line.split(/\s+/, 2)  # FIXME - what if no arg?
@@ -172,11 +177,12 @@ But overall, the process is robust and well thought-out. No major changes needed
           nil
         end
       end
-      html.compact
+      result << html.compact
     end
   end
 
   def build_right
+    result = ["<!-- Section: right -->\n"]
     build_section("right") do |lines|
       html = lines.map do |line|
         component, arg = line.split(/\s+/, 2)  # FIXME - what if no arg?
@@ -188,11 +194,17 @@ But overall, the process is robust and well thought-out. No major changes needed
           nil
         end
       end
-      html.compact
+      result << html.compact
     end
   end
 
   def build_main
+    result = ["<!-- Section: main -->\n"]
+    if view_posts.empty?
+      result << "  <h1>No posts yet!</h1>"
+    else
+      result += post_index_array
+    end
     build_section("main") do |lines|
       html = lines.map do |line|
         component, arg = line.split(/\s+/, 2)  # FIXME - what if no arg?
@@ -204,54 +216,51 @@ But overall, the process is robust and well thought-out. No major changes needed
           nil
         end
       end
-      html.compact
+      result << html.compact
     end
   end
 
-def xxxbuild_front_page
-  layout_file = @dir/:config/"layout.txt"
-  index_file = @dir/:output/"index.html"
-  panes = @dir/:output/:panes
-  sections = read_commented_file(@dir/:config/"layout.txt")
-  content = ""
-  if sections.include?("header")
-    build_header
-    content << File.read(panes/"header.html") << "\n\n"
+  def generate_post_index
+    posts = @repo.all_posts(self)  # sort by pubdate  # FIXME - move later
+    str = ""
+    # FIXME - many decisions to make here...
+    posts.each do |post|
+      str << post_index_entry(post)
+    end
+    write_file(@dir/:output/"post_index.html", str)    
   end
-  if sections.include?("left")
-    build_left
-    content << File.read(panes/"left.html")
+
+  def post_index_entry(post)
+      # grab index-entry template
+      # generate index-entry for each post
+      # append to str
+    num, title, pubdate, blurb = post.values_at(:"post.id", :"post.title", :"post.pubdate", :"post.blurb")
+    template = @predef.index_entry
+    entry = substitute(post, template)
+    entry
   end
-  if sections.include?("main")  
-    build_main
-    content << File.read(panes/"main.html") << "\n\n"
-  end
-  if sections.include?("right")
-    build_right
-    content << File.read(panes/"right.html") << "\n\n"
-  end
-  if sections.include?("footer")
-    build_footer
-    content << File.read(panes/"footer.html") << "\n\n"
-  end
-  write_file(index_file, content)
+
+def post_index_array
+  posts = view_posts
+  posts.map {|post| post_index_entry(post)}
 end
 
-def build_front_page
-  layout_file = @dir / :config / "layout.txt"
-  index_file  = @dir / :output / "index.html"
-  panes       = @dir / :output / :panes
+def view_posts
+  posts = []
+  @repo.all_posts(self).sort_by {|post| post[:"post.pubdate"]}
+end
 
-  sections = File.readlines(layout_file, chomp: true)
-                 .map(&:strip)
-                 .reject(&:empty?)
-                 .map(&:downcase)
+def generate_front_page
+  layout_file = @dir/:config/"layout.txt"
+  index_file  = @dir/:output/"index.html"
+  panes       = @dir/:output/:panes
+
+  sections = read_layout
 
   content = ""
 
   %w[header left main right footer].each do |section|
     next unless sections.include?(section)
-
     send("build_#{section}")
     file_path = panes / "#{section}.html"
     content << File.read(file_path) << "\n\n"

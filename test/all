@@ -1,0 +1,21 @@
+echo
+echo '#####'
+echo '#####' repo/unit
+echo '#####'
+echo
+ruby test/repo/unit.rb
+
+echo
+echo '#####'
+echo '#####' repo/unit
+echo '#####'
+echo
+ruby test/post/unit.rb
+
+echo
+echo '#####'
+echo '#####' integration
+echo '#####'
+echo
+ruby test/integration/integration_test.rb
+echo

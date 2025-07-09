@@ -83,7 +83,8 @@ class PostTest < Minitest::Test
   def test_repo_post_reads_metadata
     post = @repo.post(1)
     assert_equal "Test Post", post.title
-    assert_equal "2025-07-08", post.pubdate
+    today = Time.now.strftime("%Y-%m-%d")
+    assert_equal today, post.pubdate
   end
   
   def test_repo_post_invalid_id_returns_nil

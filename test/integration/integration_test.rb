@@ -205,18 +205,13 @@ class IntegrationTest < Minitest::Test
   
     layout_txt = <<~LAYOUT
       header
-      main
       footer
+      main
     LAYOUT
   
     layout_path = view.dir/:config/"layout.txt"
     File.write(layout_path, layout_txt)
-  
-    # Generate dummy pane content
-    %w[header main footer].each do |pane|
-      File.write(view.dir/:output/:panes/"#{pane}.html", "<div>#{pane} content</div>")
-    end
-  
+    
     # Call the method under test
     @repo.generate_front_page("landing")
   
@@ -225,9 +220,11 @@ class IntegrationTest < Minitest::Test
     assert File.exist?(index_file), "Expected index.html to be generated"
   
     content = File.read(index_file)
-    assert_includes content, "header content"
-    assert_includes content, "main content"
-    assert_includes content, "footer content"
+    targets = ["<!-- Section: header -->", 
+               "<!-- Section: main -->", 
+               "<!-- Section: footer -->"]
+    assert_present(content, *targets)
+    assert_ordered(content, *targets)
   end
   
   def test_all_containers_are_present
@@ -248,8 +245,6 @@ class IntegrationTest < Minitest::Test
       if File.exist?(output_file)
         content = File.read(output_file)
         refute content.include?("<!-- Missing #{container}.html -->"), "Missing #{container}.html should not appear"
-      else
-        puts "Warning: Missing #{container}.html"
       end
     end
   end
@@ -269,18 +264,108 @@ class IntegrationTest < Minitest::Test
       end
     end
   end
+    
+  def test_create_view_and_generate_front_page_with_placeholders
+    # Step 1: Create a new view
+    view = @repo.create_view("test_view", "Test View", "A test view")
   
-  def test_index_html_generation_order
-    @repo.generate_front_page("sample")
-    index_file = @repo.root/:views/"sample"/:output/"index.html"
-    content = File.read(index_file)
+    # Step 2: Create the layout file with all sections
+    layout_txt = <<~LAYOUT
+      header
+      main
+      right
+      footer
+    LAYOUT
+    File.write(view.dir/:config/"layout.txt", layout_txt)
   
-    layout = @sample_view.read_layout
+    # Step 3: Create the text placeholders in the corresponding sections
+    header_txt = <<~HEADER
+      text "HEADER CONTENT PLACEHOLDER"
+    HEADER
+    File.write(view.dir/:config/"header.txt", header_txt)
   
-    # Check that content appears in the expected order
-    layout.each do |container|
-      assert_includes content, "<div class=\"#{container}\">", "Expected #{container} in the correct order in index.html"
-    end
+    main_txt = <<~MAIN
+      text "MAIN CONTENT PLACEHOLDER"
+    MAIN
+    File.write(view.dir/:config/"main.txt", main_txt)
+  
+    right_txt = <<~RIGHT
+      text "RIGHT CONTENT PLACEHOLDER"
+    RIGHT
+    File.write(view.dir/:config/"right.txt", right_txt)
+  
+    footer_txt = <<~FOOTER
+      text "FOOTER CONTENT PLACEHOLDER"
+    FOOTER
+    File.write(view.dir/:config/"footer.txt", footer_txt)
+  
+    # Step 4: Generate the front page
+    @repo.generate_front_page("test_view")
+  
+    # Step 5: Now check that each section contains its placeholder replacement
+  
+    # Verify header section
+    header_html = File.read(view.dir/:output/:panes/"header.html")
+    assert_includes header_html, "HEADER CONTENT PLACEHOLDER", "Expected header content to include placeholder replacement"
+  
+    # Verify main section
+    main_html = File.read(view.dir/:output/:panes/"main.html")
+    assert_includes main_html, "MAIN CONTENT PLACEHOLDER", "Expected main content to include placeholder replacement"
+  
+    # Verify right section
+    right_html = File.read(view.dir/:output/:panes/"right.html")
+    assert_includes right_html, "RIGHT CONTENT PLACEHOLDER", "Expected right content to include placeholder replacement"
+  
+    # Verify footer section
+    footer_html = File.read(view.dir/:output/:panes/"footer.html")
+    assert_includes footer_html, "FOOTER CONTENT PLACEHOLDER", "Expected footer content to include placeholder replacement"
+  
+    # Step 6: Verify that the generated front page (index.html) contains all the expected content
+    targets = ["HEADER CONTENT PLACEHOLDER", 
+               "MAIN CONTENT PLACEHOLDER", 
+               "RIGHT CONTENT PLACEHOLDER", 
+               "FOOTER CONTENT PLACEHOLDER"]
+    index_html = File.read(view.dir/:output/"index.html")
+    assert_present(index_html, *targets)
+    assert_ordered(index_html, *targets)
   end
-  
+    
+  def test_content_of_nonempty_main_section
+    create_3_views
+    create_13_posts
+    alter_pubdates
+    @repo.generate_front_page("blog1")
+    index_file = @repo.root/:views/"blog1"/:output/"index.html"
+    index_html = File.read(index_file)
+    targets = ["<!-- Section: header -->",
+               "<!-- Section: left -->",
+               "<!-- Section: main -->",
+               "<!-- Section: right -->",
+               "<!-- Section: footer -->"]
+    assert_present(index_html, *targets)
+    assert_ordered(index_html, *targets)
+    FileUtils.cp(index_file, "/tmp/testcms1.html")
+    post_div = %[<div class="index-entry">]
+    num_posts = index_html.scan(/#{Regexp.escape(post_div)}/).length
+    assert_equal 7, num_posts, "Expected 7 posts, found #{num_posts}"
+  end
+
+  def test_content_of_empty_main_section
+    create_3_views
+    @repo.generate_front_page("blog1")
+    index_file = @repo.root/:views/"blog1"/:output/"index.html"
+    index_html = File.read(index_file)
+    targets = ["<!-- Section: header -->",
+               "<!-- Section: left -->",
+               "<!-- Section: main -->",
+               "<!-- Section: right -->",
+               "<!-- Section: footer -->"]
+    assert_present(index_html, *targets)
+    assert_ordered(index_html, *targets)
+    FileUtils.cp(index_file, "/tmp/testcms2.html")
+    post_div = %[<div class="index-entry">]
+    num_posts = index_html.scan(/#{Regexp.escape(post_div)}/).length
+    assert_equal 0, num_posts, "Expected 0 posts, found #{num_posts}"
+    assert_includes index_html, "No posts yet!", "Expected 'no posts yet' message"
+  end
 end
