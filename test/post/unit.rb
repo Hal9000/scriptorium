@@ -58,5 +58,37 @@ class PostTest < Minitest::Test
     assert_instance_of Scriptorium::Post, post
     assert_equal "0001", post.num
   end
+
+  def test_post_handles_missing_meta_file
+    File.delete(@post.meta_file) if File.exist?(@post.meta_file)
+    assert_nil @post.title
+    assert_nil @post.pubdate
+    assert_nil @post.slug
+  end
+  
+  def test_post_returns_nil_for_missing_fields
+    File.write(@post.meta_file, "post.id 1\n")  # no title, pubdate, slug
+    assert_nil @post.title
+    assert_nil @post.pubdate
+    assert_nil @post.slug
+  end
+  
+  def test_post_handles_extra_fields
+    File.open(@post.meta_file, "a") do |f|
+      f.puts "extra.stuff something"
+    end
+    assert @post.title.is_a?(String)
+  end
+  
+  def test_repo_post_reads_metadata
+    post = @repo.post(1)
+    assert_equal "Test Post", post.title
+    assert_equal "2025-07-08", post.pubdate
+  end
+  
+  def test_repo_post_invalid_id_returns_nil
+    assert_nil @repo.post(9999), "Expected nil for nonexistent post ID"
+  end
+    
   
 end

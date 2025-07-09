@@ -289,7 +289,30 @@ class Scriptorium::Repo
   end
 
   def post(id)
+    meta = @root/:posts/d4(id)/"meta.txt"
+    return nil unless File.exist?(meta)
     Scriptorium::Post.new(self, id)
   end
-
+  
+  def generate_front_page(view)
+    view = lookup_view(view)
+    layout_file = view.dir/:config/"layout.txt"
+    raise "Missing layout.txt for view #{view.name}" unless File.exist?(layout_file)
+  
+    # Read layout.txt to determine order and panes
+    layout = File.readlines(layout_file, chomp: true).map(&:strip).reject(&:empty?)
+    html = +"<html>\n<head>\n  <title>#{view.title}</title>\n</head>\n<body>\n"
+  
+    layout.each do |pane|
+      pane_file = view.dir/:output/:panes/"#{pane}.html"
+      content = File.exist?(pane_file) ? File.read(pane_file) : "<!-- Missing #{pane}.html -->"
+      html << "  <div class=\"#{pane}\">\n#{content}\n  </div>\n"
+    end
+  
+    html << "</body>\n</html>\n"
+  
+    output_file = view.dir/:output/"index.html"
+    File.write(output_file, html)
+  end
+  
 end

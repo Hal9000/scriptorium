@@ -140,4 +140,94 @@ class IntegrationTest < Minitest::Test
 
     try_blog1_index
   end
+
+  def test_integration_index_contains_titles_and_dates
+    create_13_posts
+    alter_pubdates
+    @repo.generate_index("blog1")
+    content = File.read(@repo.root/:views/"blog1"/:output/"post_index.html")
+  
+    posts = @repo.all_posts("blog1")
+    posts.each do |vars|
+      post = @repo.post(vars[:"post.id"])
+      assert_includes content, post.title
+      assert_includes content, post.pubdate
+    end
+  end
+
+  def try_blog1_index_with_post_checks   # Helper
+    @repo.generate_front_page("blog1")
+  
+    # 1. Verify index.html exists and has expected heading
+    index = @repo.root/:views/"blog1"/:output/"index.html"
+    assert File.exist?(index), "Expected index.html to exist"
+    html = File.read(index)
+    assert_includes html, "<h1>Blog 1</h1>", "Expected <h1>Blog 1</h1> in index"
+  
+    # 2. Verify container files exist and are non-empty
+    %w[header main right footer].each do |section|
+      path = @repo.root/:views/"blog1"/:output/:panes/"#{section}.html"
+      assert File.exist?(path), "Expected #{section}.html to exist"
+      refute_empty File.read(path).strip, "Expected #{section}.html not to be blank"
+    end
+  
+    # 3. Check that post_index.html includes correct post metadata
+    @repo.generate_post_index("blog1")
+    post_index = @repo.root/:views/"blog1"/:output/"post_index.html"
+    assert File.exist?(post_index), "Expected post_index.html to be generated"
+    content = File.read(post_index)
+  
+    @repo.all_posts("blog1").each do |vars|
+      post = @repo.post(vars[:"post.id"])
+      next unless post.pubdate && post.title
+      assert_includes content, post.pubdate, "Expected pubdate #{post.pubdate} to appear"
+      assert_includes content, post.title,   "Expected title #{post.title} to appear"
+    end
+  end
+  
+  def test_posts_generated_and_indexed_across_multiple_views
+    srand(42)
+    create_3_views
+    create_13_posts
+    alter_pubdates
+  
+    num_posts_per_view(@repo, "blog1", 7)
+    num_posts_per_view(@repo, "blog2", 6)
+    num_posts_per_view(@repo, "blog3", 5)
+  
+    try_blog1_index_with_post_checks
+  end
+  
+  def test_generate_front_page_outputs_index_html
+    # Setup test view and layout
+    view = @repo.create_view("landing", "Landing Page", "Unit test front page")
+  
+    layout_txt = <<~LAYOUT
+      header
+      main
+      footer
+    LAYOUT
+  
+    layout_path = view.dir/:config/"layout.txt"
+    File.write(layout_path, layout_txt)
+  
+    # Generate dummy pane content
+    %w[header main footer].each do |pane|
+      File.write(view.dir/:output/:panes/"#{pane}.html", "<div>#{pane} content</div>")
+    end
+  
+    # Call the method under test
+    @repo.generate_front_page("landing")
+  
+    # Assertions
+    index_file = view.dir/:output/"index.html"
+    assert File.exist?(index_file), "Expected index.html to be generated"
+  
+    content = File.read(index_file)
+    assert_includes content, "header content"
+    assert_includes content, "main content"
+    assert_includes content, "footer content"
+  end
+  
+  
 end

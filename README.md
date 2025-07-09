@@ -1,1 +1,343 @@
-# Nothing here yet
+ChatGPT checkpoint - July 8, 2025
+
+Scriptorium Project Summary
+
+1. Purpose, Assumptions, and Philosophy
+    - Scriptorium is a minimalist, Ruby-based blogging engine and static site generator,
+      serving as a clean-slate rewrite of the older Runeblog project.
+    - Avoids complexity, external dependencies, and hidden magic.
+    - Designed for users who prefer plain text and transparent, hackable systems.
+    - Useful first for the software author, then hackers who blog, then possibly others
+
+2. Technologies Used (or Avoided)
+    - Ruby is the primary language.
+    - Minitest for testing.
+    - Livetext for content and templating.
+    - Avoids YAML, Liquid, databases, JS frameworks.
+    - Filesystem used in lieu of a database
+
+3. Understanding Livetext
+    - Lightweight markup processor.
+    - Supports variable injection, custom directives, and flexible transformation to HTML.
+    - Also supports: include, raw copy, function definitions
+    - There is a plan for a later rewrite
+
+4. General Terminology
+    - containers   Named layout parts of a view’s front page (e.g., header, main, right, footer), generated from corresponding config text files.
+    - post         A finalized blog entry with metadata, body content, and a unique ID; stored in the posts/ directory.
+    - draft        A Livetext (.lt3) source file in the drafts/ directory, created before a post is finished.
+    - repo         A Scriptorium::Repo instance representing a blog workspace, with standard directory structure, config files, and one or more views.
+    - view         A named subset of the repo that acts as a blog/blog-like publication; includes its own output/, config/, and staging/ directories.
+    - theme        A named collection of templates (HTML and Livetext) that define the look and layout of posts and index pages for a view.
+    - slug         A URL-safe, hyphenated version of a post’s title, prefixed with its 4-digit ID, e.g., 0001-my-title.html.
+    - output       A view-local directory holding generated HTML files, including post HTML and containers like header.html and main.html.
+    - meta.txt     A key-value file under posts/NNNN/ holding post metadata (title, slug, pubdate, views, etc.).
+    - post_index   A generated file in output/ listing recent posts in a view; usually post_index.html, composed of index-entry templates.
+
+5. Git Repository Structure
+
+      .
+      ├── README.md
+      ├── doc
+      ├── lib
+      │   ├── scriptorium
+      │   │   ├── exceptions.rb
+      │   │   ├── helpers.rb
+      │   │   ├── layout.rb
+      │   │   ├── post.rb
+      │   │   ├── repo.rb
+      │   │   ├── standard_files.rb
+      │   │   ├── theme.rb
+      │   │   ├── version.rb
+      │   │   └── view.rb
+      │   ├── scriptorium.rb
+      │   └── skeleton.rb
+      ├── scriptorium.gemspec
+      ├── test
+      │   ├── integration
+      │   │   └── integration_test.rb
+      │   ├── post
+      │   │   └── unit.rb
+      │   ├── repo
+      │   │   └── unit.rb
+      │   └── test_helpers.rb
+      └── themes
+          └── standard
+              ├── README.txt
+              ├── assets
+              ├── config.txt
+              ├── header
+              ├── initial
+              │   └── post.lt3
+              ├── layout
+              │   ├── config
+              │   │   ├── footer.txt
+              │   │   ├── header.txt
+              │   │   ├── left.txt
+              │   │   ├── main.txt
+              │   │   └── right.txt
+              │   ├── gen
+              │   │   ├── layout.css
+              │   │   ├── layout.html
+              │   │   └── text.css
+              │   └── layout.txt
+              └── templates
+                  ├── index.lt3
+                  ├── post.lt3
+                  └── widget.lt3
+
+
+6. Blog Repository Structure
+
+      ./scriptorium-TEST
+      ├── assets
+      ├── config
+      │   ├── currentview.txt
+      │   └── last_post_num.txt
+      ├── drafts
+      ├── posts
+      │   ├── 0001
+      │   │   ├── assets
+      │   │   ├── body.html
+      │   │   ├── draft.lt3
+      │   │   └── meta.txt
+      │   ├── 0002
+      │   │   ├── assets
+      │   │   ├── body.html
+      │   │   ├── draft.lt3
+      │   │   └── meta.txt
+      │   ├── 0003
+      │   │   ├── assets
+      │   │   ├── body.html
+      │   │   ├── draft.lt3
+      │   │   └── meta.txt
+      │   ├── 0004
+      │   │   ├── assets
+      │   │   ├── body.html
+      │   │   ├── draft.lt3
+      │   │   └── meta.txt
+      │   ├── 0005
+      │   │   ├── assets
+      │   │   ├── body.html
+      │   │   ├── draft.lt3
+      │   │   └── meta.txt
+      │   ├── 0006
+      │   │   ├── assets
+      │   │   ├── body.html
+      │   │   ├── draft.lt3
+      │   │   └── meta.txt
+      │   ├── 0007
+      │   │   ├── assets
+      │   │   ├── body.html
+      │   │   ├── draft.lt3
+      │   │   └── meta.txt
+      │   ├── 0008
+      │   │   ├── assets
+      │   │   ├── body.html
+      │   │   ├── draft.lt3
+      │   │   └── meta.txt
+      │   ├── 0009
+      │   │   ├── assets
+      │   │   ├── body.html
+      │   │   ├── draft.lt3
+      │   │   └── meta.txt
+      │   ├── 0010
+      │   │   ├── assets
+      │   │   ├── body.html
+      │   │   ├── draft.lt3
+      │   │   └── meta.txt
+      │   ├── 0011
+      │   │   ├── assets
+      │   │   ├── body.html
+      │   │   ├── draft.lt3
+      │   │   └── meta.txt
+      │   ├── 0012
+      │   │   ├── assets
+      │   │   ├── body.html
+      │   │   ├── draft.lt3
+      │   │   └── meta.txt
+      │   └── 0013
+      │       ├── assets
+      │       └── draft.lt3
+      ├── themes
+      │   └── standard
+      │       ├── README.txt
+      │       ├── assets
+      │       ├── config.txt
+      │       ├── header
+      │       ├── initial
+      │       │   └── post.lt3
+      │       ├── layout
+      │       │   ├── config
+      │       │   │   ├── footer.txt
+      │       │   │   ├── header.txt
+      │       │   │   ├── left.txt
+      │       │   │   ├── main.txt
+      │       │   │   └── right.txt
+      │       │   ├── gen
+      │       │   │   ├── layout.css
+      │       │   │   ├── layout.html
+      │       │   │   └── text.css
+      │       │   └── layout.txt
+      │       └── templates
+      │           ├── index.lt3
+      │           ├── index_entry.lt3
+      │           ├── post.lt3
+      │           └── widget.lt3
+      └── views
+          ├── blog1
+          │   ├── config
+          │   │   ├── footer.txt
+          │   │   ├── header.txt
+          │   │   ├── layout.txt
+          │   │   ├── left.txt
+          │   │   ├── main.txt
+          │   │   └── right.txt
+          │   ├── config.txt
+          │   ├── layout
+          │   │   ├── footer.html
+          │   │   ├── header.html
+          │   │   ├── left.html
+          │   │   ├── main.html
+          │   │   └── right.html
+          │   ├── output
+          │   │   ├── panes
+          │   │   │   ├── footer.html
+          │   │   │   ├── header.html
+          │   │   │   ├── left.html
+          │   │   │   ├── main.html
+          │   │   │   └── right.html
+          │   │   └── posts
+          │   │       ├── 0001-random-post-7270.html
+          │   │       ├── 0004-random-post-466.html
+          │   │       ├── 0006-random-post-1685.html
+          │   │       ├── 0007-random-post-6949.html
+          │   │       ├── 0008-random-post-5311.html
+          │   │       ├── 0009-random-post-6420.html
+          │   │       └── 0010-random-post-4555.html
+          │   └── staging
+          ├── blog2
+          │   ├── config
+          │   │   ├── footer.txt
+          │   │   ├── header.txt
+          │   │   ├── layout.txt
+          │   │   ├── left.txt
+          │   │   ├── main.txt
+          │   │   └── right.txt
+          │   ├── config.txt
+          │   ├── layout
+          │   │   ├── footer.html
+          │   │   ├── header.html
+          │   │   ├── left.html
+          │   │   ├── main.html
+          │   │   └── right.html
+          │   ├── output
+          │   │   ├── panes
+          │   │   │   ├── footer.html
+          │   │   │   ├── header.html
+          │   │   │   ├── left.html
+          │   │   │   ├── main.html
+          │   │   │   └── right.html
+          │   │   └── posts
+          │   │       ├── 0002-random-post-5390.html
+          │   │       ├── 0004-random-post-466.html
+          │   │       ├── 0005-random-post-5578.html
+          │   │       ├── 0007-random-post-6949.html
+          │   │       ├── 0011-random-post-6396.html
+          │   │       └── 0012-random-post-9274.html
+          │   └── staging
+          ├── blog3
+          │   ├── config
+          │   │   ├── footer.txt
+          │   │   ├── header.txt
+          │   │   ├── layout.txt
+          │   │   ├── left.txt
+          │   │   ├── main.txt
+          │   │   └── right.txt
+          │   ├── config.txt
+          │   ├── layout
+          │   │   ├── footer.html
+          │   │   ├── header.html
+          │   │   ├── left.html
+          │   │   ├── main.html
+          │   │   └── right.html
+          │   ├── output
+          │   │   ├── panes
+          │   │   │   ├── footer.html
+          │   │   │   ├── header.html
+          │   │   │   ├── left.html
+          │   │   │   ├── main.html
+          │   │   │   └── right.html
+          │   │   └── posts
+          │   │       ├── 0003-random-post-5734.html
+          │   │       ├── 0005-random-post-5578.html
+          │   │       ├── 0006-random-post-1685.html
+          │   │       └── 0007-random-post-6949.html
+          │   └── staging
+          └── sample
+              ├── config
+              │   ├── footer.txt
+              │   ├── header.txt
+              │   ├── layout.txt
+              │   ├── left.txt
+              │   ├── main.txt
+              │   └── right.txt
+              ├── config.txt
+              ├── layout
+              │   ├── footer.html
+              │   ├── header.html
+              │   ├── left.html
+              │   ├── main.html
+              │   └── right.html
+              ├── output
+              │   ├── panes
+              │   │   ├── footer.html
+              │   │   ├── header.html
+              │   │   ├── left.html
+              │   │   ├── main.html
+              │   │   └── right.html
+              │   └── posts
+              └── staging
+
+7. State of Progress
+    - Basic post/view/repo functionality in place.
+    - Tests and helpers defined.
+    - Unit tests for Post and for Repo in general
+    - Some integration tests
+    - Index and container rendering underway
+    - Known issues around field presence resolved.
+
+8. High-level todo list
+    - Improve the customized scriptorium plugin for Livetext
+    - Define header far better (title, banner, navbar...)
+    - Implement deployment, preview, and live view
+    - Add concept of theme components (like mini-themes)
+    - Support theme cloning
+    - Support single-page post for viewing in isolation
+    - Support permalinks
+    - Support redirection (if needed) as posts change
+    - Add user interfaces
+        - simple command line calls
+        - interactive text-oriented (TUI)
+        - curses-like TUI based on RubyText
+        - web-based (on localhost)
+    - Add "wizards" for each UI: startup, add view, theming...
+    - Add actual AI assistant
+    - Codify a widget interface
+    - Code widgets 
+        - Highlights (list featured posts)
+        - Search (search within this blog/view)
+        - Tags (a tag cloud)
+        - Links (external links manager)
+        - Calendar (posts by year/month/day)
+        - Pages (local static pages unrelated to blog posts)
+    - Add some level of support for Markdown (for others, not me)
+    - Possibly add Atom/RSS support
+    - Integrate Bootstrap calls as needed
+    - Add support for reposting to Facebook, X (others?)
+    - Add support for discussion threads on a subreddit
+    - Create documentation:
+        - User level (incl. basic Livetext, usage, theme creation)
+        - Project contributor level
+        - Widget creator level
+
