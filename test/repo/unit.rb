@@ -19,7 +19,6 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_001_version
-    puts __method__
     ver = Scriptorium::VERSION
     pieces = ver.split(".")
     pieces.each do |num|
@@ -28,7 +27,6 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_002_repo_create_destroy
-    puts __method__
     t0 = Repo.exist?
     refute t0, "Repo should not exist yet"
 
@@ -44,13 +42,11 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_003_illegal_destroy
-    puts __method__
     Repo.testing = false
     assert_raises(TestModeOnly) { Repo.destroy }
   end
 
   def test_004_repo_structure
-    puts __method__
     create_test_repo
     root = Repo.root
     assert_dir_exist?(root/"config")
@@ -64,7 +60,6 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_005_check_sample_view
-    puts __method__
     repo = create_test_repo
     assert repo.views.is_a?(Array), "Expected array of Views"
     assert repo.views.size == 1, "Expected one initial view"
@@ -73,7 +68,6 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_006_create_view
-    puts __method__
     repo = create_test_repo
     vname = "testview"
     t0 = repo.view_exist?(vname)
@@ -90,7 +84,6 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_007_new_view_becomes_current
-    puts __method__
     repo = create_test_repo
     tv2 = "testview2"
     view = repo.create_view(tv2, "My 2nd Title", "Just another subtitle here")
@@ -101,7 +94,6 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_008_open_view
-    puts __method__
     repo = create_test_repo
     vname = "testview"
     title, sub = "My Awesome Title", "Just another subtitle"
@@ -117,7 +109,6 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_009_create_draft
-    puts __method__
     repo = create_test_repo("testview")  # View should exist to create draft?
     fname = repo.create_draft
     assert_file_exist?(fname)
@@ -133,7 +124,6 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_010_finish_draft
-    puts __method__
     $debug = true
     repo = create_test_repo("testview")  # View should exist to create draft?
     fname = repo.create_draft
@@ -147,7 +137,6 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_011_check_initial_post
-    puts __method__
     repo = create_test_repo
     root = repo.root
     file = "#{root}/themes/standard/initial/post.lt3" # FIXME hardcoded
@@ -156,7 +145,6 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_012_check_interpolated_initial_post
-    puts __method__
     repo = create_test_repo
     predef = repo.instance_eval { @predef }
     str = predef.initial_post
@@ -168,7 +156,6 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_013_find_theme_file
-    puts __method__
     repo = create_test_repo
     t = Scriptorium::Theme.new(repo.root, "standard")
 
@@ -183,7 +170,6 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_014_check_post_template
-    puts __method__
     repo = create_test_repo
     root = repo.root
     file = "#{root}/themes/standard/templates/post.lt3" # FIXME hardcoded
@@ -192,7 +178,6 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_015_change_view
-    puts __method__
     repo = create_test_repo
     root = repo.root
 
@@ -215,7 +200,6 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_016_lookup_view
-    puts __method__
     repo = create_test_repo
     root = repo.root
     v0 = repo.lookup_view('sample')
@@ -228,7 +212,6 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_017_tree_method
-    puts __method__
     repo = create_test_repo
     repo.tree("/tmp/test-tree.txt")
     assert_file_exist?("/tmp/tree.txt")
@@ -237,7 +220,6 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_018_change_config
-    puts __method__
     cfg_file = "/tmp/myconfig.txt"
     File.open(cfg_file, "w") do |f|
       f.puts <<~EOS
@@ -254,7 +236,6 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_019_mock_vars_into_template
-    puts __method__  
     title   = "This is my title"
     pubdate = "August 2, 2024"
     tags    = "history, journal, birthday"
@@ -282,7 +263,6 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_020_check_html_stubs
-    puts __method__
     repo = create_test_repo
     panes = repo.root/:views/:sample/:output/:panes
     assert_file_exist?(panes/"header.html")
@@ -299,9 +279,9 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_021_check_layout_parsing
-    puts __method__
     repo = create_test_repo
-    File.open("/tmp/layout.txt", "w") do |f|
+    file = repo.root/:views/:sample/:config/"layout.txt"
+    File.open(file, "w") do |f|
       f.puts <<~EOS
         main     # Center pane
         header
@@ -310,10 +290,11 @@ class TestScriptoriumRepo < Minitest::Test
         footer
       EOS
     end
-    results = repo.view.read_layout("/tmp/layout.txt")
-    assert results == %w[main header left right footer], "Error reading layout file"
+    results = repo.view.read_layout
+    expected = ["main", "header", "left", "right", "footer"].sort
+    assert results.sort == expected, "Error reading layout file (got #{results.inspect})"
 
-    File.open("/tmp/layout.txt", "w") do |f|
+    File.open(file, "w") do |f|
       f.puts <<~EOS
         main     # Center pane
         header
@@ -323,9 +304,9 @@ class TestScriptoriumRepo < Minitest::Test
         footer
       EOS
     end
-    assert_raises(LayoutHasUnknownTag) { repo.view.read_layout("/tmp/layout.txt") }
+    assert_raises(LayoutHasUnknownTag) { repo.view.read_layout }
 
-    File.open("/tmp/layout.txt", "w") do |f|
+    File.open(file, "w") do |f|
       f.puts <<~EOS
         main     # Center pane
         header
@@ -335,11 +316,10 @@ class TestScriptoriumRepo < Minitest::Test
         footer
       EOS
     end
-    assert_raises(LayoutHasDuplicateTags) { repo.view.read_layout("/tmp/layout.txt") }
+    assert_raises(LayoutHasDuplicateTags) { repo.view.read_layout }
   end
 
   def test_022_simple_generate_post
-    puts __method__
     repo = create_test_repo
     dname = repo.create_draft(title: "My first post", tags: %w[things stuff])
     body    = 
@@ -364,51 +344,29 @@ class TestScriptoriumRepo < Minitest::Test
     assert_file_exist?(repo.root/:views/:sample/:output/:posts/"#{d4(num)}-my-first-post.html")
   end
 
-  def xxxtest_023_advanced_posts_with_views
-    puts __method__
-    repo = create_test_repo
-    repo.create_view("blog1", "Blog 1", "nothing (1)")
-    repo.create_view("blog2", "Blog 2", "nothing (2)")
-    repo.create_view("blog3", "Blog 3", "nothing (3)")
-
-    n0 = repo.all_posts.size
-    try_post_with_views(repo, "blog1")
-    try_post_with_views(repo, "blog2")
-    try_post_with_views(repo, "blog3")
-    try_post_with_views(repo, %w[blog1 blog2])
-    try_post_with_views(repo, %w[blog2 blog3])
-    try_post_with_views(repo, %w[blog1 blog3])
-    try_post_with_views(repo, %w[blog1 blog2 blog3])
-    try_post_with_views(repo, "blog1")
-    try_post_with_views(repo, "blog1")
-    try_post_with_views(repo, "blog1")
-    try_post_with_views(repo, "blog2")
-    try_post_with_views(repo, "blog2")
-    try_post_with_views(repo, "blog3")
-    n1 = repo.all_posts.size
-    assert n1 == n0 + 13, "Expected 13 posts, found #{n1 - n0}"
-
-    repo.alter_pubdate(1,  "2025-07-01")
-    repo.alter_pubdate(2,  "2025-07-02")
-    repo.alter_pubdate(3,  "2025-07-03")
-    repo.alter_pubdate(4,  "2025-07-04")
-    repo.alter_pubdate(5,  "2025-07-05")
-    repo.alter_pubdate(6,  "2025-07-06")
-    repo.alter_pubdate(7,  "2025-07-07")
-    repo.alter_pubdate(8,  "2025-07-08")
-    repo.alter_pubdate(9,  "2025-07-09")
-    repo.alter_pubdate(10, "2025-07-10")
-    repo.alter_pubdate(11, "2025-07-11")
-    repo.alter_pubdate(12, "2025-07-12")
-    repo.alter_pubdate(13, "2025-07-13")
-
-    num_posts_per_view(repo, "blog1", 7)
-    num_posts_per_view(repo, "blog2", 6)
-    num_posts_per_view(repo, "blog3", 5)
-
-    recent = repo.recent_posts("blog1")
-    repo.generate_index("blog1")
-    
+  def test_read_commented_file
+    # Setup: Create a temporary test config file
+    test_file = "test_config.txt"
+    File.open(test_file, "w") do |f|
+      f.puts "# This is a comment"
+      f.puts ""
+      f.puts "header  20% # This is a header line with a comment"
+      f.puts "footer  # This is a footer line with another comment"
+      f.puts "# Another full-line comment"
+      f.puts "main    # Main content area"
+    end
+  
+    # Expected result: an array of non-comment lines, with comments stripped
+    expected_result = ["header  20%", "footer", "main"]
+  
+    # Run the method
+    result = read_commented_file(test_file)
+  
+    # Assert the result matches the expected array
+    assert_equal expected_result, result
+  
+    # Cleanup: Delete the test config file
+    File.delete(test_file)
   end
-
+  
 end

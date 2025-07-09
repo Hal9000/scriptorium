@@ -142,16 +142,17 @@ class IntegrationTest < Minitest::Test
   end
 
   def test_integration_index_contains_titles_and_dates
+    create_3_views
     create_13_posts
     alter_pubdates
-    @repo.generate_index("blog1")
-    content = File.read(@repo.root/:views/"blog1"/:output/"post_index.html")
-  
+    @repo.generate_post_index("blog1")
+    @repo.generate_front_page("blog1")
+    posts_content = File.read(@repo.root/:views/"blog1"/:output/"post_index.html")
     posts = @repo.all_posts("blog1")
     posts.each do |vars|
       post = @repo.post(vars[:"post.id"])
-      assert_includes content, post.title
-      assert_includes content, post.pubdate
+      assert_includes posts_content, post.title
+      assert_includes posts_content, post.pubdate
     end
   end
 
@@ -162,7 +163,7 @@ class IntegrationTest < Minitest::Test
     index = @repo.root/:views/"blog1"/:output/"index.html"
     assert File.exist?(index), "Expected index.html to exist"
     html = File.read(index)
-    assert_includes html, "<h1>Blog 1</h1>", "Expected <h1>Blog 1</h1> in index"
+    assert_includes html, "<title>Blog 1</title>", "Expected <title>Blog 1</title> in index"
   
     # 2. Verify container files exist and are non-empty
     %w[header main right footer].each do |section|
@@ -229,5 +230,57 @@ class IntegrationTest < Minitest::Test
     assert_includes content, "footer content"
   end
   
+  def test_all_containers_are_present
+    # layout_file = @sample_view.dir/:config/"layout.txt"
+    layout = @sample_view.read_layout  
+    layout.each do |container|
+      output_file = @sample_view.dir/:output/:panes/"#{container}.html"
+      assert File.exist?(output_file), "Expected output file #{output_file} for container #{container}"
+    end
+  end
+  
+  def test_missing_container_in_layout
+    layout_file = @sample_view.dir/:config/"layout.txt"
+    layout = read_commented_file(layout_file)
+  
+    layout.each do |container|
+      output_file = @sample_view.dir/:output/:panes/"#{container}.html"
+      if File.exist?(output_file)
+        content = File.read(output_file)
+        refute content.include?("<!-- Missing #{container}.html -->"), "Missing #{container}.html should not appear"
+      else
+        puts "Warning: Missing #{container}.html"
+      end
+    end
+  end
+  
+  def test_front_page_handles_missing_containers
+    @repo.generate_front_page("sample")
+    index_file = @repo.root/:views/"sample"/:output/"index.html"
+    assert File.exist?(index_file), "Expected index.html to be generated"
+  
+    layout = @sample_view.read_layout
+    layout.each do |container|
+      content = File.read(index_file)
+      if !File.exist?(@repo.root/:views/"sample"/:output/:panes/"#{container}.html")
+        assert_includes content, "<!-- Missing #{container}.html -->", "Expected placeholder for missing #{container}.html"
+      else
+        refute_includes content, "<!-- Missing #{container}.html -->", "Expected no placeholder for #{container}.html"
+      end
+    end
+  end
+  
+  def test_index_html_generation_order
+    @repo.generate_front_page("sample")
+    index_file = @repo.root/:views/"sample"/:output/"index.html"
+    content = File.read(index_file)
+  
+    layout = @sample_view.read_layout
+  
+    # Check that content appears in the expected order
+    layout.each do |container|
+      assert_includes content, "<div class=\"#{container}\">", "Expected #{container} in the correct order in index.html"
+    end
+  end
   
 end

@@ -142,5 +142,23 @@ module Scriptorium::Helpers
        .gsub(/'/, '&#39;')
   end
   
+  def read_commented_file(file_path)
+    return [] unless File.exist?(file_path)
+  
+    lines = File.readlines(file_path).map(&:chomp)  # Read file and remove newline characters
+  
+    # Process the lines to remove empty lines and comments
+    lines.reject! do |line|
+      line.strip.empty? || line.strip.start_with?("#")
+    end
+  
+    # Strip trailing comments and their preceding spaces
+    lines.map! do |line|
+      line.sub(/#.*$/, "").strip  # Remove everything after '#' and strip spaces
+    end
+  
+    lines  # Return the cleaned lines
+  end
+      
 end
 

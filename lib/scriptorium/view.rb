@@ -6,6 +6,7 @@ class Scriptorium::View
 
   def self.create_sample_view(repo)
     repo.create_view("sample", "My first view", "This is just a sample")
+    repo.generate_front_page("sample")
   end
 
   def initialize(name, title, subtitle = "", theme = "standard")
@@ -40,13 +41,13 @@ adding light validation or doc comments to header.txt to aid future users/editor
 But overall, the process is robust and well thought-out. No major changes needed.
 =end
 
-  def read_layout(file)
-    lines = File.readlines(file).map(&:strip)
-    lines.reject! { |line| line.empty? || line.start_with?('#') }
-    lines.map! {|line| line.sub(/ .*$/, "") }
-    diff = lines - %w[header footer left right main]
-    raise LayoutHasUnknownTag unless diff.empty?
-    raise LayoutHasDuplicateTags if lines.uniq != lines
+  def read_layout
+    layout_file = @dir/:config/"layout.txt"
+    lines = read_commented_file(layout_file)
+    lines.map! {|line| line.split(/\s+/, 2).first}
+    directives = %w[header footer left right main]
+    lines.each {|line| raise LayoutHasUnknownTag unless directives.include?(line)}
+    directives.each {|line| raise LayoutHasDuplicateTags if lines.count(line) > 1}
     lines
   end
 
@@ -54,7 +55,7 @@ But overall, the process is robust and well thought-out. No major changes needed
     layout_file = @dir/:config/"layout.txt"
     return unless File.exist?(layout_file)
 
-    lines = read_layout(layout_file)
+    lines = read_layout
     lines.each do |section|
       filename = @dir/:layout/"#{section}.html"
       tag = section   # header, footer, main
@@ -107,7 +108,7 @@ But overall, the process is robust and well thought-out. No major changes needed
       warn "[build_section] Missing file: #{sectxt}"
       return
     end    
-    lines = File.readlines(sectxt, chomp: true).map(&:strip).reject(&:empty?)
+    lines = read_commented_file(sectxt)
     html = yield(lines)
     text = html.join("\n")
     target = content_tag(section)
@@ -211,7 +212,7 @@ def xxxbuild_front_page
   layout_file = @dir/:config/"layout.txt"
   index_file = @dir/:output/"index.html"
   panes = @dir/:output/:panes
-  sections = File.readlines(@dir/:config/"layout.txt", chomp: true).map(&:strip).reject(&:empty?)
+  sections = read_commented_file(@dir/:config/"layout.txt")
   content = ""
   if sections.include?("header")
     build_header
