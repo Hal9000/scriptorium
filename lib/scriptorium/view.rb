@@ -59,8 +59,8 @@ But overall, the process is robust and well thought-out. No major changes needed
     flexing = {
       header: %[class="header" style="background: lightgray; padding: 10px;"],
       footer: %[class="footer" style="background: lightgray; padding: 10px;"],
-      left:   %[class="left" style="width: 20%; background: #f0f0f0; padding: 10px;"],
-      right:  %[class="right" style="width: 20%; background: #f0f0f0; padding: 10px;"],
+      left:   %[class="left" style="width: 15%; background: #f0f0f0; padding: 10px;"],
+      right:  %[class="right" style="width: 15%; background: #f0f0f0; padding: 10px;"],
       main:   %[class="main" style="flex-grow: 1; padding: 10px;"]
     }
     lines = read_layout
@@ -170,10 +170,55 @@ write output:      write the result to output/panes/header.html
   end
 
   def build_header
-    h2 = { "title" => ->(arg = nil) { "  <h1>#{escape_html(@title)}</h1>" } }
+    h2 = { 
+      "title" => ->(arg = nil) { "  <h1>#{escape_html(@title)}</h1>" },
+      "subtitle" => ->(arg = nil) { "  <p>#{escape_html(@subtitle)}</p>" },
+      "nav" => ->(arg = nil) { build_nav(arg) },
+      "banner" => ->(arg = nil) { build_banner(arg) }
+    }
+
     build_section("header", h2)
   end
   
+  ### Helpers for header
+
+  def build_banner(arg)
+    image_path = @dir/:assets/"#{arg}"
+    if File.exist?(image_path)
+      html = %[<img src='#{image_path}' alt='Banner Image' style='width: 100%; height: auto;' />]
+      return html
+    else
+      # warn "[build_banner] Missing banner image: #{arg}"
+      html = %[<p>Banner image missing: #{arg}</p>]
+      return html
+    end
+  end
+
+  def build_nav(arg)
+    nav_file = @dir/:config/"#{arg}"
+    
+    # Check if the topmenu.txt file exists
+    if File.exist?(nav_file)
+      nav_content = File.read(nav_file)
+    else
+      # If the file does not exist, return a default message or placeholder
+      nav_content = "<p>Navigation not available</p>"
+    end
+  
+    # Wrap the nav content in the appropriate container
+    html = <<~HTML
+      <nav class="topmenu">
+        #{nav_content}
+      </nav>
+    HTML
+    
+    # Return the generated HTML for the navigation section
+    html
+  end
+  
+
+  ###
+
   def build_footer
     build_section("footer")
   end
@@ -265,6 +310,7 @@ def generate_front_page
   HTML
 
   write_file(index_file, full_html)
+  write_file("/tmp/full.html", full_html)
 end
 
 

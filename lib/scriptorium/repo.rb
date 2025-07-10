@@ -109,6 +109,7 @@ class Scriptorium::Repo
     │   └── right.txt        # Content for right.html
     ├── config.txt           # View-specific config file
     ├── layout/              # Unused?
+    ├── assets/              # Images, etc. (view-specific)
     ├── output/              # Output files (generated HTML)
     │   ├── panes/           # Containers from layout.txt
     │   │   ├── footer.html  # Generated from footer.txt

@@ -61,9 +61,9 @@ class Scriptorium::StandardFiles
 def layout_text
   layout_text = <<~TXT
   header      # Top (banner? title? navbar? etc.)
-  left   20%  # Left sidebar, 20% width
+  left   15%  # Left sidebar, 15% width
   main        # Main (center) container - posts/etc.
-  right  20%  # Right sidebar, 20% width
+  right  15%  # Right sidebar, 15% width
   footer      # Footer (copyright? mail? social media? etc.)
 TXT
 end

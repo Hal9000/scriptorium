@@ -1,0 +1,204 @@
+What Should Be Global in <head>?
+Global <head> information typically includes things that apply to the entire site, such as:
+
+CSS/JS Includes:
+
+The Bootstrap CDN, for example, would be global since you likely want the same styling for the entire site.
+
+Any other site-wide stylesheets or scripts that should be included on every page (e.g., a site-wide JS library).
+
+Meta Tags:
+
+Viewport meta tags to ensure responsive design. This could be global for consistency.
+
+Any global robots meta tags or analytics tags (like Google Analytics or other site-wide integrations) would go here.
+
+Favicon (optional):
+
+If your site uses a specific favicon, you’d want to specify this globally.
+
+-------------
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="robots" content="index, follow">
+
+Summary of Essential <head> Tags:
+<meta charset="UTF-8">
+
+<title>My Blog Title</title>
+
+<meta name="description" content="...">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+Open Graph Tags (for social media)
+
+Favicon
+
+Apple Touch Icon
+
+Link to stylesheets
+
+JavaScript files (if needed)
+
+Canonical link
+
+Content Security Policy (CSP)
+
+
+==============
+
+Certainly! Here's a "nice default" for the essential <head> elements (1, 2, 3, 4, and 8) that you can use for your project:
+
+html
+Copy
+<head>
+  <!-- Meta charset for character encoding -->
+  <meta charset="UTF-8">
+
+  <!-- Viewport meta tag for responsive design -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Meta description for SEO -->
+  <meta name="description" content="A blog for insightful content on various topics.">
+
+  <!-- Robots meta tag to control search engine indexing -->
+  <meta name="robots" content="index, follow">
+
+  <!-- Link to Bootstrap CDN for styling -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEJ04F5o1v7V5b7ZMjGhGjxA8yQmBfvZwzI1r+0gEv+9KnQIMJxWwzD0u8nZ7" crossorigin="anonymous">
+
+  <!-- Title of the page (can be dynamically generated) -->
+  <title>My Awesome Blog</title>
+</head>
+Explanation:
+<meta charset="UTF-8">: Defines the character encoding for the document as UTF-8, which supports most characters and symbols.
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">: Ensures the page is mobile-responsive by setting the viewport to match the device width and an initial zoom level of 1.
+
+<meta name="description" content="...">: Provides a brief description of the page content for search engines and social media. This is often displayed in search results or link previews.
+
+<meta name="robots" content="index, follow">: Tells search engines to index the page and follow links on the page. You can modify this if you want to restrict search engines from indexing or following links.
+
+<link href="...">: Links to the Bootstrap CSS from a CDN. This adds Bootstrap styles to your site. (Later, you can also link to your own CSS or other resources.)
+
+<title>: Specifies the title of the page, which appears in the browser tab or window.
+
+
+----------------------------
+may be overridden by view:
+
+For a given view, the pieces in the <head> section that are most likely to be overridden are those that might vary based on the specific content or focus of the view. These would include:
+
+1. <title>
+Reason: Each view may have a different title depending on the context, such as the name of the blog, the specific view, or the individual post.
+
+Example: A blog view may have the title "My Awesome Blog", whereas a specific post may override it to show the post title, e.g., "My Awesome Blog - The Best Post Ever".
+
+html
+Copy
+<title><%= @title %> - <%= @post_title %></title>
+2. <meta name="description">
+Reason: The description can change depending on the content of the view. A homepage might have a general description, while a specific post may have a description tailored to that post.
+
+Example: The description of the homepage might be a brief tagline for the blog, while the post view would include a summary of the post content.
+
+html
+Copy
+<meta name="description" content="<%= @description %>">
+3. <meta name="robots">
+Reason: You might want different indexing behavior for certain views. For example, you might want to prevent search engines from indexing a draft post or have a special rule for archives or tag pages.
+
+Example: You can allow indexing for main content but no indexing for a draft page or non-public content.
+
+html
+Copy
+<meta name="robots" content="<%= @robots_content %>">
+4. <link href="..."> (CSS/JS CDN or Local Resources)
+Reason: Some views may require a different theme or custom CSS/JS files. You may choose to override the Bootstrap link or add additional resources specific to that view.
+
+Example: A specific view might require additional styles or scripts that are different from the default ones.
+
+html
+Copy
+<link rel="stylesheet" href="<%= @css_link %>">
+5. Custom Meta Tags for Social Media
+Reason: For specific views or posts, social media meta tags (e.g., Open Graph tags for Facebook, Twitter cards) may need to be overridden to provide customized previews on social platforms.
+
+Example: A post may have a different image or description when shared, compared to the default homepage view.
+
+html
+Copy
+<meta property="og:title" content="<%= @og_title %>">
+<meta property="og:description" content="<%= @og_description %>">
+<meta property="og:image" content="<%= @og_image %>">
+6. Favicon or Other Icon Links
+Reason: Some views or posts may have specific icons, while the main site might have a general favicon.
+
+Example: A blog's homepage may have one favicon, while a post could have a unique icon for a specific theme or feature.
+
+html
+Copy
+<link rel="icon" href="<%= @favicon %>" type="image/x-icon">
+To Summarize:
+The most likely candidates for being overridden by the view include:
+
+Title
+
+Description (meta tag)
+
+Robots (meta tag)
+
+CSS/JS Resources
+
+Social Media meta tags (e.g., Open Graph)
+
+Favicon or custom icon links
+
+These are the pieces of the <head> section that can be customized for individual views or specific content.
+
+---------------------
+
+Handling the Merge in Code
+Here’s how you might structure the merge in your code:
+
+Start with the global settings (which could be loaded from a global_head.txt or similar file).
+
+Override with view-specific settings: When generating the <head>, check if there’s a view-specific setting. If it exists, use it to replace the global setting.
+
+For example:
+
+ruby
+Copy
+def generate_head
+  head_content = ""
+
+  # Start with global settings
+  head_content << global_head_content
+
+  # Check for view-specific overrides and replace or append
+  head_content << "<title>#{@view_title || 'Default Title'}</title>"
+  head_content << "<meta name='description' content='#{@view_description || 'Default description'}'>"
+  head_content << "<meta name='robots' content='#{@view_robots || 'index, follow'}'>"
+
+  # Append CSS/JS links, either replace or add more
+  head_content << "<link rel='stylesheet' href='#{@view_css || 'default.css'}'>"
+
+  # Handle Open Graph and Twitter meta tags
+  head_content << "<meta property='og:title' content='#{@view_og_title || 'My Blog'}'>"
+
+  # Append favicon if available
+  head_content << "<link rel='icon' href='#{@view_favicon || 'default_favicon.ico'}'>"
+
+  head_content
+end
+Summary
+For titles, meta tags, and favicons, you can replace the global content with view-specific settings.
+
+For CSS/JS files and social media tags, you can either replace the global ones or append additional ones.
+
+Fallbacks should be used for missing view-specific settings, with defaults coming from the global setup.
+
+The important thing here is that the view-specific settings should replace global defaults, but in some cases (like CSS/JS or social media tags), you may choose to append rather than fully replace.
+

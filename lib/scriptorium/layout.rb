@@ -24,9 +24,9 @@ class Scriptorium::Layout
 
     if @containers.any? {|r| %w[left main right].include?(r) }
       out << "  <div class='main-row'>"
-      out << "    <div class='left' style='width:#{@params['left_width'] || '20%'}'><!-- left --></div>" if @containers.include?("left")
+      out << "    <div class='left' style='width:#{@params['left_width'] || '15%'}'><!-- left --></div>" if @containers.include?("left")
       out << "    <div class='main'><!-- main --></div>" if @containers.include?("main")
-      out << "    <div class='right' style='width:#{@params['right_width'] || '20%'}'><!-- right --></div>" if @containers.include?("right")
+      out << "    <div class='right' style='width:#{@params['right_width'] || '15%'}'><!-- right --></div>" if @containers.include?("right")
       out << "  </div>"
     end
 

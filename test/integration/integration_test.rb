@@ -357,4 +357,56 @@ class IntegrationTest < Minitest::Test
     assert_equal 0, num_posts, "Expected 0 posts, found #{num_posts}"
     assert_includes index_html, "No posts yet!", "Expected 'no posts yet' message"
   end
+
+  def test_build_banner_with_image_found
+    testdir = File.expand_path("../../test", __dir__)
+    FileUtils.cp("#{testdir}/assets/testbanner.jpg", @sample_view.dir/:assets/"testbanner.jpg")
+    str = @sample_view.build_banner("testbanner.jpg")
+    expected = %[<img src='#{@sample_view.dir}/assets/testbanner.jpg' alt='Banner Image' style='width: 100%; height: auto;']
+    assert_includes str, expected
+  end
+  
+  def test_build_banner_with_image_missing
+    str = @sample_view.build_banner("nosuchbanner.jpg")
+    expected = %[<p>Banner image missing: nosuchbanner.jpg</p>]
+    assert_includes str, expected
+  end
+  
+  def test_generate_full_front_page
+    # Create a sample repo and view
+    view = @repo.lookup_view("sample")
+    testdir = File.expand_path("../../test", __dir__)
+    FileUtils.cp("#{testdir}/assets/testbanner.jpg", @sample_view.dir/:assets/"testbanner.jpg")
+
+    # Set up the view with basic elements in config/header.txt and layout.txt
+    File.write(view.dir/:config/"header.txt", <<~EOS)
+      title
+      subtitle
+      nav         topmenu.txt
+      banner      testbanner.jpg
+    EOS
+  
+    File.write(view.dir/:config/"layout.txt", <<~EOS)
+      header
+      left
+      main
+      right
+      footer
+    EOS
+  
+    # Ensure the front page is generated
+    view.generate_front_page
+  
+    # Path to the generated index.html
+    index_file = view.dir/:output/"index.html"
+  
+    # Check that the file was created
+    assert File.exist?(index_file), "Expected index.html to exist"
+  
+    # Optionally, you can check for some expected content
+    content = File.read(index_file)
+    assert_includes content, "<h1>", "Expected <h1> in header"
+    assert_includes content, "No posts yet!", "Expected 'No posts yet!' in main section"
+  end
+  
 end
