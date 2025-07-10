@@ -191,18 +191,6 @@ class Scriptorium::Repo
     system(cmd) 
   end
 
-  private def adjust_vars(v1, text)
-    keys = v1.keys.select {|k| k.to_s.start_with?("post.") }
-    v2 = {}
-    keys.each {|k| v2[k] = v1[k] }
-    v2[:"post.body"] = text
-    data = {}
-    v2.each_pair do |k, v| 
-      short = k.to_s.sub(/^post./, "").to_sym
-      data[short] = v
-    end
-    data
-  end
 
   private def write_post_metadata(data, view)
     num, title = data.values_at(:"post.id", :"post.title")
@@ -243,7 +231,6 @@ class Scriptorium::Repo
     views.each do |view|  
       view = lookup_view(view)
       theme = view.theme 
-      # data = adjust_vars(vars, text)
       vars[:"post.id"] = num
       vars[:"post.body"] = text
       template = @predef.post_template("standard")
@@ -258,11 +245,11 @@ class Scriptorium::Repo
     posts = []
     dirs = Dir.children(@root/:posts)
     dirs.each do |id4|
-      posts << getvars(@root/:posts/id4/"meta.txt")
+      posts << Scriptorium::Post.read(self, id4)
     end
     return posts if view.nil?
     view = lookup_view(view)
-    posts.select {|x| x[:"post.views"].include?(view.name) }
+    posts.select {|x| x.views.include?(view.name) }
   end
 
   def generate_post_index(view)

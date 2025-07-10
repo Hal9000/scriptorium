@@ -134,7 +134,8 @@ module Scriptorium::Helpers
     end
   end            
 
-  def substitute(vars, text)
+  def substitute(obj, text)
+    vars = obj.is_a?(Hash) ? obj : obj.vars
     text % vars
   end
 

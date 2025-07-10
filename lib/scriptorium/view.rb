@@ -211,7 +211,7 @@ write output:      write the result to output/panes/header.html
       # grab index-entry template
       # generate index-entry for each post
       # append to str
-    num, title, pubdate, blurb = post.values_at(:"post.id", :"post.title", :"post.pubdate", :"post.blurb")
+    num, title, pubdate, blurb = post.attrs(:id, :title, :pubdate, :blurb)
     template = @predef.index_entry
     entry = substitute(post, template)
     entry
@@ -224,7 +224,7 @@ end
 
 def view_posts
   posts = []
-  @repo.all_posts(self).sort_by {|post| post[:"post.pubdate"]}
+  @repo.all_posts(self).sort_by {|post| post.pubdate}
 end
 
 def generate_front_page

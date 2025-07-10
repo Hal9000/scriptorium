@@ -149,8 +149,7 @@ class IntegrationTest < Minitest::Test
     @repo.generate_front_page("blog1")
     posts_content = File.read(@repo.root/:views/"blog1"/:output/"post_index.html")
     posts = @repo.all_posts("blog1")
-    posts.each do |vars|
-      post = @repo.post(vars[:"post.id"])
+    posts.each do |post|
       assert_includes posts_content, post.title
       assert_includes posts_content, post.pubdate
     end
@@ -178,8 +177,7 @@ class IntegrationTest < Minitest::Test
     assert File.exist?(post_index), "Expected post_index.html to be generated"
     content = File.read(post_index)
   
-    @repo.all_posts("blog1").each do |vars|
-      post = @repo.post(vars[:"post.id"])
+    @repo.all_posts("blog1").each do |post|
       next unless post.pubdate && post.title
       assert_includes content, post.pubdate, "Expected pubdate #{post.pubdate} to appear"
       assert_includes content, post.title,   "Expected title #{post.title} to appear"
