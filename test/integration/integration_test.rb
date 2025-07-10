@@ -220,9 +220,9 @@ class IntegrationTest < Minitest::Test
     assert File.exist?(index_file), "Expected index.html to be generated"
   
     content = File.read(index_file)
-    targets = ["<!-- Section: header -->", 
-               "<!-- Section: main -->", 
-               "<!-- Section: footer -->"]
+    targets = ["<!-- Section: header (output) -->", 
+               "<!-- Section: main (output) -->", 
+               "<!-- Section: footer (output) -->"]
     assert_present(content, *targets)
     assert_ordered(content, *targets)
   end
@@ -279,15 +279,11 @@ class IntegrationTest < Minitest::Test
     File.write(view.dir/:config/"layout.txt", layout_txt)
   
     # Step 3: Create the text placeholders in the corresponding sections
+    # Skip main as a special case
     header_txt = <<~HEADER
       text "HEADER CONTENT PLACEHOLDER"
     HEADER
     File.write(view.dir/:config/"header.txt", header_txt)
-  
-    main_txt = <<~MAIN
-      text "MAIN CONTENT PLACEHOLDER"
-    MAIN
-    File.write(view.dir/:config/"main.txt", main_txt)
   
     right_txt = <<~RIGHT
       text "RIGHT CONTENT PLACEHOLDER"
@@ -308,10 +304,6 @@ class IntegrationTest < Minitest::Test
     header_html = File.read(view.dir/:output/:panes/"header.html")
     assert_includes header_html, "HEADER CONTENT PLACEHOLDER", "Expected header content to include placeholder replacement"
   
-    # Verify main section
-    main_html = File.read(view.dir/:output/:panes/"main.html")
-    assert_includes main_html, "MAIN CONTENT PLACEHOLDER", "Expected main content to include placeholder replacement"
-  
     # Verify right section
     right_html = File.read(view.dir/:output/:panes/"right.html")
     assert_includes right_html, "RIGHT CONTENT PLACEHOLDER", "Expected right content to include placeholder replacement"
@@ -322,7 +314,6 @@ class IntegrationTest < Minitest::Test
   
     # Step 6: Verify that the generated front page (index.html) contains all the expected content
     targets = ["HEADER CONTENT PLACEHOLDER", 
-               "MAIN CONTENT PLACEHOLDER", 
                "RIGHT CONTENT PLACEHOLDER", 
                "FOOTER CONTENT PLACEHOLDER"]
     index_html = File.read(view.dir/:output/"index.html")
@@ -337,15 +328,15 @@ class IntegrationTest < Minitest::Test
     @repo.generate_front_page("blog1")
     index_file = @repo.root/:views/"blog1"/:output/"index.html"
     index_html = File.read(index_file)
-    targets = ["<!-- Section: header -->",
-               "<!-- Section: left -->",
-               "<!-- Section: main -->",
-               "<!-- Section: right -->",
-               "<!-- Section: footer -->"]
+    targets = ["<!-- Section: header (output) -->",
+               "<!-- Section: left (output) -->",
+               "<!-- Section: main (output) -->",
+               "<!-- Section: right (output) -->",
+               "<!-- Section: footer (output) -->"]
     assert_present(index_html, *targets)
     assert_ordered(index_html, *targets)
     FileUtils.cp(index_file, "/tmp/testcms1.html")
-    post_div = %[<div class="index-entry">]
+    post_div = %[class="index-entry"]
     num_posts = index_html.scan(/#{Regexp.escape(post_div)}/).length
     assert_equal 7, num_posts, "Expected 7 posts, found #{num_posts}"
   end
@@ -355,11 +346,11 @@ class IntegrationTest < Minitest::Test
     @repo.generate_front_page("blog1")
     index_file = @repo.root/:views/"blog1"/:output/"index.html"
     index_html = File.read(index_file)
-    targets = ["<!-- Section: header -->",
-               "<!-- Section: left -->",
-               "<!-- Section: main -->",
-               "<!-- Section: right -->",
-               "<!-- Section: footer -->"]
+    targets = ["<!-- Section: header (output) -->",
+               "<!-- Section: left (output) -->",
+               "<!-- Section: main (output) -->",
+               "<!-- Section: right (output) -->",
+               "<!-- Section: footer (output) -->"]
     assert_present(index_html, *targets)
     assert_ordered(index_html, *targets)
     FileUtils.cp(index_file, "/tmp/testcms2.html")

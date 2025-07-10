@@ -70,7 +70,7 @@ end
 
 def index_entry
   <<~EOS
-    <div class="index-entry">
+    <div class="index-entry" style="margin-bottom: 20px;">
       <div style="font-size: 0.8em">%{post.pubdate}</div>
       <div class="post-title" style="font-size: 1.2em">%{post.title}</div>
       <div class="post-blurb" style="font-size: 0.8em">%{post.blurb}</div>
@@ -80,19 +80,23 @@ end
 
 def theme_header     # Add theme name to these files??
   <<~EOS
+    # <!-- Section: header -->
     # Contents of header
     # (may include banner, title, navbar, ...)
+    title
   EOS
 end
 
 def theme_footer
   <<~EOS
+    # <!-- Section: footer -->
     # Contents of footer
   EOS
 end
 
 def theme_left
   <<~EOS
+    # <!-- Section: left -->
     # Contents of left sidebar
     # (may be widgets or whatever)
   EOS
@@ -100,6 +104,7 @@ end
 
 def theme_right
   <<~EOS
+    # <!-- Section: right -->
     # Contents of right sidebar
     # (may be widgets or whatever)
   EOS
@@ -107,10 +112,11 @@ end
 
 def theme_main
   <<~EOS
-   # Contents of center pane
-   # This may be empty, as it is "usually" populated
-   # by Javascript (list of recent posts, content from
-   # a widget, or whatever)
+    # <!-- Section: main -->
+    # Contents of center pane
+    # This may be empty, as it is "usually" populated
+    # by Javascript (list of recent posts, content from
+    # a widget, or whatever)
   EOS
 end
 

@@ -91,6 +91,10 @@ module Scriptorium::Helpers
     puts "-----"
   end
 
+  def see(label, var)
+    puts "#{label} = \n<<<\n#{var}\n>>>"
+  end
+
   def make_tree(base, text)
     lines = text.split("\n").map(&:chomp)
     lines.each {|line| line.gsub!(/ *#.*$/, "") }

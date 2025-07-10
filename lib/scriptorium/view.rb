@@ -56,6 +56,13 @@ But overall, the process is robust and well thought-out. No major changes needed
     layout_file = @dir/:config/"layout.txt"
     return unless File.exist?(layout_file)
 
+    flexing = {
+      header: %[class="header" style="background: lightgray; padding: 10px;"],
+      footer: %[class="footer" style="background: lightgray; padding: 10px;"],
+      left:   %[class="left" style="width: 20%; background: #f0f0f0; padding: 10px;"],
+      right:  %[class="right" style="width: 20%; background: #f0f0f0; padding: 10px;"],
+      main:   %[class="main" style="flex-grow: 1; padding: 10px;"]
+    }
     lines = read_layout
     lines.each do |section|
       filename = @dir/:layout/"#{section}.html"
@@ -63,8 +70,8 @@ But overall, the process is robust and well thought-out. No major changes needed
       tag = "aside" if section == 'left' || tag == 'right'
     
       content = <<~HTML
-        <#{tag} class="#{section}">
-          <!-- #{section.upcase} CONTENT -->
+        <#{tag} #{flexing[section.to_sym]}>
+          <!-- Section: #{section} -->
         </#{tag}>
       HTML
 
@@ -97,26 +104,7 @@ But overall, the process is robust and well thought-out. No major changes needed
   end
 
   def content_tag(section)
-    "<!-- #{section.upcase} CONTENT -->"
-  end
-
-  def build_section(section)
-    cfg = @dir/:config
-    template = @dir/:layout/"#{section}.html"
-    sectxt = cfg/"#{section}.txt"
-    output = @dir/:output/:panes/"#{section}.html"
-    unless File.exist?(sectxt)
-      warn "[build_section] Missing file: #{sectxt}"
-      return
-    end    
-    lines = read_commented_file(sectxt)
-    html = yield(lines)
-    text = html.join("\n")
-    target = content_tag(section)
-    content = File.read(template)
-    content.sub!(target, text)
-    write_file(output, content)
-    content
+    "<!-- Section: #{section} -->"
   end
 
   def placeholder_text(str)
@@ -128,96 +116,85 @@ But overall, the process is robust and well thought-out. No major changes needed
     end
   end
 
-  def build_header
-    result = ["<!-- Section: header -->\n"]
-    build_section("header") do |lines|
-      html = lines.map do |line|
-        component, arg = line.split(/\s+/, 2)  # FIXME - what if no arg?
-        case component.downcase
-        when "title"
-          "  <h1>#{escape_html(@title)}</h1>"
-        when "text"
-          "  <p>" + placeholder_text(arg) + "</p>"
-        else
-          warn "Unknown header component: #{component.inspect}"
-          nil
-        end
-      end
-      result << html.compact  
+  def section_append(sec, str)
+    file = @dir/:config/"#{sec}.txt"
+    text = File.read(file)
+    text << str
+    write_file(file, text)
+  end
+
+  def section_hash(section)
+    hash = Hash.new { |hash, key| ->(arg = nil) { "<!-- Not defined for key: #{key} -->\n" } }
+    hash["text"] = ->(arg) { "  <p>" + placeholder_text(arg) + "</p>\n" }
+    hash
+  end
+
+  def section_core(section, hash)
+    cfg = @dir/:config
+    template = @dir/:layout/"#{section}.html"  # FIXME - what if no template?
+    sectxt = cfg/"#{section}.txt"
+    section_append(section, "\ntext This is #{section}...") unless section == "main"
+    lines = read_commented_file(sectxt)
+    result = "<!-- Section: #{section} (output) -->\n"
+    lines.each do |line|
+      component, arg = line.split(/\s+/, 2)  # FIXME - what if no arg?
+      result << hash[component.downcase].call(arg)
     end
+    result
+  end
+
+=begin
+To build a header, I start with  two things: 
+   config/header.txt (which is user-supplied and has things such as "title" in it); and 
+   layout/header.html (which is a template with <header> tags enclosing at least a line 
+        like "<!-- Section: header -->"
+
+get core:          I process header.txt line by line, gathering the "core" or "guts" of the header.
+sub into template: I substitute this into the template contents and 
+write output:      write the result to output/panes/header.html
+=end
+
+  def build_section(section, hash2 = {})
+    config = @dir/:config/"#{section}.txt"
+    template = @dir/:layout/"#{section}.html"
+    output = @dir/:output/:panes/"#{section}.html"
+    hash = section_hash(section)
+    hash.merge!(hash2)
+    core = section_core(section, hash)
+    temp_txt = File.read(template)
+    target = content_tag(section)
+    temp_txt.sub!(target, core)
+    write_file(output, temp_txt)
+    html = File.read(output)
+    html
+  end
+
+  def build_header
+    h2 = { "title" => ->(arg = nil) { "  <h1>#{escape_html(@title)}</h1>" } }
+    build_section("header", h2)
   end
   
   def build_footer
-    result = ["<!-- Section: footer -->\n"]
-    build_section("footer") do |lines|
-      html = lines.map do |line|
-        component, arg = line.split(/\s+/, 2)  # FIXME - what if no arg?
-        case component.downcase
-        when "text"
-          "  <p>" + placeholder_text(arg) + "</p>"
-        else
-          warn "Unknown footer component: #{component.inspect}"
-          nil
-        end
-      end
-      result << html.compact
-    end
+    build_section("footer")
   end
   
   def build_left
-    result = ["<!-- Section: left -->\n"]
-    build_section("left") do |lines|
-      html = lines.map do |line|
-        component, arg = line.split(/\s+/, 2)  # FIXME - what if no arg?
-        case component.downcase
-        when "text"
-          "  <p>" + placeholder_text(arg) + "</p>"
-        else
-          warn "Unknown left component: #{component.inspect}"
-          nil
-        end
-      end
-      result << html.compact
-    end
+    build_section("left")
   end
 
   def build_right
-    result = ["<!-- Section: right -->\n"]
-    build_section("right") do |lines|
-      html = lines.map do |line|
-        component, arg = line.split(/\s+/, 2)  # FIXME - what if no arg?
-        case component.downcase
-        when "text"
-          "  <p>" + placeholder_text(arg) + "</p>"
-        else
-          warn "Unknown right component: #{component.inspect}"
-          nil
-        end
-      end
-      result << html.compact
-    end
+    build_section("right")
   end
 
   def build_main
-    result = ["<!-- Section: main -->\n"]
+    html = "  <!-- Section: main (output) -->\n"
+    html << %[<div style="flex-grow: 1; padding: 10px;">\n]
     if view_posts.empty?
-      result << "  <h1>No posts yet!</h1>"
+      html << "  <h1>No posts yet!</h1>"
     else
-      result += post_index_array
+      html << post_index_array.join("\n")
     end
-    build_section("main") do |lines|
-      html = lines.map do |line|
-        component, arg = line.split(/\s+/, 2)  # FIXME - what if no arg?
-        case component.downcase
-        when "text"
-          "  <p>" + placeholder_text(arg) + "</p>"
-        else
-          warn "Unknown main component: #{component.inspect}"
-          nil
-        end
-      end
-      result << html.compact
-    end
+    html << "</div> <!-- end main -->\n"
   end
 
   def generate_post_index
@@ -258,13 +235,20 @@ def generate_front_page
   sections = read_layout
 
   content = ""
+  content << build_header
+  content << "<div style='display: flex; flex-grow: 1;'> <!-- before left/main/right -->\n"
+  content << build_left
+  content << build_main
+  content << build_right
+  content << "</div> <!-- after left/main/right --></div>\n"
+  content << build_footer
 
-  %w[header left main right footer].each do |section|
-    next unless sections.include?(section)
-    send("build_#{section}")
-    file_path = panes / "#{section}.html"
-    content << File.read(file_path) << "\n\n"
-  end
+#  %w[header left main right footer].each do |section|
+#    next unless sections.include?(section)
+#    send("build_#{section}")
+#    file_path = panes/"#{section}.html"
+#    content << File.read(file_path) << "\n\n"
+#  end
 
   full_html = <<~HTML
     <!DOCTYPE html>
@@ -275,7 +259,7 @@ def generate_front_page
       <link rel="stylesheet" href="layout.css">
     </head>
     <body>
-    #{content.strip}
+        #{content.strip}
     </body>
     </html>
   HTML

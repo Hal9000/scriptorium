@@ -44,6 +44,10 @@ module TestHelpers
     puts "-----"
   end
 
+  def see(label, var)
+    puts "#{label} = <<<\n#{var}"
+  end
+  
   def assert_wildcard_exist?(pattern)
     glob = Dir.glob(pattern)
     assert glob.size == 1, "Wildcard '#{pattern}' - expected 1 entry"
