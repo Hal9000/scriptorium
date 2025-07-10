@@ -39,6 +39,8 @@ class Scriptorium::Repo
 
     postnum_file = "#@root/config/last_post_num.txt"
     write_file(postnum_file, "0")
+    write_file(@root/:config/"global-head.txt", @predef.global_head)
+    write_file(@root/:config/"bootstrap.txt",   @predef.bootstrap_txt)
     Scriptorium::Theme.create_standard(@root)   # Theme: templates, etc.
     @repo = self.open(@root)
     Scriptorium::View.create_sample_view(repo)

@@ -7,6 +7,28 @@ class Scriptorium::StandardFiles
   def initialize   # remove?
   end
 
+  def global_head
+    <<~EOS
+      <head>
+        title     My Blog (powered by Scriptorium)
+        charset   UTF-8
+        desc      A blog powered by Scriptorium. This is default text intended to be changed by the user.
+        viewport  width=device-width  initial-scale=1.0
+        robots    index  follow
+        bootstrap 
+      </head>
+    EOS
+  end
+
+  def bootstrap_txt
+    <<~EOS
+    href         https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css
+    rel          stylesheet
+    integrity    sha384-KyZXEJ04F5o1v7V5b7ZMjGhGjxA8yQmBfvZwzI1r+0gEv+9KnQIMJxWwzD0u8nZ7
+    crossorigin  anonymous
+    EOS
+  end
+  
   def initial_post(mode = :filled, 
                     num:   "0", 
                     title: nil, 

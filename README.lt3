@@ -1,54 +1,54 @@
-<b>Scriptorium</b> is a major refactoring (rewrite) of Runeblog, which had an unwieldy and
+*Scriptorium is a major refactoring (rewrite) of Runeblog, which had an unwieldy and
 fragile code base. The plan now is to develop with more of a test-first approach (and
 with AI support from ChatGPT and Gemini).
-<p>
 
 <hr>
-<p>
 
-<p>
 
-<h2>Scriptorium Project Summary</h2>
-<h3>ChatGPT checkpoint - July 8, 2025</h3>
-<i>This file was a ChatGPT summary hand-edited and reuploaded to improve memory/response.</i>
-<p>
+.h2 Scriptorium Project Summary
+.h3 ChatGPT checkpoint - July 8, 2025
+_[This file was a ChatGPT summary hand-edited and reuploaded to improve memory/response.]
 
-<h4>1. Purpose, Assumptions, and Philosophy</h4>
-<ul>
-  <li>  Scriptorium is a minimalist, Ruby-based blogging engine and static site generator, serving as a clean-slate rewrite of the older Runeblog project.</li>
-  <li>  Avoids complexity, external dependencies, and hidden magic.</li>
-  <li>  Designed for users who prefer plain text and transparent, hackable systems.</li>
-  <li>  Useful first for the software author, then hackers who blog, then possibly others</li>
-</ul>
-<h4>2. Technologies Used (or Avoided)</h4>
-<ul>
-  <li>  Ruby is the primary language.</li>
-  <li>  Minitest for testing.</li>
-  <li>  Livetext for content and templating.</li>
-  <li>  Avoids YAML, Liquid, databases, JS frameworks.</li>
-  <li>  Filesystem used in lieu of a database</li>
-</ul>
-<h4>3. Understanding Livetext</h4>
-<ul>
-  <li>  Lightweight markup processor.</li>
-  <li>  Supports variable injection, custom directives, and flexible transformation to HTML.</li>
-  <li>  Also supports: include, raw copy, function definitions</li>
-  <li>  There is a plan for a later rewrite</li>
-</ul>
-<h4>4. General Terminology</h4>
-<ul>
-  <li>  <b>containers</b>   Named layout parts of a view’s front page (e.g., header, main, right, footer), generated from corresponding config text files.</li>
-  <li>  <b>post</b>         A finalized blog entry with metadata, body content, and a unique ID; stored in the posts/ directory.</li>
-  <li>  <b>draft</b>        A Livetext (.lt3) source file in the drafts/ directory, created before a post is finished.</li>
-  <li>  <b>repo</b>         A Scriptorium::Repo instance representing a blog workspace, with standard directory structure, config files, and one or more views.</li>
-  <li>  <b>view</b>         A named subset of the repo that acts as a blog/blog-like publication; includes its own output/, config/, and staging/ directories.</li>
-  <li>  <b>theme</b>        A named collection of templates (HTML and Livetext) that define the look and layout of posts and index pages for a view.</li>
-  <li>  <b>slug</b>         A URL-safe, hyphenated version of a post’s title, prefixed with its 4-digit ID, e.g., 0001-my-title.html.</li>
-  <li>  <b>output</b>       A view-local directory holding generated HTML files, including post HTML and containers like header.html and main.html.</li>
-  <li>  <b>meta.txt</b>     A key-value file under posts/NNNN/ holding post metadata (title, slug, pubdate, views, etc.).</li>
-  <li>  <b>post_index</b>   A generated file in output/ listing recent posts in a view; usually post_index.html, composed of index-entry templates.</li>
-</ul>
-<h4>5. Git Repository Structure</h4>
+.h4 1. Purpose, Assumptions, and Philosophy
+.list
+  Scriptorium is a minimalist, Ruby-based blogging engine and static site generator, serving as a clean-slate rewrite of the older Runeblog project.
+  Avoids complexity, external dependencies, and hidden magic.
+  Designed for users who prefer plain text and transparent, hackable systems.
+  Useful first for the software author, then hackers who blog, then possibly others
+.end
+
+.h4 2. Technologies Used (or Avoided)
+.list
+  Ruby is the primary language.
+  Minitest for testing.
+  Livetext for content and templating.
+  Avoids YAML, Liquid, databases, JS frameworks.
+  Filesystem used in lieu of a database
+.end
+
+.h4 3. Understanding Livetext
+.list
+  Lightweight markup processor.
+  Supports variable injection, custom directives, and flexible transformation to HTML.
+  Also supports: include, raw copy, function definitions
+  There is a plan for a later rewrite
+.end
+
+.h4 4. General Terminology
+.list
+  *containers   Named layout parts of a view’s front page (e.g., header, main, right, footer), generated from corresponding config text files.
+  *post         A finalized blog entry with metadata, body content, and a unique ID; stored in the posts/ directory.
+  *draft        A Livetext (.lt3) source file in the drafts/ directory, created before a post is finished.
+  *repo         A Scriptorium::Repo instance representing a blog workspace, with standard directory structure, config files, and one or more views.
+  *view         A named subset of the repo that acts as a blog/blog-like publication; includes its own output/, config/, and staging/ directories.
+  *theme        A named collection of templates (HTML and Livetext) that define the look and layout of posts and index pages for a view.
+  *slug         A URL-safe, hyphenated version of a post’s title, prefixed with its 4-digit ID, e.g., 0001-my-title.html.
+  *output       A view-local directory holding generated HTML files, including post HTML and containers like header.html and main.html.
+  *meta.txt     A key-value file under posts/NNNN/ holding post metadata (title, slug, pubdate, views, etc.).
+  *post_index   A generated file in output/ listing recent posts in a view; usually post_index.html, composed of index-entry templates.
+.end
+
+.h4 5. Git Repository Structure
 <pre>
       .
       ├── README.md
@@ -100,14 +100,11 @@ with AI support from ChatGPT and Gemini).
                   ├── post.lt3
                   └── widget.lt3
 </pre>
-<p>
 
-<p>
 
-<h4>6. Blog Repository Structure</h4>
-<i>This is a snapshot of a test run.</i>
+.h4 6. Blog Repository Structure
+_[This is a snapshot of a test run.]
 <pre>
-<p>
 
       ./scriptorium-TEST
       ├── assets
@@ -264,63 +261,64 @@ with AI support from ChatGPT and Gemini).
               │   └── posts
               └── staging
 </pre>
-<p>
 
-<h4>7. State of Progress</h4>
-<ul>
-  <li>  Basic classes in place: Repo, View, Post, Theme, etc.</li>
-  <li>  Unit tests for Repo (22 assertions) and Post (70 assertions)</li>
-  <li>  Integration tests (257 assertions)</li>
-  <li>  Can create a blog repo, views, posts</li>
-  <li>  Theme "standard" is honored</li>
-  <li>  Can generate a rudimentary "front page"</li>
-  <li>  Working on: &lt;head&gt; generation, Bootstrap integration, etc.</li>
-</ul>
-<h4>8. Near-term high-level to-do list</h4>
-<i>This is planned by August 31, 2025.</i>
-<ul>
-  <li>  Improved handling of blog header and &lt;head&gt; tag</li>
-  <li>  Support for top-level menu</li>
-  <li>  Improvements in Livetext blog plugin</li>
-  <li>  Widget base class</li>
-  <li>  Widgets: At least Featured, Links, and Pages</li>
-  <li>  Isolate and codify all of API</li>
-  <li>  Interactive (text) UI</li>
-  <li>  Setup/config wizard(s)</li>
-  <li>  Basic user docs</li>
-</ul>
-<h4>9. Notes on future to-do items</h4>
-<ul>
-  <li>  Improve the customized scriptorium plugin for Livetext</li>
-  <li>  Define header far better (title, banner, navbar...)</li>
-  <li>  Implement deployment, preview, and live view</li>
-  <li>  Add concept of theme components (like mini-themes)</li>
-  <li>  Support theme cloning</li>
-  <li>  Support single-page post for viewing in isolation</li>
-  <li>  Support permalinks</li>
-  <li>  Support redirection (if needed) as posts change</li>
-  <li>  Add user interfaces</li>
-  <li>    -  simple command line calls</li>
-  <li>    -  interactive text-oriented (TUI)</li>
-  <li>    -  curses-like TUI based on RubyText</li>
-  <li>    -  web-based (on localhost)</li>
-  <li>  Add "wizards" for each UI: startup, add view, theming...</li>
-  <li>  Add actual AI assistant</li>
-  <li>  Codify a widget interface</li>
-  <li>  Code widgets </li>
-  <li>    -  Highlights (list featured posts)</li>
-  <li>    -  Search (search within this blog/view)</li>
-  <li>    -  Tags (a tag cloud)</li>
-  <li>    -  Links (external links manager)</li>
-  <li>    -  Calendar (posts by year/month/day)</li>
-  <li>    -  Pages (local static pages unrelated to blog posts)</li>
-  <li>  Add some level of support for Markdown (for others, not me)</li>
-  <li>  Possibly add Atom/RSS support</li>
-  <li>  Integrate Bootstrap calls as needed</li>
-  <li>  Add support for reposting to Facebook, X (others?)</li>
-  <li>  Add support for discussion threads on a subreddit</li>
-  <li>  Create documentation:</li>
-  <li>    -  User level (incl. basic Livetext, usage, theme creation)</li>
-  <li>    -  Project contributor level</li>
-  <li>    -  Widget creator level</li>
-</ul>
+.h4 7. State of Progress
+.list
+  Basic classes in place: Repo, View, Post, Theme, etc.
+  Unit tests for Repo (22 assertions) and Post (70 assertions)
+  Integration tests (257 assertions)
+  Can create a blog repo, views, posts
+  Theme "standard" is honored
+  Can generate a rudimentary "front page"
+  Working on: &lt;head&gt; generation, Bootstrap integration, etc.
+.end
+
+.h4 8. Near-term high-level to-do list
+_[This is planned by August 31, 2025.]
+.list
+  Improved handling of blog header and &lt;head&gt; tag
+  Support for top-level menu
+  Improvements in Livetext blog plugin
+  Widget base class
+  Widgets: At least Featured, Links, and Pages
+  Isolate and codify all of API
+  Interactive (text) UI
+  Setup/config wizard(s)
+  Basic user docs
+.end
+
+.h4 9. Notes on future to-do items
+.list
+  Improve the customized scriptorium plugin for Livetext
+  Define header far better (title, banner, navbar...)
+  Implement deployment, preview, and live view
+  Add concept of theme components (like mini-themes)
+  Support theme cloning
+  Support single-page post for viewing in isolation
+  Support permalinks
+  Support redirection (if needed) as posts change
+  Add user interfaces
+    -  simple command line calls
+    -  interactive text-oriented (TUI)
+    -  curses-like TUI based on RubyText
+    -  web-based (on localhost)
+  Add "wizards" for each UI: startup, add view, theming...
+  Add actual AI assistant
+  Codify a widget interface
+  Code widgets 
+    -  Highlights (list featured posts)
+    -  Search (search within this blog/view)
+    -  Tags (a tag cloud)
+    -  Links (external links manager)
+    -  Calendar (posts by year/month/day)
+    -  Pages (local static pages unrelated to blog posts)
+  Add some level of support for Markdown (for others, not me)
+  Possibly add Atom/RSS support
+  Integrate Bootstrap calls as needed
+  Add support for reposting to Facebook, X (others?)
+  Add support for discussion threads on a subreddit
+  Create documentation:
+    -  User level (incl. basic Livetext, usage, theme creation)
+    -  Project contributor level
+    -  Widget creator level
+.end
