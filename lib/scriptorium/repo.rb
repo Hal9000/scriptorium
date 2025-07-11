@@ -39,8 +39,9 @@ class Scriptorium::Repo
 
     postnum_file = "#@root/config/last_post_num.txt"
     write_file(postnum_file, "0")
-    write_file(@root/:config/"global-head.txt", @predef.global_head)
+    write_file(@root/:config/"global-head.txt", @predef.html_head_content)
     write_file(@root/:config/"bootstrap.txt",   @predef.bootstrap_txt)
+    write_file(@root/:config/"common.js",       @predef.common_js)
     Scriptorium::Theme.create_standard(@root)   # Theme: templates, etc.
     @repo = self.open(@root)
     Scriptorium::View.create_sample_view(repo)
@@ -130,8 +131,9 @@ class Scriptorium::Repo
                "title    #{title}", 
                "subtitle #{subtitle}",
                "theme    #{theme}")
-    write_file(dir/:config/"global-head.txt", @predef.global_head(true))  # true = view-specific
+    write_file(dir/:config/"global-head.txt", @predef.html_head_content(true))  # true = view-specific
     write_file(dir/:config/"bootstrap.txt",   @predef.bootstrap_txt)
+    write_file(dir/:config/"common.js",       @predef.common_js)
     view = open_view(name)
     @views -= [view]
     @views << view
@@ -239,11 +241,19 @@ class Scriptorium::Repo
       vars[:"post.id"] = num
       vars[:"post.body"] = text
       template = @predef.post_template("standard")
-      vars[:"post.pubdate"] = Time.now.strftime("%Y-%m-%d") 
-      final = substitute(vars, template)
+      set_pubdate(vars)
+      final = substitute(vars, template) 
       tree("/tmp/tree.txt")
       write_generated_post(vars, view, final)
     end
+  end
+
+  private def set_pubdate(vars)
+    t = Time.now
+    vars[:"post.pubdate"] = t.strftime("%Y-%m-%d") 
+    vars[:"post.pubdate.month"] = t.strftime("%B") 
+    vars[:"post.pubdate.day"] = t.strftime("%d") 
+    vars[:"post.pubdate.year"] = t.strftime("%Y") 
   end
 
   def all_posts(view = nil)

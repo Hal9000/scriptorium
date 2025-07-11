@@ -59,8 +59,8 @@ But overall, the process is robust and well thought-out. No major changes needed
     flexing = {
       header: %[class="header" style="background: lightgray; padding: 10px;"],
       footer: %[class="footer" style="background: lightgray; padding: 10px;"],
-      left:   %[class="left" style="width: 15%; background: #f0f0f0; padding: 10px;"],
-      right:  %[class="right" style="width: 15%; background: #f0f0f0; padding: 10px;"],
+      left:   %[class="left" style="width: 15%; background: #f0f0f0; padding: 10px; flex-grow: 0; flex-shrink: 0;"],
+      right:  %[class="right" style="width: 15%; background: #f0f0f0; padding: 10px; flex-grow: 0; flex-shrink: 0;"],
       main:   %[class="main" style="flex-grow: 1; padding: 10px;"]
     }
     lines = read_layout
@@ -233,7 +233,8 @@ write output:      write the result to output/panes/header.html
 
   def build_main
     html = "  <!-- Section: main (output) -->\n"
-    html << %[<div style="flex-grow: 1; padding: 10px;">\n]
+    html << %[<div id="main" class="main" style="flex-grow: 1; padding: 10px;">\n]
+    html << @predef.post_index_style
     if view_posts.empty?
       html << "  <h1>No posts yet!</h1>"
     else
@@ -298,12 +299,22 @@ def generate_html_head(view = nil)
       @robots = args
       str = args.split.join(", ")  
       content << %[<meta name="robots" content="#{str}">\n]
+    when "javascript"
+      content = get_common_js(view)
     when "bootstrap"
       content << generate_bootstrap_url(view)
     end
   end
   content << "</head>\n"
   content
+end
+
+def get_common_js(view = nil)
+  global_js = @root/:config/"common.js"
+  view_js   = @dir/:config/"common.js"
+  js_file = view ? view_js : global_js
+  File.read(js_file)
+  return %[<script src="#{js_file}"></script>\n]
 end
 
 def generate_bootstrap_url(view = nil)

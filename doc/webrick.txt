@@ -1,0 +1,14 @@
+require 'webrick'
+
+# Set up the server with the current directory as the document root
+server = WEBrick::HTTPServer.new(Port: 8000, DocumentRoot: Dir.pwd)
+
+# Trap termination signal to gracefully shut down the server
+trap 'INT' do 
+  server.shutdown
+end
+
+# Start the server
+puts "Starting WEBrick server on http://localhost:8000"
+server.start
+
