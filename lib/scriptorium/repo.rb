@@ -130,6 +130,8 @@ class Scriptorium::Repo
                "title    #{title}", 
                "subtitle #{subtitle}",
                "theme    #{theme}")
+    write_file(dir/:config/"global-head.txt", @predef.global_head(true))  # true = view-specific
+    write_file(dir/:config/"bootstrap.txt",   @predef.bootstrap_txt)
     view = open_view(name)
     @views -= [view]
     @views << view

@@ -272,12 +272,70 @@ def view_posts
   @repo.all_posts(self).sort_by {|post| post.pubdate}
 end
 
+def generate_html_head(view = nil)
+  # FIXME - view does not yet override global
+  global_head = @root/:config/"global-head.txt"
+  view_head   = @dir/:config/"global-head.txt"
+  head_file = view ? view_head : global_head
+  which = view ? "view" : "global"
+  line1 = "<!-- head info from #{which} -->"
+  lines = read_commented_file(head_file)
+  content = "<head>\n#{line1}\n<title>#{@title}</title>\n"
+  lines.each do |line|
+    component, args = line.split(/\s+/, 2)
+    case component.downcase
+    when "charset"
+      @charset = args
+      content << %[<meta charset="#{args}">\n]
+    when "desc"
+      @desc = args
+      content << %[<meta name="description" content="#{args}">\n]
+    when "viewport"
+      @viewport = args
+      str = args.split.join(" ")
+      content << %[<meta name="viewport" content="#{str}">\n]
+    when "robots"
+      @robots = args
+      str = args.split.join(", ")  
+      content << %[<meta name="robots" content="#{str}">\n]
+    when "bootstrap"
+      content << generate_bootstrap_url(view)
+    end
+  end
+  content << "</head>\n"
+  content
+end
+
+def generate_bootstrap_url(view = nil)
+  global_boot = @root/:config/"bootstrap.txt"
+  view_boot   = @dir/:config/"bootstrap.txt"
+  bs_file = view ? view_boot : global_boot
+  lines = read_commented_file(bs_file)
+  href = rel = integrity = crossorigin = nil
+  lines.each do |line|
+    component, args = line.split(/\s+/, 2)
+    case component.downcase
+    when "href"
+      href = args
+    when "rel"
+      rel = args
+    when "integrity"
+      integrity = args
+    when "crossorigin"
+      crossorigin = args
+    end
+  end
+  content = %[<link rel="#{rel}" href="#{href}" integrity="#{integrity}" crossorigin="#{crossorigin}">\n]
+  content
+end
+
 def generate_front_page
   layout_file = @dir/:config/"layout.txt"
   index_file  = @dir/:output/"index.html"
   panes       = @dir/:output/:panes
 
   sections = read_layout
+  html_head = generate_html_head(true)
 
   content = ""
   content << build_header
@@ -288,21 +346,10 @@ def generate_front_page
   content << "</div> <!-- after left/main/right --></div>\n"
   content << build_footer
 
-#  %w[header left main right footer].each do |section|
-#    next unless sections.include?(section)
-#    send("build_#{section}")
-#    file_path = panes/"#{section}.html"
-#    content << File.read(file_path) << "\n\n"
-#  end
-
   full_html = <<~HTML
     <!DOCTYPE html>
     <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>#{@title}</title>
-      <link rel="stylesheet" href="layout.css">
-    </head>
+    #{html_head}
     <body>
         #{content.strip}
     </body>
@@ -310,7 +357,7 @@ def generate_front_page
   HTML
 
   write_file(index_file, full_html)
-  write_file("/tmp/full.html", full_html)
+  write_file("/tmp/full.html", full_html) # debugging
 end
 
 

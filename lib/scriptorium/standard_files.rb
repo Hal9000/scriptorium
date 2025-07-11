@@ -7,16 +7,18 @@ class Scriptorium::StandardFiles
   def initialize   # remove?
   end
 
-  def global_head
-    <<~EOS
-      <head>
-        title     My Blog (powered by Scriptorium)
-        charset   UTF-8
-        desc      A blog powered by Scriptorium. This is default text intended to be changed by the user.
-        viewport  width=device-width  initial-scale=1.0
-        robots    index  follow
-        bootstrap 
-      </head>
+  def global_head(view = nil)
+    line1global = "# This global file supplies the default values for all views."
+    line2view   = "# This view-specific file supplies the default values for this view."
+    line1 = view ? line2view : line1global
+    str = <<~EOS
+      #{line1}
+      # title is omitted - filled in at generation 
+      charset   UTF-8
+      desc      A blog powered by Scriptorium. This is default text intended to be changed by the user.
+      viewport  width=device-width  initial-scale=1.0
+      robots    index  follow
+      bootstrap 
     EOS
   end
 

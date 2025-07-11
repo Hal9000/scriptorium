@@ -13,7 +13,7 @@ class Scriptorium::Post
     end
   
     def meta_file
-      dir/"meta.txt"
+      @repo.root/:posts/@num/"meta.txt"
     end
   
     def id
@@ -59,15 +59,10 @@ class Scriptorium::Post
     def meta
       return @meta if defined?(@meta)
       return @meta = {} unless File.exist?(meta_file)
-      @meta = {}
-      File.readlines(meta_file, chomp: true).each do |line|
-        key, value = line.strip.split(/\s+/, 2)
-        next if key.nil? || key.empty?
-        @meta[key] = value
-      end
-      @meta
+      @meta = load_metadata
     end
-  
+
+
     def vars
       return @vars if defined?(@vars)
       @vars = Hash.new("")
@@ -77,7 +72,14 @@ class Scriptorium::Post
 
     # Additional method to load metadata explicitly, so it’s only called once
     def load_metadata
-      meta
+      @meta = {}
+      @repo.tree("/tmp/tree.txt")
+      File.readlines(meta_file, chomp: true).each do |line|
+        key, value = line.strip.split(/\s+/, 2)
+        next if key.nil? || key.empty?
+        @meta[key] = value
+      end 
+      @meta
     end
   end
   
