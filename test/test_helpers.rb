@@ -1,3 +1,5 @@
+require 'htmlbeautifier'
+
 module TestHelpers
 
   def assert_dir_exist?(dir)
@@ -23,7 +25,7 @@ module TestHelpers
 
   def assert_file_lines(file, num)
     lines = File.readlines(file)
-    assert lines.size == num, "Expected #{num} lines in #{file}"
+    assert lines.size == num, "Expected #{num} lines in #{file}; found #{lines.size}"
   end
 
   def assert_file_newer?(f1, f2)

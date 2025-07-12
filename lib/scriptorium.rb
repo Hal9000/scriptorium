@@ -1,5 +1,7 @@
 require 'livetext'
 require 'find'
+require 'htmlbeautifier'
+
 
 require_relative "skeleton"
 require_relative "scriptorium/version"

@@ -191,14 +191,14 @@ end
 def index_entry
   # Note the use of %% to escape the % in the flex-basis attribute!
   <<~EOS
-    <div class="index-entry" style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+    <div class="index-entry" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
       <!-- Left Side: Date (right aligned) -->
-      <div style="text-align: right; font-size: 0.7em; flex-basis: 20%%;">
+      <div style="text-align: right; font-size: 0.7em; flex-basis: 20%%; padding-top: 3px;">
         <div>%{post.pubdate.month} %{post.pubdate.day}</div>
         <div>%{post.pubdate.year}</div>
       </div>
       <!-- Right Side: Title and Blurb (left aligned) -->
-      <div style="font-size: 1.2em; margin-left: 10px; flex-grow: 1;">
+      <div style="font-size: 1.2em; margin-left: 10px; flex-grow: 1; padding-top: 0;">
         <div><a href="posts/%{post.slug}" 
                 style="text-decoration: none;"
                 onclick="load_main('%{post.slug}')">%{post.title}</a></div>

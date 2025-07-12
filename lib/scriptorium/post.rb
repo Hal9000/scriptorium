@@ -36,6 +36,21 @@ class Scriptorium::Post
       meta["post.pubdate"]
     end
 
+    def set_pubdate(ymd)
+      raise TestModeOnly unless Scriptorium::Repo.testing
+      yyyy, mm, dd = ymd.split("-")
+      t = Time.new(yyyy.to_i, mm.to_i, dd.to_i)
+      meta["post.pubdate"] = t.strftime("%Y-%m-%d") 
+      meta["post.pubdate.month"] = t.strftime("%B") 
+      meta["post.pubdate.day"] = t.strftime("%e") 
+      meta["post.pubdate.year"] = t.strftime("%Y") 
+      save_metadata   # Because it changed
+    end
+
+    def pubdate_month_day_year
+      [meta["post.pubdate.month"], meta["post.pubdate.day"], meta["post.pubdate.year"]]
+    end
+
     def views
       meta["post.views"]
     end
@@ -80,6 +95,12 @@ class Scriptorium::Post
         @meta[key] = value
       end 
       @meta
+    end
+
+    def save_metadata
+      File.open(meta_file, "w") do |f|
+        @meta.each_pair {|k,v| f.printf "%-18s  %s\n", k, v }
+      end
     end
   end
   

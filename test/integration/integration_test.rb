@@ -61,23 +61,23 @@ class IntegrationTest < Minitest::Test
   end
 
   def alter_pubdates  # For test_posts_generated_and_indexed_across_multiple_views
-    @repo.alter_pubdate(1,  "2025-07-01")
-    @repo.alter_pubdate(2,  "2025-07-02")
-    @repo.alter_pubdate(3,  "2025-07-03")
-    @repo.alter_pubdate(4,  "2025-07-04")
-    @repo.alter_pubdate(5,  "2025-07-05")
-    @repo.alter_pubdate(6,  "2025-07-06")
-    @repo.alter_pubdate(7,  "2025-07-07")
-    @repo.alter_pubdate(8,  "2025-07-08")
-    @repo.alter_pubdate(9,  "2025-07-09")
-    @repo.alter_pubdate(10, "2025-07-10")
-    @repo.alter_pubdate(11, "2025-07-11")
-    @repo.alter_pubdate(12, "2025-07-12")
-    @repo.alter_pubdate(13, "2025-07-13")
+    @repo.post(1).set_pubdate("2025-07-01")
+    @repo.post(2).set_pubdate("2025-07-02")
+    @repo.post(3).set_pubdate("2025-07-03")
+    @repo.post(4).set_pubdate("2025-07-04")
+    @repo.post(5).set_pubdate("2025-07-05")
+    @repo.post(6).set_pubdate("2025-07-06")
+    @repo.post(7).set_pubdate("2025-07-07")
+    @repo.post(8).set_pubdate("2025-07-08")
+    @repo.post(9).set_pubdate("2025-07-09")
+    @repo.post(10).set_pubdate("2025-07-10")
+    @repo.post(11).set_pubdate("2025-07-11")
+    @repo.post(12).set_pubdate("2025-07-12")
+    @repo.post(13).set_pubdate("2025-07-13")
   end
 
   def try_blog1_index  # For test_posts_generated_and_indexed_across_multiple_views
-    @repo.generate_post_index("blog1")
+    @repo.generate_post_index("blog1")  
     %w[header main right footer].each do |section|
       file = @repo.root/:views/"blog1"/:output/:panes/"#{section}.html"
       assert File.exist?(file), "Expected section file #{file} to exist"
@@ -86,19 +86,20 @@ class IntegrationTest < Minitest::Test
     post_index = @repo.root/:views/"blog1"/:output/"post_index.html"
     assert File.exist?(post_index), "Expected blog1 post_index.html to be generated"
     content = File.read(post_index)
-    assert_includes content, "2025-07-01"
-    assert_includes content, "2025-07-04"
-    assert_includes content, "2025-07-06"
-    assert_includes content, "2025-07-07"
-    assert_includes content, "2025-07-08"
-    assert_includes content, "2025-07-09"
-    assert_includes content, "2025-07-10"
-    refute_includes content, "2025-07-02"
-    refute_includes content, "2025-07-03"
-    refute_includes content, "2025-07-05"
-    refute_includes content, "2025-07-11"
-    refute_includes content, "2025-07-12"
-    refute_includes content, "2025-07-13"
+    
+    assert content.include?("July 1</div>"), "Expected July 1 in post_index"
+    assert content.include?("July 4</div>"), "Expected July 4 in post_index"
+    assert content.include?("July 6</div>"), "Expected July 6 in post_index"
+    assert content.include?("July 7</div>"), "Expected July 7 in post_index"
+    assert content.include?("July 8</div>"), "Expected July 8 in post_index"
+    assert content.include?("July 9</div>"), "Expected July 9 in post_index"
+    assert content.include?("July 10</div>"), "Expected July 10 in post_index"
+    refute content.include?("July 2</div>"), "Expected July 2 not in post_index"
+    refute content.include?("July 3</div>"), "Expected July 3 not in post_index"
+    refute content.include?("July 5"), "Expected July 5 not in post_index"
+    refute content.include?("July 11"), "Expected July 11 not in post_index"
+    refute content.include?("July 12"), "Expected July 12 not in post_index"
+    refute content.include?("July 13"), "Expected July 13 not in post_index"
   end
 
 =begin
@@ -151,7 +152,9 @@ class IntegrationTest < Minitest::Test
     posts = @repo.all_posts("blog1")
     posts.each do |post|
       assert_includes posts_content, post.title
-      assert_includes posts_content, post.pubdate
+      month, day, year = post.pubdate_month_day_year
+      assert_includes posts_content, month + " " + day
+      assert_includes posts_content, year
     end
   end
 
@@ -162,7 +165,7 @@ class IntegrationTest < Minitest::Test
     index = @repo.root/:views/"blog1"/:output/"index.html"
     assert File.exist?(index), "Expected index.html to exist"
     html = File.read(index)
-    assert_includes html, "<title>Blog 1</title>", "Expected <title>Blog 1</title> in index"
+    assert html.include?("<title>Blog 1</title>"), "Expected <title>Blog 1</title> in index"
   
     # 2. Verify container files exist and are non-empty
     %w[header main right footer].each do |section|
@@ -179,7 +182,9 @@ class IntegrationTest < Minitest::Test
   
     @repo.all_posts("blog1").each do |post|
       next unless post.pubdate && post.title
-      assert_includes content, post.pubdate, "Expected pubdate #{post.pubdate} to appear"
+      month, day, year = post.pubdate_month_day_year
+      assert_includes content, month + " " + day + "</div>", "Expected pubdate #{month} #{day} to appear"
+      assert_includes content, year + "</div>", "Expected year #{year} to appear"
       assert_includes content, post.title,   "Expected title #{post.title} to appear"
     end
   end

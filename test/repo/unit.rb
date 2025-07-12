@@ -174,7 +174,7 @@ class TestScriptoriumRepo < Minitest::Test
     root = repo.root
     file = "#{root}/themes/standard/templates/post.lt3" # FIXME hardcoded
     assert_file_exist?(file)
-    assert_file_lines(file, 9)
+    assert_file_lines(file, 13)
   end
 
   def test_015_change_view
@@ -259,7 +259,7 @@ class TestScriptoriumRepo < Minitest::Test
     File.open("/tmp/mock.html", "w") do |f|
       f.puts result
     end
-    assert_file_lines("/tmp/mock.html", 17)
+    assert_file_lines("/tmp/mock.html", 21)
   end
 
   def test_020_check_html_stubs

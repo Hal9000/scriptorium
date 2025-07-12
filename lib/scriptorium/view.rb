@@ -300,7 +300,7 @@ def generate_html_head(view = nil)
       str = args.split.join(", ")  
       content << %[<meta name="robots" content="#{str}">\n]
     when "javascript"
-      content = get_common_js(view)
+      content << get_common_js(view)
     when "bootstrap"
       content << generate_bootstrap_url(view)
     end
@@ -348,6 +348,7 @@ def generate_front_page
   sections = read_layout
   html_head = generate_html_head(true)
 
+  # see("html_head", html_head)
   content = ""
   content << build_header
   content << "<div style='display: flex; flex-grow: 1;'> <!-- before left/main/right -->\n"
@@ -359,14 +360,15 @@ def generate_front_page
 
   full_html = <<~HTML
     <!DOCTYPE html>
-    <html>
     #{html_head}
+    <html>
     <body>
         #{content.strip}
     </body>
     </html>
   HTML
 
+  full_html = ::HtmlBeautifier.beautify(full_html)
   write_file(index_file, full_html)
   write_file("/tmp/full.html", full_html) # debugging
 end

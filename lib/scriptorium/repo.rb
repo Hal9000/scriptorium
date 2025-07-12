@@ -248,7 +248,7 @@ class Scriptorium::Repo
     end
   end
 
-  private def set_pubdate(vars)
+  private def set_pubdate(vars)    # Not Post#set_pubdate 
     t = Time.now
     vars[:"post.pubdate"] = t.strftime("%Y-%m-%d") 
     vars[:"post.pubdate.month"] = t.strftime("%B") 
@@ -270,12 +270,6 @@ class Scriptorium::Repo
   def generate_post_index(view)
     view = lookup_view(view)
     view.generate_post_index
-  end
-
-  def alter_pubdate(id, ymd)
-    raise TestModeOnly unless Scriptorium::Repo.testing
-    meta = @root/:posts/d4(id)/"meta.txt"
-    change_config(meta, "post.pubdate", ymd)
   end
 
   def post(id)
