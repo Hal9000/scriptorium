@@ -1,6 +1,0 @@
-# <!-- Section: header -->
-# Contents of header
-# (may include banner, title, navbar, ...)
-title
-
-text This is header...

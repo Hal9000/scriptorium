@@ -1,3 +1,0 @@
-# <!-- Section: right -->
-# Contents of right sidebar
-# (may be widgets or whatever)

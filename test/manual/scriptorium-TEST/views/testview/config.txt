@@ -1,3 +1,0 @@
-title    Test View
-subtitle A test view for manual inspection
-theme    standard
