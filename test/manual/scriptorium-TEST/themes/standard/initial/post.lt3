@@ -1,0 +1,12 @@
+. Initial file created by StandardFiles#post_template(num)
+
+.id %{num}
+.created %{created}
+
+.title %{title}
+
+.views %{views}  
+.tags  %{tags}   
+
+. Start of post body:
+BEGIN HERE...

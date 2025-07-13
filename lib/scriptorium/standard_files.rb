@@ -27,37 +27,94 @@ class Scriptorium::StandardFiles
     <<~EOS
       // This is the common JavaScript file for all views.
       // It is included in all views.
-      <script type="text/javascript">
-        function load_main(slug) {
-          const contentDiv = document.getElementById("main");
-          fetch(slug)  // This fetches a local file, such as post_123.html
-            .then(response => response.text())
-            .then(content => { contentDiv.innerHTML = content; })
-            .catch(error => console.log("Error loading content:", error));
-        }
-      </script>
 
+      function load_post_index() {
+        const contentDiv = document.getElementById("main");
+        const postIndexHTML = `
+          <div class="index-entry" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+            <div style="text-align: right; font-size: 0.7em; flex-basis: 20%; padding-top: 3px;">
+              <div>July 13</div>
+              <div>2025</div>
+            </div>
+            <div style="font-size: 1.2em; margin-left: 10px; flex-grow: 1; padding-top: 0;">
+              <div><a href="javascript:void(0)" onclick="load_main('0002-post-number-two.html')">Post number two</a></div>
+              <div style="font-size: 0.9em;">In Roman numerals, this is post II.</div>
+            </div>
+          </div>
+          <div class="index-entry" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+            <div style="text-align: right; font-size: 0.7em; flex-basis: 20%; padding-top: 3px;">
+              <div>July 13</div>
+              <div>2025</div>
+            </div>
+            <div style="font-size: 1.2em; margin-left: 10px; flex-grow: 1; padding-top: 0;">
+              <div><a href="javascript:void(0)" onclick="load_main('0001-post-number-one.html')">Post number one</a></div>
+              <div style="font-size: 0.9em;">It's sort of the William Riker of blog posts.</div>
+            </div>
+          </div>
+        `;
+        contentDiv.innerHTML = postIndexHTML;
+      }
+
+      function load_main(slug) {
+        const contentDiv = document.getElementById("main");
+
+        // If the slug is for a post, ensure it starts with 'posts/'
+        if (slug !== 'index.html' && !slug.startsWith('posts/')) {
+          slug = 'posts/' + slug;
+        }
+
+        // Fetch the content for the post
+        fetch(slug)
+          .then(response => response.text())
+          .then(content => {
+            contentDiv.innerHTML = content;
+
+            // Push the post slug to the browser's history stack
+            history.pushState({slug: slug}, "", slug);
+          })
+          .catch(error => console.log("Error loading content:", error));
+      }
+
+      // Handle the back button (or JavaScript history.go(-1))
+      window.onpopstate = function(event) {
+        if (event.state && event.state.slug) {
+          load_main(event.state.slug);  // Load the post for the previous history state
+        } else {
+          load_post_index();  // Load the post index when no valid history state exists
+        }
+      };
+
+      // Initialize with the front page if no history state exists
+      if (!history.state) {
+        load_post_index();  // Show the post index on initial load
+      }
     EOS
   end
 
-  def bootstrap_txt
+  def bootstrap_css
     <<~EOS
-    href         https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css
+    href         https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css
     rel          stylesheet
-    integrity    sha384-KyZXEJ04F5o1v7V5b7ZMjGhGjxA8yQmBfvZwzI1r+0gEv+9KnQIMJxWwzD0u8nZ7
+    # integrity has a problem - compute instead?
+    # integrity    sha384-KyZXEJ04F5o1v7V5b7ZMjGhGjxA8yQmBfvZwzI1r+0gEv+9KnQIMJxWwzD0u8nZ7
+    # crossorigin  anonymous
+    EOS
+  end
+
+  def bootstrap_js
+    <<~EOS
+    src          https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js
+    # integrity has a problem - compute instead?
+    # integrity    sha384-pzjw8f+ua7Kw1TIq0+v5+GZkR6P/6v03cI0myXcJU22Hc5p5BY5/X93HmaJXjm4C
     crossorigin  anonymous
     EOS
   end
   
-  def initial_post(mode = :filled, 
-                    num:   "0", 
-                    title: nil, 
-                    views: nil,
-                    tags:  nil,
-                    body:  nil)
-
+  def initial_post(mode = :filled, num: "0", title: nil, blurb: nil, views: nil,
+                  tags: nil, body:  nil)
     # FIXME - screwed up?
     title ||= "ADD TITLE HERE"
+    blurb ||= "ADD BLURB HERE"
     views ||= %w[sample]
     tags  ||= %w[sample tags]
     body  ||= "BEGIN HERE..."
@@ -112,20 +169,6 @@ def layout_text
   right  15%  # Right sidebar, 15% width
   footer      # Footer (copyright? mail? social media? etc.)
 TXT
-end
-
-def oldindex_entry
-  <<~EOS
-    <div class="index-entry" style="margin-bottom: 20px;">
-      <div style="font-size: 0.8em">%{post.pubdate}</div>
-      <div class="post-title" style="font-size: 1.2em">
-        <a href="posts/%{post.slug}" 
-           style="text-decoration: none;"
-          onclick="load_main('%{post.slug}')">%{post.title}</a>
-      </div>
-      <div class="post-blurb" style="font-size: 0.8em">%{post.blurb}</div>
-    </div>
-  EOS
 end
 
 def post_index_style   # Not really a file
@@ -188,6 +231,8 @@ def post_index_style   # Not really a file
   EOS
 end
 
+# <!-- posts/%{post.slug}" --> 
+
 def index_entry
   # Note the use of %% to escape the % in the flex-basis attribute!
   <<~EOS
@@ -199,7 +244,7 @@ def index_entry
       </div>
       <!-- Right Side: Title and Blurb (left aligned) -->
       <div style="font-size: 1.2em; margin-left: 10px; flex-grow: 1; padding-top: 0;">
-        <div><a href="posts/%{post.slug}" 
+        <div><a href="javascript:void(0)" 
                 style="text-decoration: none;"
                 onclick="load_main('%{post.slug}')">%{post.title}</a></div>
         <div style="font-size: 0.9em;">%{post.blurb}</div>

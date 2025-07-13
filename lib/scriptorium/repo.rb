@@ -39,10 +39,11 @@ class Scriptorium::Repo
 
     postnum_file = "#@root/config/last_post_num.txt"
     write_file(postnum_file, "0")
-    write_file(@root/:config/"global-head.txt", @predef.html_head_content)
-    write_file(@root/:config/"bootstrap.txt",   @predef.bootstrap_txt)
-    write_file(@root/:config/"common.js",       @predef.common_js)
-    Scriptorium::Theme.create_standard(@root)   # Theme: templates, etc.
+    write_file(@root/:config/"global-head.txt",   @predef.html_head_content)
+    write_file(@root/:config/"bootstrap_js.txt",  @predef.bootstrap_js)
+    write_file(@root/:config/"bootstrap_css.txt", @predef.bootstrap_css)
+    write_file(@root/:config/"common.js",         @predef.common_js)
+    Scriptorium::Theme.create_standard(@root)     # Theme: templates, etc.
     @repo = self.open(@root)
     Scriptorium::View.create_sample_view(repo)
     return repo
@@ -132,7 +133,8 @@ class Scriptorium::Repo
                "subtitle #{subtitle}",
                "theme    #{theme}")
     write_file(dir/:config/"global-head.txt", @predef.html_head_content(true))  # true = view-specific
-    write_file(dir/:config/"bootstrap.txt",   @predef.bootstrap_txt)
+    write_file(dir/:config/"bootstrap_js.txt", @predef.bootstrap_js)
+    write_file(dir/:config/"bootstrap_css.txt", @predef.bootstrap_css)
     write_file(dir/:config/"common.js",       @predef.common_js)
     view = open_view(name)
     @views -= [view]
@@ -160,14 +162,14 @@ class Scriptorium::Repo
     view
   end
 
-  def create_draft(title: nil, views: nil, tags: nil, body: nil)
+  def create_draft(title: nil, blurb: nil, views: nil, tags: nil, body: nil)
     ts = Time.now.strftime("%Y%m%d-%H%M%S")
     name = "#@root/drafts/#{ts}-draft.lt3"
     theme = @current_view.theme
     id = incr_post_num
-    initial = @predef.initial_post(num: id, title: title, views: views, tags: tags, body: body)
+    initial = @predef.initial_post(num: id, title: title, blurb: blurb, 
+                                   views: views, tags: tags, body: body)
     write_file(name, initial)
-    # FIXME add boilerplate
     name
   end
 
@@ -225,6 +227,12 @@ class Scriptorium::Repo
     write_file("/tmp"/slug)  # for debugging
   end
 
+  def create_post(title: nil, views: nil, tags: nil, body: nil)
+    name = create_draft(title: title, views: views, tags: tags, body: body)
+    num = finish_draft(name)
+    generate_post(num)
+    self.post(num)  # Return the Post object
+  end
 
   def generate_post(num)
     draft = @root/:posts/d4(num)/"draft.lt3"

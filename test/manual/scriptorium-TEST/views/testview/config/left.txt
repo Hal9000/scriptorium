@@ -1,0 +1,5 @@
+# <!-- Section: left -->
+# Contents of left sidebar
+# (may be widgets or whatever)
+
+text This is left...

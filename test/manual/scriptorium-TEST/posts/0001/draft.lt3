@@ -1,0 +1,21 @@
+. Initial file created by StandardFiles#post_template(num)
+
+.id 0001
+.created 2025-07-11-22-41-21
+
+.title Post number one
+
+.views testview  
+.tags  sample, tags   
+
+. Start of post body:
+.blurb It's sort of the William Riker of blog posts.
+This is the first post.
+
+It contains multiple paragraphs:
+- Introduction to the topic.<br>
+- A deep dive into the details.<br>
+- Conclusion with key takeaways.<br>
+
+This should span multiple lines in the draft.
+

@@ -1,0 +1,29 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.header, .footer {
+  width: 100%;
+  padding: 1em;
+  background-color: #eee;
+  text-align: center;
+}
+
+.main-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.left, .right {
+  padding: 1em;
+  background-color: #f0f0f0;
+}
+
+.main {
+  flex-grow: 1;
+  padding: 1em;
+  background-color: #fff;
+}

@@ -233,7 +233,7 @@ write output:      write the result to output/panes/header.html
 
   def build_main
     html = "  <!-- Section: main (output) -->\n"
-    html << %[<div id="main" class="main" style="flex-grow: 1; padding: 10px;">\n]
+    html << %[<div id="main" class="main" style="flex-grow: 1; padding: 10px; overflow-y: auto;">\n]
     html << @predef.post_index_style
     if view_posts.empty?
       html << "  <h1>No posts yet!</h1>"
@@ -299,10 +299,10 @@ def generate_html_head(view = nil)
       @robots = args
       str = args.split.join(", ")  
       content << %[<meta name="robots" content="#{str}">\n]
-    when "javascript"
-      content << get_common_js(view)
+    # when "javascript"
+    #   content << get_common_js(view)
     when "bootstrap"
-      content << generate_bootstrap_url(view)
+      content << generate_bootstrap_css(view)
     end
   end
   content << "</head>\n"
@@ -313,13 +313,13 @@ def get_common_js(view = nil)
   global_js = @root/:config/"common.js"
   view_js   = @dir/:config/"common.js"
   js_file = view ? view_js : global_js
-  File.read(js_file)
-  return %[<script src="#{js_file}"></script>\n]
+  code = File.read(js_file)
+  return %[<script>#{code}</script>\n]
 end
 
-def generate_bootstrap_url(view = nil)
-  global_boot = @root/:config/"bootstrap.txt"
-  view_boot   = @dir/:config/"bootstrap.txt"
+def generate_bootstrap_css(view = nil)
+  global_boot = @root/:config/"bootstrap_css.txt"
+  view_boot   = @dir/:config/"bootstrap_css.txt"
   bs_file = view ? view_boot : global_boot
   lines = read_commented_file(bs_file)
   href = rel = integrity = crossorigin = nil
@@ -336,7 +336,32 @@ def generate_bootstrap_url(view = nil)
       crossorigin = args
     end
   end
-  content = %[<link rel="#{rel}" href="#{href}" integrity="#{integrity}" crossorigin="#{crossorigin}">\n]
+  # content = %[<link rel="#{rel}" href="#{href}" integrity="#{integrity}" crossorigin="#{crossorigin}">\n]
+  content = %[<link rel="stylesheet" href="#{href}"></link>\n]
+  content
+end
+
+def generate_bootstrap_js(view = nil)
+  global_boot = @root/:config/"bootstrap_js.txt"
+  view_boot   = @dir/:config/"bootstrap_js.txt"
+  bs_file = view ? view_boot : global_boot
+  lines = read_commented_file(bs_file)
+  src = integrity = crossorigin = nil
+  lines.each do |line|
+    component, args = line.split(/\s+/, 2)
+    case component.downcase
+    when "src"
+      src = args
+    when "rel"
+      rel = args
+    when "integrity"
+      integrity = args
+    when "crossorigin"
+      crossorigin = args
+    end
+  end
+  # content = %[<script src="#{src}" integrity="#{integrity}" crossorigin="#{crossorigin}"></script>\n]
+  content = %[<script src="#{src}"></script>\n]
   content
 end
 
@@ -351,20 +376,25 @@ def generate_front_page
   # see("html_head", html_head)
   content = ""
   content << build_header
-  content << "<div style='display: flex; flex-grow: 1;'> <!-- before left/main/right -->\n"
+  content << "<!-- before left/main/right -->\n"
+  content << "<div style='display: flex; flex-grow: 1; height: 100%; flex-direction: row;'>"
   content << build_left
   content << build_main
   content << build_right
   content << "</div> <!-- after left/main/right --></div>\n"
   content << build_footer
 
+  common = get_common_js
+  boot = generate_bootstrap_js
   full_html = <<~HTML
     <!DOCTYPE html>
     #{html_head}
-    <html>
-    <body>
+    <html style="height: 100%; margin: 0;">
+      <body style="height: 100%; margin: 0; display: flex; flex-direction: column;">
         #{content.strip}
-    </body>
+        #{boot.strip}
+        #{common.strip}
+      </body>
     </html>
   HTML
 

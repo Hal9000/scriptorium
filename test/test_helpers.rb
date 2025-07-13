@@ -2,6 +2,8 @@ require 'htmlbeautifier'
 
 module TestHelpers
 
+  include Scriptorium::Helpers
+
   def assert_dir_exist?(dir)
     assert Dir.exist?(dir), "Directory '#{dir}' was not found"
   end
@@ -82,6 +84,11 @@ module TestHelpers
     assert_generated_post_found?(repo, num, views)
   end
 
+  def post_with_views(repo, views)  # No assert - for manual tests
+    num = random_post(repo, views: views)
+    repo.generate_post(num)
+  end
+
   def num_posts_per_view(repo, view, exp)
     posts = repo.all_posts(view)
     assert posts.size == exp, "Expected #{exp} #{view} posts, found #{posts.size}"
@@ -114,4 +121,108 @@ module TestHelpers
     assert result, "Targets missing: #{missing.join(", ").inspect}"
   end
   
+  def create_3_views  # For test_posts_generated_and_indexed_across_multiple_views
+    @repo.create_view("blog1", "Blog 1", "nothing (1)")
+    @repo.create_view("blog2", "Blog 2", "nothing (2)")
+    @repo.create_view("blog3", "Blog 3", "nothing (3)")
+  end
+
+  def create_13_posts_manual
+    post_with_views(@repo, "blog1")
+    post_with_views(@repo, "blog2")
+    post_with_views(@repo, "blog3")
+    post_with_views(@repo, %w[blog1 blog2])
+    post_with_views(@repo, %w[blog2 blog3])
+    post_with_views(@repo, %w[blog1 blog3])
+    post_with_views(@repo, %w[blog1 blog2 blog3])
+    post_with_views(@repo, "blog1")
+    post_with_views(@repo, "blog1")
+    post_with_views(@repo, "blog1")
+    post_with_views(@repo, "blog2")
+    post_with_views(@repo, "blog2")
+    post_with_views(@repo, "blog3")
+  end
+
+  def create_13_posts  # For test_posts_generated_and_indexed_across_multiple_views
+    try_post_with_views(@repo, "blog1")
+    try_post_with_views(@repo, "blog2")
+    try_post_with_views(@repo, "blog3")
+    try_post_with_views(@repo, %w[blog1 blog2])
+    try_post_with_views(@repo, %w[blog2 blog3])
+    try_post_with_views(@repo, %w[blog1 blog3])
+    try_post_with_views(@repo, %w[blog1 blog2 blog3])
+    try_post_with_views(@repo, "blog1")
+    try_post_with_views(@repo, "blog1")
+    try_post_with_views(@repo, "blog1")
+    try_post_with_views(@repo, "blog2")
+    try_post_with_views(@repo, "blog2")
+    try_post_with_views(@repo, "blog3")
+    # blog1   1 4 6 7 8 9 10
+    # blog2   2 4 5 11 12
+    # blog3   3 5 6 7 13
+  end
+
+  def alter_pubdates  # For test_posts_generated_and_indexed_across_multiple_views
+    @repo.post(1).set_pubdate("2025-07-01")
+    @repo.post(2).set_pubdate("2025-07-02")
+    @repo.post(3).set_pubdate("2025-07-03")
+    @repo.post(4).set_pubdate("2025-07-04")
+    @repo.post(5).set_pubdate("2025-07-05")
+    @repo.post(6).set_pubdate("2025-07-06")
+    @repo.post(7).set_pubdate("2025-07-07")
+    @repo.post(8).set_pubdate("2025-07-08")
+    @repo.post(9).set_pubdate("2025-07-09")
+    @repo.post(10).set_pubdate("2025-07-10")
+    @repo.post(11).set_pubdate("2025-07-11")
+    @repo.post(12).set_pubdate("2025-07-12")
+    @repo.post(13).set_pubdate("2025-07-13")
+  end
+
+  def try_blog1_index  # For test_posts_generated_and_indexed_across_multiple_views
+    @repo.generate_post_index("blog1")  
+    %w[header main right footer].each do |section|
+      file = @repo.root/:views/"blog1"/:output/:panes/"#{section}.html"
+      assert File.exist?(file), "Expected section file #{file} to exist"
+    end
+    @repo.tree("/tmp/blog1.txt")
+    post_index = @repo.root/:views/"blog1"/:output/"post_index.html"
+    assert File.exist?(post_index), "Expected blog1 post_index.html to be generated"
+    content = File.read(post_index)
+    
+    assert content.include?("July 1</div>"), "Expected July 1 in post_index"
+    assert content.include?("July 4</div>"), "Expected July 4 in post_index"
+    assert content.include?("July 6</div>"), "Expected July 6 in post_index"
+    assert content.include?("July 7</div>"), "Expected July 7 in post_index"
+    assert content.include?("July 8</div>"), "Expected July 8 in post_index"
+    assert content.include?("July 9</div>"), "Expected July 9 in post_index"
+    assert content.include?("July 10</div>"), "Expected July 10 in post_index"
+    refute content.include?("July 2</div>"), "Expected July 2 not in post_index"
+    refute content.include?("July 3</div>"), "Expected July 3 not in post_index"
+    refute content.include?("July 5"), "Expected July 5 not in post_index"
+    refute content.include?("July 11"), "Expected July 11 not in post_index"
+    refute content.include?("July 12"), "Expected July 12 not in post_index"
+    refute content.include?("July 13"), "Expected July 13 not in post_index"
+  end
+
+=begin
+  blog1   1 4 6 7 8 9 10
+  blog2   2 4 5 11 12
+  blog3   3 5 6 7 13
+  
+  1,  "2025-07-01"
+  2,  "2025-07-02"
+  3,  "2025-07-03"
+  4,  "2025-07-04"
+  5,  "2025-07-05"
+  6,  "2025-07-06"
+  7,  "2025-07-07"
+  8,  "2025-07-08"
+  9,  "2025-07-09"
+  10, "2025-07-10"
+  11, "2025-07-11"
+  12, "2025-07-12"
+  13, "2025-07-13"
+
+=end
+
 end

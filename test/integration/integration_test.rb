@@ -35,94 +35,6 @@ class IntegrationTest < Minitest::Test
     assert_includes content, "<h1>", "Expected header content to include <h1>"
   end
 
-  def create_3_views  # For test_posts_generated_and_indexed_across_multiple_views
-    @repo.create_view("blog1", "Blog 1", "nothing (1)")
-    @repo.create_view("blog2", "Blog 2", "nothing (2)")
-    @repo.create_view("blog3", "Blog 3", "nothing (3)")
-  end
-
-  def create_13_posts  # For test_posts_generated_and_indexed_across_multiple_views
-    try_post_with_views(@repo, "blog1")
-    try_post_with_views(@repo, "blog2")
-    try_post_with_views(@repo, "blog3")
-    try_post_with_views(@repo, %w[blog1 blog2])
-    try_post_with_views(@repo, %w[blog2 blog3])
-    try_post_with_views(@repo, %w[blog1 blog3])
-    try_post_with_views(@repo, %w[blog1 blog2 blog3])
-    try_post_with_views(@repo, "blog1")
-    try_post_with_views(@repo, "blog1")
-    try_post_with_views(@repo, "blog1")
-    try_post_with_views(@repo, "blog2")
-    try_post_with_views(@repo, "blog2")
-    try_post_with_views(@repo, "blog3")
-    # blog1   1 4 6 7 8 9 10
-    # blog2   2 4 5 11 12
-    # blog3   3 5 6 7 13
-  end
-
-  def alter_pubdates  # For test_posts_generated_and_indexed_across_multiple_views
-    @repo.post(1).set_pubdate("2025-07-01")
-    @repo.post(2).set_pubdate("2025-07-02")
-    @repo.post(3).set_pubdate("2025-07-03")
-    @repo.post(4).set_pubdate("2025-07-04")
-    @repo.post(5).set_pubdate("2025-07-05")
-    @repo.post(6).set_pubdate("2025-07-06")
-    @repo.post(7).set_pubdate("2025-07-07")
-    @repo.post(8).set_pubdate("2025-07-08")
-    @repo.post(9).set_pubdate("2025-07-09")
-    @repo.post(10).set_pubdate("2025-07-10")
-    @repo.post(11).set_pubdate("2025-07-11")
-    @repo.post(12).set_pubdate("2025-07-12")
-    @repo.post(13).set_pubdate("2025-07-13")
-  end
-
-  def try_blog1_index  # For test_posts_generated_and_indexed_across_multiple_views
-    @repo.generate_post_index("blog1")  
-    %w[header main right footer].each do |section|
-      file = @repo.root/:views/"blog1"/:output/:panes/"#{section}.html"
-      assert File.exist?(file), "Expected section file #{file} to exist"
-    end
-    @repo.tree("/tmp/blog1.txt")
-    post_index = @repo.root/:views/"blog1"/:output/"post_index.html"
-    assert File.exist?(post_index), "Expected blog1 post_index.html to be generated"
-    content = File.read(post_index)
-    
-    assert content.include?("July 1</div>"), "Expected July 1 in post_index"
-    assert content.include?("July 4</div>"), "Expected July 4 in post_index"
-    assert content.include?("July 6</div>"), "Expected July 6 in post_index"
-    assert content.include?("July 7</div>"), "Expected July 7 in post_index"
-    assert content.include?("July 8</div>"), "Expected July 8 in post_index"
-    assert content.include?("July 9</div>"), "Expected July 9 in post_index"
-    assert content.include?("July 10</div>"), "Expected July 10 in post_index"
-    refute content.include?("July 2</div>"), "Expected July 2 not in post_index"
-    refute content.include?("July 3</div>"), "Expected July 3 not in post_index"
-    refute content.include?("July 5"), "Expected July 5 not in post_index"
-    refute content.include?("July 11"), "Expected July 11 not in post_index"
-    refute content.include?("July 12"), "Expected July 12 not in post_index"
-    refute content.include?("July 13"), "Expected July 13 not in post_index"
-  end
-
-=begin
-  blog1   1 4 6 7 8 9 10
-  blog2   2 4 5 11 12
-  blog3   3 5 6 7 13
-  
-  1,  "2025-07-01"
-  2,  "2025-07-02"
-  3,  "2025-07-03"
-  4,  "2025-07-04"
-  5,  "2025-07-05"
-  6,  "2025-07-06"
-  7,  "2025-07-07"
-  8,  "2025-07-08"
-  9,  "2025-07-09"
-  10, "2025-07-10"
-  11, "2025-07-11"
-  12, "2025-07-12"
-  13, "2025-07-13"
-
-=end
-
   def test_posts_generated_and_indexed_across_multiple_views
     srand(42)  # for random posts
 
@@ -146,7 +58,6 @@ class IntegrationTest < Minitest::Test
     create_3_views
     create_13_posts
     alter_pubdates
-    @repo.generate_post_index("blog1")
     @repo.generate_front_page("blog1")
     posts_content = File.read(@repo.root/:views/"blog1"/:output/"post_index.html")
     posts = @repo.all_posts("blog1")
@@ -269,10 +180,8 @@ class IntegrationTest < Minitest::Test
   end
     
   def test_create_view_and_generate_front_page_with_placeholders
-    # Step 1: Create a new view
     view = @repo.create_view("test_view", "Test View", "A test view")
   
-    # Step 2: Create the layout file with all sections
     layout_txt = <<~LAYOUT
       header
       main
@@ -281,7 +190,7 @@ class IntegrationTest < Minitest::Test
     LAYOUT
     File.write(view.dir/:config/"layout.txt", layout_txt)
   
-    # Step 3: Create the text placeholders in the corresponding sections
+    # Create text placeholders in the corresponding sections
     # Skip main as a special case
     header_txt = <<~HEADER
       text "HEADER CONTENT PLACEHOLDER"
@@ -298,10 +207,10 @@ class IntegrationTest < Minitest::Test
     FOOTER
     File.write(view.dir/:config/"footer.txt", footer_txt)
   
-    # Step 4: Generate the front page
+    # Generate the front page
     @repo.generate_front_page("test_view")
   
-    # Step 5: Now check that each section contains its placeholder replacement
+    # Check that each section contains its placeholder replacement
   
     # Verify header section
     header_html = File.read(view.dir/:output/:panes/"header.html")
@@ -315,7 +224,7 @@ class IntegrationTest < Minitest::Test
     footer_html = File.read(view.dir/:output/:panes/"footer.html")
     assert_includes footer_html, "FOOTER CONTENT PLACEHOLDER", "Expected footer content to include placeholder replacement"
   
-    # Step 6: Verify that the generated front page (index.html) contains all the expected content
+    # Verify that generated front page (index.html) contains all expected content
     targets = ["HEADER CONTENT PLACEHOLDER", 
                "RIGHT CONTENT PLACEHOLDER", 
                "FOOTER CONTENT PLACEHOLDER"]
@@ -378,7 +287,6 @@ class IntegrationTest < Minitest::Test
   end
   
   def test_generate_full_front_page
-    # Create a sample repo and view
     view = @repo.lookup_view("sample")
     testdir = File.expand_path("../../test", __dir__)
     FileUtils.cp("#{testdir}/assets/testbanner.jpg", @sample_view.dir/:assets/"testbanner.jpg")
