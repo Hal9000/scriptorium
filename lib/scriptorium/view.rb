@@ -216,6 +216,17 @@ write output:      write the result to output/panes/header.html
     html
   end
   
+  def build_widgets(arg)
+    widgets = arg.split
+    content = ""
+    widgets.each do |widget|
+      widget_class = eval("Scriptorium::Widget::#{widget.capitalize}")
+      obj = widget_class.new(@repo, self)
+      obj.generate
+      content << obj.card
+    end
+    content
+  end
 
   ###
 
@@ -224,11 +235,13 @@ write output:      write the result to output/panes/header.html
   end
   
   def build_left
-    build_section("left")
+    h2 = { "widget" => ->(arg = nil) { build_widgets(arg) } }
+    build_section("left", h2)
   end
 
   def build_right
-    build_section("right")
+    h2 = { "widget" => ->(arg = nil) { build_widgets(arg) } }
+    build_section("right", h2)
   end
 
   def build_main
@@ -371,21 +384,21 @@ def generate_front_page
   panes       = @dir/:output/:panes
 
   sections = read_layout
+  see("sections", sections)
   html_head = generate_html_head(true)
 
-  # see("html_head", html_head)
   content = ""
-  content << build_header
+  content << build_header if sections.include?("header")
   content << "<!-- before left/main/right -->\n"
   content << "<div style='display: flex; flex-grow: 1; height: 100%; flex-direction: row;'>"
-  content << build_left
+  content << build_left if sections.include?("left")
   content << build_main
-  content << build_right
+  content << build_right if sections.include?("right")
   content << "</div> <!-- after left/main/right --></div>\n"
-  content << build_footer
+  content << build_footer if sections.include?("footer")
 
   common = get_common_js
-  boot = generate_bootstrap_js
+  boot   = generate_bootstrap_js
   full_html = <<~HTML
     <!DOCTYPE html>
     #{html_head}

@@ -28,66 +28,28 @@ class Scriptorium::StandardFiles
       // This is the common JavaScript file for all views.
       // It is included in all views.
 
-      function load_post_index() {
-        const contentDiv = document.getElementById("main");
-        const postIndexHTML = `
-          <div class="index-entry" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-            <div style="text-align: right; font-size: 0.7em; flex-basis: 20%; padding-top: 3px;">
-              <div>July 13</div>
-              <div>2025</div>
-            </div>
-            <div style="font-size: 1.2em; margin-left: 10px; flex-grow: 1; padding-top: 0;">
-              <div><a href="javascript:void(0)" onclick="load_main('0002-post-number-two.html')">Post number two</a></div>
-              <div style="font-size: 0.9em;">In Roman numerals, this is post II.</div>
-            </div>
-          </div>
-          <div class="index-entry" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-            <div style="text-align: right; font-size: 0.7em; flex-basis: 20%; padding-top: 3px;">
-              <div>July 13</div>
-              <div>2025</div>
-            </div>
-            <div style="font-size: 1.2em; margin-left: 10px; flex-grow: 1; padding-top: 0;">
-              <div><a href="javascript:void(0)" onclick="load_main('0001-post-number-one.html')">Post number one</a></div>
-              <div style="font-size: 0.9em;">It's sort of the William Riker of blog posts.</div>
-            </div>
-          </div>
-        `;
-        contentDiv.innerHTML = postIndexHTML;
+    // Handle the back button (or JavaScript history.go(-1))
+    window.onpopstate = function(event) {
+      if (event.state && event.state.slug) {
+        load_main(event.state.slug);  // Load the post for the previous history state
       }
+    };
 
-      function load_main(slug) {
-        const contentDiv = document.getElementById("main");
+    // Initialize with the front page when navigating via the back button or similar
+    function load_main(slug) {
+      const contentDiv = document.getElementById("main");
 
-        // If the slug is for a post, ensure it starts with 'posts/'
-        if (slug !== 'index.html' && !slug.startsWith('posts/')) {
-          slug = 'posts/' + slug;
-        }
-
-        // Fetch the content for the post
+      if (true) { // (slug.startsWith('posts/')) {
         fetch(slug)
           .then(response => response.text())
           .then(content => {
             contentDiv.innerHTML = content;
-
-            // Push the post slug to the browser's history stack
-            history.pushState({slug: slug}, "", slug);
+            history.pushState({slug: slug}, "", slug);  // Update browser history
           })
           .catch(error => console.log("Error loading content:", error));
       }
+    }
 
-      // Handle the back button (or JavaScript history.go(-1))
-      window.onpopstate = function(event) {
-        if (event.state && event.state.slug) {
-          load_main(event.state.slug);  // Load the post for the previous history state
-        } else {
-          load_post_index();  // Load the post index when no valid history state exists
-        }
-      };
-
-      // Initialize with the front page if no history state exists
-      if (!history.state) {
-        load_post_index();  // Show the post index on initial load
-      }
     EOS
   end
 
@@ -238,7 +200,7 @@ def index_entry
   <<~EOS
     <div class="index-entry" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
       <!-- Left Side: Date (right aligned) -->
-      <div style="text-align: right; font-size: 0.7em; flex-basis: 20%%; padding-top: 3px;">
+      <div style="text-align: right; font-size: 0.7em; flex-basis: 10%%; padding-top: 3px;">
         <div>%{post.pubdate.month} %{post.pubdate.day}</div>
         <div>%{post.pubdate.year}</div>
       </div>
@@ -246,7 +208,7 @@ def index_entry
       <div style="font-size: 1.2em; margin-left: 10px; flex-grow: 1; padding-top: 0;">
         <div><a href="javascript:void(0)" 
                 style="text-decoration: none;"
-                onclick="load_main('%{post.slug}')">%{post.title}</a></div>
+                onclick="load_main('posts/%{post.slug}')">%{post.title}</a></div>
         <div style="font-size: 0.9em;">%{post.blurb}</div>
       </div>
     </div>

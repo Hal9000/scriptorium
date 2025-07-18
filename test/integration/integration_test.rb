@@ -59,7 +59,7 @@ class IntegrationTest < Minitest::Test
     create_13_posts
     alter_pubdates
     @repo.generate_front_page("blog1")
-    posts_content = File.read(@repo.root/:views/"blog1"/:output/"post_index.html")
+    posts_content = File.read(@repo.root/:views/"blog1"/:output/"index.html")
     posts = @repo.all_posts("blog1")
     posts.each do |post|
       assert_includes posts_content, post.title

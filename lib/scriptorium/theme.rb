@@ -15,19 +15,19 @@ class Scriptorium::Theme
       ├── config.txt
       ├── header/
       ├── initial/
-      │   └── post.lt3
+      │   └── post.lt3
       ├── layout/
-      │   ├── config/
-      │   │   ├── footer.txt
-      │   │   ├── header.txt
-      │   │   ├── left.txt
-      │   │   ├── main.txt
-      │   │   └── right.txt
-      │   ├── gen/
-      │   │   ├── layout.css
-      │   │   ├── layout.html
-      │   │   └── text.css
-      │   └── layout.txt
+      │   ├── config/
+      │   │   ├── footer.txt
+      │   │   ├── header.txt
+      │   │   ├── left.txt
+      │   │   ├── main.txt
+      │   │   └── right.txt
+      │   ├── gen/
+      │   │   ├── layout.css
+      │   │   ├── layout.html
+      │   │   └── text.css
+      │   └── layout.txt
       └── templates/
           ├── index.lt3
           ├── post.lt3

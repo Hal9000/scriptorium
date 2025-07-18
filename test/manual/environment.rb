@@ -10,23 +10,27 @@ def manual_setup
 
   @pid = nil
   Dir.chdir("scriptorium-TEST") do
-    @pid = Process.spawn ("ruby -run -e httpd . -p 8000 >/dev/null 2>&1") 
+    Process.spawn ("ruby -run -e httpd . -p 8000 >/dev/null 2>&1") 
     sleep 1
     puts "webrick started\n "
   end
 end
 
 def examine(view)
-  index_path = @repo.root/:views/view/:output/"index.html"
-  index_path.sub!("./scriptorium-TEST", "http://127.0.0.1:8000")
-  puts "Generated front page located at: #{index_path}"
+  index_path = @repo.root/:views/view.name/:output/"index.html"
+  index_path.sub!("./scriptorium-TEST", "127.0.0.1:8000")
+  puts "Generated front page located at: \n#{index_path}"
   puts "Press Enter to open the generated front page to inspect the result."
   STDIN.gets
   system("open #{index_path}")
 
   puts "Press Enter to kill webrick"
   STDIN.gets
-  system("kill #@pid")
-  system("kill #{@pid + 1}")   # child
+  line = `ps | grep "ruby -run -e httpd" | grep -v grep`
+  pid = line.split.first
+  puts "line: #{line}"
+  puts "pid: #{pid}"
+  pid2 = pid.to_i + 1
+  system("kill #{pid} #{pid2}")
   puts "Killed\n "
 end

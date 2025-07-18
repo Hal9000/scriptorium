@@ -1,7 +1,7 @@
 require 'livetext'
 require 'find'
 require 'htmlbeautifier'
-
+require 'pp'
 
 require_relative "skeleton"
 require_relative "scriptorium/version"
@@ -13,3 +13,5 @@ require_relative "scriptorium/exceptions"
 require_relative "scriptorium/helpers"
 require_relative "scriptorium/standard_files"
 require_relative "scriptorium/layout"
+require_relative "scriptorium/widgets/widget"
+require_relative "scriptorium/widgets/links"

@@ -122,6 +122,7 @@ class Scriptorium::Repo
     │   │   ├── main.html    # Generated from main.txt
     │   │   └── right.html   # Generated from right.txt
     │   └── posts/           # Generated posts for view (slug.html)
+    ├── widgets/             # Widgets for view
     └── staging/             # Staging area prior to deployment
     EOS
 
