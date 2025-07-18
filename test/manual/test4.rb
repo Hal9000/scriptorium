@@ -12,8 +12,9 @@ view = @repo.view("blog3")
 File.open(view.dir/:config/"layout.txt", "w") do |f|
   f.puts "header"
   f.puts "main"
-  f.puts "right  25%"
+  f.puts "right  20%"
 end
+view.generate_empty_containers
 File.open(view.dir/:config/"right.txt", "w") do |f|
   f.puts "widget links"
 end

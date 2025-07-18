@@ -290,7 +290,7 @@ class TestScriptoriumRepo < Minitest::Test
         footer
       EOS
     end
-    results = repo.view.read_layout
+    results = repo.view.read_layout.keys
     expected = ["main", "header", "left", "right", "footer"].sort
     assert results.sort == expected, "Error reading layout file (got #{results.inspect})"
 

@@ -45,32 +45,46 @@ But overall, the process is robust and well thought-out. No major changes needed
   def read_layout
     layout_file = @dir/:config/"layout.txt"
     lines = read_commented_file(layout_file)
-    lines.map! {|line| line.split(/\s+/, 2).first}
+    containers = {}
+    secs = []
+    lines.each do |line| 
+      sec, args = line.split(/\s+/, 2)
+      containers[sec] = (args || "")
+      secs << sec
+    end
     directives = %w[header footer left right main]
-    lines.each {|line| raise LayoutHasUnknownTag unless directives.include?(line)}
-    directives.each {|line| raise LayoutHasDuplicateTags if lines.count(line) > 1}
-    lines
+    secs.each {|sec| raise LayoutHasUnknownTag unless directives.include?(sec)}
+    directives.each {|sec| raise LayoutHasDuplicateTags if lines.count(sec) > 1}
+    containers
   end
 
-  private def generate_empty_containers
+  def generate_empty_containers
     layout_file = @dir/:config/"layout.txt"
     return unless File.exist?(layout_file)
 
     flexing = {
       header: %[class="header" style="background: lightgray; padding: 10px;"],
       footer: %[class="footer" style="background: lightgray; padding: 10px;"],
-      left:   %[class="left" style="width: 15%; background: #f0f0f0; padding: 10px; flex-grow: 0; flex-shrink: 0;"],
-      right:  %[class="right" style="width: 15%; background: #f0f0f0; padding: 10px; flex-grow: 0; flex-shrink: 0;"],
+      left:   %[class="left" style="width: %{width}; background: #f0f0f0; padding: 10px; flex-grow: 0; flex-shrink: 0;"],
+      right:  %[class="right" style="width: %{width}; background: #f0f0f0; padding: 10px; flex-grow: 0; flex-shrink: 0;"],
       main:   %[class="main" style="flex-grow: 1; padding: 10px;"]
     }
-    lines = read_layout
+    sections = read_layout
+    lines = sections.keys
+    # FIXME Pleeeease refactor this.
     lines.each do |section|
+      args  = sections[section]  # like 20% for right, left
       filename = @dir/:layout/"#{section}.html"
       tag = section   # header, footer, main
       tag = "aside" if section == 'left' || tag == 'right'
     
+      inline = flexing[section.to_sym]
+      if section == "left" || section == "right"
+        mod = {width: args}
+        inline = inline % mod
+      end
       content = <<~HTML
-        <#{tag} #{flexing[section.to_sym]}>
+        <#{tag} #{inline}>
           <!-- Section: #{section} -->
         </#{tag}>
       HTML
@@ -154,7 +168,7 @@ sub into template: I substitute this into the template contents and
 write output:      write the result to output/panes/header.html
 =end
 
-  def build_section(section, hash2 = {})
+  def build_section(section, hash2 = {}, args = "")
     config = @dir/:config/"#{section}.txt"
     template = @dir/:layout/"#{section}.html"
     output = @dir/:output/:panes/"#{section}.html"
@@ -169,7 +183,9 @@ write output:      write the result to output/panes/header.html
     html
   end
 
-  def build_header
+  def build_header(sections)
+    args = sections["header"]
+    return "" unless args
     h2 = { 
       "title" => ->(arg = nil) { "  <h1>#{escape_html(@title)}</h1>" },
       "subtitle" => ->(arg = nil) { "  <p>#{escape_html(@subtitle)}</p>" },
@@ -177,7 +193,7 @@ write output:      write the result to output/panes/header.html
       "banner" => ->(arg = nil) { build_banner(arg) }
     }
 
-    build_section("header", h2)
+    build_section("header", h2, args)
   end
   
   ### Helpers for header
@@ -230,21 +246,29 @@ write output:      write the result to output/panes/header.html
 
   ###
 
-  def build_footer
-    build_section("footer")
+  def build_footer(sections)
+    args = sections["footer"]
+    return "" unless args
+    build_section("footer", {}, args)
   end
   
-  def build_left
+  def build_left(sections)
+    args = sections["left"]
+    return "" unless args
     h2 = { "widget" => ->(arg = nil) { build_widgets(arg) } }
-    build_section("left", h2)
+    build_section("left", h2, args)
   end
 
-  def build_right
+  def build_right(sections)
+    args = sections["right"]
+    return "" unless args
     h2 = { "widget" => ->(arg = nil) { build_widgets(arg) } }
-    build_section("right", h2)
+    build_section("right", h2, args)
   end
 
-  def build_main
+  def build_main(sections)
+    args = sections["main"]
+    return "" unless args
     html = "  <!-- Section: main (output) -->\n"
     html << %[<div id="main" class="main" style="flex-grow: 1; padding: 10px; overflow-y: auto;">\n]
     html << @predef.post_index_style
@@ -378,24 +402,28 @@ def generate_bootstrap_js(view = nil)
   content
 end
 
+def build_containers
+  sections = read_layout
+  content = ""
+  content << build_header(sections)
+  content << "<!-- before left/main/right -->\n"
+  content << "<div style='display: flex; flex-grow: 1; height: 100%; flex-direction: row;'>"
+  content << build_left(sections)
+  content << build_main(sections)
+  content << build_right(sections)
+  content << "</div> <!-- after left/main/right --></div>\n"
+  content << build_footer(sections)
+  content
+end
+
 def generate_front_page
   layout_file = @dir/:config/"layout.txt"
   index_file  = @dir/:output/"index.html"
   panes       = @dir/:output/:panes
 
-  sections = read_layout
-  see("sections", sections)
   html_head = generate_html_head(true)
 
-  content = ""
-  content << build_header if sections.include?("header")
-  content << "<!-- before left/main/right -->\n"
-  content << "<div style='display: flex; flex-grow: 1; height: 100%; flex-direction: row;'>"
-  content << build_left if sections.include?("left")
-  content << build_main
-  content << build_right if sections.include?("right")
-  content << "</div> <!-- after left/main/right --></div>\n"
-  content << build_footer if sections.include?("footer")
+  content = build_containers
 
   common = get_common_js
   boot   = generate_bootstrap_js

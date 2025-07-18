@@ -26,8 +26,8 @@ class IntegrationTest < Minitest::Test
   def test_sample_view_generates_header_html
     header_txt = @sample_view.dir/:config/"header.txt"
     File.write(header_txt, "title")
-
-    @sample_view.build_header
+    sections = @sample_view.read_layout
+    @sample_view.build_header(sections)
 
     output = @sample_view.dir/:output/:panes/"header.html"
     assert File.exist?(output), "Expected header.html to exist"
@@ -143,7 +143,7 @@ class IntegrationTest < Minitest::Test
   
   def test_all_containers_are_present
     # layout_file = @sample_view.dir/:config/"layout.txt"
-    layout = @sample_view.read_layout  
+    layout = @sample_view.read_layout.keys  
     layout.each do |container|
       output_file = @sample_view.dir/:output/:panes/"#{container}.html"
       assert File.exist?(output_file), "Expected output file #{output_file} for container #{container}"
@@ -168,7 +168,7 @@ class IntegrationTest < Minitest::Test
     index_file = @repo.root/:views/"sample"/:output/"index.html"
     assert File.exist?(index_file), "Expected index.html to be generated"
   
-    layout = @sample_view.read_layout
+    layout = @sample_view.read_layout.keys
     layout.each do |container|
       content = File.read(index_file)
       if !File.exist?(@repo.root/:views/"sample"/:output/:panes/"#{container}.html")
