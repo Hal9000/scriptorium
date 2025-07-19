@@ -165,5 +165,12 @@ module Scriptorium::Helpers
     lines  # Return the cleaned lines
   end
       
+  def cf_time(t1, t2)
+    t1 = t1.split(/- :/, 6)
+    t2 = t2.split(/- :/, 6)
+    t1 = Time.new(*t1)
+    t2 = Time.new(*t2)
+    t1 <=> t2
+  end
 end
 

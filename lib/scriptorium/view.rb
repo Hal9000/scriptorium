@@ -6,7 +6,7 @@ class Scriptorium::View
 
   def self.create_sample_view(repo)
     repo.create_view("sample", "My first view", "This is just a sample")
-    repo.generate_front_page("sample")
+    # repo.generate_front_page("sample")
   end
 
   def initialize(name, title, subtitle = "", theme = "standard")
@@ -15,6 +15,10 @@ class Scriptorium::View
     @repo = Scriptorium::Repo.repo
     @dir = "#@root/views/#{name}"
     @predef = Scriptorium::StandardFiles.new
+  end
+
+  def inspect
+    "<View: #@name #{@title.inspect} theme: #@theme>"
   end
 
 =begin
@@ -301,7 +305,7 @@ write output:      write the result to output/panes/header.html
   end
 
 def post_index_array
-  posts = view_posts
+  posts = view_posts.sort {|a,b| cf_time(b.pubdate, a.pubdate) }
   posts.map {|post| post_index_entry(post)}
 end
 
@@ -444,5 +448,29 @@ def generate_front_page
   write_file("/tmp/full.html", full_html) # debugging
 end
 
+def pagination_bar(group, count, nth)  # nth group of total 'count'
+  str = "Pages: "
+  1.upto(count) do |i|
+    if i == nth  # 0-based
+      str << "<b>#{i}</b>&nbsp;&nbsp;"
+    else
+      str << %[<a href=page#{i}.html>#{i}</a>&nbsp;&nbsp;]
+    end
+  end
+  puts str + "<br>"
+end
+
+def paginate_posts
+  posts = @repo.all_posts(self)
+  posts.sort! {|a,b| cf_time(b.pubdate, a.pubdate) }
+  ppp = 10  # FIXME posts per page
+  pages = []
+  posts.each_slice(ppp).with_index do |group, i|
+    pages << group.map {|post| post_index_entry(post) }
+  end
+  pages.each.with_index do |page, i|
+    pagination_bar(page, pages.size, i+1)
+  end
+end
 
 end

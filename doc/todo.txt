@@ -1,0 +1,63 @@
+VERY SOON:
+----------
+- Fix post index and pagination
+  Fix history feature
+  Better error handling (edge cases, garbage input)
+  Explicit exceptions
+  More tests (what's missing?)
+x Improve container generation
+x Widget: Links
+  Widget: Pages
+  Header: banner
+  Header: SVG
+  Header: menu
+  Asset management
+  Well-defined API (Scriptorium::API) - with versioning
+  UI by API
+  UI by command line
+  UI by interaction (TUI)
+  Wizards: initial setup, add view, theming, widget setup, ...
+  Work on dependency tree? (user action triggers regeneration)
+  Theme components?
+  Single-page post for viewing in isolation
+  Permalinks
+
+
+SOONISH:
+--------
+  Widget: Featured posts
+  Improve livetext support
+  Deployment
+  Preview feature
+  Live view (browse) feature
+  UI by curses (RubyText)
+  Syntax coloring
+  reddit support
+  facebook support
+  x/twitter support
+  Docs: Project contributor level
+  Docs: Widget creator level
+  Docs: Livetext for Scriptorium
+
+  
+LATER:
+------
+  Atom/RSS support?
+  Widget: TagCloud
+  Widget: Calendar
+  Widget: Twitter? Instagram?
+  Ad support (footer? widget?)
+  Backup and versioning
+  Markdown support
+  Redirection if posts change?
+  Docs: User level (incl. basic Livetext, usage, theme creation)
+
+
+EVEN LATER:
+-----------
+  Widget: Search
+  Widget: Document library? News? Image gallery? POTD?
+  Like/dislike/etc.??
+  UI by web
+  AI assistant
+  

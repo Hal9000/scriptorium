@@ -17,12 +17,14 @@ def manual_setup
 end
 
 def examine(view)
-  index_path = @repo.root/:views/view.name/:output/"index.html"
-  index_path.sub!("./scriptorium-TEST", "127.0.0.1:8000")
-  puts "Generated front page located at: \n#{index_path}"
+  view = @repo.lookup_view(view)
+  index_url = "http://127.0.0.1:8000/views/#{view.name}/output/index.html"
+  puts "Generated front page located at: \n#{index_url}"
   puts "Press Enter to open the generated front page to inspect the result."
   STDIN.gets
-  system("open #{index_path}")
+  cmd = "open #{index_url}"
+  see("cmd = ", cmd)
+  system("open #{index_url}")
 
   puts "Press Enter to kill webrick"
   STDIN.gets
@@ -30,7 +32,7 @@ def examine(view)
   pid = line.split.first
   puts "line: #{line}"
   puts "pid: #{pid}"
-  pid2 = pid.to_i + 1
-  system("kill #{pid} #{pid2}")
+  # pid2 = pid.to_i + 1
+  system("kill #{pid}")  #  #{pid2}")
   puts "Killed\n "
 end

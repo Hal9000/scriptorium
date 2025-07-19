@@ -65,7 +65,9 @@ class Scriptorium::Repo
   def initialize(root)    # repo
     @root = root
     @predef = Scriptorium::StandardFiles.new
-    Scriptorium::Repo.class_eval { @root, @repo = root, self }
+    # Scriptorium::Repo.class_eval { @root, @repo = root, self }
+    self.class.instance_variable_set(:@root, root)
+    self.class.instance_variable_set(:@repo, self)  
     load_views
   end
 
@@ -85,7 +87,7 @@ class Scriptorium::Repo
   def lookup_view(target)
     return target if target.is_a?(Scriptorium::View)
     list = @views.select {|v| v.name == target }
-    raise CannotLookupView if list.empty?
+    raise CannotLookupView.new(target) if list.empty?
     raise MoreThanOneResult if list.size > 1
     return list[0]
   end
@@ -166,7 +168,11 @@ class Scriptorium::Repo
   def create_draft(title: nil, blurb: nil, views: nil, tags: nil, body: nil)
     ts = Time.now.strftime("%Y%m%d-%H%M%S")
     name = "#@root/drafts/#{ts}-draft.lt3"
+    # Whoa - what if different views have different themes??? FIXME 
+    # Maybe solution is as simple as: Initial post is not theme-dependent
     theme = @current_view.theme
+    views ||= @current_view.name   # initial_post wants a String!
+    views, tags = Array(views), Array(tags)
     id = incr_post_num
     initial = @predef.initial_post(num: id, title: title, blurb: blurb, 
                                    views: views, tags: tags, body: body)
@@ -259,7 +265,7 @@ class Scriptorium::Repo
 
   private def set_pubdate(vars)    # Not Post#set_pubdate 
     t = Time.now
-    vars[:"post.pubdate"] = t.strftime("%Y-%m-%d") 
+    vars[:"post.pubdate"] = t.strftime("%Y-%m-%d %H:%M:%S") 
     vars[:"post.pubdate.month"] = t.strftime("%B") 
     vars[:"post.pubdate.day"] = t.strftime("%d") 
     vars[:"post.pubdate.year"] = t.strftime("%Y") 

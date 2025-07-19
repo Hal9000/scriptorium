@@ -1,0 +1,119 @@
+Create new repo
+Edit global settings
+Create view
+Switch view
+
+List views
+List drafts
+List posts
+
+Create post
+Edit post
+Delete post
+
+Change view layout
+Change view settings
+Edit/switch post template
+Switch theme
+Clone theme
+
+Edit container: header left main right footer
+Generate view (force)
+
+Add widget
+
+Widget Links - add/remove link
+Widget Pages - add/remove page
+Widget FeaturedPost - add/remove post
+
+
+
+
+
+ChatGPT says:
+-------------
+Your list of user tasks looks well-structured and covers a broad range of actions typically needed for a blogging system. Below are some thoughts on each of the tasks, and areas where you might consider further clarification or improvement:
+
+Repository & View Creation
+Create new repo: Clear and self-explanatory. It’s important that users can create new repositories to isolate content and settings.
+
+Create view: Ensure that users can create and configure different views (for example, public vs private views, different themes).
+
+Post Management
+Create post: This task should ideally be tied to a template or format for the post, ensuring that the user can start from a predefined template or layout.
+
+Edit post: As expected, users should be able to edit any created post. It might be worth specifying if users will be able to see version history or rollbacks of posts (useful for editing purposes).
+
+Delete post: Deletion is critical. Ensure you have proper safeguards or a confirmation step before allowing the user to delete posts.
+
+View Layout & Settings
+Change view layout: This likely involves modifying structural elements (header, footer, sidebar) or the grid layout of the page. It might be good to define which elements of the layout can be modified and if you’re enabling a drag-and-drop functionality or allowing for JSON/YAML configurations.
+
+Change view settings: Be clear on what settings are being changed. For example, does this involve color themes, fonts, or content like metadata (title, description)?
+
+Edit container: header, left, main, right, footer: This task appears related to customization of different sections of a page. It’s useful for providing flexibility but might be complicated by the fact that users would need to understand the markup and structure of each container. Are you planning to offer a UI for this?
+
+View Generation
+Generate view (force): This should be well-explained, especially if it's referring to regenerating a view after changes to the layout or settings. Forcing generation is useful if there are caching mechanisms involved, but be clear on why a force generation is needed over a regular one.
+
+Widget Management
+Widgets are integral for adding functionality to views, and providing users control over them is crucial.
+
+Add widget: This is a good broad task, though it would be useful to specify what types of widgets (static, dynamic, or both) the system will support. Additionally, will widgets come with predefined templates, or can users create them from scratch?
+
+Specific Widget Tasks:
+
+Widget Links - add/remove link: Clear. You should define if users can customize the appearance of the links (e.g., adding custom icons, grouping, etc.). If there are external link features (e.g., open in a new tab), it could also be worth specifying those.
+
+Widget Pages - add/remove page: This is great for handling static pages. You might want to clarify if pages are full-blown articles or simple links, and how page hierarchy (e.g., parent-child relationships) might be handled.
+
+Widget FeaturedPost - add/remove post: This task will be important to highlight when users want to curate featured content. If posts can be "featured" or "unfeatured" from the widget, ensure there is some kind of flag in the post or content management system that tracks the post’s status.
+
+Additional Thoughts & Considerations:
+Permissions: Will users have the ability to assign permissions to different users or groups for these tasks? For instance, who can create posts, who can edit them, and who can delete them?
+
+Drafting Workflow: Will posts go through a draft, review, and publish process? How will users interact with drafts (e.g., save for later, publish directly, etc.)?
+
+Versioning: Will posts or views be versioned? Users might want to roll back to previous versions of a post or view. This can be a critical part of the editing experience.
+
+User Interface for Widgets: Will you have a visual interface for adding/removing widgets, or will this be a CLI or text-based approach? How easy will it be for non-technical users to interact with?
+
+Search and Filter Options: Users will likely need ways to search for posts, pages, or widgets by tags, categories, or metadata. Consider how the search/filter UI will integrate with the system.
+
+Possible Reorganization:
+Basic Repository & View Management
+Create new repo
+
+Create view
+
+Change view layout
+
+Change view settings
+
+Edit container (header, left, main, right, footer)
+
+Generate view (force)
+
+Post Management
+Create post
+
+Edit post
+
+Delete post
+
+Widgets
+Add widget
+
+Widget Links (add/remove link)
+
+Widget Pages (add/remove page)
+
+Widget FeaturedPost (add/remove post)
+
+By grouping tasks based on their roles (repository/view management, post management, widget management), this layout provides a clearer user flow.
+
+Conclusion:
+Your tentative list is solid but could benefit from more detail on the specific behavior of each task. For instance, “Generate view (force)” needs to be defined more clearly (what triggers the need for “force”?). Additionally, defining permissions, draft workflows, and version control will make this list more complete.
+
+Overall, the tasks seem reasonable for a blogging platform and cover essential functionality. Let me know if you'd like further refinement!
+

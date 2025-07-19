@@ -204,25 +204,30 @@ module TestHelpers
     refute content.include?("July 13"), "Expected July 13 not in post_index"
   end
 
-=begin
-  blog1   1 4 6 7 8 9 10
-  blog2   2 4 5 11 12
-  blog3   3 5 6 7 13
-  
-  1,  "2025-07-01"
-  2,  "2025-07-02"
-  3,  "2025-07-03"
-  4,  "2025-07-04"
-  5,  "2025-07-05"
-  6,  "2025-07-06"
-  7,  "2025-07-07"
-  8,  "2025-07-08"
-  9,  "2025-07-09"
-  10, "2025-07-10"
-  11, "2025-07-11"
-  12, "2025-07-12"
-  13, "2025-07-13"
+  def pseudoword
+    syllables = %w[tel mas re ko tem sil cro nim tes ran vel san tos le tor
+                   de del mac dor mor ma ril odo tre kon lan sa te ti do mu]
+    n = syllables.size
+    num = rand(1..3)
+    str = ""
+    num.times { str << syllables[rand(n)] }
+    str
+  end
 
-=end
+  def pseudowords(n, prefix = "")
+    arr = [prefix]
+    n.times { arr << pseudoword }
+    arr.join(" ")
+  end
+
+  def pseudoline
+    pseudowords(10) + "\n"
+  end
+
+  def pseudolines(n)
+    str = ""
+    n.times { str << pseudoline }
+    str
+  end
 
 end

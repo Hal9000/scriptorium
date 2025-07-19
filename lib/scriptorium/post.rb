@@ -40,7 +40,7 @@ class Scriptorium::Post
       raise TestModeOnly unless Scriptorium::Repo.testing
       yyyy, mm, dd = ymd.split("-")
       t = Time.new(yyyy.to_i, mm.to_i, dd.to_i)
-      meta["post.pubdate"] = t.strftime("%Y-%m-%d") 
+      meta["post.pubdate"] = t.strftime("%Y-%m-%d %H:%M:%S") 
       meta["post.pubdate.month"] = t.strftime("%B") 
       meta["post.pubdate.day"] = t.strftime("%e") 
       meta["post.pubdate.year"] = t.strftime("%Y") 

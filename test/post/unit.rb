@@ -44,7 +44,7 @@ class PostTest < Minitest::Test
 
   def test_post_pubdate
     pub = @post.pubdate
-    assert pub =~ /^\d{4}-\d{2}-\d{2}$/, "pubdate should be YYYY-MM-DD"
+    assert pub =~ /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/, "pubdate should be YYYY-MM-DD HH:MM:SS"
   end
 
   def test_post_slug
@@ -83,7 +83,9 @@ class PostTest < Minitest::Test
   def test_repo_post_reads_metadata
     post = @repo.post(1)
     assert_equal "Test Post", post.title
-    today = Time.now.strftime("%Y-%m-%d")
+    today = Time.now.strftime("%Y-%m-%d %H:%M:%S")
+    # NOTE: In theory, this can fail if the post is made in one second
+    # and the Time.now in the next second. So far, I haven't seen this.
     assert_equal today, post.pubdate
   end
   
