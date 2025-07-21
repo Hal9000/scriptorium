@@ -39,4 +39,9 @@ num = @repo.finish_draft(name2)
 
 @repo.generate_front_page("testview")   # Generate the front page
 
+instruct <<~EOS
+  Front page should have two posts.
+  Each should have a blurb.
+  Links should work (and back button to return).
+EOS
 examine("testview")

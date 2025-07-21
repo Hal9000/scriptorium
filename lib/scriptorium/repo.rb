@@ -29,12 +29,13 @@ class Scriptorium::Repo
     raise RepoDirAlreadyExists if Dir.exist?(@root)
     make_tree(parent, <<~EOS)
       #@root
-      ├── config/  # Global config files
-      ├── views/   # Views
-      ├── drafts/  # Draft posts (global)
-      ├── posts/   # Global generated posts (slug.html)
-      ├── assets/  # Images, etc.
-      └── themes/  # Themes
+      ├── config/       # Global config files
+      ├── views/        # Views
+      ├── drafts/       # Draft posts (global)
+      ├── posts/        # Global generated posts (slug.html)
+      ├── assets/       # Images, etc.
+      │   └── library/  # Common images, icons, etc.
+      └── themes/       # Themes
     EOS
 
     postnum_file = "#@root/config/last_post_num.txt"

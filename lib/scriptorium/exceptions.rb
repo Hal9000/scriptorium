@@ -10,4 +10,6 @@ module Scriptorium::Exceptions
   class ThemeFileNotFound       < Exception; end
   class LayoutHasUnknownTag     < Exception; end
   class LayoutHasDuplicateTags  < Exception; end
+  class AssetNotFound           < Exception; end
+  class NoGemPath               < Exception; end
 end

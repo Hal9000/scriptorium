@@ -344,7 +344,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert_file_exist?(repo.root/:views/:sample/:output/:posts/"#{d4(num)}-my-first-post.html")
   end
 
-  def test_read_commented_file
+  def test_023_read_commented_file
     # Setup: Create a temporary test config file
     test_file = "test_config.txt"
     File.open(test_file, "w") do |f|
@@ -369,4 +369,11 @@ class TestScriptoriumRepo < Minitest::Test
     File.delete(test_file)
   end
   
+  def test_024_get_asset_path
+    repo = create_test_repo
+    name = "back-icon.png"
+    result = get_asset_path(name)
+    assert result == "lib/scriptorium/dev_assets/#{name}", "Expected #{name} to be in dev_assets (got #{result})"
+    assert_raises(AssetNotFound) { get_asset_path("nonexistent.png") }
+  end
 end

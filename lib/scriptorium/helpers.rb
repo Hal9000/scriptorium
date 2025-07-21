@@ -172,5 +172,18 @@ module Scriptorium::Helpers
     t2 = Time.new(*t2)
     t1 <=> t2
   end
+
+  def get_asset_path(name)
+    if Scriptorium::Repo.testing
+      if File.exist?("lib/scriptorium/dev_assets/#{name}")
+        return "lib/scriptorium/dev_assets/#{name}"
+      else
+        raise Scriptorium::Exceptions::AssetNotFound, "#{name} not found in dev_assets"
+      end
+    else  # Production
+      raise Scriptorium::Exceptions::NoGemPath, "No gem path yet"
+      # return "#{Gem.loaded_specs['scriptorium'].full_gem_path}/lib/scriptorium/assets/#{asset_path}"
+    end
+  end
 end
 

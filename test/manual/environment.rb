@@ -16,6 +16,17 @@ def manual_setup
   end
 end
 
+def instruct(msg)
+  lines = msg.split("\n")
+  longest = lines.map {|line| line.length }.max
+  puts "  +" + "-" * (longest + 4) + "+"
+  lines.each do |line|
+    puts "  | #{line.ljust(longest + 2)} |"
+  end
+  puts "  +" + "-" * (longest + 4) + "+"
+  puts
+end
+
 def examine(view)
   view = @repo.lookup_view(view)
   index_url = "http://127.0.0.1:8000/views/#{view.name}/output/index.html"
