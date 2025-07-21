@@ -32,7 +32,7 @@ def examine(view)
   pid = line.split.first
   puts "line: #{line}"
   puts "pid: #{pid}"
-  # pid2 = pid.to_i + 1
-  system("kill #{pid}")  #  #{pid2}")
+  pid2 = pid.to_i + 1
+  system("kill #{pid} #{pid2}")
   puts "Killed\n "
 end

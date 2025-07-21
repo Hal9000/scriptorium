@@ -1,7 +1,7 @@
 VERY SOON:
 ----------
-- Fix post index and pagination
-  Fix history feature
+x Fix post index and pagination
+- Fix history feature
   Better error handling (edge cases, garbage input)
   Explicit exceptions
   More tests (what's missing?)

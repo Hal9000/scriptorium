@@ -274,12 +274,14 @@ write output:      write the result to output/panes/header.html
     args = sections["main"]
     return "" unless args
     html = "  <!-- Section: main (output) -->\n"
-    html << %[<div id="main" class="main" style="flex-grow: 1; padding: 10px; overflow-y: auto;">\n]
+    html << %[  <div id="main" class="main" style="flex-grow: 1; padding: 10px; overflow-y: auto; position: relative; display: flex; flex-direction: column;">]
+    # html << %[<div id="main" class="main" style="position: relative; display: flex; flex-direction: column;">\n]
     html << @predef.post_index_style
     if view_posts.empty?
       html << "  <h1>No posts yet!</h1>"
     else
-      html << post_index_array.join("\n")
+      paginate_posts
+      html << File.read(self.dir/:output/"post_index.html")
     end
     html << "</div> <!-- end main -->\n"
   end
@@ -304,173 +306,176 @@ write output:      write the result to output/panes/header.html
     entry
   end
 
-def post_index_array
-  posts = view_posts.sort {|a,b| cf_time(b.pubdate, a.pubdate) }
-  posts.map {|post| post_index_entry(post)}
-end
+  def post_index_array
+    posts = view_posts.sort {|a,b| cf_time(b.pubdate, a.pubdate) }
+    posts.map {|post| post_index_entry(post)}
+  end
 
-def view_posts
-  posts = []
-  @repo.all_posts(self).sort_by {|post| post.pubdate}
-end
+  def view_posts
+    posts = []
+    @repo.all_posts(self).sort_by {|post| post.pubdate}
+  end
 
-def generate_html_head(view = nil)
-  # FIXME - view does not yet override global
-  global_head = @root/:config/"global-head.txt"
-  view_head   = @dir/:config/"global-head.txt"
-  head_file = view ? view_head : global_head
-  which = view ? "view" : "global"
-  line1 = "<!-- head info from #{which} -->"
-  lines = read_commented_file(head_file)
-  content = "<head>\n#{line1}\n<title>#{@title}</title>\n"
-  lines.each do |line|
-    component, args = line.split(/\s+/, 2)
-    case component.downcase
-    when "charset"
-      @charset = args
-      content << %[<meta charset="#{args}">\n]
-    when "desc"
-      @desc = args
-      content << %[<meta name="description" content="#{args}">\n]
-    when "viewport"
-      @viewport = args
-      str = args.split.join(" ")
-      content << %[<meta name="viewport" content="#{str}">\n]
-    when "robots"
-      @robots = args
-      str = args.split.join(", ")  
-      content << %[<meta name="robots" content="#{str}">\n]
-    # when "javascript"
-    #   content << get_common_js(view)
-    when "bootstrap"
-      content << generate_bootstrap_css(view)
+  def generate_html_head(view = nil)
+    # FIXME - view does not yet override global
+    global_head = @root/:config/"global-head.txt"
+    view_head   = @dir/:config/"global-head.txt"
+    head_file = view ? view_head : global_head
+    which = view ? "view" : "global"
+    line1 = "<!-- head info from #{which} -->"
+    lines = read_commented_file(head_file)
+    content = "<head>\n#{line1}\n<title>#{@title}</title>\n"
+    lines.each do |line|
+      component, args = line.split(/\s+/, 2)
+      case component.downcase
+      when "charset"
+        @charset = args
+        content << %[<meta charset="#{args}">\n]
+      when "desc"
+        @desc = args
+        content << %[<meta name="description" content="#{args}">\n]
+      when "viewport"
+        @viewport = args
+        str = args.split.join(" ")
+        content << %[<meta name="viewport" content="#{str}">\n]
+      when "robots"
+        @robots = args
+        str = args.split.join(", ")  
+        content << %[<meta name="robots" content="#{str}">\n]
+      # when "javascript"
+      #   content << get_common_js(view)
+      when "bootstrap"
+        content << generate_bootstrap_css(view)
+      end
     end
+    content << "</head>\n"
+    content
   end
-  content << "</head>\n"
-  content
-end
 
-def get_common_js(view = nil)
-  global_js = @root/:config/"common.js"
-  view_js   = @dir/:config/"common.js"
-  js_file = view ? view_js : global_js
-  code = File.read(js_file)
-  return %[<script>#{code}</script>\n]
-end
+  def get_common_js(view = nil)
+    global_js = @root/:config/"common.js"
+    view_js   = @dir/:config/"common.js"
+    js_file = view ? view_js : global_js
+    code = File.read(js_file)
+    return %[<script>#{code}</script>\n]
+  end
 
-def generate_bootstrap_css(view = nil)
-  global_boot = @root/:config/"bootstrap_css.txt"
-  view_boot   = @dir/:config/"bootstrap_css.txt"
-  bs_file = view ? view_boot : global_boot
-  lines = read_commented_file(bs_file)
-  href = rel = integrity = crossorigin = nil
-  lines.each do |line|
-    component, args = line.split(/\s+/, 2)
-    case component.downcase
-    when "href"
-      href = args
-    when "rel"
-      rel = args
-    when "integrity"
-      integrity = args
-    when "crossorigin"
-      crossorigin = args
+  def generate_bootstrap_css(view = nil)
+    global_boot = @root/:config/"bootstrap_css.txt"
+    view_boot   = @dir/:config/"bootstrap_css.txt"
+    bs_file = view ? view_boot : global_boot
+    lines = read_commented_file(bs_file)
+    href = rel = integrity = crossorigin = nil
+    lines.each do |line|
+      component, args = line.split(/\s+/, 2)
+      case component.downcase
+      when "href"
+        href = args
+      when "rel"
+        rel = args
+      when "integrity"
+        integrity = args
+      when "crossorigin"
+        crossorigin = args
+      end
     end
+    # content = %[<link rel="#{rel}" href="#{href}" integrity="#{integrity}" crossorigin="#{crossorigin}">\n]
+    content = %[<link rel="stylesheet" href="#{href}"></link>\n]
+    content
   end
-  # content = %[<link rel="#{rel}" href="#{href}" integrity="#{integrity}" crossorigin="#{crossorigin}">\n]
-  content = %[<link rel="stylesheet" href="#{href}"></link>\n]
-  content
-end
 
-def generate_bootstrap_js(view = nil)
-  global_boot = @root/:config/"bootstrap_js.txt"
-  view_boot   = @dir/:config/"bootstrap_js.txt"
-  bs_file = view ? view_boot : global_boot
-  lines = read_commented_file(bs_file)
-  src = integrity = crossorigin = nil
-  lines.each do |line|
-    component, args = line.split(/\s+/, 2)
-    case component.downcase
-    when "src"
-      src = args
-    when "rel"
-      rel = args
-    when "integrity"
-      integrity = args
-    when "crossorigin"
-      crossorigin = args
+  def generate_bootstrap_js(view = nil)
+    global_boot = @root/:config/"bootstrap_js.txt"
+    view_boot   = @dir/:config/"bootstrap_js.txt"
+    bs_file = view ? view_boot : global_boot
+    lines = read_commented_file(bs_file)
+    src = integrity = crossorigin = nil
+    lines.each do |line|
+      component, args = line.split(/\s+/, 2)
+      case component.downcase
+      when "src"
+        src = args
+      when "rel"
+        rel = args
+      when "integrity"
+        integrity = args
+      when "crossorigin"
+        crossorigin = args
+      end
     end
+    # content = %[<script src="#{src}" integrity="#{integrity}" crossorigin="#{crossorigin}"></script>\n]
+    content = %[<script src="#{src}"></script>\n]
+    content
   end
-  # content = %[<script src="#{src}" integrity="#{integrity}" crossorigin="#{crossorigin}"></script>\n]
-  content = %[<script src="#{src}"></script>\n]
-  content
-end
 
-def build_containers
-  sections = read_layout
-  content = ""
-  content << build_header(sections)
-  content << "<!-- before left/main/right -->\n"
-  content << "<div style='display: flex; flex-grow: 1; height: 100%; flex-direction: row;'>"
-  content << build_left(sections)
-  content << build_main(sections)
-  content << build_right(sections)
-  content << "</div> <!-- after left/main/right --></div>\n"
-  content << build_footer(sections)
-  content
-end
+  def build_containers
+    sections = read_layout
+    content = ""
+    content << build_header(sections)
+    content << "<!-- before left/main/right -->\n"
+    content << "<div style='display: flex; flex-grow: 1; height: 100%; flex-direction: row;'>"
+    content << build_left(sections)
+    content << build_main(sections)
+    content << build_right(sections)
+    content << "</div> <!-- after left/main/right --></div>\n"
+    content << build_footer(sections)
+    content
+  end
 
-def generate_front_page
-  layout_file = @dir/:config/"layout.txt"
-  index_file  = @dir/:output/"index.html"
-  panes       = @dir/:output/:panes
-
-  html_head = generate_html_head(true)
-
-  content = build_containers
-
-  common = get_common_js
-  boot   = generate_bootstrap_js
-  full_html = <<~HTML
-    <!DOCTYPE html>
-    #{html_head}
-    <html style="height: 100%; margin: 0;">
-      <body style="height: 100%; margin: 0; display: flex; flex-direction: column;">
-        #{content.strip}
-        #{boot.strip}
-        #{common.strip}
-      </body>
-    </html>
-  HTML
-
-  full_html = ::HtmlBeautifier.beautify(full_html)
-  write_file(index_file, full_html)
-  write_file("/tmp/full.html", full_html) # debugging
-end
-
-def pagination_bar(group, count, nth)  # nth group of total 'count'
-  str = "Pages: "
-  1.upto(count) do |i|
-    if i == nth  # 0-based
-      str << "<b>#{i}</b>&nbsp;&nbsp;"
-    else
-      str << %[<a href=page#{i}.html>#{i}</a>&nbsp;&nbsp;]
+  def pagination_bar(group, count, nth)  # nth group of total 'count'
+    str = %[<div style="align-self: flex-end;">Pages: ]
+    1.upto(count) do |i|
+      if i == nth  # 0-based
+        str << "<b>[#{i}]</b>&nbsp;&nbsp;"
+      else
+        str << %[<a href="javascript:void(0)" style="text-decoration: none;"
+                  onclick="load_main('page#{i}.html')">#{i}&nbsp;&nbsp;</a>]
+      end
     end
+    str << "<br><br></div>"
   end
-  puts str + "<br>"
-end
 
-def paginate_posts
-  posts = @repo.all_posts(self)
-  posts.sort! {|a,b| cf_time(b.pubdate, a.pubdate) }
-  ppp = 10  # FIXME posts per page
-  pages = []
-  posts.each_slice(ppp).with_index do |group, i|
-    pages << group.map {|post| post_index_entry(post) }
+  def paginate_posts
+    posts = @repo.all_posts(self)
+    posts.sort! {|a,b| cf_time(b.pubdate, a.pubdate) }
+    ppp = 10  # FIXME posts per page
+    pages = []
+    posts.each_slice(ppp).with_index do |group, i|
+      pages << group.map {|post| post_index_entry(post) }
+    end
+    out = self.dir/:output
+    pages.each.with_index do |page, i|
+      bar = pagination_bar(page, pages.size, i+1)
+      page << %[<div style="position: absolute; bottom: 0; width: 100%;">#{bar}</div>]
+      write_file(out/"page#{i+1}.html", page)
+    end
+    FileUtils.ln(out/"page1.html", out/"post_index.html")
   end
-  pages.each.with_index do |page, i|
-    pagination_bar(page, pages.size, i+1)
+
+  def generate_front_page
+    layout_file = @dir/:config/"layout.txt"
+    index_file  = @dir/:output/"index.html"
+    panes       = @dir/:output/:panes
+
+    html_head = generate_html_head(true)
+    content = build_containers
+    common = get_common_js
+    boot   = generate_bootstrap_js
+    full_html = <<~HTML
+      <!DOCTYPE html>
+      #{html_head}
+      <html style="height: 100%; margin: 0;">
+        <body style="height: 100%; margin: 0; display: flex; flex-direction: column;">
+          #{content.strip}
+          #{boot.strip}
+          #{common.strip}
+        </body>
+      </html>
+    HTML
+
+    full_html = ::HtmlBeautifier.beautify(full_html)
+    write_file(index_file, full_html)
+    write_file("/tmp/full.html", full_html) # debugging
   end
-end
 
 end
