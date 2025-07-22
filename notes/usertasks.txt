@@ -6,6 +6,8 @@ Switch view
 List views
 List drafts
 List posts
+List widgets available
+List widgets used
 
 Create post
 Edit post
@@ -16,6 +18,7 @@ Change view settings
 Edit/switch post template
 Switch theme
 Clone theme
+Edit theme
 
 Edit container: header left main right footer
 Generate view (force)

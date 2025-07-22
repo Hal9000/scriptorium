@@ -57,8 +57,8 @@ But overall, the process is robust and well thought-out. No major changes needed
       secs << sec
     end
     directives = %w[header footer left right main]
-    secs.each {|sec| raise LayoutHasUnknownTag unless directives.include?(sec)}
-    directives.each {|sec| raise LayoutHasDuplicateTags if lines.count(sec) > 1}
+    secs.each {|sec| raise LayoutHasUnknownTag(sec) unless directives.include?(sec)}
+    directives.each {|sec| raise LayoutHasDuplicateTags(sec) if lines.count(sec) > 1}
     containers
   end
 
@@ -100,8 +100,8 @@ But overall, the process is robust and well thought-out. No major changes needed
   def theme(change = nil)
     return @theme if change.nil?
     # what if it doesn't exist?
-    raise ThemeDoesntExist unless Dir.exist?(@root/:themes/change)
-    @theme = change
+    raise ThemeDoesntExist(change) unless Dir.exist?(@root/:themes/change)
+    @theme = change 
     change_config(@dir/"config.txt", "theme", change)
     apply_theme(change)
   end

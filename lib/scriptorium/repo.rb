@@ -26,7 +26,7 @@ class Scriptorium::Repo
     parent = testing ? "." : home
     file = testing ? "scriptorium-TEST" : ".scriptorium"
     @root = parent/file
-    raise RepoDirAlreadyExists if Dir.exist?(@root)
+    raise RepoDirAlreadyExists(@root) if Dir.exist?(@root)
     make_tree(parent, <<~EOS)
       #@root
       ├── config/       # Global config files
@@ -88,8 +88,8 @@ class Scriptorium::Repo
   def lookup_view(target)
     return target if target.is_a?(Scriptorium::View)
     list = @views.select {|v| v.name == target }
-    raise CannotLookupView.new(target) if list.empty?
-    raise MoreThanOneResult if list.size > 1
+    raise CannotLookupView(target) if list.empty?
+    raise MoreThanOneResult(target) if list.size > 1
     return list[0]
   end
 
@@ -104,7 +104,7 @@ class Scriptorium::Repo
   end
 
   def create_view(name, title, subtitle = "", theme: "standard")
-    raise ViewDirAlreadyExists if view_exist?(name)
+    raise ViewDirAlreadyExists(name) if view_exist?(name)
     make_tree(@root/:views, <<~EOS)
     #{name}/
     ├── config/              # View-specific config files (FIXME rename?)
@@ -244,11 +244,8 @@ class Scriptorium::Repo
 
   def generate_post(num)
     draft = @root/:posts/d4(num)/"draft.lt3"
-    live = Livetext.customize(call: ".nopara") # vars??
-    input = @predef.scriptor
-    input << File.read(draft)
-    write_file("/tmp/test.lt3", input)
-    text = live.xform_file("/tmp/test.lt3")
+    live = Livetext.customize(mix: "lt3scriptor", call: ".nopara") # vars??
+    text = live.xform_file(draft)
     vars, body = live.vars.vars, live.body
     views = vars[:"post.views"].strip.split(/\s+/)
     views.each do |view|  

@@ -29,4 +29,12 @@ see_file data
 
 view.generate_front_page
 
+instruct <<~EOS
+  Again, 13 posts in three views
+  blog3 will have only header, main, right
+  It will have the Links widget
+  Click the + to expand
+  Links open in new tabs
+EOS
+
 examine view

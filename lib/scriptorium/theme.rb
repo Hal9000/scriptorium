@@ -62,9 +62,9 @@ class Scriptorium::Theme
     when found.size > 1
       # puts "Search for #{portion} found"
       # found.each {|x| puts "  #{x}"}
-      raise MoreThanOneResult
+      raise MoreThanOneResult(portion)
     else 
-      raise ThemeFileNotFound
+      raise ThemeFileNotFound(portion)
     end
   end
 

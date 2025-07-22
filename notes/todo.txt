@@ -4,9 +4,10 @@ x Fix post index and pagination
 x Improve container generation
 x Widget: Links
 x Fix history feature
+x Explicit exceptions
+x Improve livetext support
 - Gem asset handling
 - Repo asset management
-  Explicit exceptions
   Widget: Pages
   Header: banner
   Header: SVG
@@ -29,7 +30,6 @@ SOONISH:
   Single-page post for viewing in isolation
   Permalinks
   Widget: Featured posts
-  Improve livetext support
   Deployment
   Preview feature
   Live view (browse) feature

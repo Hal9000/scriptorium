@@ -178,10 +178,10 @@ module Scriptorium::Helpers
       if File.exist?("lib/scriptorium/dev_assets/#{name}")
         return "lib/scriptorium/dev_assets/#{name}"
       else
-        raise Scriptorium::Exceptions::AssetNotFound, "#{name} not found in dev_assets"
+        raise AssetNotFound(name)
       end
     else  # Production
-      raise Scriptorium::Exceptions::NoGemPath, "No gem path yet"
+      raise NoGemPath
       # return "#{Gem.loaded_specs['scriptorium'].full_gem_path}/lib/scriptorium/assets/#{asset_path}"
     end
   end
