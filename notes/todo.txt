@@ -6,22 +6,22 @@ x Widget: Links
 x Fix history feature
 x Explicit exceptions
 x Improve livetext support
-- Gem asset handling
-- Repo asset management
+x Header: SVG
+x Better error handling (edge cases, garbage input)
+x More tests (what's missing?)
   Widget: Pages
+  Widget: Featured posts
   Header: banner
-  Header: SVG
   Header: menu
   Widget configuration (selection)
   Well-defined API (Scriptorium::API) - with versioning
+- Gem asset handling
+- Repo asset management
   UI by API
   UI by command line
   UI by interaction (TUI)
   Wizards: initial setup, add view, theming, widget setup, ...
-  Work on dependency tree? (user action triggers regeneration)
-  Find dead code
-  Better error handling (edge cases, garbage input)
-  More tests (what's missing?)
+  Sample blog additions
 
 
 SOONISH:
@@ -29,7 +29,8 @@ SOONISH:
   Theme components?
   Single-page post for viewing in isolation
   Permalinks
-  Widget: Featured posts
+  Work on dependency tree? (user action triggers regeneration)
+  Find dead code
   Deployment
   Preview feature
   Live view (browse) feature

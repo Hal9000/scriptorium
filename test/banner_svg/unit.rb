@@ -122,13 +122,10 @@ class BannerSVGTest < Minitest::Test
   end
 
   def test_handle_xy_unknown_which
-    original_title_xy = @banner.instance_variable_get(:@title_xy)
-    original_subtitle_xy = @banner.instance_variable_get(:@subtitle_xy)
-    
-    @banner.handle_xy("unknown", "30%", "40%")
-    
-    assert_nil @banner.instance_variable_get(:@title_xy)
-    assert_nil @banner.instance_variable_get(:@subtitle_xy)
+    # Should raise an error for invalid "which" value
+    assert_raises(CannotHandleXYInvalidWhich) do
+      @banner.handle_xy("unknown", "30%", "40%")
+    end
   end
 
   # Test handle_background method
@@ -361,8 +358,8 @@ class BannerSVGTest < Minitest::Test
     File.write("config.txt", "back.color\nback.linear\nback.radial")
     @banner.parse_header_svg
     # Should handle gracefully without raising exceptions
-    # Note: Currently returns nil for malformed lines, which may need fixing
-    assert_nil @banner.instance_variable_get(:@background)
+    # Malformed lines should be ignored, leaving default values
+    assert_equal "#fff", @banner.instance_variable_get(:@background)
   end
 
   def test_handle_scale_with_invalid_numeric_values
@@ -373,10 +370,10 @@ class BannerSVGTest < Minitest::Test
   end
 
   def test_handle_aspect_with_invalid_numeric_values
-    @banner.handle_aspect("invalid")
-    # Should handle gracefully - keep default value
-    # Note: Currently returns 0.0 for invalid input, which may need fixing
-    assert_equal 0.0, @banner.instance_variable_get(:@aspect)
+    # Should raise an error for invalid numeric value
+    assert_raises(CannotHandleAspectInvalidValue) do
+      @banner.handle_aspect("invalid")
+    end
   end
 
   def test_handle_xy_with_insufficient_arguments
@@ -719,9 +716,10 @@ class BannerSVGTest < Minitest::Test
     assert_equal "end", @banner.instance_variable_get(:@title_text_anchor)
     assert_equal "end", @banner.instance_variable_get(:@subtitle_text_anchor)
     
-    @banner.handle_text_align("invalid")
-    assert_equal "start", @banner.instance_variable_get(:@title_text_anchor)  # defaults to start
-    assert_equal "start", @banner.instance_variable_get(:@subtitle_text_anchor)  # defaults to start
+    # Should raise an error for invalid direction
+    assert_raises(CannotHandleAlignInvalidDirection) do
+      @banner.handle_text_align("invalid")
+    end
   end
 
   def test_svg_output_text_anchor

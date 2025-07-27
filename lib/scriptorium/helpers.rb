@@ -17,6 +17,7 @@ Symbol.include(PathSep)
 ## Helpers
 
 module Scriptorium::Helpers
+  include Scriptorium::Exceptions
   def getvars(file)
     lines = read_file(file, lines: true)
     lines.map! {|line| line.sub(/ #.*$/, "").strip }
@@ -40,13 +41,9 @@ module Scriptorium::Helpers
 
   def write_file(file, *lines)
     # Input validation
-    if file.nil?
-      raise "Cannot write file: file path is nil"
-    end
+    raise CannotWriteFilePathNil if file.nil?
     
-    if file.to_s.strip.empty?
-      raise "Cannot write file: file path is empty or whitespace-only"
-    end
+    raise CannotWriteFilePathEmpty if file.to_s.strip.empty?
     
     # Ensure parent directory exists
     FileUtils.mkdir_p(File.dirname(file))
@@ -57,25 +54,21 @@ module Scriptorium::Helpers
         lines.each {|line| f.puts line }
       end
     rescue Errno::ENOSPC => e
-      raise "Cannot write file #{file}: disk full (#{e.message})"
+      raise CannotWriteFileDiskFull(file, e.message)
     rescue Errno::EACCES => e
-      raise "Cannot write file #{file}: permission denied (#{e.message})"
+      raise CannotWriteFilePermissionDenied(file, e.message)
     rescue Errno::ENOENT => e
-      raise "Cannot write file #{file}: directory not found (#{e.message})"
+      raise CannotWriteFileDirectoryNotFound(file, e.message)
     rescue => e
-      raise "Cannot write file #{file}: #{e.message}"
+      raise CannotWriteFileError(file, e.message)
     end
   end
 
   def make_dir(dir, create_parents = false)
     # Input validation
-    if dir.nil?
-      raise "Cannot create directory: directory path is nil"
-    end
+    raise CannotCreateDirectoryPathNil if dir.nil?
     
-    if dir.to_s.strip.empty?
-      raise "Cannot create directory: directory path is empty or whitespace-only"
-    end
+    raise CannotCreateDirectoryPathEmpty if dir.to_s.strip.empty?
     
     # Create parent directories if requested
     if create_parents
@@ -85,36 +78,32 @@ module Scriptorium::Helpers
       begin
         Dir.mkdir(dir)
       rescue Errno::ENOSPC => e
-        raise "Cannot create directory #{dir}: disk full (#{e.message})"
+        raise CannotCreateDirectoryDiskFull(dir, e.message)
       rescue Errno::EACCES => e
-        raise "Cannot create directory #{dir}: permission denied (#{e.message})"
+        raise CannotCreateDirectoryPermissionDenied(dir, e.message)
       rescue Errno::ENOENT => e
-        raise "Cannot create directory #{dir}: parent directory not found (#{e.message})"
+        raise CannotCreateDirectoryParentNotFound(dir, e.message)
       rescue Errno::EEXIST => e
         # Directory already exists - this is usually not an error
         # But we could make this configurable if needed
       rescue => e
-        raise "Cannot create directory #{dir}: #{e.message}"
+        raise CannotCreateDirectoryError(dir, e.message)
       end
     end
   end
 
   def system!(command, description = nil)
     # Input validation
-    if command.nil?
-      raise "Cannot execute command: command is nil"
-    end
+    raise CannotExecuteCommandNil if command.nil?
     
-    if command.to_s.strip.empty?
-      raise "Cannot execute command: command is empty or whitespace-only"
-    end
+    raise CannotExecuteCommandEmpty if command.to_s.strip.empty?
     
     # Execute command with error handling
     success = system(command)
     
     unless success
       desc = description ? " (#{description})" : ""
-      raise "Command failed#{desc}: #{command}"
+      raise CommandFailedWithDesc(desc, command)
     end
     
     success
@@ -122,13 +111,9 @@ module Scriptorium::Helpers
 
   def need(type, path, exception_class = RuntimeError)
     # Input validation
-    if path.nil?
-      raise "Cannot require #{type}: path is nil"
-    end
+    raise CannotRequirePathNil(type) if path.nil?
     
-    if path.to_s.strip.empty?
-      raise "Cannot require #{type}: path is empty or whitespace-only"
-    end
+    raise CannotRequirePathEmpty(type) if path.to_s.strip.empty?
     
     # Check if file/directory exists
     exists = case type
@@ -137,20 +122,15 @@ module Scriptorium::Helpers
              when :dir
                Dir.exist?(path)
              else
-               raise "Invalid type: #{type} (must be :file or :dir)"
+               raise InvalidType(type)
              end
     
     unless exists
-      if exception_class == RuntimeError
-        raise "Required #{type} not found: #{path}"
-      else
-        # Exception class - try to call it as a method first, then as constructor
-        if exception_class.respond_to?(:call)
-          raise exception_class.call(path)
-        else
-          raise exception_class.new(path)
-        end
-      end
+      raise RequiredFileNotFound(type, path) if exception_class == RuntimeError
+      
+      # Exception class - try to call it as a method first, then as constructor
+      raise exception_class.call(path) if exception_class.respond_to?(:call)
+      raise exception_class.new(path)
     end
     
     path
@@ -158,13 +138,9 @@ module Scriptorium::Helpers
 
   def read_file(file, options = {})
     # Input validation
-    if file.nil?
-      raise "Cannot read file: file path is nil"
-    end
+    raise CannotReadFilePathNil if file.nil?
     
-    if file.to_s.strip.empty?
-      raise "Cannot read file: file path is empty or whitespace-only"
-    end
+    raise CannotReadFilePathEmpty if file.to_s.strip.empty?
     
     # Handle missing file with fallback
     if options[:missing_fallback]
@@ -188,12 +164,12 @@ module Scriptorium::Helpers
       if options[:missing_fallback]
         return options[:missing_fallback]
       else
-        raise "Cannot read file #{file}: file not found (#{e.message})"
+        raise CannotReadFileNotFound(file, e.message)
       end
     rescue Errno::EACCES => e
-      raise "Cannot read file #{file}: permission denied (#{e.message})"
+      raise CannotReadFilePermissionDenied(file, e.message)
     rescue => e
-      raise "Cannot read file #{file}: #{e.message}"
+      raise CannotReadFileError(file, e.message)
     end
   end
 

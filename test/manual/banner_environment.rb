@@ -1,3 +1,6 @@
+# Set up environment for banner tests
+ENV['PATH'] = "#{ENV['HOME']}/.rbenv/shims:#{ENV['PATH']}"
+
 # Minimal environment for banner tests
 require 'fileutils'
 require 'find'
@@ -70,12 +73,12 @@ def create_banner_post(title, subtitle, config_content, description, view_name, 
   File.write("banner-tests/config.txt", config_content)
   
   # Create banner AFTER config is written, in the correct directory
-  # Force reload to ensure we get the latest version
-  load File.expand_path('../../../lib/scriptorium/header_svg.rb', __FILE__)
+  # Load the main Scriptorium library
+  require_relative '../../lib/scriptorium'
   
   # Change to the test directory so the banner can find config.txt
   Dir.chdir("banner-tests") do
-    banner = BannerSVG.new(title, subtitle)
+    banner = Scriptorium::BannerSVG.new(title, subtitle)
     
     # Parse config first to set instance variables
     banner.parse_header_svg
@@ -86,6 +89,7 @@ def create_banner_post(title, subtitle, config_content, description, view_name, 
     svg_output = banner.generate_svg
     
     # Use provided post_num or generate one
+    Dir.mkdir("posts") unless Dir.exist?("posts")
     post_num ||= Dir.glob("posts/*").length + 1
     post_dir = "posts/#{post_num.to_s.rjust(4, '0')}"
     Dir.mkdir(post_dir) unless Dir.exist?(post_dir)
@@ -126,7 +130,7 @@ def create_banner_post(title, subtitle, config_content, description, view_name, 
     
     # Add to view for index generation
     view_dir = "views/#{view_name}/output/posts"
-    Dir.mkdir(view_dir) unless Dir.exist?(view_dir)
+    FileUtils.mkdir_p(view_dir) unless Dir.exist?(view_dir)
     File.write("#{view_dir}/#{post_num.to_s.rjust(4, '0')}.html", post_html)
     
     # Return post info for navigation links
@@ -183,5 +187,6 @@ def generate_front_page(view_name)
     </html>
   HTML
   
+  FileUtils.mkdir_p("scriptorium-TEST/views/#{view_name}/output")
   File.write("scriptorium-TEST/views/#{view_name}/output/index.html", index_html)
 end 

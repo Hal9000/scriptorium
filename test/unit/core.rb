@@ -107,7 +107,7 @@ class TestReadWrite < Minitest::Test
 
   def test_system_basic_functionality
     # Test a simple command that should succeed
-    result = system!("echo 'test'", "basic echo test")
+    result = system!("echo 'test' > /dev/null", "basic echo test")
     assert result
   end
 

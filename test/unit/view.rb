@@ -28,43 +28,43 @@ class TestScriptoriumView < Minitest::Test
   end
 
   def test_initialize_with_nil_name
-    assert_raises(RuntimeError) do
+    assert_raises(CannotCreateViewNameNil) do
       Scriptorium::View.new(nil, "Title", "Subtitle")
     end
   end
 
   def test_initialize_with_empty_name
-    assert_raises(RuntimeError) do
+    assert_raises(CannotCreateViewNameEmpty) do
       Scriptorium::View.new("", "Title", "Subtitle")
     end
   end
 
   def test_initialize_with_whitespace_name
-    assert_raises(RuntimeError) do
+    assert_raises(CannotCreateViewNameEmpty) do
       Scriptorium::View.new("   ", "Title", "Subtitle")
     end
   end
 
   def test_initialize_with_invalid_name_format
-    assert_raises(RuntimeError) do
+    assert_raises(CannotCreateViewNameInvalid) do
       Scriptorium::View.new("invalid@name", "Title", "Subtitle")
     end
   end
 
   def test_initialize_with_nil_title
-    assert_raises(RuntimeError) do
+    assert_raises(CannotCreateViewTitleNil) do
       Scriptorium::View.new("valid_name", nil, "Subtitle")
     end
   end
 
   def test_initialize_with_empty_title
-    assert_raises(RuntimeError) do
+    assert_raises(CannotCreateViewTitleEmpty) do
       Scriptorium::View.new("valid_name", "", "Subtitle")
     end
   end
 
   def test_initialize_with_whitespace_title
-    assert_raises(RuntimeError) do
+    assert_raises(CannotCreateViewTitleEmpty) do
       Scriptorium::View.new("valid_name", "   ", "Subtitle")
     end
   end
@@ -89,25 +89,25 @@ class TestScriptoriumView < Minitest::Test
   def test_build_widgets_with_valid_widget
     # This test would need actual widget classes to be available
     # For now, we'll test the validation logic
-    assert_raises(RuntimeError) do
+    assert_raises(CannotBuildWidgetsArgNil) do
       @view.build_widgets(nil)
     end
   end
 
   def test_build_widgets_with_empty_arg
-    assert_raises(RuntimeError) do
+    assert_raises(CannotBuildWidgetsArgEmpty) do
       @view.build_widgets("")
     end
   end
 
   def test_build_widgets_with_whitespace_arg
-    assert_raises(RuntimeError) do
+    assert_raises(CannotBuildWidgetsArgEmpty) do
       @view.build_widgets("   ")
     end
   end
 
   def test_build_widgets_with_invalid_widget_name
-    assert_raises(RuntimeError) do
+    assert_raises(CannotBuildWidgetNameInvalid) do
       @view.build_widgets("invalid@widget")
     end
   end

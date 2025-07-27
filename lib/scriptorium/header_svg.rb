@@ -1,5 +1,6 @@
 class Scriptorium::BannerSVG
   include Scriptorium::Helpers
+  include Scriptorium::Exceptions
   
     def initialize(title, subtitle)
       @title, @subtitle = title, subtitle
@@ -40,16 +41,39 @@ class Scriptorium::BannerSVG
     end
   
     def handle_background(*args)
+      validate_background_args(args)
       @background = args.first
     end
 
+    private def validate_background_args(args)
+      raise CannotHandleBackgroundNoArgs if args.nil? || args.empty?
+      
+      raise CannotHandleBackgroundFirstArgNil if args.first.nil?
+      
+      raise CannotHandleBackgroundFirstArgEmpty if args.first.to_s.strip.empty?
+    end
+
     def handle_linear_gradient(*args)
+      validate_linear_gradient_args(args)
       @gradient_start_color = args[0]
       @gradient_end_color = args[1]
       @gradient_direction = args[2] || "lr"
     end
+
+    private def validate_linear_gradient_args(args)
+      raise CannotHandleLinearGradientNoArgs if args.nil? || args.empty?
+      
+      raise CannotHandleLinearGradientStartColorNil if args[0].nil? || args[0].to_s.strip.empty?
+      
+      # Validate all provided arguments (up to 3: start_color, end_color, direction)
+      args.each_with_index do |arg, index|
+        next if arg.nil? # Allow nil for optional arguments
+        raise CannotHandleLinearGradientArgEmpty(index + 1) if arg.to_s.strip.empty?
+      end
+    end
   
     def handle_radial_gradient(*args)
+      validate_radial_gradient_args(args)
       @radial_start_color = args[0]
       @radial_end_color = args[1]
       # Optional: cx, cy, r
@@ -60,14 +84,48 @@ class Scriptorium::BannerSVG
       @radial_ar = args[5] ? args[5].to_f : nil
     end
 
+    private def validate_radial_gradient_args(args)
+      raise CannotHandleRadialGradientNoArgs if args.nil? || args.empty?
+      
+      raise CannotHandleRadialGradientStartColorNil if args[0].nil? || args[0].to_s.strip.empty?
+      
+      # Validate all provided arguments (up to 6: start_color, end_color, cx, cy, r, aspect_ratio)
+      args.each_with_index do |arg, index|
+        next if arg.nil? # Allow nil for optional arguments
+        raise CannotHandleRadialGradientArgEmpty(index + 1) if arg.to_s.strip.empty?
+      end
+    end
+
     # Image backgrounds: Users should provide images matching the banner's aspect ratio.
     # SVG will crop/stretch if aspect ratios don't match (use preserveAspectRatio="xMidYMid slice" for cropping).
     def handle_image_background(*args)
+      validate_image_background_args(args)
       @image_background = args[0]
+    end
+
+    private def validate_image_background_args(args)
+      raise CannotHandleImageBackgroundNoArgs if args.nil? || args.empty?
+      
+      raise CannotHandleImageBackgroundFirstArgNil if args[0].nil?
+      
+      raise CannotHandleImageBackgroundFirstArgEmpty if args[0].to_s.strip.empty?
     end
     
     def handle_aspect(*args)
+      validate_aspect_args(args)
       @aspect = args.first.to_f
+    end
+
+    private def validate_aspect_args(args)
+      raise CannotHandleAspectNoArgs if args.nil? || args.empty?
+      
+      raise CannotHandleAspectFirstArgNil if args.first.nil?
+      
+      raise CannotHandleAspectFirstArgEmpty if args.first.to_s.strip.empty?
+      
+      unless args.first.to_s.match?(/^\d+(\.\d+)?$/)
+        raise CannotHandleAspectInvalidValue(args.first)
+      end
     end
 
     def handle_preserve_aspect(*args)
@@ -75,18 +133,40 @@ class Scriptorium::BannerSVG
     end
 
     def handle_font(*args)
+      validate_font_args(args)
       @font = args.join(" ")
+    end
+
+    private def validate_font_args(args)
+      raise CannotHandleFontArgsNil if args.nil?
+      
+      # Font arguments are optional - empty args array is allowed
+      # But if any arguments are provided, they must be valid
+      args.each_with_index do |arg, index|
+        raise CannotHandleFontArgNil(index + 1) if arg.nil?
+        
+        raise CannotHandleFontArgEmpty(index + 1) if arg.to_s.strip.empty?
+      end
     end
     
     def handle_text_color(*args)
+      validate_text_color_args(args)
       @text_color = args.first
+    end
+
+    private def validate_text_color_args(args)
+      raise CannotHandleTextColorNoArgs if args.nil? || args.empty?
+      
+      raise CannotHandleTextColorFirstArgNil if args.first.nil?
+      
+      raise CannotHandleTextColorFirstArgEmpty if args.first.to_s.strip.empty?
     end
     
     def handle_text_align(*args)
       direction = args[0]
       # Apply to both title and subtitle
-      handle_title_align(direction)
-      handle_subtitle_align(direction)
+      handle_title_align(*args)
+      handle_subtitle_align(*args)
     end
     
     def handle_scale(which, *args)
@@ -116,6 +196,8 @@ class Scriptorium::BannerSVG
     end
     
     def handle_xy(which, *args)
+      validate_xy_which(which)
+      
       if which == "title"
         @title_xy = args
         @title_xy_set = true
@@ -125,7 +207,35 @@ class Scriptorium::BannerSVG
       end
     end
 
+    private def validate_xy_which(which)
+      raise CannotHandleXYWhichNil if which.nil?
+      
+      raise CannotHandleXYWhichEmpty if which.to_s.strip.empty?
+      
+      unless ["title", "subtitle"].include?(which)
+        raise CannotHandleXYInvalidWhich(which)
+      end
+    end
+
+      private def validate_align_args(args)
+    raise CannotHandleAlignNoArgs if args.nil? || args.empty?
+    
+    raise CannotHandleAlignDirectionNil if args[0].nil? || args[0].to_s.strip.empty?
+      
+      unless ["left", "center", "right"].include?(args[0])
+        raise CannotHandleAlignInvalidDirection(args[0])
+      end
+      
+      # Validate optional x and y arguments if provided
+      args.each_with_index do |arg, index|
+        next if index == 0 # Skip direction (already validated)
+        next if arg.nil? # Allow nil for optional arguments
+        raise CannotHandleAlignArgEmpty(index + 1) if arg.to_s.strip.empty?
+      end
+    end
+
   def handle_title_align(*args)
+    validate_align_args(args)
     direction = args[0]
     x = args[1]
     y = args[2]
@@ -161,6 +271,7 @@ class Scriptorium::BannerSVG
   end
 
   def handle_subtitle_align(*args)
+    validate_align_args(args)
     direction = args[0]
     x = args[1]
     y = args[2]
@@ -192,11 +303,21 @@ class Scriptorium::BannerSVG
   end
 
   def handle_title_color(*args)
+    validate_color_args(args)
     @title_color = args.first
   end
 
   def handle_subtitle_color(*args)
+    validate_color_args(args)
     @subtitle_color = args.first
+  end
+
+  private def validate_color_args(args)
+    raise CannotHandleColorNoArgs if args.nil? || args.empty?
+    
+    raise CannotHandleColorFirstArgNil if args.first.nil?
+    
+    raise CannotHandleColorFirstArgEmpty if args.first.to_s.strip.empty?
   end
   
     def parse_header_svg
@@ -234,7 +355,11 @@ class Scriptorium::BannerSVG
 
       cfg.each_pair do |key, args|
         handler = handlers[key]
-        handler.call(args) if handler
+        if handler
+          # Skip malformed lines (empty args) to avoid validation errors
+          next if args.nil? || args.empty?
+          handler.call(args)
+        end
       end
       
       # Check for align/xy conflicts and warn

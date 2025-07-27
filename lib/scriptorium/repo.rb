@@ -89,19 +89,18 @@ class Scriptorium::Repo
   def lookup_view(target)
     return target if target.is_a?(Scriptorium::View)
     
-    # Input validation
-    if target.nil?
-      raise "Cannot lookup view: target is nil"
-    end
-    
-    if target.to_s.strip.empty?
-      raise "Cannot lookup view: target is empty or whitespace-only"
-    end
+    validate_view_target(target)
     
     list = @views.select {|v| v.name == target }
     raise CannotLookupView(target) if list.empty?
     raise MoreThanOneResult(target) if list.size > 1
     return list[0]
+  end
+
+  private def validate_view_target(target)
+    raise CannotLookupViewTargetNil if target.nil?
+    
+    raise CannotLookupViewTargetEmpty if target.to_s.strip.empty?
   end
 
   def view(change = nil)   # get/set current view
@@ -115,26 +114,12 @@ class Scriptorium::Repo
   end
 
   def create_view(name, title, subtitle = "", theme: "standard")
-    # Input validation
-    if name.nil?
-      raise "Cannot create view: name is nil"
-    end
-    
-    if name.to_s.strip.empty?
-      raise "Cannot create view: name is empty or whitespace-only"
-    end
-    
-    if title.nil?
-      raise "Cannot create view: title is nil"
-    end
-    
-    if title.to_s.strip.empty?
-      raise "Cannot create view: title is empty or whitespace-only"
-    end
+    validate_view_name(name)
+    validate_view_title(title)
     
     # Validate name format (only allow alphanumeric, hyphen, underscore)
     unless name.match?(/^[a-zA-Z0-9_-]+$/)
-      raise "Cannot create view: invalid name '#{name}' (only alphanumeric, hyphen, and underscore allowed)"
+      raise CannotCreateViewNameInvalid(name)
     end
     
     raise ViewDirAlreadyExists(name) if view_exist?(name)
@@ -319,28 +304,38 @@ class Scriptorium::Repo
   end
 
   def post(id)
-    # Input validation
-    if id.nil?
-      raise "Cannot get post: id is nil"
-    end
-    
-    if id.to_s.strip.empty?
-      raise "Cannot get post: id is empty or whitespace-only"
-    end
-    
-    # Validate id format (should be numeric)
-    unless id.to_s.match?(/^\d+$/)
-      raise "Cannot get post: invalid id '#{id}' (must be numeric)"
-    end
+    validate_post_id(id)
     
     meta = @root/:posts/d4(id)/"meta.txt"
     return nil unless File.exist?(meta)
     Scriptorium::Post.new(self, id)
   end
+
+  private def validate_post_id(id)
+    raise CannotGetPostIdNil if id.nil?
+    
+    raise CannotGetPostIdEmpty if id.to_s.strip.empty?
+    
+    unless id.to_s.match?(/^\d+$/)
+      raise CannotGetPostIdInvalid(id)
+    end
+  end
   
   def generate_front_page(view)
     view = lookup_view(view)
     view.generate_front_page
+  end
+
+  private def validate_view_name(name)
+    raise CannotCreateViewNameNil if name.nil?
+    
+    raise CannotCreateViewNameEmpty if name.to_s.strip.empty?
+  end
+
+  private def validate_view_title(title)
+    raise CannotCreateViewTitleNil if title.nil?
+    
+    raise CannotCreateViewTitleEmpty if title.to_s.strip.empty?
   end
     
 end

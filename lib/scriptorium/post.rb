@@ -5,26 +5,25 @@ class Scriptorium::Post
     attr_reader :repo, :num
   
     def initialize(repo, num)
-      # Input validation
-      if repo.nil?
-        raise "Cannot create post: repo is nil"
-      end
-      
-      if num.nil?
-        raise "Cannot create post: num is nil"
-      end
-      
-      if num.to_s.strip.empty?
-        raise "Cannot create post: num is empty or whitespace-only"
-      end
-      
-      # Validate num format (should be numeric)
-      unless num.to_s.match?(/^\d+$/)
-        raise "Cannot create post: invalid num '#{num}' (must be numeric)"
-      end
+      validate_repo(repo)
+      validate_num(num)
       
       @repo = repo
       @num = num.to_s.rjust(4, "0")
+    end
+
+    private def validate_repo(repo)
+      raise CannotCreatePostRepoNil if repo.nil?
+    end
+
+    private def validate_num(num)
+      raise CannotCreatePostNumNil if num.nil?
+      
+      raise CannotCreatePostNumEmpty if num.to_s.strip.empty?
+      
+      unless num.to_s.match?(/^\d+$/)
+        raise CannotCreatePostNumInvalid(num)
+      end
     end
   
     def dir
@@ -62,19 +61,7 @@ class Scriptorium::Post
     def set_pubdate(ymd)
       raise TestModeOnly unless Scriptorium::Repo.testing
       
-      # Input validation
-      if ymd.nil?
-        raise "Cannot set pubdate: ymd is nil"
-      end
-      
-      if ymd.to_s.strip.empty?
-        raise "Cannot set pubdate: ymd is empty or whitespace-only"
-      end
-      
-      # Validate date format (YYYY-MM-DD)
-      unless ymd.to_s.match?(/^\d{4}-\d{2}-\d{2}$/)
-        raise "Cannot set pubdate: invalid date format '#{ymd}' (expected YYYY-MM-DD)"
-      end
+      validate_date(ymd)
       
       yyyy, mm, dd = ymd.split("-")
       t = Time.new(yyyy.to_i, mm.to_i, dd.to_i)
@@ -83,6 +70,16 @@ class Scriptorium::Post
       meta["post.pubdate.day"] = t.strftime("%e") 
       meta["post.pubdate.year"] = t.strftime("%Y") 
       save_metadata   # Because it changed
+    end
+
+    private def validate_date(date)
+      raise CannotSetPubdateYmdNil if date.nil?
+      
+      raise CannotSetPubdateYmdEmpty if date.to_s.strip.empty?
+      
+      unless date.to_s.match?(/^\d{4}-\d{2}-\d{2}$/)
+        raise CannotSetPubdateInvalidFormat(date)
+      end
     end
 
     def set_pubdate_with_seconds(ymd, seconds)

@@ -29,37 +29,37 @@ class TestScriptoriumPost < Minitest::Test
   end
 
   def test_initialize_with_nil_repo
-    assert_raises(RuntimeError) do
+    assert_raises(CannotCreatePostRepoNil) do
       Scriptorium::Post.new(nil, 1)
     end
   end
 
   def test_initialize_with_nil_num
-    assert_raises(RuntimeError) do
+    assert_raises(CannotCreatePostNumNil) do
       Scriptorium::Post.new(@repo, nil)
     end
   end
 
   def test_initialize_with_empty_num
-    assert_raises(RuntimeError) do
+    assert_raises(CannotCreatePostNumEmpty) do
       Scriptorium::Post.new(@repo, "")
     end
   end
 
   def test_initialize_with_whitespace_num
-    assert_raises(RuntimeError) do
+    assert_raises(CannotCreatePostNumEmpty) do
       Scriptorium::Post.new(@repo, "   ")
     end
   end
 
   def test_initialize_with_invalid_num_format
-    assert_raises(RuntimeError) do
+    assert_raises(CannotCreatePostNumInvalid) do
       Scriptorium::Post.new(@repo, "abc")
     end
   end
 
   def test_initialize_with_negative_num
-    assert_raises(RuntimeError) do
+    assert_raises(CannotCreatePostNumInvalid) do
       Scriptorium::Post.new(@repo, -1)
     end
   end
@@ -167,21 +167,21 @@ class TestScriptoriumPost < Minitest::Test
 
   def test_set_pubdate_with_nil_date
     Scriptorium::Repo.testing = true
-    assert_raises(RuntimeError) do
+    assert_raises(CannotSetPubdateYmdNil) do
       @post.set_pubdate(nil)
     end
   end
 
   def test_set_pubdate_with_empty_date
     Scriptorium::Repo.testing = true
-    assert_raises(RuntimeError) do
+    assert_raises(CannotSetPubdateYmdEmpty) do
       @post.set_pubdate("")
     end
   end
 
   def test_set_pubdate_with_invalid_format
     Scriptorium::Repo.testing = true
-    assert_raises(RuntimeError) do
+    assert_raises(CannotSetPubdateInvalidFormat) do
       @post.set_pubdate("2023/01/15")
     end
   end

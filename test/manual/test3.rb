@@ -1,8 +1,17 @@
 require_relative './environment'
 
+# Handle --automated flag at the end
+automated_mode = ARGV.last == '--automated'
+if automated_mode
+  ARGV.pop  # Remove --automated from ARGV
+end
+
 abort "Need a view name (blog1 blog2 blog3)" unless ARGV.size == 1
 
 view = ARGV.first
+
+# Restore --automated flag for the examine function
+ARGV << '--automated' if automated_mode
 
 manual_setup
 

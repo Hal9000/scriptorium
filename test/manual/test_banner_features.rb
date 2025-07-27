@@ -173,9 +173,9 @@ tests.each_with_index do |test, index|
   File.write(test_dir/"config.txt", test[:config])
   
   # Create banner
-  load File.expand_path('../../../lib/scriptorium/header_svg.rb', __FILE__)
+  require_relative '../../lib/scriptorium'
   Dir.chdir(test_dir) do
-    banner = BannerSVG.new(test[:title], test[:subtitle])
+    banner = Scriptorium::BannerSVG.new(test[:title], test[:subtitle])
     banner.parse_header_svg
     svg_output = banner.generate_svg
     

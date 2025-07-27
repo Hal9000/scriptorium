@@ -12,27 +12,8 @@ class Scriptorium::View
   end
 
   def initialize(name, title, subtitle = "", theme = "standard")
-    # Input validation
-    if name.nil?
-      raise "Cannot create view: name is nil"
-    end
-    
-    if name.to_s.strip.empty?
-      raise "Cannot create view: name is empty or whitespace-only"
-    end
-    
-    if title.nil?
-      raise "Cannot create view: title is nil"
-    end
-    
-    if title.to_s.strip.empty?
-      raise "Cannot create view: title is empty or whitespace-only"
-    end
-    
-    # Validate name format (only allow alphanumeric, hyphen, underscore)
-    unless name.match?(/^[a-zA-Z0-9_-]+$/)
-      raise "Cannot create view: invalid name '#{name}' (only alphanumeric, hyphen, and underscore allowed)"
-    end
+    validate_name(name)
+    validate_title(title)
     
     @name, @title, @subtitle, @theme = name, title, subtitle, theme
     @root = Scriptorium::Repo.root
@@ -43,6 +24,22 @@ class Scriptorium::View
 
   def inspect
     "<View: #@name #{@title.inspect} theme: #@theme>"
+  end
+
+  private def validate_name(name)
+    raise CannotCreateViewNameNil if name.nil?
+    
+    raise CannotCreateViewNameEmpty if name.to_s.strip.empty?
+    
+    unless name.match?(/^[a-zA-Z0-9_-]+$/)
+      raise CannotCreateViewNameInvalid(name)
+    end
+  end
+
+  private def validate_title(title)
+    raise CannotCreateViewTitleNil if title.nil?
+    
+    raise CannotCreateViewTitleEmpty if title.to_s.strip.empty?
   end
 
 =begin
@@ -242,7 +239,7 @@ write output:      write the result to output/panes/header.html
     begin
       write_file(output, temp_txt)
     rescue Errno::EACCES, Errno::ENOSPC => e
-      raise "Section output error: #{output} (section: #{section}) - #{e.message}"
+      raise SectionOutputError(output, section, e.message)
     end
     
     html = read_file(output)
@@ -313,27 +310,12 @@ write output:      write the result to output/panes/header.html
   end
   
   def build_widgets(arg)
-    # Input validation
-    if arg.nil?
-      raise "Cannot build widgets: argument is nil"
-    end
-    
-    if arg.to_s.strip.empty?
-      raise "Cannot build widgets: argument is empty or whitespace-only"
-    end
+    validate_widget_arg(arg)
     
     widgets = arg.split
     content = ""
     widgets.each do |widget|
-      # Validate widget name
-      if widget.nil? || widget.strip.empty?
-        raise "Cannot build widget: widget name is nil or empty"
-      end
-      
-      # Validate widget name format (only allow alphanumeric and underscore)
-      unless widget.match?(/^[a-zA-Z0-9_]+$/)
-        raise "Cannot build widget: invalid widget name '#{widget}' (only alphanumeric and underscore allowed)"
-      end
+      validate_widget_name(widget)
       
       widget_class = eval("Scriptorium::Widget::#{widget.capitalize}")
       obj = widget_class.new(@repo, self)
@@ -341,6 +323,20 @@ write output:      write the result to output/panes/header.html
       content << obj.card
     end
     content
+  end
+
+  private def validate_widget_arg(arg)
+    raise CannotBuildWidgetsArgNil if arg.nil?
+    
+    raise CannotBuildWidgetsArgEmpty if arg.to_s.strip.empty?
+  end
+
+  private def validate_widget_name(name)
+    raise CannotBuildWidgetNameNil if name.nil? || name.strip.empty?
+    
+    unless name.match?(/^[a-zA-Z0-9_]+$/)
+      raise CannotBuildWidgetNameInvalid(name)
+    end
   end
 
   ###
@@ -584,7 +580,7 @@ write output:      write the result to output/panes/header.html
     begin
       write_file(index_file, full_html)
     rescue Errno::ENOSPC, Errno::EACCES => e
-      raise "Failed to write front page: #{e.message}"
+      raise FailedToWriteFrontPage(e.message)
     end
 
     # Write debug file (optional, don't fail if it doesn't work)
