@@ -1,0 +1,9 @@
+cp 4
+Can't create blog repo: '/private/tmp/.blogs' - wrong number of arguments (given 0, expected 1)
+/Users/Hal/.rbenv/versions/3.0.0/lib/ruby/gems/3.0.0/gems/runeblog-0.3.29/lib/runeblog.rb:168:in `initialize'
+/Users/Hal/.rbenv/versions/3.0.0/lib/ruby/gems/3.0.0/gems/runeblog-0.3.29/lib/runeblog.rb:117:in `new'
+/Users/Hal/.rbenv/versions/3.0.0/lib/ruby/gems/3.0.0/gems/runeblog-0.3.29/lib/runeblog.rb:117:in `create_new_blog_repo'
+/Users/Hal/.rbenv/versions/3.0.0/lib/ruby/gems/3.0.0/gems/runeblog-0.3.29/bin/blog:197:in `create_new_repo?'
+/Users/Hal/.rbenv/versions/3.0.0/lib/ruby/gems/3.0.0/gems/runeblog-0.3.29/bin/blog:242:in `<top (required)>'
+/Users/Hal/.rbenv/versions/3.0.0/bin/blog:23:in `load'
+/Users/Hal/.rbenv/versions/3.0.0/bin/blog:23:in `<main>'

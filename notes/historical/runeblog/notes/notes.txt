@@ -1,0 +1,69 @@
+templates...
+------------
+To post: 
+  - ask title
+  - multiselect views
+  - multiselect tags?
+
+config command (?)
+--------------
+edit .blogs/config? view/publish
+edit view/templates/*
+ssh keys??
+
+
+Creating a view:
+----------------
+*Ideally: enter deployment info up front
+Copy default files over (header, trailer, template)
+These "should" have vars referring to server/etc. (for Back/Home)
+Can't deploy with deployment info
+What about rebuild??
+Make a View class?
+
+
+Work flow: Make a post, publish it
+----------
+
+Publishing involves:
+  - process text
+  - push into views
+  - link into blog history
+  - scp to server (call that deploy now?)
+
+
+features:
+  - youtube
+  - gist
+  - wikipedia?
+  - render inset quote as graphics?
+
+Logic flow
+----------
+
+Post
+----
+Create a blog post
+Process it
+Link it
+Upload to server
+
+Edit (name)
+----
+Edit
+Process
+Redeploy
+
+Delete (name)
+------
+Mark deleted
+Relink
+Redeploy
+
+
+Issues:
+-------
+Leftover junk files?
+How form slug?
+How delete files?
+How embed images, links, etc.?

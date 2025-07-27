@@ -1,0 +1,91 @@
+
+.def dropcap
+  # Bad form: adds another HEAD
+  text = _data
+  _out <<-HTML
+<head>
+<style>
+\.mydrop {
+  color: #444444;
+  float: left;
+  text-align: top;
+# font-family: Verdana;
+  font-size: 35px;
+  line-height: 35px;
+# padding-top: 0px;
+  padding-right: 8px;
+  padding-left: 3px;
+}
+</style>
+</head>
+HTML
+  _out " "
+  letter = text[0]
+  remain = text[1..-1]
+  _out %[<div class='mydrop'>#{letter}</div>]
+  _out %[<div style="padding-top: 1px">#{remain}]
+.end
+
+.def inset
+  lines = _body
+  box = ""
+  output = []
+  lines.each do |line| 
+    line = line
+    case line[0]
+      when "/"  # Only into inset
+        line[0] = ' '
+        box << line
+        line.replace(" ")
+      when "|"  # Into inset and body
+        line[0] = ' '
+        box << line
+        output << line
+    else  # Only into body
+      output << line 
+    end
+#   _passthru(line)
+  end
+  lr = _args.first
+  wide = _args[1] || "25"
+  0.upto(3) {|i| _passthru output[i] }
+  4.upto(output.length-1) {|i| _passthru output[i] }
+  _passthru "<div style='float:#{lr}; width: #{wide}%; padding:8px; padding-right:12px'>"   # ; font-family:verdana'>"
+  _passthru '<b><i>'
+  _passthru box
+  _passthru '</i></b></div>'
+  _optional_blank_line
+.end
+
+<h2>This is my title</h2>
+
+.dropcap It's been quite
+a while since I was there. They say it was torn down
+while I wasn't looking. Never actually tagged anything there (or anywhere else for that matter).
+But I'm just rambling here. I was born a rambling man, as the song said. Or as the other song
+said, I was born under a wandering star.
+
+This fake entry is a long one so as to demonstrate both drop-caps
+(above) and an inset quote. Blah blah blah. Lorem ipsum dolor and
+a partridge in a pear tree.
+
+Wherever you go, there you are. Last night I saw upon the stair
+a little man who was not there. He wasn't there again today; I
+wish, I wish he'd go away.
+
+.inset left 20
+As far as we know, our computer has never had an undetected error.
+But that is what they all say. How do you know you're not dreaming
+right now? When you see a butterfly, think of Chuang Tzu.
+|On a clean disk, you can seek forever.
+And never let it be denied that pobbles are happier without their
+toes. And may your snark never be a boojum.
+.end
+
+Contact light. Houston, this is Tranquility Base. The Eagle has
+landed. That's one small step for (a) man, one giant leap for 
+mankind.
+
+Pity this busy monster, manunkind, not. Pity rather... Listen:
+There's a hell of a universe next door; let's go.
+

@@ -19,13 +19,13 @@ class Scriptorium::Repo
     Dir.exist?(dir)
   end
 
-  def self.create(testing = false)
-    Scriptorium::Repo.testing = testing
+  def self.create(testpath = nil)
+    Scriptorium::Repo.testing = testpath
     home = ENV['HOME']
     @predef = Scriptorium::StandardFiles.new
-    @root = testing ? "scriptorium-TEST" : "#{home}/.scriptorium"
-    parent = testing ? "." : home
-    file = testing ? "test/scriptorium-TEST" : ".scriptorium"
+    @root = testpath || "#{home}/.scriptorium"
+    parent = testpath ? "." : home
+    file = testpath || ".scriptorium"
     @root = parent/file
     raise self.RepoDirAlreadyExists(@root) if Dir.exist?(@root)
     make_tree(parent, <<~EOS)
@@ -80,7 +80,13 @@ class Scriptorium::Repo
     cview_file = @root/:config/"currentview.txt"
     @current_view = nil
     if File.exist?(cview_file)
-      @current_view = read_file(cview_file).chomp
+      view_name = read_file(cview_file).chomp
+      begin
+        @current_view = lookup_view(view_name)
+      rescue => e
+        # If the saved view doesn't exist, just leave current_view as nil
+        # It will be set when a view is created or selected
+      end
     end
   end
 
@@ -252,8 +258,8 @@ class Scriptorium::Repo
     write_file("/tmp"/slug)  # for debugging
   end
 
-  def create_post(title: nil, views: nil, tags: nil, body: nil)
-    name = create_draft(title: title, views: views, tags: tags, body: body)
+  def create_post(title: nil, views: nil, tags: nil, body: nil, blurb: nil)
+    name = create_draft(title: title, views: views, tags: tags, body: body, blurb: blurb)
     num = finish_draft(name)
     generate_post(num)
     self.post(num)  # Return the Post object

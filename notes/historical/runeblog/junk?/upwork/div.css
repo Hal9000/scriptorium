@@ -1,0 +1,63 @@
+.TopBanner, .SideBar, .Main { border: 1px solid; }
+
+.VerticalSpace, .HorizontalSpace { border: 0px; float:  left; }
+
+.VerticalSpace { height: 7px; width:  99%; }
+.Vert2 { height: 7px; }
+
+.HorizontalSpace { height: 5px; width=100%;}  #  width: 4%; }
+.Hori2 { width: 14%;  height: 120px; }
+
+.Left { float: left }
+.Right { float: right }
+
+###
+
+.Bounding
+{
+  height: 880px;
+  width:  100%;
+  float:  top;
+}
+
+
+.TopBanner
+{
+  display: flex;
+  height: 120px;
+  width:  100%;
+  float:  top;
+}
+
+.SideBar
+{
+  height: 660px;
+  width:  24%;
+  float:  left;
+}
+
+.SideBar1
+{
+  height: 100px;
+  float:  top;
+  background-color: lightgreen;
+  padding: 5px;
+}
+
+.SideBar2
+{
+  height: 100px;
+  float:  top;
+  background-color: pink;
+  padding: 5px;
+}
+
+.Main
+{
+  height: 650px;
+  width:  74%;
+  float:  right;
+  padding: 5px;
+  background-color: lightgray;
+}
+

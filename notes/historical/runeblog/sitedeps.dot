@@ -1,0 +1,21 @@
+digraph blog_dependencies {
+  frontpage -> blog_generate
+  frontpage -> blog_index
+  
+  frontpage -> banner
+  frontpage -> sidebar
+  frontpage -> recent
+
+  banner    -> banner_body
+  banner    -> navbar_data
+
+  sidebar   -> widgets_used
+  recent    -> recent_posts
+  recent    -> post_entry
+
+  any_widget -> widget_data
+
+  any_post  -> post_generate
+  any_post  -> post_index
+}
+

@@ -1,0 +1,378 @@
+#!/Users/Hal/.rbenv/versions/3.2.3/bin/ruby
+
+require_relative "../lib/scriptorium"
+require 'readline'
+
+# Main entry point for Scriptorium TUI
+class ScriptoriumTUI
+  include Scriptorium::Exceptions
+  include Scriptorium::Helpers
+
+  def initialize
+    @repo = nil
+    @testing = false
+    setup_readline
+  end
+
+  def run
+    puts "=== Scriptorium TUI ==="
+    puts "Type 'help' for commands, 'quit' to exit"
+    puts
+
+    # Auto-discovery: check for existing repo
+    discover_repo
+
+    # Main REPL loop
+    mainloop
+  end
+
+  private
+
+  def setup_readline
+    # Set up tab completion
+    Readline.completion_proc = proc do |input|
+      completions = []
+      
+      # Split input to get command and arguments
+      parts = input.split(/\s+/)
+      command = parts[0]&.downcase
+      args = parts[1..-1] || []
+      
+      if args.empty?
+        # Complete command names
+        commands = %w[view change list create version help quit cv lsv v h q]
+        completions = commands.select { |cmd| cmd.start_with?(command || "") }
+      elsif command == "change" || command == "cv"
+        # Complete view names
+        if @repo
+          view_names = @repo.views.map(&:name)
+          completions = view_names.select { |name| name.start_with?(args.last || "") }
+        end
+      elsif command == "list" && args.length == 1 && args[0] == "views"
+        # Complete "list views" command
+        completions = []
+      elsif command == "create" && args.length == 1 && args[0] == "view"
+        # Suggest common view names for create view
+        suggestions = %w[blog personal work tech travel]
+        completions = suggestions
+      end
+      
+      completions
+    end
+  end
+
+  def discover_repo
+    if Dir.exist?("scriptorium-TEST")
+              # Check if this is an interactive TTY session
+        if STDIN.tty?
+          # Interactive session - use a separate repo
+          tty_repo_path = "scriptorium-TEST-tty"
+          if Dir.exist?(tty_repo_path)
+            puts "Found existing interactive test repository: #{tty_repo_path}"
+            @testing = true
+            @repo = Scriptorium::Repo.open(tty_repo_path)
+            puts "Loaded interactive test repository"
+          else
+            puts "Found existing test repository: scriptorium-TEST"
+            puts "Creating interactive test repository: #{tty_repo_path}"
+            @testing = true
+            @repo = Scriptorium::Repo.create(tty_repo_path)
+            puts "Created interactive test repository"
+          end
+        else
+          # Automated test session
+          puts "Found existing test repository: scriptorium-TEST"
+          @testing = true
+          @repo = Scriptorium::Repo.open("scriptorium-TEST")
+          puts "Loaded test repository"
+        end
+    elsif Dir.exist?(".scriptorium")
+      puts "Found existing repository: .scriptorium"
+      home = ENV['HOME']
+      @repo = Scriptorium::Repo.open("#{home}/.scriptorium")
+      puts "Loaded repository"
+    else
+      puts "No repository found."
+      if ask_yes_no("Create a new test repository?")
+        create_test_repo
+      else
+        puts "Exiting. Create a repository first or run in a directory with one."
+        exit 0
+      end
+    end
+    puts
+  end
+
+  def create_test_repo
+    puts "Creating test repository..."
+    @testing = true
+    @repo = Scriptorium::Repo.create("scriptorium-TEST")
+    puts "Test repository created successfully!"
+  end
+
+  def mainloop
+    loop do
+      begin
+        current_view = @repo.current_view
+        current_view_name = current_view&.name || "no-view"
+        prompt = "[#{current_view_name}] "
+        
+        # Use regular gets for automated tests, Readline for interactive
+        if STDIN.tty?
+          input = Readline.readline(prompt, true)
+        else
+          print prompt
+          input = gets&.chomp&.strip
+        end
+
+        break if input.nil? || input.downcase == "quit" || input.downcase == "q"
+
+        next if input.empty?
+
+        execute_command(input)
+      rescue Interrupt
+        puts "\nUse 'quit' to exit"
+      rescue => e
+        puts "Error: #{e.message}"
+        puts e.backtrace.first if @testing
+      end
+    end
+
+    puts
+    puts "  Goodbye!"
+    puts
+  end
+
+  def execute_command(input)
+    parts = input.split(/\s+/, 2)
+    cmd = parts[0].downcase
+    args = parts[1] || ""
+
+    # Handle multi-word commands first
+    if cmd == "list" && args.start_with?("views")
+      list_views
+    elsif cmd == "list" && args.start_with?("posts")
+      list_posts
+    elsif cmd == "list" && args.start_with?("drafts")
+      list_drafts
+    elsif cmd == "change" && args.start_with?("view")
+      change_view(args)
+    elsif cmd == "create" && args.start_with?("view")
+      create_view(args)
+    else
+      # Handle single-word commands
+      case cmd
+      when "help", "h"
+        show_help
+      when "view"
+        show_current_view
+      when "cv"
+        change_view(args)
+      when "lsv"
+        list_views
+      when "lsp"
+        list_posts
+      when "lsd"
+        list_drafts
+      when "version", "v"
+        show_version
+      when "quit", "q"
+        exit 0
+      else
+        puts
+        puts "  Unknown command: #{cmd}. Type 'help' for available commands."
+        puts
+      end
+    end
+  end
+
+  def show_help
+    puts
+    puts <<~HELP
+      Available commands:
+      
+      View Management:
+        view                   - Show current view
+        change view <name>     (cv) - Switch to a view
+        list views             (lsv) - List all views
+        create view [<name> <title>] - Create a new view
+      
+      Content:
+        list posts             (lsp) - List posts in current view
+        list drafts            (lsd) - List all drafts
+      
+      Other:
+        version                (v)  - Show version
+        help                   (h)  - Show this help
+        quit                   (q)  - Exit
+    HELP
+    puts
+  end
+
+  def show_current_view
+    current_view = @repo.current_view
+    current_view_name = current_view&.name || "none"
+    puts
+    puts "  Current view: #{current_view_name}"
+    puts
+  end
+
+  def change_view(args)
+    # Handle "change view <name>" format
+    if args.start_with?("view ")
+      view_name = args[5..-1].strip  # Remove "view " prefix
+    else
+      view_name = args.strip
+    end
+    
+    if view_name.empty?
+      puts
+      puts "  Usage: change view <name>"
+      puts
+      return
+    end
+
+    view = @repo.lookup_view(view_name)
+    @repo.view(view_name)
+    puts
+    puts "  Switched to view '#{view_name}'"
+    puts
+  rescue => e
+    puts
+    puts "  View '#{view_name}' not found"
+    puts
+  end
+
+  def create_view(args)
+    # Handle "create view" format - prompt for all parameters
+    if args == "view" || args.start_with?("view ")
+      # Remove "view " prefix if present, otherwise args is just "view"
+      view_args = args == "view" ? "" : args[5..-1]
+      
+      if view_args.strip.empty?
+        # Interactive mode - prompt for all parameters
+        print "  Enter view name: "
+        name = gets&.chomp&.strip
+        return if name.nil? || name.empty?
+        
+        print "  Enter view title: "
+        title = gets&.chomp&.strip
+        return if title.nil? || title.empty?
+        
+        print "  Enter subtitle (optional): "
+        subtitle = gets&.chomp&.strip
+        subtitle = nil if subtitle.empty?
+        
+        # Create view with all parameters
+        @repo.create_view(name, title, subtitle, theme: "standard")
+        puts
+        puts "  Created view '#{name}' with title '#{title}'"
+        puts "  Switched to view '#{name}'"
+        puts
+      else
+        # Legacy mode - still support "create view <name> <title>"
+        parts = view_args.split(/\s+/, 2)
+        if parts.length < 2
+          puts
+          puts "  Usage: create view [<name> <title>]"
+          puts
+          return
+        end
+
+        name, title = parts
+        
+        # Prompt for subtitle
+        print "  Enter subtitle (optional): "
+        subtitle = gets&.chomp&.strip
+        subtitle = nil if subtitle.empty?
+        
+        # Create view with all parameters
+        @repo.create_view(name, title, subtitle, theme: "standard")
+        puts
+        puts "  Created view '#{name}' with title '#{title}'"
+        puts "  Switched to view '#{name}'"
+        puts
+      end
+    else
+      puts
+      puts "  Usage: create view [<name> <title>]"
+      puts
+    end
+  end
+
+  def show_version
+    puts
+    puts "  Scriptorium #{Scriptorium::VERSION}"
+    puts
+  end
+
+  def list_views
+    puts
+    views = @repo.views
+    if views.empty?
+      puts "  No views found"
+    else
+      current_view = @repo.current_view
+      current_view_name = current_view&.name
+      
+      views.each do |view|
+        current = view.name == current_view_name ? "*" : " "
+        puts "    #{current} #{view.name}  #{view.title}"
+      end
+    end
+    puts
+  end
+
+  def ask_yes_no(question)
+    print "#{question} (y/n): "
+    response = gets&.chomp&.downcase
+    response == "y" || response == "yes"
+  end
+
+  def list_posts
+    current_view = @repo.current_view
+    if current_view.nil?
+      puts
+      puts "  No current view selected"
+      puts
+      return
+    end
+
+    posts = @repo.all_posts(current_view)
+    
+    puts
+    if posts.empty?
+      puts "  No posts found in view '#{current_view.name}'"
+    else
+      puts "  Posts in view '#{current_view.name}':"
+      posts.each do |post|
+        puts "    #{post.title}"
+      end
+    end
+    puts
+  end
+
+  def list_drafts
+    drafts_dir = @repo.root/:drafts
+    return unless Dir.exist?(drafts_dir)
+    
+    draft_files = Dir.glob("#{drafts_dir}/*-draft.lt3")
+    
+    puts
+    if draft_files.empty?
+      puts "  No drafts found"
+    else
+      puts "  Drafts:"
+      draft_files.each do |file|
+        filename = File.basename(file)
+        puts "    #{filename}"
+      end
+    end
+    puts
+  end
+end
+
+# Run the TUI if this file is executed directly
+if __FILE__ == $0
+  ScriptoriumTUI.new.run
+end 

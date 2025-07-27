@@ -1,0 +1,25 @@
+. --------------------------------------------------
+. Global ../../settings are stored here in the form       
+.   <variable>  <value>                             
+. --------------------------------------------------
+
+.variables
+View     around_austin
+ViewDir  /Users/Hal/topx/runeblog/.blogs/views/around_austin
+.end
+
+.variables view     ../../settings/view.txt
+
+.variables recent   ../../settings/recent.txt
+
+.variables publish  ../../settings/publish.txt
+
+.variables
+host        http://SITE
+charset     utf-8
+url         http://SITE
+locale      en_US
+
+font.family       verdana
+.end
+

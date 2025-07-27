@@ -1,0 +1,39 @@
+. --------------------------------------------------
+. This is used to generate a single post.           
+. The logic behind it is convoluted and may be      
+. subject to change.                                
+. --------------------------------------------------
+
+.mixin liveblog
+<html>
+  <!-- Generated from $File on $$date; editing not recommended.   -->
+
+.include $ViewDir/global.lt3
+
+.variables! post metadata.txt
+
+. FIXME
+.head
+og:title    $post.title 
+description $post.teaser
+style       blog.css
+.end
+
+<body>
+
+<section class="post">
+  <div class="recent-content">
+    $.post_toolbar
+    <table border=0 width=100%><tr>
+      <td align=left valign=bottom><h2 class="recent-title">$post.title</h2></td>
+. FIXME - longdate is passed in from outside
+      <td align=right valign=top><font size=-5><br></font>$longdate</td>
+    </tr></table><hr>
+    $.copy guts.html
+  </div>
+</section>
+
+<br>
+.post_trailer $post.num
+</body>
+</html>

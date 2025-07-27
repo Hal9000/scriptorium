@@ -1,0 +1,31 @@
+. --------------------------------------------------
+. A permalink differs very little from the original 
+. post except that it lacks "context" (navigation   
+. bar, banner, sidebar, etc.).
+. It does have a link back to the current front page
+. of the blog.
+. --------------------------------------------------
+
+.mixin liveblog
+
+<html>
+  <!-- Editing this file is not recommended.   -->
+  <!-- It was generated from $File on $$date.  -->
+
+.include $ViewDir/global.lt3
+
+.head
+og:title    $title
+description $teaser
+.end
+
+<section class="post">
+  <div class="recent-content">
+    $.copy guts.html
+  </div>
+</section>
+
+<br>
+<a href="../index.html" style="text-decoration: none">[Home: $blog]</a>
+</body>
+</html>

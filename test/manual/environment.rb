@@ -9,7 +9,7 @@ include TestHelpers
 def manual_setup
   system("rm -rf test/scriptorium-TEST")
 
-  @repo = Scriptorium::Repo.create(true)  # true for testing mode
+  @repo = Scriptorium::Repo.create("test/scriptorium-TEST")  # true for testing mode
 
   @pid = nil
   Dir.chdir(File.expand_path("..", __dir__)) do

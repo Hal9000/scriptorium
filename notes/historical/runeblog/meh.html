@@ -1,0 +1,55 @@
+      <html>
+        <head><link rel="stylesheet" href="ruby.css"></head>
+        <body>
+          <div class=highlight>
+<span class="c1">#!/usr/bin/env ruby</span>
+
+<span class="nb">require</span> <span class="s1">'rouge'</span>
+
+<span class="k">def</span> <span class="nf">format_ruby</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">theme</span> <span class="o">=</span> <span class="s2">"Github"</span><span class="p">)</span>
+  <span class="n">theme</span> <span class="o">=</span> <span class="n">theme</span><span class="p">.</span><span class="nf">capitalize</span>
+  <span class="n">css</span> <span class="o">=</span> <span class="no">Rouge</span><span class="o">::</span><span class="no">Themes</span><span class="p">.</span><span class="nf">const_get</span><span class="p">(</span><span class="n">theme</span><span class="p">).</span><span class="nf">render</span><span class="p">(</span><span class="ss">scope: </span><span class="s1">'.highlight'</span><span class="p">)</span>
+  <span class="n">added</span> <span class="o">=</span> <span class="s2">".highlight { font-family: courier; white-space: pre; background-color: black }"</span>
+  <span class="n">css</span> <span class="o">=</span> <span class="n">css</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="n">added</span>
+  <span class="nb">puts</span> <span class="s2">"Writing </span><span class="si">#{</span><span class="n">theme</span><span class="si">}</span><span class="s2"> theme to ruby.css"</span>
+  <span class="no">File</span><span class="p">.</span><span class="nf">write</span><span class="p">(</span><span class="s2">"ruby.css"</span><span class="p">,</span> <span class="n">css</span><span class="p">)</span>
+
+  <span class="n">formatter</span> <span class="o">=</span> <span class="no">Rouge</span><span class="o">::</span><span class="no">Formatters</span><span class="o">::</span><span class="no">HTML</span><span class="p">.</span><span class="nf">new</span>
+  <span class="n">lexer</span> <span class="o">=</span> <span class="no">Rouge</span><span class="o">::</span><span class="no">Lexers</span><span class="o">::</span><span class="no">Ruby</span><span class="p">.</span><span class="nf">new</span>
+  <span class="n">source</span> <span class="o">=</span> <span class="no">File</span><span class="p">.</span><span class="nf">read</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+  <span class="n">body</span> <span class="o">=</span> <span class="n">formatter</span><span class="p">.</span><span class="nf">format</span><span class="p">(</span><span class="n">lexer</span><span class="p">.</span><span class="nf">lex</span><span class="p">(</span><span class="n">source</span><span class="p">))</span>
+
+  <span class="n">html_file</span> <span class="o">=</span> <span class="n">file</span><span class="p">.</span><span class="nf">sub</span><span class="p">(</span><span class="sr">/.rb/</span><span class="p">,</span> <span class="s2">".html"</span><span class="p">)</span>
+  <span class="nb">puts</span> <span class="s2">"Writing output to </span><span class="si">#{</span><span class="n">html_file</span><span class="si">}</span><span class="s2">"</span>
+  <span class="no">File</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="n">html_file</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">output</span><span class="o">|</span>
+    <span class="n">output</span><span class="p">.</span><span class="nf">puts</span> <span class="o">&lt;&lt;~</span><span class="no">HTML</span><span class="sh">
+      &lt;html&gt;
+        &lt;head&gt;&lt;link rel="stylesheet" href="ruby.css"&gt;&lt;/head&gt;
+        &lt;body&gt;
+          &lt;div class=highlight&gt;
+</span><span class="si">#{</span><span class="n">body</span><span class="si">}</span><span class="sh">
+          &lt;/div&gt;
+        &lt;/body&gt;
+      &lt;/html&gt;
+</span><span class="no">    HTML</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="c1">#### Main...</span>
+
+<span class="k">if</span> <span class="no">ARGV</span><span class="p">.</span><span class="nf">empty?</span>
+  <span class="nb">puts</span> <span class="s2">"Parameters: file.rb [theme]</span><span class="se">\n</span><span class="s2">              where theme defaults to Github"</span>
+  <span class="nb">puts</span> <span class="s2">"Themes: </span><span class="si">#{</span><span class="no">Rouge</span><span class="o">::</span><span class="no">Themes</span><span class="p">.</span><span class="nf">constants</span><span class="p">.</span><span class="nf">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:to_s</span><span class="p">).</span><span class="nf">join</span><span class="p">(</span><span class="s1">', '</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+  <span class="nb">abort</span>
+<span class="k">end</span>
+
+<span class="n">file</span><span class="p">,</span> <span class="n">theme</span> <span class="o">=</span> <span class="o">*</span><span class="no">ARGV</span>
+
+<span class="n">theme</span> <span class="o">=</span> <span class="s2">"Github"</span> <span class="k">if</span> <span class="n">theme</span><span class="p">.</span><span class="nf">nil?</span>
+
+<span class="n">format_ruby</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">theme</span><span class="p">)</span>
+
+
+          </div>
+        </body>
+      </html>

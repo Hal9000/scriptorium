@@ -11,7 +11,7 @@ module TestHelpers
   end
 
   def create_test_repo(viewname = nil)
-    repo = Scriptorium::Repo.create(true)  # testing
+    repo = Scriptorium::Repo.create("test/scriptorium-TEST")  # testing
     if viewname
       repo.create_view(viewname, "My Awesome Title", "Just another subtitle")
     end

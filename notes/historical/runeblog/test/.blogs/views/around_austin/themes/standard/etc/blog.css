@@ -1,0 +1,66 @@
+<p>
+
+<p>
+
+body { font-family: verdana }
+<p>
+
+.recent-title a {
+  color: [recent.title.color is undefined];
+  font-family: verdana;
+  font-size: [recent.title.size is undefined];
+  float: right;
+  display: inline-block;
+  text-align: top;
+  text-decoration: none;
+}
+<p>
+
+.recent-title a:hover {
+  text-decoration: none;
+}
+<p>
+
+.recent-title-text a {
+  color: [recent.text.color is undefined];
+  font-family: verdana;
+  font-size: [recent.text.size is undefined]; 
+  display: block;
+  text-decoration: none;
+}
+<p>
+
+.recent-title-text a:hover {
+  text-decoration: none;
+}
+<p>
+
+.recent-date {
+  color: [recent.date.color is undefined];
+  font-family: verdana;
+  font-size: [recent.date.size is undefined];
+  display: block;
+  float: left;
+  text-align: top;
+}
+<p>
+
+.mydrop {
+  color: #444444;
+  float: left;
+  text-align: top;
+# font-family: Verdana;
+  font-size: 38px;
+  line-height: 38px;
+# padding-top: 0px;
+  padding-right: 8px;
+  padding-left: 3px;
+}
+<p>
+
+.thumbnail img {
+    max-height: 100%;
+    max-width: 100%;
+}
+<p>
+

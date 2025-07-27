@@ -16,6 +16,8 @@ require_relative 'unit/view'
 require_relative 'banner_svg/unit'
 require_relative 'integration/integration_test'
 require_relative 'unit/core' # Tests core helper methods
+require_relative 'tui_integration_test'
+require_relative 'tui_interactive_test'
 
 puts "\n" + "="*60
 puts "All tests completed!"

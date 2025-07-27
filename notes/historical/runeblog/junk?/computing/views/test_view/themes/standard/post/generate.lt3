@@ -1,0 +1,35 @@
+. --------------------------------------------------
+. This is used to generate a single post.           
+. The logic behind it is convoluted and may be      
+. subject to change.                                
+. --------------------------------------------------
+
+.mixin liveblog
+<html>
+  <!-- Generated from $File on $$date; editing not recommended.   -->
+
+.seek global.lt3
+.include vars.lt3
+
+.head
+og:title    $title 
+description $teaser
+.end
+
+<body>
+
+<section class="post">
+  <div class="entry-content">
+    <table border=0 width=100%><tr>
+      <td align=left valign=bottom><h2 class="post-title">$title</h2></td>
+      <td align=right valign=top><font size=-5><br></font>$longdate</td>
+    </tr></table><hr>
+    $.copy guts.html
+  </div>
+</section>
+
+<br>
+<hr>
+.post_trailer
+</body>
+</html>

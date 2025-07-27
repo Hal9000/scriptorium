@@ -1,0 +1,21 @@
+. --------------------------------------------------
+. This HTML fragment gives the format of a post's   
+. "index" entry (recent posts on blog front page).  
+. --------------------------------------------------
+
+<div class="post">
+  <table width=100% cellpadding=7>
+    <tr>
+      <td width=16% valign=top align=right style="margin-top: -1px;">
+        <font size=-1>#{date}</font>
+      </td>
+      <td> 
+        <span class="recent-title-text"><a href="#{url}" style="margin-top: -5px">#{title}</a></span>
+        <b>#{teaser_text}</b>&nbsp;&nbsp;
+        <a style="text-decoration: none" href="#{url}"><small>Keep&nbsp;reading</small></a> 
+      </td>
+    </tr>
+  </table>
+</div>
+
+<font size=-4><br></font>

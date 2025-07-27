@@ -1,0 +1,38 @@
+
+Currently planned .banner usage:
+--------------------------------
+
+. ...... only default image
+
+.banner image
+
+. ...... only default text
+
+.banner text
+
+. ...... default text and image side by side
+
+.banner text image
+
+. ...... specific text/image side by side
+
+.banner text: mytext.html image: myimage.jpg
+
+. ...... specific text/image with break (top/bottom)
+
+.banner text: mytext.html // image: myimage.jpg
+
+
+. ...... specific text/image, then break, then navbar
+
+.banner text: mytext.html image: myimage.jpg // navbar
+
+. ...... stacked text/image, then navbar
+
+.banner text: (mytext.html // image: myimage.jpg) navbar
+
+
+. ...... vert navbar, image, text
+
+.banner vnavbar image text
+

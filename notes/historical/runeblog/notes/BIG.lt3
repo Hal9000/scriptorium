@@ -1,0 +1,1795 @@
+Resolving dependencies...
+<p>
+
+My thoughts/ideas are kind of scattered. They end up in notes in 
+different files. Here they are.
+<p>
+
+<p>
+
+<div style="float: left; align: left; vertical-align: bottom">
+<img src="readme/raido4.png" width="210" height="295" align="left"></img>
+</div>
+<h1>runeblog</h1><b>Runeblog</b> is a blogging tool written in Ruby. It has these basic characteristics:
+<ul>
+  <li>It is usable entirely in text mode from the terminal</li>
+  <li>It publishes web pages as static HTML</li>
+  <li>So far, yes, like Jekyll</li>
+  <li>It's based on Livetext (highly extensible Ruby-based markup)</li>
+  <li>It has the concept of multiple "views" for a blog</li>
+  <li>The multiple views are in effect multiple blogs managed with the same backend.</li>
+</ul>
+<p>
+
+<p>
+
+<p>
+
+## What is Livetext?
+Livetext is a markup format that is a throwback to the old, old days of text 
+formatters such as <font size=+1><tt>nroff</tt></font>. It's very flexible, and it is extensible <i>in Ruby</i>. 
+<p>
+
+It is far from mature or full-featured, but it is usable. Runeblog uses Livetext, 
+along with some custom definitions, to try to ease the formatting of a blog entry.
+<p>
+
+## What are "views"?
+Think of them as multiple separate blogs with the same backend. Why would you
+want to do this? Maybe you wouldn't, but I do.
+<p>
+
+The purpose is to present different "faces" to different audiences. In my case,
+my computing-related stuff would go into one view, and my hometown-related things
+would go into another. There might be a view that only old friends or close friends
+can see. There might be a view purely for reviews of music, books, and movies. 
+<p>
+
+But the important points are these:
+<p>
+
+ * <i>All</i> the views will be managed the same way in the same place, and they will all share common data.
+ * Any post can easily be included in a single view, in more than one, or in all of them.
+ * Each view can have its own look and feel, and it can be linked/published separately from the others.
+ * Each view can be hosted in a different location and/or a different server and domain
+ * Any post can be in more than one view
+## The <tt>blog</tt> environment
+There is a command-line tool called <font size=+1><tt>blog</tt></font> which is a REPL (read-eval-print loop). 
+Note that this tool is a curses-based environment (mainly so it can display menus
+and such to the user).
+<p>
+
+The help message looks like this:
+<p>
+
+<:pre>
+  <b>Basics:</b>                                         <b>Views:</b>
+  -------------------------------------------     -------------------------------------------
+  <b>h, help</b>           This message                  <b>change view VIEW</b>  Change current view
+  <b>q, quit</b>           Exit the program              <b>cv VIEW</b>           Change current view
+  <b>v, version</b>        Print version information     <b>new view</b>          Create a new view
+  <b>clear</b>             Clear screen                  <b>list views</b>        List all views available
+                                                  <b>lsv</b>               Same as: list views
+<br>
+  <b>Posts:</b>                                          <b>Advanced:</b>
+  -------------------------------------------     -------------------------------------------
+  <b>p, post</b>           Create a new post             <b>config</b>            Edit various system files
+  <b>new post</b>          Same as p, post               <b>customize</b>         (BUGGY) Change set of tags, extra views
+  <b>lsp, list posts</b>   List posts in current view    <b>preview</b>           Look at current (local) view in browser
+  <b>lsd, list drafts</b>  List all drafts (all views)   <b>browse</b>            Look at current (published) view in browser
+  <b>delete ID [ID...]</b> Remove multiple posts         <b>rebuild</b>           Regenerate all posts and relink
+  <b>undelete ID</b>       Undelete a post               <b>publish</b>           Publish (current view)
+  <b>edit ID</b>           Edit a post                   <b>ssh</b>               Login to remote server
+  <b>import ASSETS</b>     Import assets (images, etc.)  <b>manage WIDGET</b>     Manage content/layout of a widget
+</:pre>
+## Getting started
+But when you first run the REPL, it checks for an existing blog repository under 
+the <font size=+1><tt>.blogs</tt></font> directory. If it doesn't find one, it asks whether you want to create 
+a new blog repo. Enter <font size=+1><tt>y</tt></font> for yes.
+<p>
+
+You'll then enter the editor (vim for now) to add configuration info to the <font size=+1><tt>global.lt3</tt></font> file.
+<p>
+
+<!-- <pre><b>FIXME add menu screenshot here</b></pre> -->
+<!-- <pre><b>FIXME add vim screenshot here</b></pre> -->
+<img src="readme/vim-global.png" width="494" height="696" align="center"></img>
+<p>
+
+The next thing you should do is to create at least one view of your own. Use the <font size=+1><tt>new view</tt></font> 
+command for this. Note that the current view is displayed as part of the prompt.
+<p>
+
+<pre>
+<b>[no view]</b> new view mystuff<br>
+<b>[mystuff]</b>
+</pre>
+<p>
+
+To create a new post, use the <font size=+1><tt>new post</tt></font> command (also abbreviated <font size=+1><tt>post</tt></font> or simply <font size=+1><tt>p</tt></font>). You will be
+prompted for a title:
+<p>
+
+<pre>
+<b>[mystuff]</b> new post<br>
+<b>Title:</b> This is my first post
+</pre>
+<p>
+
+Then you'll be sent into the editor (currently vim but can be others):
+<p>
+
+<img src="readme/edit-first.png" width="506" height="383" align="center"></img>
+<p>
+
+<pre>
+<b>FIXME wizard?</b>
+(publishing one-time setup - server, ssh keys, etc.)
+preview...
+publish...
+browse...
+(and so on)
+</pre>
+<p>
+
+<b>To be continued</b>
+<p>
+
+## Customizing the default templates and configuration
+You can use the <font size=+1><tt>config</tt></font> command to choose a file to edit.
+<p>
+
+<img src="readme/config-menu.png" width="700" height="547" align="center"></img>
+<p>
+
+The meaning and interaction of these files will be explained later. <b>FIXME</b>
+<p>
+
+When you make changes, <font size=+1><tt>rebuild</tt></font> will detect these and regenerate whatever files
+are needed.
+<p>
+
+## The directory structure for a view
+<b>Subject to change</b>
+TBD: Add details
+<p>
+
+<pre>
+    .blogs/views/mystuff/
+    ├── assets
+    ├── posts
+    ├── remote
+    │   ├── assets
+    │   ├── banner
+    │   ├── etc
+    │   ├── permalink
+    │   └── widgets
+    │       ├── ad
+    │       ├── links
+    │       ├── news
+    │       ├── pages
+    │       └── pinned
+    └── themes
+        └── standard
+            ├── banner
+            ├── blog
+            ├── etc
+            ├── post
+            └── widgets
+                ├── ad
+                ├── bydates
+                ├── links
+                ├── news
+                ├── pages
+                ├── pinned
+                ├── search
+                ├── sitemap
+                └── tag-cloud
+</pre>
+<p>
+
+<pre><b>FIXME add details here</b></pre>
+<p>
+
+<p>
+
+## Basics of Livetext
+<b>TBD</b>
+<p>
+
+<b>Bold, italics, etc.</b>
+  single, double, bracketed
+<p>
+
+<b>Common dot commands)
+<pre>
+  .debug
+  .say
+  .nopara
+  .quit
+  indented dot-commands
+</pre>
+<p>
+
+<b>Using external files</b>
+<pre>
+  .mixin
+  .include
+  .copy
+  .seek
+</pre>
+<p>
+
+<b>Predefined functions and variables</b>
+<pre>
+  $ile
+  <font size=+1><tt>[date is undefined]$</tt></font>
+  etc.
+</pre>
+<p>
+
+## Runeblog-specific features (Liveblog)</b>
+<b>TBD</b>
+<p>
+
+<b>Dot commands - the basics</b>
+<pre>
+  .mixin liveblog
+  .post
+  .title
+  .views
+  .tags
+  .teaser
+</pre>
+<p>
+
+<b>Dot commands - more advanced</b>
+<pre>
+  .image
+  .inset
+  .dropcap
+  .pin
+</pre>
+<p>
+
+<b>Variables and functions</b>
+<pre>
+  $iew, etc.
+  $[date is undefined], $[link is undefined], etc.
+</pre>
+<p>
+
+<p>
+
+## Defining your own features
+<b>Dot commands, variables, functions</b>
+<pre>
+  .def/.end
+  .set
+  .variables
+  .heredoc
+  .func
+</pre>
+<p>
+
+<b>Defining these in Ruby</b>
+<p>
+
+<p>
+
+## More topics
+<b>Meta tags, etc.</b>
+<b>CSS</b>
+<p>
+
+<b>Widgets</b>
+<pre>
+  pages
+  links 
+  pinned
+  faq
+  sitemap
+  news
+  etc.
+</pre>
+<p>
+
+<b>Banner and navbar</b>
+<p>
+
+<b>Creating your own widgets</b>
+<p>
+
+<b>Special tags/functions coming "soon"</b>
+<pre>
+  github, gitlab, gist
+  wikipedia
+  youtube, vimeo
+  twitter, instagram
+  etc.
+</pre>
+<p>
+
+<p>
+
+<b>TBD</b>
+<p>
+
+## More later...
+<b>TBD</b>
+<p>
+
+I wanted to explain the thought process I am using to "abstract away"
+as much HTML as possible. (I have barely begun here.)
+<p>
+
+To summarize as briefly as possible:
+<b>Don't</b> think like someone writing good conventional HTML.*
+<b>Think</b> like someone who wants to invent a better replacement for HTML.*
+<p>
+
+When you look at an HTML file, it is frequently very long and very
+deeply nested. Why is this?
+<p>
+
+You may think: Why is he asking why?
+<p>
+
+Well, pretend that we're not talking about a markup language here. 
+After all, HTML has rather outgrown what it was 25 years ago.
+<p>
+
+Pretend we're talking about a programming language, like C or even
+Ruby. Have you ever seen people whose code rambles on indefinitely, 
+perhaps for hundreds of lines in a single function or a main program?
+Code that nests more and more deeply until you must expand your window
+because the indentations have forced the code to crawl out far to the
+right, maybe 200 columns?
+<p>
+
+The people I'm thinking of are typically students or beginners. Or 
+maybe they are "cowboy coders" who just don't care, or people who think 
+their deadlines don't permit refactoring. But I hope you have seen that
+kind of code?
+<p>
+
+Yes, they "shouldn't" do that. They shouldn't because they <i>don't</i> have to_.
+<p>
+
+There are many language mechanisms that can make code more manageable.
+For example, there are separate files and facilities for including them.
+There are user-defined variables, there are functions that can take 
+parameters (or even defaults), there are ways to manage scope, and so on.
+<p>
+
+You know how people like Ron Jeffries and Dave Thomas advocate for methods 
+or functions that are <i>very</i> short_ or compact? Think how they would react
+to seeing 900 lines of continuous, unbroken code. Words come to my mind
+such as "shock," "horror," and "ridicule."
+<p>
+
+But that is how HTML typically looks. What if it didn't have to? What if
+we could apply techniques to HTML as if it were C or C++ or Ruby?
+<p>
+
+We expect certain features in any programming language less than 40 years 
+old. But HTML is missing these features. 
+<p>
+
+For example, it does not have file inclusion of any kind. Javascript and 
+CSS permit this to some extent, but HTML does not.
+<p>
+
+HTML has no variables. You have a value, a string, that appears in six 
+places? Fine, go ahead and hardcode it six times.
+<p>
+
+It has no facility for making new tags. Just use the ones we gave you, OK?
+<p>
+
+It has no functions. But you could probably do something in Javascript?
+<p>
+
+Part of the reason for Livetext was to correct all of these shortcomings. 
+(My own design decisions, of course, will not match anyone else's, and they
+are changing anyhow.)
+<p>
+
+There are at least two forms of file inclusion. The <font size=+1><tt>.include</tt></font> file` command
+will bring in a file and interpret it. The <font size=+1><tt>.copy</tt></font> file` command will <i>not</i>
+interpret the text it brings in.
+<p>
+
+There are built-in "dot commands" in Livetext, but you can write your own 
+in Ruby; these can be in separate files or injected into the Livetext source 
+or any combination of those.
+<p>
+
+There are variables (`[var is undefined]`) in Livetext. For heaven's sake, Don't Repeat 
+Yourself.
+<p>
+
+There are predefined functions (`[Error evaluating $$func()]` or <font size=+1><tt>[func is undefined]$c[whatever,arbitrary,params]`).</tt></font>
+More importantly, you can define your own, within the main file or another
+file or a Ruby library.
+<p>
+
+Intra-line formatting (e.g., italics and boldface) is simple, similar to 
+Markdown. But it can be turned off for a portion of a line, for an entire line,
+or for a group of lines. Naturally it can be escaped as well.
+<p>
+
+Variables and dot-commands and functions mean that you can "abstract away"
+certain things you do. This can reduce the code-sprawl and the nesting.
+<p>
+
+I am pondering what Rails calls "convention over configuration." I haven't
+fully thought this through, but I like the principle.
+<p>
+
+Another principle I want to use is: If a piece of text is <i>always</i> there_,
+then omit it and let the processor insert it based on context. Supposing we
+write a file that we (and the processor) know will be a complete HTML file.
+Well, then handle the <font size=+1><tt>html`</tt></font> and <font size=+1><tt>body`</tt></font> tags automatically. Don't make the
+user code these in any form. 
+<p>
+
+That is like a high-level program that needs to have an explicit "stack push" 
+at the top, and an explicit "stack pop" and assembly language <font size=+1><tt>HALT`</tt></font> at the 
+bottom.  That is so 1968. Just say no.
+<p>
+
+Even today, it is <i>possible_</i> to insert assembly language code into a C 
+program... but we only do it rarely and when we have good reason.
+<p>
+
+Moving on: Let's use parameters (in more than one sense) in whatever 
+meaningful ways we can. Back up and think generally for a moment: How do 
+parameters work, and what are they for? I see three basic principles here:
+<p>
+
+  1. If text or data is <b>always*</b> the same, it's not a parameter -- 
+     hide it as deeply as you can.
+  2. If it's <b>very</b> often* the same, it needs a reasonable default -- set one
+     internally and let us omit it at higher levels. 
+  3. If it varies often and can have many possible values -- it's a 
+     "true" parameter.
+<p>
+
+These principles are sound. I'd like to push them as far as I reasonably can. 
+<p>
+
+Another very general principle: Let's handle the most common cases first. 
+We can make simplifiying assumptions which we can refine later as needed.
+We'll hardcode <font size=+1><tt>en_US`,</tt></font> for example. 
+<p>
+
+These are all my thoughts at the moment. Give any feedback you want.
+<p>
+
+<pre>
+
+Just brainstorming here...
+
+
+ .widebanner  mybanner.jpg
+ .left_column
+    ABOUT
+    RECENT
+    CALENDAR
+    TAG_CLOUD
+ .end
+ .right_column
+    POST
+    AD
+ .end
+
+
+then when it's processed, strings like TAG_CLOUD would get interpreted
+=========================
+What are some TODO items?
+=========================
+
+1. Improve the HTML "templates" -- e.g. no TABLEs for formatting.
+2. Introduce CSS into HTML templates?
+3. Support CSS in Livetext (liveblog plugin)
+4. Better navigation/etc for default?
+5. Select themes/styles for blog??
+6. Move some pieces into "snippets" (e.g. Facebook/Twitter integration)
+7. Convert HTML to Livetext (??)
+
+===========================
+How is the tree structured?
+===========================
+
+\.blogs                                 The root dir of the blog(s) 
+├── config                             Small config file (global)       
+└── data                               The data directory where "all" stuff lives          
+    ├── VERSION                        Version info, date blog was created            
+    ├── assets                         Images, other media, etc. (blog-wide)           
+    │   └── fakeimage.jpg                                    
+    ├── sequence                       Sequence number for next post (global)             
+    ├── src                            Source directory (drafts and original text)        
+    │   ├── 0001-post-number-1.lt3     Livetext files (one per draft)
+    │   ├── 0002-post-number-2.lt3                                    
+    │   ├── 0003-post-number-3.lt3                                    
+    │   ├── 0004-post-number-4.lt3                                    
+    │   ├── 0005-post-number-5.lt3                                    
+    │   ├── 0006-post-number-6.lt3                                    
+    │   ├── 0007-post-number-7.lt3                                    
+    │   ├── 0008-post-number-8.lt3                                    
+    │   ├── 0009-post-number-9.lt3                                    
+    │   └── 0010-post-number-10.lt3                                    
+    └── views                          Where all views are stored          
+        ├── alpha_view                 All stuff for this one view                   
+        │   ├── 0001-post-number-1     All files related to draft 0001 (output)
+        │   │   ├── assets             Assets (per draft); not used yet                       
+        │   │   ├── body.txt           The body of the blog post                         
+        │   │   ├── index.html         Final HTML form of the blog post                           
+        │   │   ├── metadata.txt       Metadata for the blog post                             
+        │   │   └── teaser.txt         The "teaser" for the post                           
+        │   ├── 0002-post-number-2                                    
+        │   │   ├── assets
+        .   .   .   ...
+        │   ├── 0007-post-number-7                                    
+        .   .   .   ...
+        │   ├── 0008-post-number-8                                    
+        .   .   .   ...
+        │   ├── 0009-post-number-9                                    
+        .   .   .   ...
+        │   ├── assets                 Assets (per view); not used yet                    
+        │   │   └── fakeimage.jpg                                    
+        │   ├── templates              Customized headers, templates, whatever                   
+        │   │   ├── blog_header.html   Goes at top of main page for view
+        │   │   └── blog_trailer.html  Goes at bottom of main page for view                                  
+        │   ├── index.html             The generated HTML of the view's main page                       
+        │   ├── last_published         Which files were published when (for efficiency)                           
+        │   ├── publish                Exactly where the view is to be published                    
+        │   └── tagpool                All existing tags available for this view                    
+        ├── beta_view                  Next view...                  
+        .   .   .   ...
+        ├── gamma_view                                    
+        .   .   .   ...
+        └── test_view                                    
+            ├── assets                                    
+            ├── templates                                 
+            │   ├── blog_header.html                                    
+            │   └── blog_trailer.html                                    
+            ├── last_published                                    
+            ├── publish                                    
+            └── tagpool                                    
+                                    
+
+
+=======================================
+What is wrong, inconsistent, or broken?
+=======================================
+
+ 1. The "multi-level" assets may be a good idea, but only the global one is
+    used right now.
+ 2. No provision for different assets of same name.
+ 3. The "publish" file specifies the server, user, etc., but the private keys
+    must already be set up. This is not really configurable inside the program
+    (and maybe shouldn't be), but should at least be documented or something.
+ 4. Because of code evolution, there is some redundant information stored here
+    and there (e.g., the body.txt and teaser.txt for each post).
+ 5. The "teaser" might have been a dumb idea. It is sort of hard-wired into the
+    very guts of the code. Maybe this should change later.
+ 6. The "publish" files should perhaps be in a hierarchy like the one I imagined
+    for assets. For example, many views might be stored on a single server. This
+    is probably not very important.
+ 7. The "tag pools" could also be in a hierarchy. Not sure it matters.
+ 8. Rather than a header and trailer for a view, we should probably have a template
+    of some kind.
+ 9. In fact, for each view, we might want several different templates to choose from.
+10. I have considered different post templates as well (varying per view or maybe 
+    even within a view). For example, a book review and a movie review might look
+    different in general form.
+11. I think "most people" will say this should all be in a database. Personally, I 
+    think I would get lost earlier and more often if I weren't able to simply surf
+    around the directory structure and look at files (on the local and/or the 
+    remote side). But a database is a possibility for later.
+12. I'm thinking there should probably be some "code snippets" stored somewhere 
+    that we can easily include. An example would be the overly complex Twitter and
+    Facebook code that is currently hard-wired into the post template.
+13. There is no CSS anywhere. This is a flaw both in the templates and headers, but
+    in the output from Livetext itself.
+14. The last_published file is supposed to make it unnecessary to upload (publish)
+    files that have not changed. This is probably not working currently.
+15. Note that each post starts as a single .lt3 file, but ends up as a directory.
+    Both these are named with the global serial number (see the sequence file) and
+    then the "slug" of the title. It is possible that a user might edit an existing
+    post and re-publish it. This works fine... unless the title itself is changed.
+    This creates chaos, as we don't support it yet.
+16. Notice that the src directory knows nothing about the views. But each draft has
+    a list of views; when the post is "built," this list of views is how the generated
+    post will end up under different views. 
+17. If a post is under (say) ten different views, there will be ten different copies
+    of all the information for that post. This may not ever be a problem, but it seems
+    inelegant. On the other hand, there might later on be good reasons to keep separate
+    copies.
+18. The headers/trailers and so on are pure HTML, not Livetext. This is probably a 
+    drawback.
+
+
+===========================
+What does a post look like?
+===========================
+
+Here is a shortened version of a real blog post. Afterward there's a 
+brief explanation.
+
+--------------------------------------------------------------------------
+  .mixin liveblog
+  .mixin bookish
+
+  .title Immutable data (ditching the wax tablet)
+  .pubdate 2015-08-25
+  .tags elixir ruby
+  .views computing
+
+  .teaser
+A couple of weeks ago, I went to Phoenix training prior to the Lone Star Ruby
+Conference in Austin. I was talking with Bruce Tate, and he shared with me 
+some thoughts about functional programming in general. 
+  .end
+
+Obviously Bruce isn't responsible if I misquote him. My memory is faulty.
+
+"Functional programming is the future," he told me, "and OOP is dying." 
+He pointed to the ever-increasing popularity of multi-core machines and the 
+increasing irrelevance of conserving memory.
+
+[blah blah...]
+
+I can imagine a time when memory is simply never erased at all. We're seeing
+the crude beginnings of this already. Source control systems and databases
+preserve far more history than they used to. My laptop's OS encourages me to
+think of my backed-up data as a sort of limitless archive of past versions of
+files. It's mostly an illusion, but it needn't always be. Why should any
+document, any image, any video ever be erased? 
+
+Food for thought. Chow down, friends.
+--------------------------------------------------------------------------
+
+The two "mixin" commands are rather like Ruby's require method. I've thought of
+making at least one of these implicit (liveblog) since every single post will
+use the liveblog plugin.
+
+Though .title and .views are necessary, I don't think this is enforced right now.
+Leave out something crucial, and it might just crash. The list of tags is optional
+anyhow.
+
+The .teaser command introduces the teaser, which continues until the .end is reached.
+The remainder of the post "could" have all kinds of fancy commands, but this is the
+basic structure you can expect.
+
+templates...
+------------
+To post: 
+  - ask title
+  - multiselect views
+  - multiselect tags?
+
+config command (?)
+--------------
+edit .blogs/config? view/publish
+edit view/templates/*
+ssh keys??
+
+
+Creating a view:
+----------------
+*Ideally: enter deployment info up front
+Copy default files over (header, trailer, template)
+These "should" have vars referring to server/etc. (for Back/Home)
+Can't deploy with deployment info
+What about rebuild??
+Make a View class?
+
+
+Work flow: Make a post, publish it
+----------
+
+Publishing involves:
+  - process text
+  - push into views
+  - link into blog history
+  - scp to server (call that deploy now?)
+
+
+features:
+  - youtube
+  - gist
+  - wikipedia?
+  - render inset quote as graphics?
+
+Logic flow
+----------
+
+Post
+----
+Create a blog post
+Process it
+Link it
+Upload to server
+
+Edit (name)
+----
+Edit
+Process
+Redeploy
+
+Delete (name)
+------
+Mark deleted
+Relink
+Redeploy
+
+
+Issues:
+-------
+Leftover junk files?
+How form slug?
+How delete files?
+How embed images, links, etc.?
+=begin
+
+STEPS:
+  1. revamp blog/post creation
+  2. create .tgz, remove build logic
+  3. test the hell out of it
+  4. take notes for reworking old blog data!
+
+
+Remember "pages" and so on...
+
+ .blog
+  local
+    src (drafts)
+    views
+      each_view
+        themes/standard
+        timestamps/  # reflects structure under gen.../each_view
+        assets
+        posts
+        ...?
+  generated
+    views
+      each_view
+        ? themes/standard
+        index.html
+        posts
+        assets
+        ...?
+  config
+    sequence
+    VERSION
+
+
+  themes
+    standard
+      head.lt3
+      meta.lt3
+      global.lt3
+      assets/
+      blog/
+        [kill assets]
+        sidebar/
+          ad.lt3
+          calendar.lt3
+          news.lt3
+          tag_cloud.lt3
+        _postentry
+        generate.lt3
+        index.lt3
+        meta.lt3
+        navbar.lt3
+      post/
+        generate.lt3
+        head.lt3
+        index.lt3
+
+
+=end
+
+
+When a post is created (in drafts):
+  - it should be copied to each view
+  - it should be built in each view?
+What are the biggest issues here?
+---------------------------------
+
+Valid links for Back/Home, etc.
+Must handle uploading assets well
+Must detect errors such as missing assets
+Must never, ever crash
+Must never leave files in an inconsistent state
+Should sync backward as well as forward?
+So I want to regenerate a post...
+
+To create a post the first time, I start with
+a title...
+
+But afterward, the title is buried in the post or metadata.
+
+Hmmm.
+
+
+repl  cmd_new_post
+rune  create_new_post
+      create meta (title, teaser, body)
+      next_seq
+      Post.new(meta, view)
+        make_slug(meta)
+        get template
+        interpolate
+      post.edit
+      post.build(meta)
+Move editor into global.lt3
+Maybe reference smaller files? blog, publishing, banner?, 
+  widgets?, post, post_index, ...
+Author email?
+Widgets in use?
+Font faces/sizes, colors
+Other colors
+Spacing?
+I wanted to explain the thought process I am using to "abstract away"
+as much HTML as possible. (I have barely begun here.)
+
+To summarize as briefly as possible:
+*Don't think like someone writing good conventional HTML.*
+*Think like someone who wants to invent a better replacement for HTML.*
+
+ - Remember what Rails calls "convention over configuration." I haven't
+   fully thought this through, but I like the principle.
+ - Let's handle the most common cases first. We'll hardcode en_US, for
+   example. 
+ - Let's make simplifiying assumptions which we can refine later as needed.
+ - Remember the DRY principle - "Don't Repeat Yourself." For example:
+   If the `title` is used in five places, we should only set it once.
+ - HTML files have tended to be _very long and deeply nested_.
+   Think about *how and why* they got that way. You wouldn't write a
+   method with 1,000 lines in it, would you? But HTML was created
+   without _variables_ and without any kind of "include" feature.
+- But Livetext does have variables and multiple kinds of file inclusion.
+  It also has many other "dot commands" and several _functions_
+  defined (and there should be many more later).
+- Note that the user can define not only variables, but his own
+  dot commands and functions as well. This is potentially *powerful*.
+- Therefore let's break things down into many small pieces. (Think of
+  the people who want to put crazy limits on number of lines in a
+  method.)
+ - Another principle I want to use is: If a piece of text is _always there_,
+   then omit it and let the processor insert it based on context.
+ - A similar principle has to do with "parameters" in pretty much any
+   kind of context. There are three parts: 
+     1. If text or data is *always* the same, it's not a parameter -- 
+        hide it as deeply as you can.
+     2. If it's *very often* the same, it needs a reasonable default -- set one
+        internally and let us omit it at higher levels. 
+     3. If it varies often and can have many possible values -- it's a 
+        "true" parameter.
+- I'd like to push this as far as I reasonably can. 
+  Example: Here's a file that is going to be a complete HTML document. 
+  Don't put html and body tags at the top and bottom -- build an 
+  environment where the coder and processor recognize these files from 
+  context. Let the processor itself add those on. (Analogy: It is possible 
+  to insert assembly language code into a C program... but we only do it 
+  rarely and when we have good reason.)
+
+So for example: I have created `experimental.rb` (not checked in yet)
+and I am trying to reduce your HTML example to its essence.
+
+Config:
+global.lt3            Global settings and configuration
+blog/index.lt3        Layout of blog front page
+blog/post_entry.lt3   Layout of "recent post" list entry
+navbar/navbar.lt3     Layout of navigation bar
+
+Content:
+
+navbar/about.lt3
+navbar/contact.lt3
+
+pages/...
+IdeaL A special sub-environment for creating a post
+
+1. Display: view, post number, date
+2. Menu?
+3.   - Edit/enter title
+4.   - Edit teaser
+5.   - Add views
+6.   - Add tags
+7.   - Import assets
+8.   - Edit body
+9.   - Save 
+10.  - Quit
+Why have different levels of assets?
+  - possible name collisions between posts
+  - name collisions between views
+
+Problem: How to handle assets?
+  - avoid duplicating them
+  - hierarchy? global, view, post?
+  - upload as needed
+  - flag when missing
+  - keep manifests?
+  - use a .asset command?
+  - assets directories at each level?
+
+
+
+Logic:
+  Post is being published
+  Asset reference is detected
+  Is there already a local one? Use it (manipulate URL)
+  Is there one in the view? (default) Use it for link
+  Is there a global one? Copy to view
+  If not available, complain
+  If available, handle in publish *and* deploy
+  Write to manifest?
+  Asset inheritance depends on deployment server?
+** Thinking about assets...
+
+Search as far up the tree as necessary?
+Copy to server? Or also to local dir?
+
+Why do we even track assets? 
+ - So they can be uploaded to the remote server as needed.
+ - ? So they can be moved to optimum point of use?
+Remember to update "src=" properly.
+First order simplification:
+  - .image copies into assets?
+  - should worry about filenames overwritten
+  - dump all into view/assets
+  - let .image be aware of view/assets
+  - HTML should say src=assets/...
+  - publish dumps all needed assets (looking at checksums? Or just published list?)
+  - how to handle in repl?
+
+
+** Thinking about templates...
+
+Should there be global templates? Maybe with
+  more than one view specified?
+Should there be a default template per view?
+Always select view when starting post? Unless there
+  is only one to choose?
+Or select a template, then start a post?
+Templates are part of "config" menu??
+
+
+Templates:
+  Austin event
+  Book review
+  Movie review
+  Software/gadget unboxing/review
+  ...
+
+When a post is processed...
+Add link (number?) to tag - how store?
+Read, add, sort, write
+
+Dir tags
+  tag1: n, n, n
+  tag2: n, n
+  tag3: n, n, n, n
+
+
+The command .tags specifies any/all tags for a post
+When a draft is processed, the tags will be collected
+Backend Idea: 
+  - somewhere there is a "tags" directory
+  - each file in it is named for a tag
+  - each file has a list of drafts (uniq'd in case of reprocessing)
+Frontend: Who knows??
+  - reads all the tag files
+  - turns into magic HTML (see tag-cloud mockup)
+Template stuff...
+-----------------
+_postentry.lt3           ?
+application.css          
+blog-generate.lt3         
+blog-meta.lt3                  
+blog-head.lt3             
+global.lt3                
+
+Tasks...
+--------
+Create or edit a post:  generate index (entries), post
+
+
+
+HAL9000:runeblog Hal$ ls -l .blogs/data/views/around_austin/themes/standard/
+ 1658 Jul  6 20:59 README
+   74 Jul  6 20:59 about.html
+  156 Jul  6 20:59 assets-application.css
+  318 Jul  6 20:59 assets-favicon.ico
+  494 Jul  6 20:59 blog-_postentry.lt3
+  274 Jul  6 20:59 blog-application.css
+  348 Jul  6 20:59 blog-generate.lt3
+  105 Jul  6 20:59 blog-index.lt3
+  146 Jul  6 20:59 blog-meta.lt3
+   78 Jul  6 20:59 blog-navbar.lt3
+  179 Jul  6 20:59 global.lt3
+  707 Jul  6 20:59 head.lt3
+  146 Jul  6 20:59 meta.lt3
+   80 Jul  6 20:59 post-generate.lt3
+   91 Jul  6 20:59 post-head.lt3
+  277 Jul  6 20:59 post-index.lt3
+  135 Jul  6 20:59 sidebar-ad.lt3
+  161 Jul  6 20:59 sidebar-calendar.lt3
+  462 Jul  6 20:59 sidebar-news.lt3
+  407 Jul  6 20:59 sidebar-tag-cloud.lt3
+
+  .
+  ├── README
+  ├── blog
+  │   ├── assets
+  │   │   ├── application.css
+  │   │   └── favicon.ico
+  │   ├── _postentry.lt3
+  │   ├── application.css
+  │   ├── blog-generate.lt3
+  │   ├── index.lt3
+  │   ├── blog-meta.lt3    SAME
+  │   ├── navbar.lt3
+  │   └── sidebar
+  │       ├── ad.lt3
+  │       ├── calendar.lt3
+  │       ├── news.lt3
+  │       └── tag-cloud.lt3
+  ├── global.lt3
+  ├── head.lt3
+  ├── meta.lt3
+  └── post
+      ├── generate.lt3
+      ├── head.lt3
+      └── index.lt3
+Big menu system...
+
+List of posts:
+  - edit 
+  - remove from view
+  - delete entirely?
+  - add views
+  - add tags
+  - pin
+  - import asset
+  - rebuild
+
+
+
+Top menu:  (triggered by Esc?)
+  - Config
+     - ...
+  - Build
+     - Rebuild
+     - Preview
+     - Publish
+     - Browse
+  - Help
+  - Drafts/Posts
+     - add/del views
+     - add/del tags
+     - add/del pins
+     - edit
+     - regen
+     - change title?
+  - Exit
+
+
+X. repl: install WIDGET   (gem ->root?)
+X.       enable     "     (.txt file)
+X.       disable    "     (.txt file)
+X.       update     "     (gem -> view?)
+X. rebuild [post]
+X. rebuild [widget]
+X. Move "manage" code into widgets
+X. manage navbar
+Hal 9/17/2019
+
+1.  We can use dotted variables now (see global.lt3)
+2.  Links can open in the "main" area by changing the iframe "src="
+    (try About, Contact in navbar; also "Recent News" items)
+3.  blog.css is now built from blog.css.lt3 (using variables in global.lt3)
+4.  Primitive permalinks exist now (http://whatever.com/myblog/permalink/blah-blah-blah.html)
+5.  Command "preview" works in the REPL
+6.  Given a valid "publish" file and keys set up, "publish" and "browse" also work
+7.  Some/most header issues are fixed (posts have their own metadata)
+8.  Moved some very basic stuff out of [view]/assets into [view]/etc
+9.  Added an etc/misc.js (for open_main and maybe future stuff)
+10. Started playing with [view]/widgets concept (and widgets/pages under it);
+    *very* confused how this would/should relate to sidebar
+11. For more on that, see notes/widgets.txt
+[Notes to Ronak G in slack]
+
+btw - I will make some comments here about Livetext and Runeblog --
+I have been playing with these a lot.
+
+ - Livetext (I think) no longer messes up underscores -- if they are
+   embedded, they are ignored. (If a name *starts* with an underscore,
+   that is probably still a problem)
+ - I have added a `$.` notation where there can be any number of blank
+   spaces before the `$` -- so I guess this allows for indentation.
+
+I wanted to explain the thought process I am using to "abstract away"
+as much HTML as possible. (I have barely begun here.)
+
+To summarize as briefly as possible:
+*Don't think like someone writing good conventional HTML.*
+*Think like someone who wants to invent a better replacement for HTML.*
+
+ - Remember the DRY principle - "Don't Repeat Yourself." For example:
+   If the `title` is used in five places, we should only set it once.
+ - HTML files have tended to be _very long and deeply nested_.
+   Think about *how and why* they got that way. You wouldn't write a
+   method with 1,000 lines in it, would you? But HTML was created
+   without _variables_ and without any kind of "include" feature.
+- But Livetext does have variables and multiple kinds of file inclusion.
+  It also has many other "dot commands" and several _functions_
+  defined (and there should be many more later).
+- Note that the user can define not only variables, but his own
+  dot commands and functions as well. This is potentially *powerful*.
+- Therefore let's break things down into many small pieces. (Think of
+  the people who want to put crazy limits on number of lines in a
+  method.)
+ - Another principle I want to use is: If a piece of text is _always there_,
+   then omit it and let the processor insert it based on context.
+ - A similar principle has to do with "parameters" in pretty much any
+   kind of context. There are three parts: 1. If text or data is *always*
+   the same, it's not a parameter -- hide it as deeply as you can.
+   2. If it's *very often* the same, it needs a reasonable default -- set one
+   one internally and let us omit it at higher levels. 3. If it varies often
+   and can have many possible values -- it's a "true" parameter.
+- I'd like to push this as far as I reasonably can. Example: Here's a file
+  that is going to be a complete HTML document. Don't put html and
+  body tags at the top and bottom -- build an environment where
+  the coder and processor recognize these files from context. Let the
+  processor itself add those on. (Analogy: It is possible to insert
+  assembly language code into a C program... but we only do it rarely
+  and when we have good reason.)
+
+So for example: I have created `experimental.rb` (not checked in yet)
+and I am trying to reduce your HTML example to its essence.
+
+For now, this `lt3` file produces your example HTML down to the end
+of the `head`. It doesn't handle the body yet.
+
+```
+  .mixin experimental
+
+  .set title="Your awesome title", host=http://localhost:4000
+
+  .heredoc desc
+Write an awesome description for your new site here. It will appear in your document head meta (for Google search results) and in your feed.xml site
+  .end
+
+  . Note: 
+  .   The command head takes the first word of each line as
+  .   a sort of "subcommand"; there are other values besides
+  .   these three, but they are defaulted based partly on
+  .   title, host, and desc (and "frequently used" defaults
+  .   such as en_US
+
+  .head
+viewport width=device-width, initial-scale=1
+script head.lt3
+style main.css
+feed 
+  .end
+```
+That is only 22 lines (counting comments), and it seems to me
+much more readable. My intent is to carry "custom formatting"
+to the point where the blog template might be *very* few lines
+(like 10-15?) and yet have all the same functionality, mainly
+through using other smaller files and higher levels of abstraction.
+
+We can talk on this later if you want.
+
+Cheers for now.
+Thinking about RubyText (more complex) menus
+
+Top menu: 
+  Hash of strings
+  Each value is an action or a submenu
+  Esc = display/hide
+  Del = hide?
+  
+Top menu logic
+  - Display bar (one highlighted)
+  - left/right to select
+  - esc to exit
+  - Enter/down to execute (down=submenu, enter=sub or execute)
+  - display submenu without down arrow??
+  
+Submenu:
+  - Display menu (nothing highlighted)
+  - up/down to select
+  - Enter to execute
+  - sub-submenus??
+  - After execute: kill submenu; keep top menu?
+
+
+
+Deploying/updating
+------------------
+
+x 1. Idea: Widgets are stored in gem; code is not necessarily copied over
+     to a new view.
+
+x 2. Therefore, widgets can be installed or updated.
+
+x 3. The gem "knows" which widgets are available, so they can be put in
+     the "available" list but not installed unless requested.
+
+x 4. Where to store them in gem?
+
+  5. repl: install WIDGET   (root -> view?)
+           enable     "     (.txt file)
+           disable    "     (.txt file)
+           update     "     (gem -> root and view?)
+     Version numbers for widgets?
+
+
+Original notes
+--------------
+
+1.  Originally my concept of a "widget" was a self-contained item that would
+    display in a box in the sidebar.
+
+2.  Examples of widgets: 
+      - pages (list of my own pages)
+      - links (list of other sites/blogs that I recommend)
+      - search (search for posts in title, body, tags, etc.)
+      - bydates (browse posts by date in a calendar style)
+
+2.  Then I started thinking: But these don't really differ from a sidebar item?
+    So maybe I should generalize.
+
+3.  Then I thought: But there are potentially different varieties of these and
+    different behaviors (so I got confused).
+ 
+4.  Example: A search box *could* live in the sidebar (opening results in the 
+    main area)
+
+5.  Or it could be a "Search" link in the navbar, opening the search box in the
+    main area and overlaying it when it finds results.
+
+6.  For that matter, any widget *could* just be a single link in the sidebar, 
+    opening into the main area when it's clicked.
+
+7.  Similarly, I notice that "Recent News" only displays a few news items. 
+    Maybe clicking the actual header should open the full list in the main area?
+
+8.  Also: The sidebar items themselves (which work) are confusing to me. There has
+    to be some templating and some logic, and when I try to separate those out, I
+    find myself screwing up.
+
+9.  Re confusing sidebar -- I recommend doing things like this to see what is 
+    going on:
+      $ vi -O themes/standard/sidebar/news.lt3       lib/liveblog.rb  .blogs/views/around_austin/remote/index.html
+      $ vi -O themes/standard/sidebar/tag-cloud.lt3  lib/liveblog.rb  .blogs/views/around_austin/remote/index.html
+      $ vi -O themes/standard/sidebar/calendar.lt3   lib/liveblog.rb  .blogs/views/around_austin/remote/index.html
+
+</pre>
+<p>
+
+<div style="font-family: verdana">
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<html>
+  <head>
+<!--
+    <style>
+      * { font-family: times }
+    </style>
+-->
+  </head>
+<body>
+<p>
+
+<h2>Runeblog TODO</h2>
+</h3>Generated from <code><font size=+1><b>notes/todo.lt3</b></font></code> - 2020-12-09 20:14:07</h3>
+<p>
+
+<table border=0 width=96% cellpadding=8 cellspacing=8>
+  <tr>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Next steps...</b><br><ul><li><font color=red>Allow installing widgets</font></li>
+<li><font color=red>Allow updating widgets</font></li>
+<li><font color=red>Manage navbar (navbar.lt3, .html, ...)</font></li>
+<li><font color=red>Fix $DotDir</font></li>
+<li><font color=red>Update posts: Views, tags, pinned?, ...</font></li>
+<li><font color=red>"preview post" command</font></li>
+<li><font color=red>Need "older posts" link</font></li>
+<li><font color=red>Fix "head" stuff</font></li>
+<li><font color=red>Stay in menu?? ("sticky" menus?)</font></li>
+<li><font color=red>RubyText: radio buttons</font></li>
+<li><font color=red>RubyText: checkboxes</font></li>
+<li><font color=red>RubyText: list controller</font></li>
+<li><font color=red>RubyText: settings</font></li>
+<li><font color=red>RubyText: better YesNo</font></li>
+<li><font color=red>Regenerate (posts) command?</font></li>
+<li><font color=red>Move "manage" code into widgets</font></li>
+<li><font color=red>Let bin/blog detect current view</font></li>
+<li><font color=red>More ARGV-style commands for bin/blog</font></li>
+<li><font color=red>Formalize example blog</font></li>
+<li><font color=red>Use example blog in automated testing</font></li>
+<li><font color=red>Double occurrence in .views</font></li>
+<li><font color=red>ssh-copy-id in setup</font></li>
+<li><font color=red>post aliases (scoped to view? or view/name)</font></li>
+<li><font color=red>intra-blog links (incl aliases)</font></li>
+<li><font color=red>Reread vars after any update</font></li></ul></td>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Easy and/or soonish...</b><br><ul><li>detect non-OSX and print warning</li>
+<li><font color=red>Change teaser to excerpt?</font></li>
+<li><font color=red>Change "guts" to "contents"</font></li>
+<li><font color=red>Collapse and rename "themes/standard"</font></li>
+<li><font color=red>Facebook buttons</font></li>
+<li><font color=red>Twitter buttons</font></li>
+<li><font color=red>backup/restore?</font></li>
+<li>Add excerpt! form</li>
+<li>Dropcap for excerpt?</li>
+<li>Publish will crash on failure</li>
+<li>"wrap"-style include maybe?</li>
+<li>add CSS ref to post?</li>
+<li>specific kinds of rebuild?</li>
+<li>custom.rb (livetext) gets included if present?</li>
+<li>Warn when .img (etc.) refs nonexistent asset</li>
+<li>RubyText settings in file</li>
+<li>set up publishing</li>
+<li>configure facebook, twitter, reddit, etc.</li>
+<li>On publish: Autopost to twitter (if enabled and not posted)</li>
+<li>On publish: Autopost to facebook (if enabled and not posted)</li>
+<li>Wizard: Keep track of what is done/undone (per view)</li>
+<li>Wizard: no view</li>
+<li>Wizard: servers referenced but no keys set up</li>
+<li>Wizard: widget enabled but not configured</li>
+<li>Wizard: standard entities? About, Contact, FAQ, ...</li>
+<li>Wizard: unpublished changes</li>
+<li>special tags: intra-blog, gist, github, youtube, ...</li>
+<li>special tags: vimeo, twitter, fb?, reddit?, ...</li>
+<li>fix/delete Runeblog::Default (post_template)?</li></ul></td>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Bugs, etc.</b><br><ul><li><font color=red>up-arrow broken</font></li>
+<li><font color=red>bin/blog: Error when escaping from menu</font></li>
+<li><font color=red>bin/blog: autocomplete fails when no valid prefix</font></li>
+<li>tt tag not working with blog.css?</li>
+<li>widgets don't honor their CSS?</li>
+<li>things deleted locally aren't deleted remotely (rsync??)</li>
+<li>delete post, edit elsewhere, comes back (change source!)</li></ul></td>
+  </tr>
+  <tr>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>General functionality</b><br><ul><li>better asset management</li>
+<li>autopost: Twitter</li>
+<li>autopost: Facebook</li>
+<li>autopost: linkedin</li>
+<li>post analyzer - SEO, spell, wcount, etc.</li>
+<li>dynamically add commands/code to repl?</li>
+<li>need categories??</li></ul></td>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Next steps (Livetext, etc.)</b><br><ul><li>Livetext: mixin? include? copy? seek?</li>
+<li>RubyText: let yesno accept characters</li>
+<li>Livetext: Var as replacement for _var  (see varmint)</li>
+<li>Livetext: open/close</li></ul></td>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Livetext bugs/features</b><br><ul><li><font color=red>nbsp function</font></li>
+<li><font color=red>center function</font></li>
+<li><font color=red>heredoc! adds break after each line</font></li>
+<li>fix bug .set var="this, that"</li>
+<li>mixin as module (livetext -m)</li>
+<li>$$incr?</li>
+<li>permit omission of .lt3?</li>
+<li>.include dir/    # refs dir/main.lt3 ?</li></ul></td>
+  </tr>
+  <tr>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Widget functionality, etc.</b><br><ul><li><font color=red>common widget code</font></li>
+<li><font color=red>tag cloud</font></li>
+<li>work on "standard widget" concept</li>
+<li>standard/nonstandard marker for widgets</li>
+<li>site map widget</li>
+<li>automated news search</li>
+<li>bydates manager</li>
+<li>search</li></ul></td>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>UI and UX</b><br><ul><li>shorten commands?</li>
+<li>allow large output for lsp/lsd (scroll? more?)</li>
+<li>undo last post?</li>
+<li>allow for post title changing</li>
+<li>add post template capability (create, edit, post)</li>
+<li>allow windows to scroll back</li></ul></td>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Prettier code</b><br><ul><li>more keyword parameters as needed</li>
+<li>liveblog: separate dot-commands from helpers</li>
+<li>remove duplicated and double-scoped code</li>
+<li>cards as .lt3 files?</li>
+<li>remove dead code!!</li>
+<li>factor generic HTML out of liveblog.rb</li>
+<li>rethink helper libs?</li>
+<li>distinguish view and view_name</li></ul></td>
+  </tr>
+  <tr>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Faster/sturdier code</b><br><ul><li><font color=red>more tests!</font></li>
+<li>check user input</li>
+<li>more/better exceptions</li>
+<li>internal error handling</li>
+<li>livetext error handling</li>
+<li>code coverage analysis</li>
+<li>profiling</li></ul></td>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Documentation and tutorials</b><br><ul><li><font color=red>github README</font></li>
+<li><font color=red>docs: getting started</font></li>
+<li><font color=red>docs: overview of Livetext</font></li>
+<li>Make an intro video</li>
+<li>explicitly document use of ssh/scp</li>
+<li>update docs</li>
+<li>out-of-the-box workflow</li>
+<li>video tutorial</li>
+<li>docs: how-to</li>
+<li>docs: how to write templates (incl main one)</li></ul></td>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>More advanced features</b><br><ul><li><font color=red>FB/Twitter icons on posts</font></li>
+<li>poll support</li>
+<li>second sidebar??</li>
+<li>footer? holding a widget?</li>
+<li>support for Windows?? (open, paths, ...)</li>
+<li>Twitter-embed widget</li>
+<li>verify image assets</li>
+<li>auto-notify on post (FB/Twitter)</li>
+<li>subscription?</li>
+<li>analytics?</li>
+<li>connect to REST interface??</li>
+<li>up/down votes, etc.?</li>
+<li>Select themes/styles for blog??</li>
+<li>real support for tags (and cloud)</li>
+<li>Move some pieces into "snippets" (e.g. Facebook/Twitter integration)</li></ul></td>
+  </tr>
+  <tr>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Miscellaneous/Other</b><br><ul><li>allow test code to add to post?</li>
+<li>tag pools? dumb??</li>
+<li>verify view is publishable before trying</li>
+<li>methods such as get_post_template?</li>
+<li>make hierarchy of publish files?</li>
+<li>safe way to delete a view?</li>
+<li>test credentials for publishing?</li>
+<li>config files: persistent comments?</li>
+<li>change interaction of liveblog and process_file (arbitrary ostruct?)</li>
+<li>hash same as metadata??</li>
+<li>allow templates to be .lt3 files?</li>
+<li>snippets for templates?</li>
+<li>facebook/twitter as snippets?</li>
+<li>changes in liveblog for snippets??</li>
+<li>Fix/rewrite asset handling? .asset and .asset! tags?</li>
+<li>use a database???</li>
+<li>possibly change: relink, rebuild, etc.?</li>
+<li>back-sync with remote?</li></ul></td>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Recently completed (Jan-Mar 2020)</b><br><ul><li>Removed more dead code</li>
+<li>Added read_metadata</li>
+<li>Added rebuild of post and index when post edited</li>
+<li>Better lsd, lsp output (title, not slug)</li>
+<li>Fixed reddit stuff</li>
+<li>Added enable/disable</li>
+<li>Fixed FAQ</li>
+<li>Fixed sorting in lsd/lsp</li>
+<li>Minor ui/ux fixes</li>
+<li>Tweaked bump-gem, etc.</li>
+<li>Compensated for scary livetext bug</li>
+<li>Fixed problem with .def</li>
+<li>Improved some exceptions</li>
+<li>Added dates to list of pinned posts</li>
+<li>Starting to move widget code</li>
+<li>Mostly finished widget reorg</li>
+<li>Stubs for widget-related commands</li>
+<li>Added write_features to helpers-blog</li>
+<li>Added enable/disable commands</li>
+<li>Removed vars.lt3</li>
+<li>Added rudimentary menu system</li>
+<li>Fixed ^C and ^D bugs</li>
+<li>Updated rubytext to 0.1.22</li>
+<li>Cleaned up topmenu (responds to spacebar)</li>
+<li>Added exceptions.rb + new exceptions</li>
+<li>Misc changes/fixes</li>
+<li>Working on "newpost" functionality</li>
+<li>Fixed/improved 'change view' command</li></ul></td>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Recently completed (Dec 2019)</b><br><ul><li>Added explanations to config menu</li>
+<li>.banner now takes body</li>
+<li>some work on banner_svg</li>
+<li>.end issue</li>
+<li>Added svg_title to banner</li>
+<li>Livetext: added prefix to .variables</li>
+<li>Experimental pieces: FB, Twitter, varmint, univ.lt3</li>
+<li>Removed Runeblog.create (folded into create_new_blog_repo)</li>
+<li>Experimenting with new config</li>
+<li>Replaced config with three files under data/</li>
+<li>BROKEN: Replaced xlate with preprocess</li>
+<li>Backed out preprocess</li>
+<li>put navbar inside blog/index.lt3</li>
+<li>move global.lt3 into etc</li>
+<li>Fixed navbar</li>
+<li>Added blog/banner.lt3</li>
+<li>Rudimentary "universal.lt3" file</li>
+<li>UI/UX improvements incl menus</li>
+<li>Beginnings of a "wizard"</li>
+<li>New livetext, rubytext</li>
+<li>Almost fixes generate_global</li>
+<li>Fixes livetext non-system mode</li>
+<li>Fixes pinned-posts redundant rebuild</li>
+<li>Improves ux/ui and get_started</li>
+<li>Adds "no post"</li>
+<li>Improves auto-generated banner</li>
+<li>Still faster initial setup</li>
+<li>Livetext: permit # comments on end of line</li>
+<li>Livetext: add <i>get_arg,</i> <i>get_colon_parse,</i> etc.</li>
+<li>RubyText: let menu accept hash</li>
+<li>automatic .nopara as needed</li>
+<li>Livetext: other command line options? nopara? debug? ...</li>
+<li>removed need for ".mixin liveblog"</li>
+<li>improved banner layout and config</li>
+<li>adds minus, comments to list.data format</li>
+<li>fixed view handling</li>
+<li>use rsync for publishing</li>
+<li>adds lowlevel.rb</li>
+<li>removed some redundant or dead code</li>
+<li>added config (exper, reddit, ...)</li>
+<li>got reddit posting working</li>
+<li>rearranged source tree a little</li>
+<li>post-rebuild now works</li>
+<li>added file arg to .variables</li>
+<li>progress on reddit, fb, twitter</li>
+<li>credentials.txt into .gitignore</li>
+<li>added views to lsd/lsp output</li>
+<li>added view titles to lsv</li>
+<li>adds get_live_vars</li>
+<li>improves global.lt3 and CSS class names</li>
+<li>fixes in livetext formatting</li>
+<li>added nlist to liveblog</li>
+<li>experimenting with em dash</li>
+<li>broke up global.lt3</li>
+<li>added view.txt, recent.txt, publish.txt</li>
+<li>improved ui/ux</li>
+<li>fixed/changed some variable names (e.g. view.*)</li>
+<li>added features.txt file</li>
+<li>bumped livetext to 0.9.01</li>
+<li>changed format of features.txt</li>
+<li>fixed reddit_enable</li>
+<li>now can enable/disable widgets, FB/Twitter/reddit</li>
+<li>adds recent.count, recent.bgcolor</li>
+<li>adds reddit/facebook/twitter to config</li>
+<li>UI workaround for screen-clear problem</li>
+<li>improves command dispatch</li>
+<li>removes ugly test scaffolding</li>
+<li>fixed metadata.txt format</li></ul></td>
+  </tr>
+  <tr>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Recently completed (Oct/Nov 2019)</b><br><ul><li>date inside post</li>
+<li>show tags on posts</li>
+<li>permalink on post?</li>
+<li>collect tags (into metadata.txt)</li>
+<li>crude ad mockup</li>
+<li>widgets now have #initialize</li>
+<li>rough fix for "links" widget code</li>
+<li>dropcaps work now</li>
+<li>inset quotes also work</li>
+<li>fixed quote issue</li>
+<li>added basic 'config' command</li>
+<li>basic 'manage' command</li>
+<li>created .faq command</li>
+<li>got vertical navbar working</li>
+<li>very rudimentary .banner command</li>
+<li>.faq works mostly</li>
+<li>added "deps" to xlate</li>
+<li>some work done on real dependencies</li>
+<li>Warning: .views line refs nonexistent views</li>
+<li>ask for name when view is created</li>
+<li>.banner knows defaults text.html, banner.jpg</li>
+<li>rewrote help info</li>
+<li>Usage message</li>
+<li>Warning/error: create post with no views existing</li>
+<li>enhances ViewPost</li>
+<li>legacy drafts mostly working</li>
+<li>some work on banner, navbar</li>
+<li>pinned posts mostly working</li>
+<li>banner and navbar mostly working</li>
+<li>blog command line works (rebuild, preview)</li>
+<li>updates to README</li>
+<li>Fixes to widgets (links, pages, ...)</li>
+<li>Fixed failure in pages </li>
+<li>Fixed failure in links </li>
+<li>Fixed pinned pages</li>
+<li>Fixed banner/navbar</li>
+<li>Fixed "missing/incomplete index" problem</li>
+<li>Fixed "preview without rebuild" crash</li>
+<li>Fixed "out-of-box" problem</li>
+<li>Fixed bug in pinned posts</li>
+<li>Some code cleanup in liveblog</li>
+<li>Added to README</li>
+<li>Minor fixes to bin/blog</li>
+<li>Widget rebuild is fixed</li>
+<li>Deleted card1, card2, card_iframe</li>
+<li>Deleted "pieces" dir under widget</li>
+<li>Fixed mkwidget</li></ul></td>
+    <td valign=top width=32%>[rcomp is undefined]</td>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Completed tasks</b><br><ul><li>todo as .lt3</li>
+<li>idea: local.rb code under widgets/FOO gets called to build?</li>
+<li>repl commands for pages</li>
+<li>pathmagic bug</li>
+<li>pages (FAQ) bug</li>
+<li>rudimentary banner</li>
+<li>minor main/iframe bug?</li>
+<li>fix card2 problem with "$" in cdata</li>
+<li>Bug - whats-at-stubbs post missing</li>
+<li>FAQ opens two different ways (iframe)</li>
+<li>Publishing anomaly</li>
+<li>current_view anomaly</li>
+<li>get publishing working again!</li>
+<li>fix $\_blog</li>
+<li>Bug - front of post title truncated</li>
+<li>publishing into globals?</li>
+<li>vars.lt3 — title/teaser as heredoc</li>
+<li>make cards collapsible!</li>
+<li>main list broken for all widgets</li>
+<li>scrollbar on iframe?</li>
+<li>other vars?</li>
+<li>modifiable global defaults for publishing info/etc.?</li>
+<li>Better navigation/etc for default?</li>
+<li>need open_main, open_blank, open_local, etc.</li>
+<li>navbar is broken (about, contact)</li>
+<li>let test code log to screen</li>
+<li>whoa! some things won't open in an iframe? (workaround)</li>
+<li>bug: permalinks are broken</li>
+<li>revamp dirs (see dir.struct)</li>
+<li>bug: one post is truncated (life-...)</li>
+<li>fix generalized widget</li>
+<li>use .copy for guts.html</li></ul></td>
+  </tr>
+  <tr>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Completed tasks, contd.</b><br><ul><li>introduce guts.html</li>
+<li>use .seek for global.lt3</li>
+<li>"livetext" method is "xlate" for now</li>
+<li>removed staging dir</li>
+<li>fix "missing post" problem</li>
+<li>fix post and blog headers</li>
+<li>navbar into main portion of front page</li>
+<li>livetext: dotted variables</li>
+<li>variables inside blog.css</li>
+<li>alternate config file format (.variables)</li>
+<li>add permalinks (with no Back, add link to view)</li>
+<li>get publish to work</li>
+<li>verify preview/browse still work</li>
+<li>add header data to post!</li>
+<li>livetext: .variables (for config)</li>
+<li>livetext: escape bug  .this</li>
+<li>livetext: better way to do _include</li>
+<li>css/ directory?</li>
+<li>bootstrap_etc file? css or lt3?</li>
+<li>deepen structure of theme</li>
+<li>fix themes/standard issue</li>
+<li>improve gemspec</li>
+<li>work on sidebar "cards"!</li>
+<li>ditch .blogs/data</li>
+<li>post ID into HTML as comment</li>
+<li>add Back to post</li>
+<li>no */.lt3 in remote/ </li>
+<li>copy CSS into remote (/assets ?)</li>
+<li>VIEW/posts dir</li>
+<li>make sure posts go into 'generated'</li>
+<li>get rid of 'generated/blog'?</li></ul></td>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Completed tasks, contd.</b><br><ul><li>must fix blog title issue!</li>
+<li>fix "Keep Reading" CSS</li>
+<li>improve HTML (eg DIV not TABLE)</li>
+<li>create "posts" dir</li>
+<li>rename source to drafts?</li>
+<li>put CSS into templates?</li>
+<li>Livetext: support CSS</li>
+<li>Convert HTML to Livetext (??)</li>
+<li>Readline completion for views</li>
+<li>deal with CSS??</li>
+<li>fix unnecessary rebuild_post/generate_index calls</li>
+<li>Problematic: store initial content as .lt3 rather than .html</li>
+<li>remember runeblog fixes</li>
+<li>weaponize rubytext (gemspec, etc.)</li>
+<li>move some logic into liveblog?</li>
+<li>try new code with old data</li>
+<li>DBC code?</li>
+<li>work on: rebuild, relink, link_post, generate, ...</li>
+<li>fix 'categories' bug</li>
+<li>create tag pool (no defaults for now)</li>
+<li>Add Back/Home to post template</li>
+<li>rebuild doesn't seem to work?</li>
+<li>implicit paragraphs not working?</li>
+<li>list assets?</li>
+<li>allow menu selection of views/tags</li>
+<li>Command to import asset(s)?</li>
+<li>fix asset handling for now</li>
+<li>allow tag pool</li>
+<li>Readline completion for commands?</li>
+<li>leave view out of ./publish file!</li>
+<li>ssh from within repl?</li></ul></td>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Completed tasks, contd.</b><br><ul><li>fix asset discrepancy</li>
+<li>distinguish unpublished?</li>
+<li>custom curses menu</li>
+<li>work on publishing</li>
+<li>tests are screwed up</li>
+<li>publish is buggy</li>
+<li>[false, @out]</li>
+<li>screen/colors messed up on exit</li>
+<li>spinner for publishing, etc.</li>
+<li>check remote mkdir</li>
+<li>curses integration?</li>
+<li>config command (See notes.txt)</li>
+<li>dumb_menu method</li>
+<li>rethink publish/deploy </li>
+<li>remove explicit tag formatting</li>
+<li>rescue errors only in main REPL?</li>
+<li>run "unyaml" everywhere (incl my instance!)</li>
+<li>delete/undelete from view, not file list</li>
+<li>"undelete" from trash</li>
+<li>Fix the bad rescues!!</li>
+<li>Fix dumping of metadata.yaml => .txt</li>
+<li>change "remainder"</li>
+<li>get rid of YAML dependency</li>
+<li>add body, teaser to post subdir</li>
+<li>fix cmdline args</li>
+<li>search for .blog under cwd, home</li>
+<li>a "real" default view?</li>
+<li>let main blog be named? call 'data' something else?</li>
+<li>params checking on method entry</li>
+<li>occasional sanity checking?</li>
+<li>config files: blank lines, comments (persistent?)</li></ul></td>
+  </tr>
+  <tr>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Completed tasks, contd.</b><br><ul><li>consolidate under .blog</li>
+<li>test make_slug to death</li>
+<li>fix/improve config file path handling</li>
+<li>editor variable?</li>
+<li>smoother config files?</li>
+<li>distinguish post template and index template</li>
+<li>store in trash instead of deleting? (underscore)</li>
+<li>get rid of "data" tree</li>
+<li>get rid of silly BlogHeader (etc.) constants</li>
+<li>add delete_draft</li>
+<li>remove/kill should be aware of views??</li>
+<li>better data_test environment (and more views/posts)</li>
+<li>code for recreating data_test</li>
+<li>hash into create_post</li>
+<li>use Readline</li>
+<li>should there be a Post class?</li>
+<li>Make a View class?</li>
+<li>coupling between runeblog and repl</li>
+<li>large testbed!</li>
+<li>rebuild</li>
+<li>fix post template problem</li>
+<li>remove post</li>
+<li>append onto VERSION when creating blog</li>
+<li>default view in .blog</li>
+<li>current view (all views?) into new post</li>
+<li>fix publishing</li>
+<li>Bug: published post is still mangled</li>
+<li>open remote/local?</li>
+<li>detect dirty files for publishing</li>
+<li>single template for post?</li></ul></td>
+    <td valign=top width=32%>&nbsp;&nbsp;<b>Completed tasks, contd.</b><br><ul><li>get rid of #readmore</li>
+<li>Bug: make sure teaser goes into body of post</li>
+<li>runeblog dependency on livetext</li>
+<li>improve class structure!</li>
+<li>edit post</li>
+<li>auto-rebuild after post edit?</li>
+<li>error checking!</li>
+<li>Bug: views are not working properly</li>
+<li>Figure out links</li>
+<li>allow abbreviating view names</li>
+<li>delete multiple posts</li>
+<li>Figure out assets</li>
+<li>$$asset function </li>
+<li>maybe add (default) publishing info to config?</li>
+<li>head/tail for widget HTML?</li>
+<li>"local" CSS for each widget?</li></ul></td>
+    <td valign=top width=32%>...</td>
+  </tr>
+</table>
+<p>
+
+</div>
+</body>
+</html>
+<p>
+

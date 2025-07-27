@@ -1,0 +1,361 @@
+<h3>Runeblog: Notes for collaborators</h3>
+<p>
+
+Runeblog is one of my very favorite projects. No one uses it but me.
+<p>
+
+At some point, I let the code get out of control. Worse than that, the
+code no longer works with my existing blog installation.
+<p>
+
+Existing blog: <a style='text-decoration: none' href='https://rubyhacker.com/rubyelixiretc/'>Ruby, Elixir, and more</a>
+<br>
+Another blog: <a style='text-decoration: none' href='https://rubyhacker.com/around_austin/'>Around Austin</a> (mostly for testing)
+<p>
+
+Main repo: <a style='text-decoration: none' href='https://github.com/Hal9000/runeblog'>Runeblog</a>
+<br>
+Also used: <a style='text-decoration: none' href='//github.com/Hal9000/livetext'>Livetext</a> and 
+           <a style='text-decoration: none' href='https://github.com/Hal9000/rubytext'>RubyText</a>
+<p>
+
+My goals:
+<ol>
+  <li>Get the code working again</li>
+  <li>Make sure it is compatible with existing legacy data</li>
+  <li>Refactor and improve</li>
+  <li>Add tests</li>
+</ol>
+I'd love to have people to pair with on this. I'm thinking remote pairing
+with Zoom or whatever, probably with me driving.
+<p>
+
+I am willing (planning) to do major refactoring and redesign. But whatever
+we do has to fit into my overall goal.
+<p>
+
+General guidelines:
+<ol>
+  <li>This tool is based on Livetext (my own tool) and will continue that way. However, I am willing to add fixes and enhancements and improvements.</li>
+  <li>This is a tool that generates static content. In general, this will not change. If someone has suggestions for simple ways to add pieces of dynamic content, I'll consider it.</li>
+  <li>The blogger's interface is text-based via my own RubyText which is built on curses and the curses gem. I am flexible on details, but the interface itself will NOT be web-based.</li>
+  <li>I do want to add a simple non-interactive command line interface (which could be invoked in scripts if necessary).  </li>
+  <li>The overall philosophy of this tool will not change. However, I am certainly open to changing many issues with deployed data, including file names, file contents, directory structures, and so on. </li>
+  <li>I am also willing to consider changes in the code structure, the class hierarchy, the API, the names of classes/variables/methods, the Livetext interface, and so on.</li>
+</ol>
+<p>
+
+<hr>
+<p>
+
+<img src='aroundaustin.png '></img>
+<h4>Some important files:</h4>
+<p>
+
+<b>File: <tt>/Users/Hal/.blogs/views/austin//settings/view.txt</tt></b>
+<pre><code>
+author      VIEW_AUTHOR
+title       Life in ATX
+subtitle    the view from downtown
+site        VIEW_SITE
+</code><pre><br><br>
+<b>File: <tt>/Users/Hal/.blogs/views/austin//settings/publish.txt</tt></b>
+<pre><code>
+user      root
+server    SITE
+docroot   /var/www/html
+path      VIEW_NAME        # can be different
+proto     https
+</code><pre><br><br>
+<b>File: <tt>/Users/Hal/.blogs/views/austin//settings/recent.txt</tt></b>
+<pre><code>
+title.color  #010101
+title.size   28px
+
+text.color   #0101a1
+text.size    22px
+
+date.color   #9a9a9a
+date.size    15px
+
+bgcolor      #ffffff   # white
+count        10        # max number of recent entries
+</code><pre><br><br>
+<p>
+
+<b>File: <tt>/Users/Hal/.blogs/views/austin//themes/standard/post/generate.lt3</tt></b>
+<pre><code>
+. --------------------------------------------------
+. This is used to generate a single post.           
+. The logic behind it is convoluted and may be      
+. subject to change.                                
+. --------------------------------------------------
+
+.mixin liveblog
+&lt;html&gt;
+  &lt;!-- Generated from $File on $$date; editing not recommended.   --&gt;
+
+.seek global.lt3
+
+.variables! post metadata.txt
+
+. FIXME
+.head
+og:title    $post.title 
+description $post.teaser
+style       blog.css
+.end
+
+&lt;body&gt;
+
+&lt;section class=&quot;post&quot;&gt;
+  &lt;div class=&quot;recent-content&quot;&gt;
+    $.post_toolbar
+    &lt;table border=0 width=100%&gt;&lt;tr&gt;
+      &lt;td align=left valign=bottom&gt;&lt;h2 class=&quot;recent-title&quot;&gt;$post.title&lt;/h2&gt;&lt;/td&gt;
+. FIXME - longdate is passed in from outside
+      &lt;td align=right valign=top&gt;&lt;font size=-5&gt;&lt;br&gt;&lt;/font&gt;$longdate&lt;/td&gt;
+    &lt;/tr&gt;&lt;/table&gt;&lt;hr&gt;
+    $.copy guts.html
+  &lt;/div&gt;
+&lt;/section&gt;
+
+&lt;br&gt;
+.post_trailer $post.num
+&lt;/body&gt;
+&lt;/html&gt;
+</code><pre><br><br>
+<b>File: <tt>/Users/Hal/.blogs/views/austin//themes/standard/post/index.lt3</tt></b>
+<pre><code>
+. --------------------------------------------------
+. This file is overwritten and customized as the    
+. blog is maintained.
+. Currently there is no user-friendly way to change 
+. the &quot;skeleton&quot; of a post. When there is, this will
+. likely be the place.
+. --------------------------------------------------
+
+.post 0
+ 
+.title This is my title
+.pubdate 2019-07-09
+.views stuff 
+.tags 
+ 
+.teaser
+This is only a short excerpt from the top of the blog post. 
+.end
+
+And now we continue the post.
+Do we have anything to say?
+
+Apparently not much.
+
+</code><pre><br><br>
+<b>File: <tt>/Users/Hal/.blogs/views/austin//themes/standard/post/head.lt3</tt></b>
+<pre><code>
+. --------------------------------------------------
+. This file is currently unused and may go away.    
+. It is intended to manage the &lt;HEAD&gt; for a post (as
+. opposed to the entire blog).
+. --------------------------------------------------
+
+. To be done...
+</code><pre><br><br>
+<b>File: <tt>/Users/Hal/.blogs/views/austin//themes/standard/global.lt3</tt></b>
+<pre><code>
+. --------------------------------------------------
+. Global settings are stored here in the form
+.   &lt;variable&gt;  &lt;value&gt;
+. --------------------------------------------------
+
+.variables view     settings/view.txt
+
+.variables recent   settings/recent.txt
+
+.variables publish  settings/publish.txt
+
+.variables
+host        http://rubyhacker.com
+charset     utf-8
+url         http://rubyhacker.com
+locale      en_US
+
+font.family       verdana
+.end
+</code><pre><br><br>
+<b>File: <tt>/Users/Hal/.blogs/views/austin//themes/standard/blog/generate.lt3</tt></b>
+<pre><code>
+. --------------------------------------------------
+. This file will usually not be edited by the user. 
+. It is used to generate the top-level index.html   
+. The user will more often edit blog/index.lt3 in   
+. the process of blog setup.                        
+. --------------------------------------------------
+
+&lt;html&gt;
+  &lt;!-- Generated from $File on $$date.  
+       Editing not recommended. --&gt;
+  $.seek global.lt3
+  $.include blog/head.lt3
+  &lt;body&gt;
+    $.include banner/banner.lt3
+    &lt;div class=&quot;content container-fluid mt-4&quot;&gt;
+      &lt;div class=&quot;row&quot;&gt;
+        $.include blog/index.lt3
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code><pre><br><br>
+<b>File: <tt>/Users/Hal/.blogs/views/austin//themes/standard/blog/index.lt3</tt></b>
+<pre><code>
+. --------------------------------------------------
+. This file describes the actual layout of the blog.
+. It is referenced from blog/generate.lt3           
+. --------------------------------------------------
+
+. figure out how to put navbar here
+
+.recent_posts
+
+.sidebar
+  links 
+  pinned
+  pages 
+  news 
+.end
+
+</code><pre><br><br>
+<b>File: <tt>/Users/Hal/.blogs/views/austin//themes/standard/blog/head.lt3</tt></b>
+<pre><code>
+. --------------------------------------------------
+. This file will usually not be edited by the user. 
+. It is used to generate the &lt;HEAD&gt; for the overall 
+. blog and for the individual post.                 
+. SUBJECT TO CHANGE, like everything else but moreso
+. --------------------------------------------------
+
+&lt;head&gt;
+.include etc/externals.lt3
+.include etc/misc.js
+
+. fix/remove later
+.head  
+.end
+
+&lt;/head&gt;
+</code><pre><br><br>
+<b>File: <tt>/Users/Hal/.blogs/views/austin//themes/standard/blog/post_entry.lt3</tt></b>
+<pre><code>
+. --------------------------------------------------
+. This HTML fragment gives the format of a post&#39;s   
+. &quot;index&quot; entry (recent posts on blog front page).  
+. --------------------------------------------------
+
+&lt;div class=&quot;post&quot;&gt;
+  &lt;table width=100% cellpadding=7&gt;
+    &lt;tr&gt;
+      &lt;td width=16% valign=top align=right style=&quot;margin-top: -1px;&quot;&gt;
+        &lt;font size=-1&gt;#{date}&lt;/font&gt;
+      &lt;/td&gt;
+      &lt;td&gt; 
+        &lt;span class=&quot;recent-title-text&quot;&gt;&lt;a href=&quot;#{url}&quot; style=&quot;margin-top: -5px&quot;&gt;#{title}&lt;/a&gt;&lt;/span&gt;
+        &lt;b&gt;#{teaser_text}&lt;/b&gt;&amp;nbsp;&amp;nbsp;
+        &lt;a style=&quot;text-decoration: none&quot; href=&quot;#{url}&quot;&gt;&lt;small&gt;Keep&amp;nbsp;reading&lt;/small&gt;&lt;/a&gt; 
+      &lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/table&gt;
+&lt;/div&gt;
+
+&lt;font size=-4&gt;&lt;br&gt;&lt;/font&gt;
+</code><pre><br><br>
+<b>File: <tt>/Users/Hal/.blogs/views/austin//themes/standard/banner/navbar/contact.lt3</tt></b>
+<pre><code>
+. --------------------------------------------------
+. This is a sample file typical of page referenced  
+. directly from the navigation bar.
+. It is like a special case of a page in the &quot;pages&quot;
+. widget.
+. --------------------------------------------------
+
+.set this.title=&quot;Contact&quot;
+. make this better later
+&lt;html&gt;&lt;body&gt;
+    &lt;div class=&quot;content container-fluid mt-4&quot;&gt;
+      &lt;div class=&quot;row&quot;&gt;
+        &lt;h1&gt;$this.title&lt;/h1&gt;
+. content starts here...
+How to contact me by email, smoke signals, ICBM, seance, ...
+      &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/body&gt;&lt;/html&gt;
+</code><pre><br><br>
+<b>File: <tt>/Users/Hal/.blogs/views/austin//themes/standard/banner/navbar/faq.lt3</tt></b>
+<pre><code>
+.include ../../../../widgets/pages/faq.lt3
+</code><pre><br><br>
+<b>File: <tt>/Users/Hal/.blogs/views/austin//themes/standard/banner/navbar/about.lt3</tt></b>
+<pre><code>
+. --------------------------------------------------
+. This is a sample file typical of page referenced  
+. directly from the navigation bar.
+. It is like a special case of a page in the &quot;pages&quot;
+. widget.
+. --------------------------------------------------
+
+.set this.title=&quot;About me&quot;
+. make this better later
+&lt;html&gt;&lt;body&gt;
+    &lt;div class=&quot;content container-fluid mt-4&quot;&gt;
+      &lt;div class=&quot;row&quot;&gt;
+        &lt;h1&gt;$this.title&lt;/h1&gt;
+. content starts here...
+Blah blah blah...
+      &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/body&gt;&lt;/html&gt;
+</code><pre><br><br>
+<b>File: <tt>/Users/Hal/.blogs/views/austin//themes/standard/banner/navbar/list.data</tt></b>
+<pre><code>
+about    About
+contact  Contact
+faq      FAQ
+</code><pre><br><br>
+<b>File: <tt>/Users/Hal/.blogs/views/austin//themes/standard/banner/banner.lt3</tt></b>
+<pre><code>
+.banner
+  text    top.html
+  break
+  navbar
+.end
+</code><pre><br><br>
+<b>File: <tt>/Users/Hal/.blogs/views/austin//themes/standard/banner/top.lt3</tt></b>
+<pre><code>
+.seek global.lt3    # FIXME this is a hack!
+
+&lt;svg width=&quot;98%&quot; height=&quot;120&quot;
+     viewBox=&quot;0 0 98% 100&quot;&gt;
+  &lt;defs&gt;
+    &lt;linearGradient id=&quot;grad1&quot; x1=&quot;100%&quot; y1=&quot;100%&quot; x2=&quot;0%&quot; y2=&quot;100%&quot;&gt;
+      &lt;stop offset=&quot;0%&quot; style=&quot;stop-color:rgb(198,198,228);stop-opacity:1&quot; /&gt;
+      &lt;stop offset=&quot;100%&quot; style=&quot;stop-color:rgb(30,30,50);stop-opacity:1&quot; /&gt;
+    &lt;/linearGradient&gt;
+  &lt;/defs&gt;
+  &lt;style&gt;
+    .small { font: 18px sans-serif; fill: #98baff }
+    .heavy { font: bold 52px sans-serif; fill: #76a9ff }
+  &lt;/style&gt;
+
+&lt;rect x=&quot;20&quot; y=&quot;20&quot; rx=&quot;15&quot; ry=&quot;15&quot; width=&quot;98%&quot; height=&quot;100&quot; fill=&quot;url(#grad1)&quot;/&gt;
+
+&lt;text x=&quot;45&quot; y=&quot;70&quot; class=heavy&gt;$view.title&lt;/text&gt;
+&lt;text x=&quot;45&quot; y=&quot;98&quot; class=small&gt;$view.subtitle&lt;/text&gt;
+&lt;/svg&gt;
+</code><pre><br><br>
+<p>
+
+<p>
+
+<p>
+

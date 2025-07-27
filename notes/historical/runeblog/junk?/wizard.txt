@@ -1,0 +1,7 @@
+1. Author
+2. Editor?
+3. Primary server
+4. ssh-copy-id
+5. First view: filename, title, subtitle
+6. Banner image
+7. Other assets

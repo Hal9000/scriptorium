@@ -1,0 +1,69 @@
+RuneBlog - Notes for Sergey
+
+1. In a nuthsell: This is a blogging tool for my own use. Likely no one else 
+   will ever want it. Main features are:
+     - Can manage/deploy multiple views (essentially different blogs that 
+       may have content in common)
+     - Based on my tool Livetext (a Ruby-based smart markup)
+     - Generates static HTML
+     - All text-oriented (curses) - no web management for backend
+     - Uses my tool Rubytext (a thick wrapper for ncurses)
+
+2. Why Livetext? (no one uses it but me)
+     - adds features to markup: variables, functions, include files
+     - flexible and extensible (in Ruby)
+     - promotes abstraction, simplification, data hiding
+     - by default, emits HTML
+     - enables custom domain-specific markup 
+
+3. Why Rubytext? (no one uses it but me)
+     - text-based, no browser needed, no mouse needed
+     - enables windows, popups, menus, command history, autocomplete
+     - works over ssh
+
+4. Repositories and links
+
+   Runeblog - https://github.com/Hal9000/runeblog (the README is fairly
+              informative)
+
+   Rubytext - https://github.com/Hal9000/rubytext 
+   Livetext - https://github.com/Hal9000/livetext 
+   Scriptorium - https://github.com/Hal9000/scriptorium (mostly empty -
+              started to rewrite Runeblog)
+
+   My coding blog: Will link later (problem with server at present)
+
+5. At one point, I was using this. I haven't worked on it actively in three
+   years or so. I don't remember how it broke, but it is very broken now.
+
+6. Problems:
+     - Code base is no longer sane or organized
+     - Inadequate testing (mostly manual)
+     - Legacy code, dead code, bugs, design flaws - the whole thing is 
+       so screwed up, I hardly know where to begin
+     - I want to be able to salvage my existing blog content (even
+       though it my require some reorganization)
+     - While I like Rubytext, its features are incomplete and can make
+       debugging tricky (specifically, I can't scroll back in a text
+       window)
+     - Occasionally I discovered issues in Livetext or Rubytext - in fixing
+       these, I may have inserted unnoticed bugs into Runeblog
+
+7. I considered rewriting Runeblog from scratch and even started this 
+   (see Scriptorium) - but that thought is VERY daunting. At the very least, 
+   I want to add more automated tests (and maybe snapshot tests).
+
+8. My current thought (which is tentative): Start by getting the "create new 
+   blog" feature working again. This would fix several bugs, possibly expose
+   code that is unused/outdated.
+
+9. In principle, you should be able to do "gem install runeblog" and then
+   run "blog" and follow the instructions. This used to work well. I am not 
+   sure when/how it broke.
+
+   Trying it now reveals a few things:
+     - it fails very early
+     - my error handling is awful
+     - Rubytext does make debugging a little harder in this case
+
+10. Your thoughts??

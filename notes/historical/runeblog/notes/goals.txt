@@ -1,0 +1,5 @@
+A little more design up front, change some things?
+Need to figure out some unit tests
+Code needs to be cleaner and more regular.
+Behavior needs to be more robust and efficient).
+Convert existing blog to maintain compatibility

@@ -1,0 +1,10 @@
+But let's get back to UNIX. Have you ever wondered why we type ``ls, ``cp, and `mv rather than
+``list, ``copy, and `[move]? It's not just that old terminals could be slow to echo. One of the
+UNIX creators basically _[hated to type]. (I remember it as Brian Kernighan, but it may have been 
+Thompson or Ritchie.) And I argue this laziness also extended to a reluctance to type capital letters. 
+Can you think of a command flag that is capitalized (such as `[-F]) _except where the lowercase
+(such as `[-f]) was already used by something more fundamental? I can't think of one.
+
+`[FOR I:=1 TO 10], but a little later, we wrote `[for i:=1 to 10] instead.
+
+Where we once wrote ``BOOLEAN, we wrote `boolean instead. And

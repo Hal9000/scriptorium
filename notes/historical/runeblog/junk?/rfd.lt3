@@ -1,0 +1,20 @@
+
+I have a good friend I've known since college. He was much older than I was (though
+now somehow we are much closer together in age). He was a mentor to me with regard 
+to computers and other things. 
+
+He was a brilliant programmer and actually wrote a C compiler in the days before the
+IBM PC. He's now past 70 if I am not mistaken. Lately, he says technical things make 
+him tired.
+
+But as a Ruby enthusiast, I felt obligated to pass on some of the insights I had in
+the last 16 years. Will it bring him out of retirement and get him to write code
+again? Maybe not. But I had been meaning for years to write this little intro, and so
+I finally did.
+
+. asset rubydino.pdf
+
+Here's the PDF of $$link["Ruby for the Old-Time C Programmer"|http://rubyhacker.com/blog2/rubydino.pdf]
+
+If you know someone who thinks in C and never learned OOP, you might share it with 
+that person as well. If you have comments, feel free to email me.

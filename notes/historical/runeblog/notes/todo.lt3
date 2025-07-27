@@ -1,0 +1,633 @@
+<div style="font-family: verdana">
+
+.mixin notes/todo
+
+. These just set variables - see bottom of file
+
+.sublist jan2020 Recently completed (Jan-Mar 2020)
+Removed more dead code
+Added read_metadata
+Added rebuild of post and index when post edited
+Better lsd, lsp output (title, not slug)
+Fixed reddit stuff
+Added enable/disable
+Fixed FAQ
+Fixed sorting in lsd/lsp
+Minor ui/ux fixes
+Tweaked bump-gem, etc.
+Compensated for scary livetext bug
+Fixed problem with \.def
+Improved some exceptions
+Added dates to list of pinned posts
+Starting to move widget code
+Mostly finished widget reorg
+Stubs for widget-related commands
+Added write_features to helpers-blog
+Added enable/disable commands
+Removed vars.lt3
+Added rudimentary menu system
+Fixed ^C and ^D bugs
+Updated rubytext to 0.1.22
+Cleaned up topmenu (responds to spacebar)
+Added exceptions.rb + new exceptions
+Misc changes/fixes
+Working on "newpost" functionality
+Fixed/improved 'change view' command
+.end
+
+.sublist nextish Next steps...
+=Allow installing widgets
+=Allow updating widgets
+=Manage navbar (navbar.lt3, .html, ...)
+=Fix \$DotDir
+=Update posts: Views, tags, pinned?, ...
+="preview post" command
+=Need "older posts" link
+=Fix "head" stuff
+=Stay in menu?? ("sticky" menus?)
+=RubyText: radio buttons
+=RubyText: checkboxes
+=RubyText: list controller
+=RubyText: settings
+=RubyText: better YesNo
+=Regenerate (posts) command?
+=Move "manage" code into widgets
+=Let bin/blog detect current view
+=More ARGV-style commands for bin/blog
+=Formalize example blog
+=Use example blog in automated testing
+=Double occurrence in .views
+=ssh-copy-id in setup
+=post aliases (scoped to view? or view/name)
+=intra-blog links (incl aliases)
+=Reread vars after any update
+=Guidelines for extending runeblog (liveblog)
+.end
+
+.sublist bugs Bugs, etc.
+=up-arrow broken
+=bin/blog: Error when escaping from menu
+=bin/blog: autocomplete fails when no valid prefix
+tt tag not working with blog.css?
+widgets don't honor their CSS?
+things deleted locally aren't deleted remotely (rsync??)
+delete post, edit elsewhere, comes back (change source!)
+.end
+
+.sublist easyish Easy and/or soonish...
+=detect OSX/other and print warning (filename case sensitivity)
+=Change teaser to excerpt?
+=Change "guts" to "contents"
+=Collapse and rename "themes/standard"
+=Facebook buttons
+=Twitter buttons
+=backup/restore?
+Add excerpt! form
+Dropcap for excerpt?
+Publish will crash on failure
+"wrap"-style include maybe?
+add CSS ref to post?
+specific kinds of rebuild?
+custom.rb (livetext) gets included if present?
+Warn when .img (etc.) refs nonexistent asset
+RubyText settings in file
+set up publishing
+configure facebook, twitter, reddit, etc.
+On publish: Autopost to twitter (if enabled and not posted)
+On publish: Autopost to facebook (if enabled and not posted)
+Wizard: Keep track of what is done/undone (per view)
+Wizard: no view
+Wizard: servers referenced but no keys set up
+Wizard: widget enabled but not configured
+Wizard: standard entities? About, Contact, FAQ, ...
+Wizard: unpublished changes
+special tags: intra-blog, gist, github, youtube, ...
+special tags: vimeo, twitter, fb?, reddit?, ...
+fix/delete Runeblog::Default (post\_template)?
+.end
+
+.sublist funky General functionality
+better asset management
+autopost: Twitter
+autopost: Facebook
+autopost: linkedin
+post analyzer - SEO, spell, wcount, etc.
+dynamically add commands/code to repl?
+need categories??
+.end
+
+.sublist widgets Widget functionality, etc.
+=common widget code
+=tag cloud
+work on "standard widget" concept
+standard/nonstandard marker for widgets
+site map widget
+automated news search
+bydates manager
+search
+.end
+
+.sublist livetext Livetext bugs/features
+=nbsp function
+=center function
+=heredoc! adds break after each line
+fix bug .set var="this, that"
+mixin as module (livetext -m)
+$$dd[incr]?
+permit omission of .lt3?
+\.include dir/    # refs dir/main.lt3 ?
+.end
+
+.sublist ui UI and UX
+shorten commands?
+allow large output for lsp/lsd (scroll? more?)
+undo last post?
+allow for post title changing
+add post template capability (create, edit, post)
+allow windows to scroll back
+.end
+
+.sublist advanced More advanced features
+=FB/Twitter icons on posts
+poll support
+second sidebar??
+footer? holding a widget?
+support for Windows?? (open, paths, ...)
+Twitter-embed widget
+verify image assets
+auto-notify on post (FB/Twitter)
+subscription?
+analytics?
+connect to REST interface??
+up/down votes, etc.?
+Select themes/styles for blog??
+real support for tags (and cloud)
+Move some pieces into "snippets" (e.g. Facebook/Twitter integration)
+.end
+
+.sublist pretty Prettier code
+more keyword parameters as needed
+liveblog: separate dot-commands from helpers
+remove duplicated and double-scoped code
+cards as .lt3 files?
+remove dead code!!
+factor generic HTML out of liveblog.rb
+rethink helper libs?
+distinguish view and view\_name
+.end
+
+.sublist robust Faster/sturdier code
+=more tests!
+check user input
+more/better exceptions
+internal error handling
+livetext error handling
+code coverage analysis
+profiling
+.end
+
+.sublist misc Miscellaneous/Other
+allow test code to add to post?
+tag pools? dumb??
+verify view is publishable before trying
+methods such as get\_post\_template?
+make hierarchy of publish files?
+safe way to delete a view?
+test credentials for publishing?
+config files: persistent comments?
+change interaction of liveblog and process\_file (arbitrary ostruct?)
+hash same as metadata??
+allow templates to be .lt3 files?
+snippets for templates?
+facebook/twitter as snippets?
+changes in liveblog for snippets??
+Fix/rewrite asset handling? .asset and .asset! tags?
+use a database???
+possibly change: relink, rebuild, etc.?
+back-sync with remote?
+.end
+
+
+.sublist docs Documentation and tutorials
+=github README
+=docs: getting started
+=docs: overview of Livetext
+Make an intro video
+explicitly document use of ssh/scp
+update docs
+out-of-the-box workflow
+video tutorial
+docs: how-to
+docs: how to write templates (incl main one)
+.end
+
+.sublist dec2019 Recently completed (Dec 2019)
+Added explanations to config menu
+\.banner now takes body
+some work on banner_svg
+Livetext: fixed $\.end issue
+Added svg_title to banner
+Livetext: added prefix to .variables
+Experimental pieces: FB, Twitter, varmint, univ.lt3
+Removed Runeblog.create (folded into create_new_blog_repo)
+Experimenting with new config
+Replaced config with three files under data/
+BROKEN: Replaced xlate with preprocess
+Backed out preprocess
+put navbar inside blog/index.lt3
+move global.lt3 into etc
+Fixed navbar
+Added blog/banner.lt3
+Rudimentary "universal.lt3" file
+UI/UX improvements incl menus
+Beginnings of a "wizard"
+New livetext, rubytext
+Almost fixes generate_global
+Fixes livetext non-system mode
+Fixes pinned-posts redundant rebuild
+Improves ux/ui and get_started
+Adds "no post"
+Improves auto-generated banner
+Still faster initial setup
+Livetext: permit # comments on end of line
+Livetext: add _get_arg, _get_colon_parse, etc.
+RubyText: let menu accept hash
+automatic .nopara as needed
+Livetext: other command line options? nopara? debug? ...
+removed need for ".mixin liveblog"
+improved banner layout and config
+adds minus, comments to list.data format
+fixed view handling
+use rsync for publishing
+adds lowlevel.rb
+removed some redundant or dead code
+added config (exper, reddit, ...)
+got reddit posting working
+rearranged source tree a little
+post-rebuild now works
+added file arg to .variables
+progress on reddit, fb, twitter
+credentials.txt into .gitignore
+added views to lsd/lsp output
+added view titles to lsv
+adds get_live_vars
+improves global.lt3 and CSS class names
+fixes in livetext formatting
+added nlist to liveblog
+experimenting with em dash
+broke up global.lt3
+added view.txt, recent.txt, publish.txt
+improved ui/ux
+fixed/changed some variable names (e.g. view.*)
+added features.txt file
+bumped livetext to 0.9.01
+changed format of features.txt
+fixed reddit_enable
+now can enable/disable widgets, FB/Twitter/reddit
+adds recent.count, recent.bgcolor
+adds reddit/facebook/twitter to config
+UI workaround for screen-clear problem
+improves command dispatch
+removes ugly test scaffolding
+fixed metadata.txt format
+.end
+
+.sublist octnov2019 Recently completed (Oct/Nov 2019)
+date inside post
+show tags on posts
+permalink on post?
+collect tags (into metadata.txt)
+crude ad mockup
+widgets now have #initialize
+rough fix for "links" widget code
+dropcaps work now
+inset quotes also work
+fixed quote issue
+added basic 'config' command
+basic 'manage' command
+created .faq command
+got vertical navbar working
+very rudimentary .banner command
+\.faq works mostly
+added "deps" to xlate
+some work done on real dependencies
+Warning: .views line refs nonexistent views
+ask for name when view is created
+\.banner knows defaults text.html, banner.jpg
+rewrote help info
+Usage message
+Warning/error: create post with no views existing
+enhances ViewPost
+legacy drafts mostly working
+some work on banner, navbar
+pinned posts mostly working
+banner and navbar mostly working
+blog command line works (rebuild, preview)
+updates to README
+Fixes to widgets (links, pages, ...)
+Fixed failure in pages 
+Fixed failure in links 
+Fixed pinned pages
+Fixed banner/navbar
+Fixed "missing/incomplete index" problem
+Fixed "preview without rebuild" crash
+Fixed "out-of-box" problem
+Fixed bug in pinned posts
+Some code cleanup in liveblog
+Added to README
+Minor fixes to bin/blog
+Widget rebuild is fixed
+Deleted card1, card2, card_iframe
+Deleted "pieces" dir under widget
+Fixed mkwidget
+.end
+
+.sublist comp1 Completed tasks
+todo as .lt3
+idea: local.rb code under widgets/FOO gets called to build?
+repl commands for pages
+pathmagic bug
+pages (FAQ) bug
+rudimentary banner
+minor main/iframe bug?
+fix card2 problem with "\$" in cdata
+Bug - whats-at-stubbs post missing
+FAQ opens two different ways (iframe)
+Publishing anomaly
+current\_view anomaly
+get publishing working again!
+fix \$\_blog
+Bug - front of post title truncated
+publishing into globals?
+vars.lt3 — title/teaser as heredoc
+make cards collapsible!
+main list broken for all widgets
+scrollbar on iframe?
+other vars?
+modifiable global defaults for publishing info/etc.?
+Better navigation/etc for default?
+need open\_main, open\_blank, open\_local, etc.
+navbar is broken (about, contact)
+let test code log to screen
+whoa! some things won't open in an iframe? (workaround)
+bug: permalinks are broken
+revamp dirs (see dir.struct)
+bug: one post is truncated (life-...)
+fix generalized widget
+use .copy for guts.html
+.end
+
+.sublist comp2 Completed tasks, contd.
+introduce guts.html
+use .seek for global.lt3
+"livetext" method is "xlate" for now
+removed staging dir
+fix "missing post" problem
+fix post and blog headers
+navbar into main portion of front page
+livetext: dotted variables
+variables inside blog.css
+alternate config file format (.variables)
+add permalinks (with no Back, add link to view)
+get publish to work
+verify preview/browse still work
+add header data to post!
+livetext: .variables (for config)
+livetext: escape bug  \.this
+livetext: better way to do \_include
+css/ directory?
+bootstrap\_etc file? css or lt3?
+deepen structure of theme
+fix themes/standard issue
+improve gemspec
+work on sidebar "cards"!
+ditch .blogs/data
+post ID into HTML as comment
+add Back to post
+no \*/.lt3 in remote/ 
+copy CSS into remote (/assets ?)
+VIEW/posts dir
+make sure posts go into 'generated'
+get rid of 'generated/blog'?
+.end
+
+.sublist comp3 Completed tasks, contd.
+must fix blog title issue!
+fix "Keep Reading" CSS
+improve HTML (eg DIV not TABLE)
+create "posts" dir
+rename source to drafts?
+put CSS into templates?
+Livetext: support CSS
+Convert HTML to Livetext (??)
+Readline completion for views
+deal with CSS??
+fix unnecessary rebuild\_post/generate\_index calls
+Problematic: store initial content as .lt3 rather than .html
+remember runeblog fixes
+weaponize rubytext (gemspec, etc.)
+move some logic into liveblog?
+try new code with old data
+DBC code?
+work on: rebuild, relink, link\_post, generate, ...
+fix 'categories' bug
+create tag pool (no defaults for now)
+Add Back/Home to post template
+rebuild doesn't seem to work?
+implicit paragraphs not working?
+list assets?
+allow menu selection of views/tags
+Command to import asset(s)?
+fix asset handling for now
+allow tag pool
+Readline completion for commands?
+leave view out of ./publish file!
+ssh from within repl?
+.end
+
+.sublist comp4 Completed tasks, contd.
+fix asset discrepancy
+distinguish unpublished?
+custom curses menu
+work on publishing
+tests are screwed up
+publish is buggy
+[false, @out]
+screen/colors messed up on exit
+spinner for publishing, etc.
+check remote mkdir
+curses integration?
+config command (See notes.txt)
+dumb\_menu method
+rethink publish/deploy 
+remove explicit tag formatting
+rescue errors only in main REPL?
+run "unyaml" everywhere (incl my instance!)
+delete/undelete from view, not file list
+"undelete" from trash
+Fix the bad rescues!!
+Fix dumping of metadata.yaml => .txt
+change "remainder"
+get rid of YAML dependency
+add body, teaser to post subdir
+fix cmdline args
+search for .blog under cwd, home
+a "real" default view?
+let main blog be named? call 'data' something else?
+params checking on method entry
+occasional sanity checking?
+config files: blank lines, comments (persistent?)
+.end
+
+.sublist comp5 Completed tasks, contd.
+consolidate under .blog
+test make\_slug to death
+fix/improve config file path handling
+editor variable?
+smoother config files?
+distinguish post template and index template
+store in trash instead of deleting? (underscore)
+get rid of "data" tree
+get rid of silly BlogHeader (etc.) constants
+add delete\_draft
+remove/kill should be aware of views??
+better data\_test environment (and more views/posts)
+code for recreating data\_test
+hash into create\_post
+use Readline
+should there be a Post class?
+Make a View class?
+coupling between runeblog and repl
+large testbed!
+rebuild
+fix post template problem
+remove post
+append onto VERSION when creating blog
+default view in .blog
+current view (all views?) into new post
+fix publishing
+Bug: published post is still mangled
+open remote/local?
+detect dirty files for publishing
+single template for post?
+.end
+
+.sublist comp6 Completed tasks, contd.
+get rid of #readmore
+Bug: make sure teaser goes into body of post
+runeblog dependency on livetext
+improve class structure!
+edit post
+auto-rebuild after post edit?
+error checking!
+Bug: views are not working properly
+Figure out links
+allow abbreviating view names
+delete multiple posts
+Figure out assets
+$$dd[asset] function 
+maybe add (default) publishing info to config?
+head/tail for widget HTML?
+"local" CSS for each widget?
+.end
+
+.comment
+28  General functionality
+6  Widget functionality, etc.
+11  Livetext bugs/features
+11  and UX
+15  More advanced features
+12  Prettier code
+6  Faster/sturdier code
+18  Miscellaneous/Other
+8  Documentation and tutorials
+0  Bugs, etc.
+170  Completed tasks
+
+funky    General functionality
+bugs     Bugs, etc.
+livetext Livetext bugs/features
+widgets  Widget functionality, etc.
+
+ui       UI and UX
+pretty   Prettier code
+robust   Faster/sturdier code
+advanced More advanced features
+
+misc     Miscellaneous/Other
+docs     Documentation and tutorials
+comp1
+comp2
+
+comp3-6
+complete Completed tasks
+.end
+
+.sublist nextlive Next steps (Livetext, etc.)
+Livetext: mixin? include? copy? seek?
+RubyText: let yesno accept characters
+Livetext: Var as replacement for \_var  (see varmint)
+Livetext: open/close
+.end
+
+
+<html>
+  <head>
+<!--
+    <style>
+      * { font-family: times }
+    </style>
+-->
+  </head>
+<body>
+
+<h2>Runeblog TODO</h2>
+</h3>Generated from <code><font size=+1><b>$File</b></font></code> - $$date $$time</h3>
+
+<table border=0 width=96% cellpadding=8 cellspacing=8>
+  <tr>
+    <td valign=top width=32%>$nextish</td>
+    <td valign=top width=32%>$easyish</td>
+    <td valign=top width=32%>$bugs</td>
+  </tr>
+  <tr>
+    <td valign=top width=32%>$funky</td>
+    <td valign=top width=32%>$nextlive</td>
+    <td valign=top width=32%>$livetext</td>
+  </tr>
+  <tr>
+    <td valign=top width=32%>$widgets</td>
+    <td valign=top width=32%>$ui</td>
+    <td valign=top width=32%>$pretty</td>
+  </tr>
+  <tr>
+    <td valign=top width=32%>$robust</td>
+    <td valign=top width=32%>$docs</td>
+    <td valign=top width=32%>$advanced</td>
+  </tr>
+  <tr>
+    <td valign=top width=32%>$misc</td>
+    <td valign=top width=32%>$jan2020</td>
+    <td valign=top width=32%>$dec2019</td>
+  </tr>
+  <tr>
+    <td valign=top width=32%>$octnov2019</td>
+    <td valign=top width=32%>$rcomp</td>
+    <td valign=top width=32%>$comp1</td>
+  </tr>
+  <tr>
+    <td valign=top width=32%>$comp2</td>
+    <td valign=top width=32%>$comp3</td>
+    <td valign=top width=32%>$comp4</td>
+  </tr>
+  <tr>
+    <td valign=top width=32%>$comp5</td>
+    <td valign=top width=32%>$comp6</td>
+    <td valign=top width=32%>...</td>
+  </tr>
+</table>
+
+</div>
+</body>
+</html>
+

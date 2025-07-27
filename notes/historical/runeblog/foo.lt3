@@ -1,0 +1,23 @@
+. mixin liveblog
+
+. include themes/standard/global.lt3
+
+echo FileDir = $FileDir
+
+this 
+
+is a 
+. head
+og:title This is a title
+. end
+test
+
+. wocka
+
+.variables
+foo This is foo
+bar This isn't
+.end
+
+I get foo = "$foo" and bar = "$bar"
+

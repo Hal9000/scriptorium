@@ -1,0 +1,62 @@
+. --------------------------------------------------
+. This file is processed to create blog.css         
+. Most of the global CSS goes here                  
+. --------------------------------------------------
+
+.include $ViewDir/global.lt3
+
+body { font-family: $font.family }
+
+\.recent-title a {
+  color: $recent.title.color;
+  font-family: $font.family;
+  font-size: $recent.title.size;
+  float: right;
+  display: inline-block;
+  text-align: top;
+  text-decoration: none;
+}
+
+\.recent-title a:hover {
+  text-decoration: none;
+}
+
+\.recent-title-text a {
+  color: $recent.text.color;
+  font-family: $font.family;
+  font-size: $recent.text.size; 
+  display: block;
+  text-decoration: none;
+}
+
+\.recent-title-text a:hover {
+  text-decoration: none;
+}
+
+\.recent-date {
+  color: $recent.date.color;
+  font-family: $font.family;
+  font-size: $recent.date.size;
+  display: block;
+  float: left;
+  text-align: top;
+}
+
+\.mydrop {
+  color: #444444;
+  float: left;
+  text-align: top;
+# font-family: Verdana;
+  font-size: 38px;
+  line-height: 38px;
+# padding-top: 0px;
+  padding-right: 8px;
+  padding-left: 3px;
+}
+
+. not used?
+\.thumbnail img {
+    max-height: 100%;
+    max-width: 100%;
+}
+

@@ -62,25 +62,25 @@ class TestReadWrite < Minitest::Test
   end
 
   def test_need_nil_path_raises_error
-    assert_raises(RuntimeError) do
+    assert_raises(CannotRequirePathNil) do
       need(:file, nil)
     end
   end
 
   def test_need_empty_path_raises_error
-    assert_raises(RuntimeError) do
+    assert_raises(CannotRequirePathEmpty) do
       need(:file, "")
     end
   end
 
   def test_need_whitespace_path_raises_error
-    assert_raises(RuntimeError) do
+    assert_raises(CannotRequirePathEmpty) do
       need(:file, "   ")
     end
   end
 
   def test_need_invalid_type_raises_error
-    assert_raises(RuntimeError) do
+    assert_raises(InvalidType) do
       need(:invalid, "some/path")
     end
   end
@@ -88,7 +88,7 @@ class TestReadWrite < Minitest::Test
   def test_need_file_nonexistent_raises_error
     file_path = "#{@test_dir}/nonexistent.txt"
     
-    assert_raises(RuntimeError) do
+    assert_raises(RequiredFileNotFound) do
       need(:file, file_path)
     end
   end
@@ -96,7 +96,7 @@ class TestReadWrite < Minitest::Test
   def test_need_dir_nonexistent_raises_error
     dir_path = "#{@test_dir}/nonexistent_dir"
     
-    assert_raises(RuntimeError) do
+    assert_raises(RequiredFileNotFound) do
       need(:dir, dir_path)
     end
   end
@@ -116,38 +116,38 @@ class TestReadWrite < Minitest::Test
     begin
       system!("false", "testing failure")
       flunk "Expected system! to raise an error"
-    rescue RuntimeError => e
+    rescue CommandFailedWithDesc => e
       assert_match /testing failure/, e.message
       assert_match /Command failed/, e.message
     end
   end
 
   def test_system_nil_command_raises_error
-    assert_raises(RuntimeError) do
+    assert_raises(CannotExecuteCommandNil) do
       system!(nil)
     end
   end
 
   def test_system_empty_command_raises_error
-    assert_raises(RuntimeError) do
+    assert_raises(CannotExecuteCommandEmpty) do
       system!("")
     end
   end
 
   def test_system_whitespace_command_raises_error
-    assert_raises(RuntimeError) do
+    assert_raises(CannotExecuteCommandEmpty) do
       system!("   ")
     end
   end
 
   def test_system_failing_command_raises_error
-    assert_raises(RuntimeError) do
+    assert_raises(CommandFailedWithDesc) do
       system!("false")
     end
   end
 
   def test_system_nonexistent_command_raises_error
-    assert_raises(RuntimeError) do
+    assert_raises(CommandFailedWithDesc) do
       system!("nonexistent_command_that_should_fail")
     end
   end
@@ -185,19 +185,19 @@ class TestReadWrite < Minitest::Test
   end
 
   def test_make_dir_nil_path_raises_error
-    assert_raises(RuntimeError) do
+    assert_raises(CannotCreateDirectoryPathNil) do
       make_dir(nil)
     end
   end
 
   def test_make_dir_empty_path_raises_error
-    assert_raises(RuntimeError) do
+    assert_raises(CannotCreateDirectoryPathEmpty) do
       make_dir("")
     end
   end
 
   def test_make_dir_whitespace_path_raises_error
-    assert_raises(RuntimeError) do
+    assert_raises(CannotCreateDirectoryPathEmpty) do
       make_dir("   ")
     end
   end
@@ -211,7 +211,7 @@ class TestReadWrite < Minitest::Test
     file_path = "#{read_only_dir}/test_dir"
     
     # This should raise a permission denied error
-    assert_raises(RuntimeError) do
+    assert_raises(CannotCreateDirectoryPermissionDenied) do
       make_dir(file_path)
     end
     
@@ -274,19 +274,19 @@ class TestReadWrite < Minitest::Test
   end
 
   def test_write_file_nil_path_raises_error
-    assert_raises(RuntimeError) do
+    assert_raises(CannotWriteFilePathNil) do
       write_file(nil, "content")
     end
   end
 
   def test_write_file_empty_path_raises_error
-    assert_raises(RuntimeError) do
+    assert_raises(CannotWriteFilePathEmpty) do
       write_file("", "content")
     end
   end
 
   def test_write_file_whitespace_path_raises_error
-    assert_raises(RuntimeError) do
+    assert_raises(CannotWriteFilePathEmpty) do
       write_file("   ", "content")
     end
   end
@@ -300,7 +300,7 @@ class TestReadWrite < Minitest::Test
     file_path = "#{read_only_dir}/test.txt"
     
     # This should raise a permission denied error
-    assert_raises(RuntimeError) do
+    assert_raises(CannotWriteFilePermissionDenied) do
       write_file(file_path, "content")
     end
     
@@ -364,25 +364,25 @@ class TestReadWrite < Minitest::Test
   def test_read_file_missing_file_without_fallback_raises_error
     file_path = "#{@test_dir}/nonexistent.txt"
     
-    assert_raises(RuntimeError) do
+    assert_raises(CannotReadFileNotFound) do
       read_file(file_path)
     end
   end
 
   def test_read_file_nil_path_raises_error
-    assert_raises(RuntimeError) do
+    assert_raises(CannotReadFilePathNil) do
       read_file(nil)
     end
   end
 
   def test_read_file_empty_path_raises_error
-    assert_raises(RuntimeError) do
+    assert_raises(CannotReadFilePathEmpty) do
       read_file("")
     end
   end
 
   def test_read_file_whitespace_path_raises_error
-    assert_raises(RuntimeError) do
+    assert_raises(CannotReadFilePathEmpty) do
       read_file("   ")
     end
   end
@@ -393,7 +393,7 @@ class TestReadWrite < Minitest::Test
     File.write(file_path, "content")
     FileUtils.chmod(0000, file_path)
     
-    assert_raises(RuntimeError) do
+    assert_raises(CannotReadFilePermissionDenied) do
       read_file(file_path)
     end
     

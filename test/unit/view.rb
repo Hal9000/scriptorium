@@ -1,3 +1,5 @@
+require 'minitest/autorun'
+require_relative '../../lib/scriptorium'
 require_relative '../test_helpers'
 require_relative '../../lib/scriptorium/view'
 
@@ -9,12 +11,16 @@ class TestScriptoriumView < Minitest::Test
   def setup
     @test_dir = "test/view_test_files"
     make_dir(@test_dir)
-    @repo = Scriptorium::Repo.create(true)
+    # Use a unique test repo path to avoid conflicts
+    @repo_path = "test/view-test-repo"
+    FileUtils.rm_rf(@repo_path) if Dir.exist?(@repo_path)
+    @repo = Scriptorium::Repo.create(@repo_path)
     @view = @repo.create_view("test_view", "Test View", "A test view", theme: "standard")
   end
 
   def teardown
     FileUtils.rm_rf(@test_dir) if Dir.exist?(@test_dir)
+    FileUtils.rm_rf(@repo_path) if Dir.exist?(@repo_path)
     Scriptorium::Repo.destroy if Scriptorium::Repo.testing
   end
 

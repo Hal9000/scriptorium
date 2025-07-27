@@ -1,0 +1,164 @@
+#!/usr/bin/env ruby
+
+
+def write_css
+  # Need .lt3 file?
+  File.open("std_widget/card.css", "w") do |f|
+    f.puts <<~LIVE
+      # CSS for sidebar card
+    LIVE
+  end
+  File.open("std_widget/main.css", "w") do |f|
+    f.puts <<~LIVE
+      # CSS for main area page
+    LIVE
+  end
+end
+
+def _make_class_name(app)
+  if app =~ /[-_]/
+    words = app.split(/[-_]/)
+    name = words.map(&:capitalize).join
+  else
+    name = app.capitalize
+  end
+  return name
+end
+
+def write_widget_ruby
+  File.open("std_widget/#@app.rb", "w") do |f|
+    f.puts <<~LIVE
+      # Custom code for '#@app' widget
+
+      class ::RuneBlog::Widget
+        class #{_make_class_name(@app)}
+          Type, Title = "#@app", "#@title"
+
+          def initialize(repo)
+            @blog = repo
+            @datafile = "list.data"
+            @lines = File.exist?(@datafile) ? File.readlines(@datafile) : []
+          end
+
+          def _html_body(file, css = nil)    # FIXME move to common file
+            file.puts "<html>"
+            if css
+              file.puts "    <head>"  
+              file.puts "        <style>\n#{css}\n          </style>"
+              file.puts "    </head>"  
+            end
+            file.puts "  <body>"
+            yield
+            file.puts "  </body>\n</html>"
+          end
+
+          def build
+            # ...insert logic here
+            write_main
+            write_card
+          end
+
+          def write_main
+            tag = Type
+            card_title = Title
+            css = "* { font-family: verdana }"
+            mainfile = "#{tag}-main"
+            File.open("#{mainfile}.html", "w") do |f|
+              _html_body(f, css) do
+                f.puts "<h1>#{card_title}</h1><br><hr>"
+                # ...insert logic here
+              end
+            end
+          end
+
+          def write_card
+            tag = Type
+            url = :widgets/tag/tag+"-main.html"
+            card_title = Title
+            cardfile = "#{tag}-card"
+            File.open("#{cardfile}.html", "w") do |f|
+              f.puts <<-EOS
+                <div class="card mb-3">
+                  <div class="card-body">
+                    <h5 class="card-title">
+                      <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="##{tag}">+</button>
+                      <a href="javascript: void(0)" 
+                         onclick="javascript:open_main('#{url}')" 
+                         style="text-decoration: none; color: black"> #{card_title}</a>
+                    </h5>
+                    <div class="collapse" id="#{tag}">
+              EOS
+              # ...insert logic here
+              f.puts <<-EOS
+                    </div>
+                  </div>
+                </div>
+              EOS
+            end
+          end
+
+          def edit_menu
+          end
+
+          def refresh
+          end
+        end
+      end
+    LIVE
+  end
+end
+
+def write_custom_ruby
+  File.open("std_widget/custom.rb", "w") do |f|
+    f.puts <<~LIVE
+      # This is for specialized livetext add-ons (Ruby methods)
+    LIVE
+  end
+end
+
+def write_README
+  File.open("std_widget/README", "w") do |f|
+    f.puts <<~LIVE
+      This is for a "standard" Runeblog widget
+      Code and docs are a work in progress
+    LIVE
+  end
+end
+
+def safe_copy(src)
+  dst = src.sub(/std_widget/, "empty_view/themes/standard/widgets/#@app")
+  if File.exist?(dst)
+    puts "Skip: #{src}"
+    return 
+  else
+    puts "Copying: #{src}"
+    system("cp #{src}  #{dst}")
+  end
+end
+
+def copy_over
+  here, there = "std_widget", "empty_view/themes/standard/widgets/#@app"
+  slist = Dir["#{here}/*"].reject {|x| File.directory?(x) }
+  slist.each {|src| safe_copy(src) }
+
+  here, there = "std_widget/pieces", "empty_view/themes/standard/widgets/#@app/pieces"
+  system("mkdir #{there}") unless Dir.exist?(there)
+  slist = Dir["#{here}/*"]
+  slist.each {|src| safe_copy(src) }
+end
+
+
+### "Main"
+
+abort 'Need app, "title..."' if ARGV.empty?
+@app, @title = *ARGV
+
+system("rm -rf std_widget")
+system("mkdir -p std_widget/pieces")
+
+write_css
+write_widget_ruby
+write_custom_ruby
+write_README
+
+copy_over

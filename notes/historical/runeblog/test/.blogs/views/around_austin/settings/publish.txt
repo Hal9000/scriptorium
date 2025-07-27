@@ -1,0 +1,5 @@
+user      root
+server    SITE
+docroot   /var/www/html
+path      VIEW_NAME        # can be different
+proto     https
