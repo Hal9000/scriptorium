@@ -5,6 +5,24 @@ class Scriptorium::Post
     attr_reader :repo, :num
   
     def initialize(repo, num)
+      # Input validation
+      if repo.nil?
+        raise "Cannot create post: repo is nil"
+      end
+      
+      if num.nil?
+        raise "Cannot create post: num is nil"
+      end
+      
+      if num.to_s.strip.empty?
+        raise "Cannot create post: num is empty or whitespace-only"
+      end
+      
+      # Validate num format (should be numeric)
+      unless num.to_s.match?(/^\d+$/)
+        raise "Cannot create post: invalid num '#{num}' (must be numeric)"
+      end
+      
       @repo = repo
       @num = num.to_s.rjust(4, "0")
     end
@@ -43,6 +61,21 @@ class Scriptorium::Post
 
     def set_pubdate(ymd)
       raise TestModeOnly unless Scriptorium::Repo.testing
+      
+      # Input validation
+      if ymd.nil?
+        raise "Cannot set pubdate: ymd is nil"
+      end
+      
+      if ymd.to_s.strip.empty?
+        raise "Cannot set pubdate: ymd is empty or whitespace-only"
+      end
+      
+      # Validate date format (YYYY-MM-DD)
+      unless ymd.to_s.match?(/^\d{4}-\d{2}-\d{2}$/)
+        raise "Cannot set pubdate: invalid date format '#{ymd}' (expected YYYY-MM-DD)"
+      end
+      
       yyyy, mm, dd = ymd.split("-")
       t = Time.new(yyyy.to_i, mm.to_i, dd.to_i)
       meta["post.pubdate"] = t.strftime("%Y-%m-%d %H:%M:%S") 

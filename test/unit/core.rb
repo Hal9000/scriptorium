@@ -1,5 +1,6 @@
 # This test file primarily tests the core helper methods from lib/scriptorium/helpers.rb
 # including file I/O operations, directory creation, system commands, and existence validation
+# test/unit/core.rb
 
 require 'minitest/autorun'
 require_relative '../../lib/scriptorium'

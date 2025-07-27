@@ -10,11 +10,12 @@ puts "Running all Scriptorium tests..."
 puts "="*60
 
 # Load all test files
-require_relative 'repo/unit'
-require_relative 'post/unit'
+require_relative 'unit/repo'
+require_relative 'unit/post'
+require_relative 'unit/view'
 require_relative 'banner_svg/unit'
 require_relative 'integration/integration_test'
-require_relative 'core/unit' # Tests core helper methods
+require_relative 'unit/core' # Tests core helper methods
 
 puts "\n" + "="*60
 puts "All tests completed!"

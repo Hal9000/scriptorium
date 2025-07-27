@@ -12,6 +12,28 @@ class Scriptorium::View
   end
 
   def initialize(name, title, subtitle = "", theme = "standard")
+    # Input validation
+    if name.nil?
+      raise "Cannot create view: name is nil"
+    end
+    
+    if name.to_s.strip.empty?
+      raise "Cannot create view: name is empty or whitespace-only"
+    end
+    
+    if title.nil?
+      raise "Cannot create view: title is nil"
+    end
+    
+    if title.to_s.strip.empty?
+      raise "Cannot create view: title is empty or whitespace-only"
+    end
+    
+    # Validate name format (only allow alphanumeric, hyphen, underscore)
+    unless name.match?(/^[a-zA-Z0-9_-]+$/)
+      raise "Cannot create view: invalid name '#{name}' (only alphanumeric, hyphen, and underscore allowed)"
+    end
+    
     @name, @title, @subtitle, @theme = name, title, subtitle, theme
     @root = Scriptorium::Repo.root
     @repo = Scriptorium::Repo.repo
@@ -115,12 +137,14 @@ But overall, the process is robust and well thought-out. No major changes needed
     # check to see if ever done before?
     # copy layout.txt to view
     t = Scriptorium::Theme.new(@root, theme)
+    need(:file, t.file("layout.txt"), ThemeFileNotFound)
     FileUtils.cp(t.file("layout.txt"), @dir/:config)
     # copy other .txt to view?  header, footer, ...
     names = %w[header footer left right main]
     lay = @root/:themes/theme/:layout
     names.each do |name|
       f1, f2 = lay/:config/"#{name}.txt", dir/:config
+      need(:file, f1, ThemeFileNotFound)
       FileUtils.cp(f1, f2)
     end
     generate_empty_containers
@@ -289,9 +313,28 @@ write output:      write the result to output/panes/header.html
   end
   
   def build_widgets(arg)
+    # Input validation
+    if arg.nil?
+      raise "Cannot build widgets: argument is nil"
+    end
+    
+    if arg.to_s.strip.empty?
+      raise "Cannot build widgets: argument is empty or whitespace-only"
+    end
+    
     widgets = arg.split
     content = ""
     widgets.each do |widget|
+      # Validate widget name
+      if widget.nil? || widget.strip.empty?
+        raise "Cannot build widget: widget name is nil or empty"
+      end
+      
+      # Validate widget name format (only allow alphanumeric and underscore)
+      unless widget.match?(/^[a-zA-Z0-9_]+$/)
+        raise "Cannot build widget: invalid widget name '#{widget}' (only alphanumeric and underscore allowed)"
+      end
+      
       widget_class = eval("Scriptorium::Widget::#{widget.capitalize}")
       obj = widget_class.new(@repo, self)
       obj.generate
@@ -333,6 +376,7 @@ write output:      write the result to output/panes/header.html
       html << "  <h1>No posts yet!</h1>"
     else
       paginate_posts
+      need(:file, self.dir/:output/"post_index.html")
       html << read_file(self.dir/:output/"post_index.html")
     end
     html << "</div> <!-- end main -->\n"

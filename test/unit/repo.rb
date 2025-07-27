@@ -248,62 +248,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert_file_lines("/tmp/mock.html", 21)
   end
 
-  def test_020_check_html_stubs
-    repo = create_test_repo
-    panes = repo.root/:views/:sample/:output/:panes
-    assert_file_exist?(panes/"header.html")
-    assert_file_exist?(panes/"footer.html")
-    assert_file_exist?(panes/"left.html")
-    assert_file_exist?(panes/"right.html")
-    assert_file_exist?(panes/"main.html")
 
-    assert_file_contains?(panes/"header.html", "<!-- HEADER CONTENT -->")
-    assert_file_contains?(panes/"footer.html", "<!-- FOOTER CONTENT -->")
-    assert_file_contains?(panes/"left.html",   "<!-- LEFT CONTENT -->")
-    assert_file_contains?(panes/"right.html",  "<!-- RIGHT CONTENT -->")
-    assert_file_contains?(panes/"main.html",   "<!-- MAIN CONTENT -->")
-  end
-
-  def test_021_check_layout_parsing
-    repo = create_test_repo
-    file = repo.root/:views/:sample/:config/"layout.txt"
-    File.open(file, "w") do |f|
-      f.puts <<~EOS
-        main     # Center pane
-        header
-        left   15%
-        right  20%  # Right sidebar
-        footer
-      EOS
-    end
-    results = repo.view.read_layout.keys
-    expected = ["main", "header", "left", "right", "footer"].sort
-    assert results.sort == expected, "Error reading layout file (got #{results.inspect})"
-
-    File.open(file, "w") do |f|
-      f.puts <<~EOS
-        main     # Center pane
-        header
-        banana
-        left   15%
-        right  20%  # Right sidebar
-        footer
-      EOS
-    end
-    assert_raises(LayoutHasUnknownTag) { repo.view.read_layout }
-
-    File.open(file, "w") do |f|
-      f.puts <<~EOS
-        main     # Center pane
-        header
-        main
-        left   15%
-        right  20%  # Right sidebar
-        footer
-      EOS
-    end
-    assert_raises(LayoutHasDuplicateTags) { repo.view.read_layout }
-  end
 
   def test_022_simple_generate_post
     repo = create_test_repo

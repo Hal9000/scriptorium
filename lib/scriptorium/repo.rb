@@ -115,6 +115,28 @@ class Scriptorium::Repo
   end
 
   def create_view(name, title, subtitle = "", theme: "standard")
+    # Input validation
+    if name.nil?
+      raise "Cannot create view: name is nil"
+    end
+    
+    if name.to_s.strip.empty?
+      raise "Cannot create view: name is empty or whitespace-only"
+    end
+    
+    if title.nil?
+      raise "Cannot create view: title is nil"
+    end
+    
+    if title.to_s.strip.empty?
+      raise "Cannot create view: title is empty or whitespace-only"
+    end
+    
+    # Validate name format (only allow alphanumeric, hyphen, underscore)
+    unless name.match?(/^[a-zA-Z0-9_-]+$/)
+      raise "Cannot create view: invalid name '#{name}' (only alphanumeric, hyphen, and underscore allowed)"
+    end
+    
     raise ViewDirAlreadyExists(name) if view_exist?(name)
     make_tree(@root/:views, <<~EOS)
     #{name}/
@@ -297,6 +319,20 @@ class Scriptorium::Repo
   end
 
   def post(id)
+    # Input validation
+    if id.nil?
+      raise "Cannot get post: id is nil"
+    end
+    
+    if id.to_s.strip.empty?
+      raise "Cannot get post: id is empty or whitespace-only"
+    end
+    
+    # Validate id format (should be numeric)
+    unless id.to_s.match?(/^\d+$/)
+      raise "Cannot get post: invalid id '#{id}' (must be numeric)"
+    end
+    
     meta = @root/:posts/d4(id)/"meta.txt"
     return nil unless File.exist?(meta)
     Scriptorium::Post.new(self, id)
