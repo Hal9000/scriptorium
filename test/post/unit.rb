@@ -10,7 +10,7 @@ class PostTest < Minitest::Test
   include TestHelpers
 
   def setup
-    system("rm -rf scriptorium-TEST")
+    system("rm -rf test/scriptorium-TEST")
     @repo = create_test_repo
     draft_file = @repo.create_draft(
       title: "Test Post",
@@ -24,7 +24,7 @@ class PostTest < Minitest::Test
   end
     
   def teardown
-    system("rm -rf scriptorium-TEST")
+    system("rm -rf test/scriptorium-TEST")
   end
 
   def test_post_number_is_padded

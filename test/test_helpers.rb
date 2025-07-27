@@ -1,5 +1,3 @@
-require 'htmlbeautifier'
-
 module TestHelpers
 
   include Scriptorium::Helpers

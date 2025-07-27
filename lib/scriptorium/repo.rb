@@ -1,5 +1,6 @@
 class Scriptorium::Repo
   include Scriptorium::Exceptions
+  extend  Scriptorium::Exceptions
   include Scriptorium::Helpers
   extend  Scriptorium::Helpers
 
@@ -24,9 +25,9 @@ class Scriptorium::Repo
     @predef = Scriptorium::StandardFiles.new
     @root = testing ? "scriptorium-TEST" : "#{home}/.scriptorium"
     parent = testing ? "." : home
-    file = testing ? "scriptorium-TEST" : ".scriptorium"
+    file = testing ? "test/scriptorium-TEST" : ".scriptorium"
     @root = parent/file
-    raise RepoDirAlreadyExists(@root) if Dir.exist?(@root)
+    raise self.RepoDirAlreadyExists(@root) if Dir.exist?(@root)
     make_tree(parent, <<~EOS)
       #@root
       ├── config/       # Global config files
@@ -55,8 +56,8 @@ class Scriptorium::Repo
   end
 
   def self.destroy
-    raise TestModeOnly unless Scriptorium::Repo.testing
-    system("rm -rf #@root")
+    raise self.TestModeOnly unless Scriptorium::Repo.testing
+    system!("rm -rf #@root", "destroying repository")
   end
 
   def postnum_file
@@ -79,7 +80,7 @@ class Scriptorium::Repo
     cview_file = @root/:config/"currentview.txt"
     @current_view = nil
     if File.exist?(cview_file)
-      @current_view = File.read(cview_file).chomp
+      @current_view = read_file(cview_file).chomp
     end
   end
 
@@ -87,6 +88,16 @@ class Scriptorium::Repo
 
   def lookup_view(target)
     return target if target.is_a?(Scriptorium::View)
+    
+    # Input validation
+    if target.nil?
+      raise "Cannot lookup view: target is nil"
+    end
+    
+    if target.to_s.strip.empty?
+      raise "Cannot lookup view: target is empty or whitespace-only"
+    end
+    
     list = @views.select {|v| v.name == target }
     raise CannotLookupView(target) if list.empty?
     raise MoreThanOneResult(target) if list.size > 1
@@ -182,12 +193,12 @@ class Scriptorium::Repo
   end
 
   def last_post_num
-    File.read(postnum_file).to_i   
+    read_file(postnum_file).to_i
   end
 
   def incr_post_num
     num = last_post_num + 1
-    write_file(postnum_file, num)
+    write_file(postnum_file, num.to_s)
     num
   end
 
@@ -195,8 +206,8 @@ class Scriptorium::Repo
     id = last_post_num
     id4 = d4(id)
     posts = @root/:posts
-    Dir.mkdir(posts/id4)
-    Dir.mkdir(posts/id4/:assets)
+    make_dir(posts/id4)
+    make_dir(posts/id4/:assets)
     FileUtils.mv(name, posts/id4/"draft.lt3")
     # FIXME - what about views?
     id
@@ -205,7 +216,7 @@ class Scriptorium::Repo
   def tree(file = nil)
     cmd = "tree #@root"
     cmd << " >#{file}" if file
-    system(cmd) 
+    system!(cmd, "generating tree structure")
   end
 
 
@@ -214,10 +225,9 @@ class Scriptorium::Repo
     data = data.select {|k,v| k.to_s.start_with?("post.") }
     data.delete(:"post.body")
     data[:"post.slug"] = slugify(num, title) + ".html"
-    File.open(@root/:posts/d4(num)/"meta.txt", "w") do |f|
-      data.each_pair {|k,v| f.printf "%-12s  %s\n", k, v }
-      # FIXME - standardize key names!
-    end
+    lines = data.map { |k, v| sprintf("%-12s  %s", k, v) }
+    write_file(@root/:posts/d4(num)/"meta.txt", *lines)
+    # FIXME - standardize key names!
   end
 
   private def write_generated_post(data, view, final)
@@ -244,6 +254,7 @@ class Scriptorium::Repo
 
   def generate_post(num)
     draft = @root/:posts/d4(num)/"draft.lt3"
+    need(:file, draft)
     live = Livetext.customize(mix: "lt3scriptor", call: ".nopara") # vars??
     text = live.xform_file(draft)
     vars, body = live.vars.vars, live.body

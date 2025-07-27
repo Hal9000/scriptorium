@@ -1,3 +1,5 @@
+require 'fileutils'
+
 class Scriptorium::View
   include Scriptorium::Exceptions
   include Scriptorium::Helpers
@@ -48,6 +50,9 @@ But overall, the process is robust and well thought-out. No major changes needed
 
   def read_layout
     layout_file = @dir/:config/"layout.txt"
+    
+    need(:file, layout_file, LayoutFileMissing)
+    
     lines = read_commented_file(layout_file)
     containers = {}
     secs = []
@@ -67,7 +72,7 @@ But overall, the process is robust and well thought-out. No major changes needed
     return unless File.exist?(layout_file)
 
     flexing = {
-      header: %[class="header" style="background: lightgray; padding: 10px;"],
+      header: %[id="header" class="header" style="padding: 10px;"],
       footer: %[class="footer" style="background: lightgray; padding: 10px;"],
       left:   %[class="left" style="width: %{width}; background: #f0f0f0; padding: 10px; flex-grow: 0; flex-shrink: 0;"],
       right:  %[class="right" style="width: %{width}; background: #f0f0f0; padding: 10px; flex-grow: 0; flex-shrink: 0;"],
@@ -93,14 +98,14 @@ But overall, the process is robust and well thought-out. No major changes needed
         </#{tag}>
       HTML
 
-      File.write(filename, content)
+      write_file(filename, content)
     end
   end
 
   def theme(change = nil)
     return @theme if change.nil?
     # what if it doesn't exist?
-    raise ThemeDoesntExist(change) unless Dir.exist?(@root/:themes/change)
+    need(:dir, @root/:themes/change, ThemeDoesntExist)
     @theme = change 
     change_config(@dir/"config.txt", "theme", change)
     apply_theme(change)
@@ -128,7 +133,7 @@ But overall, the process is robust and well thought-out. No major changes needed
   def placeholder_text(str)
     if str.start_with?("@")
       file = @dir/:config/:text/"#{str[1..]}"
-      File.exist?(file) ? File.read(file) : "[Missing: #{file}]"
+      read_file(file, missing_fallback: "[Missing: #{file}]")
     else
       str
     end
@@ -136,7 +141,7 @@ But overall, the process is robust and well thought-out. No major changes needed
 
   def section_append(sec, str)
     file = @dir/:config/"#{sec}.txt"
-    text = File.read(file)
+    text = read_file(file)
     text << str
     write_file(file, text)
   end
@@ -151,12 +156,30 @@ But overall, the process is robust and well thought-out. No major changes needed
     cfg = @dir/:config
     template = @dir/:layout/"#{section}.html"  # FIXME - what if no template?
     sectxt = cfg/"#{section}.txt"
-    section_append(section, "\ntext This is #{section}...") unless section == "main"
+    
+    # Only add placeholder if section has no real content
     lines = read_commented_file(sectxt)
+    if lines.empty? && section != "main"
+      section_append(section, "\ntext This is #{section}...")
+      lines = read_commented_file(sectxt)
+    end
+    
     result = "<!-- Section: #{section} (output) -->\n"
     lines.each do |line|
-      component, arg = line.split(/\s+/, 2)  # FIXME - what if no arg?
-      result << hash[component.downcase].call(arg)
+      component, arg = line.split(/\s+/, 2)
+      
+      # Handle malformed config lines
+      if component.nil? || component.strip.empty?
+        result << "<!-- Invalid config line: #{line.inspect} -->\n"
+        next
+      end
+      
+      component = component.downcase
+      if hash.key?(component)
+        result << hash[component].call(arg)
+      else
+        result << "<!-- Unknown component: #{component} -->\n"
+      end
     end
     result
   end
@@ -176,14 +199,29 @@ write output:      write the result to output/panes/header.html
     config = @dir/:config/"#{section}.txt"
     template = @dir/:layout/"#{section}.html"
     output = @dir/:output/:panes/"#{section}.html"
+    
+    # Ensure output directory exists
+    FileUtils.mkdir_p(File.dirname(output))
+    
+    # Check if template exists
+    need(:file, template)
+    
     hash = section_hash(section)
     hash.merge!(hash2)
     core = section_core(section, hash)
-    temp_txt = File.read(template)
+    
+    temp_txt = read_file(template)
+    
     target = content_tag(section)
     temp_txt.sub!(target, core)
-    write_file(output, temp_txt)
-    html = File.read(output)
+    
+    begin
+      write_file(output, temp_txt)
+    rescue Errno::EACCES, Errno::ENOSPC => e
+      raise "Section output error: #{output} (section: #{section}) - #{e.message}"
+    end
+    
+    html = read_file(output)
     html
   end
 
@@ -191,10 +229,11 @@ write output:      write the result to output/panes/header.html
     args = sections["header"]
     return "" unless args
     h2 = { 
-      "title" => ->(arg = nil) { "  <h1>#{escape_html(@title)}</h1>" },
-      "subtitle" => ->(arg = nil) { "  <p>#{escape_html(@subtitle)}</p>" },
-      "nav" => ->(arg = nil) { build_nav(arg) },
-      "banner" => ->(arg = nil) { build_banner(arg) }
+      "title"      => ->(arg = nil) { "  <h1>#{escape_html(@title)}</h1>" },
+      "subtitle"   => ->(arg = nil) { "  <p>#{escape_html(@subtitle)}</p>" },
+      "nav"        => ->(arg = nil) { build_nav(arg) },
+      "banner"     => ->(arg = nil) { build_banner(arg) },
+      "banner_svg" => ->(arg = nil) { build_banner_svg(arg) }
     }
 
     build_section("header", h2, args)
@@ -214,16 +253,29 @@ write output:      write the result to output/panes/header.html
     end
   end
 
+  def build_banner_svg(arg)
+    bsvg = Scriptorium::BannerSVG.new(@title, @subtitle)
+    
+    # Look for config file in the view's config directory
+    config_file = @dir/:config/"config.txt"
+    if File.exist?(config_file)
+      # Temporarily change to the config directory so BannerSVG can find config.txt
+      Dir.chdir(@dir/:config) do
+        bsvg.parse_header_svg
+      end
+    else
+      # No config file, just use defaults
+      bsvg.parse_header_svg
+    end
+    
+    code = bsvg.get_svg
+  end
+
   def build_nav(arg)
     nav_file = @dir/:config/"#{arg}"
     
-    # Check if the topmenu.txt file exists
-    if File.exist?(nav_file)
-      nav_content = File.read(nav_file)
-    else
-      # If the file does not exist, return a default message or placeholder
-      nav_content = "<p>Navigation not available</p>"
-    end
+    # Read nav content with fallback for missing files
+    nav_content = read_file(nav_file, missing_fallback: "<p>Navigation not available</p>")
   
     # Wrap the nav content in the appropriate container
     html = <<~HTML
@@ -281,7 +333,7 @@ write output:      write the result to output/panes/header.html
       html << "  <h1>No posts yet!</h1>"
     else
       paginate_posts
-      html << File.read(self.dir/:output/"post_index.html")
+      html << read_file(self.dir/:output/"post_index.html")
     end
     html << "</div> <!-- end main -->\n"
   end
@@ -356,7 +408,7 @@ write output:      write the result to output/panes/header.html
     global_js = @root/:config/"common.js"
     view_js   = @dir/:config/"common.js"
     js_file = view ? view_js : global_js
-    code = File.read(js_file)
+    code = read_file(js_file)
     return %[<script>#{code}</script>\n]
   end
 
@@ -457,6 +509,9 @@ write output:      write the result to output/panes/header.html
     index_file  = @dir/:output/"index.html"
     panes       = @dir/:output/:panes
 
+    # Ensure output directory exists
+    FileUtils.mkdir_p(File.dirname(index_file))
+
     html_head = generate_html_head(true)
     content = build_containers
     common = get_common_js
@@ -473,9 +528,27 @@ write output:      write the result to output/panes/header.html
       </html>
     HTML
 
-    full_html = ::HtmlBeautifier.beautify(full_html)
-    write_file(index_file, full_html)
-    write_file("/tmp/full.html", full_html) # debugging
+    # Beautify HTML if HtmlBeautifier is available
+    begin
+      full_html = ::HtmlBeautifier.beautify(full_html)
+    rescue NameError, LoadError => e
+      # HtmlBeautifier not available, continue without beautification
+      # This is not critical for functionality
+    end
+
+    # Write the main index file
+    begin
+      write_file(index_file, full_html)
+    rescue Errno::ENOSPC, Errno::EACCES => e
+      raise "Failed to write front page: #{e.message}"
+    end
+
+    # Write debug file (optional, don't fail if it doesn't work)
+    begin
+      write_file("/tmp/full.html", full_html)
+    rescue => e
+      # Debug file write failed, but this is not critical
+    end
   end
 
 end

@@ -1,21 +1,21 @@
-echo
-echo '#####'
-echo '#####' repo/unit
-echo '#####'
-echo
-ruby test/repo/unit.rb
+#!/usr/bin/env ruby
 
-echo
-echo '#####'
-echo '#####' repo/unit
-echo '#####'
-echo
-ruby test/post/unit.rb
+# Set up environment
+ENV['PATH'] = "#{ENV['HOME']}/.rbenv/shims:#{ENV['PATH']}"
 
-echo
-echo '#####'
-echo '#####' integration
-echo '#####'
-echo
-ruby test/integration/integration_test.rb
-echo
+require 'minitest/autorun'
+
+puts "\n" + "="*60
+puts "Running all Scriptorium tests..."
+puts "="*60
+
+# Load all test files
+require_relative 'repo/unit'
+require_relative 'post/unit'
+require_relative 'banner_svg/unit'
+require_relative 'integration/integration_test'
+require_relative 'core/unit' # Tests core helper methods
+
+puts "\n" + "="*60
+puts "All tests completed!"
+puts "="*60 + "\n"

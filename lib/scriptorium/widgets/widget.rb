@@ -64,6 +64,6 @@ class Scriptorium::Widget::ListWidget < Scriptorium::Widget
 
     # Method to load the list data from the list.txt file
   def load_data
-    File.readlines(@list, chomp: true).map(&:strip)
+    read_file(@list, lines: true, chomp: true).map(&:strip)
   end
 end

@@ -14,6 +14,7 @@ class IntegrationTest < Minitest::Test
     @tmpdir = Dir.mktmpdir
     @old_dir = Dir.pwd
     Dir.chdir(@tmpdir)
+    Dir.mkdir("test")
     @repo = create_test_repo
     @sample_view = @repo.lookup_view("sample")
   end

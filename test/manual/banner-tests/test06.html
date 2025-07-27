@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Red to Blue Radial</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+        .banner { width: 100%; margin: 0; padding: 0; border: 3px solid #007cba; border-radius: 8px; }
+        .content { padding: 20px; padding-bottom: 80px; }
+        .description { margin: 10px 0; font-weight: bold; }
+        .config { background: #f0f0f0; padding: 10px; margin: 10px 0; font-family: monospace; font-size: 12px; }
+        .navigation { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            right: 0; 
+            background: #e0e0e0; 
+            padding: 15px; 
+            text-align: center; 
+            border-top: 2px solid #007cba;
+            z-index: 1000;
+        }
+        .navigation a { margin: 0 10px; padding: 8px 15px; background: #007cba; color: white; text-decoration: none; border-radius: 3px; }
+        .navigation a:hover { background: #005a87; }
+        .original-image { margin: 20px 0; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .original-image h3 { margin: 0 0 10px 0; color: #333; }
+        .original-image img { max-width: 100%; height: auto; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <div class="banner">
+      <svg xmlns='http://www.w3.org/2000/svg' 
+     width='100%' height='100' 
+     viewBox='0 0 800 100' 
+     preserveAspectRatio='xMidYMid slice'>
+  <defs>
+  <radialGradient id="radial1" cx="400.0%" cy="50%" r="50%" gradientTransform="scale(0.125,1)">
+    <stop offset="0%" style="stop-color:red;stop-opacity:1" />
+    <stop offset="100%" style="stop-color:blue;stop-opacity:1" />
+  </radialGradient>
+</defs>
+<rect x='0' y='0' width='100%' height='100%' fill='url(#radial1)' />
+
+  <text x='5%' 
+      y='52%' 
+      text-anchor='start'
+      style='font-family: Verdana; font-size: 48px; font-weight: normal; font-style: normal' 
+      fill='#374151'>Red to Blue Radial</text>
+
+  <text x='5%' 
+      y='82%' 
+      text-anchor='start'
+      style='font-family: Verdana; font-size: 24px; font-weight: normal; font-style: normal' 
+      fill='#374151'>Radial gradient test</text>
+
+</svg>
+
+    </div>
+    <div class="content">
+        <div class="description">Radial Gradient</div>
+        <div class="config">back.radial red blue</div>
+        
+        <div class="navigation"><a href="index.html">Back to Index</a> <a href="test05.html">Previous</a> <a href="test07.html">Next</a></div>
+    </div>
+</body>
+</html>

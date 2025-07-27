@@ -4,12 +4,12 @@ require_relative '../test_helpers'
 include TestHelpers
 
 def manual_setup
-  system("rm -rf scriptorium-TEST")
+  system("rm -rf test/scriptorium-TEST")
 
   @repo = Scriptorium::Repo.create(true)  # true for testing mode
 
   @pid = nil
-  Dir.chdir("scriptorium-TEST") do
+  Dir.chdir(File.expand_path("..", __dir__)) do
     Process.spawn ("ruby -run -e httpd . -p 8000 >/dev/null 2>&1") 
     sleep 1
     puts "webrick started\n "
@@ -29,8 +29,21 @@ end
 
 def examine(view)
   view = @repo.lookup_view(view)
-  index_url = "http://127.0.0.1:8000/views/#{view.name}/output/index.html"
+  index_url = "http://127.0.0.1:8000/scriptorium-TEST/views/#{view.name}/output/index.html"
   puts "Generated front page located at: \n#{index_url}"
+  
+  if ARGV.include?('--automated')
+    # Automated mode - just validate files were created
+    index_file = "test/scriptorium-TEST/views/#{view.name}/output/index.html"
+    if File.exist?(index_file)
+      puts "✓ Files generated successfully"
+    else
+      puts "✗ Error: Index file not generated"
+      exit 1
+    end
+    return
+  end
+  
   puts "Press Enter to open the generated front page to inspect the result."
   STDIN.gets
   cmd = "open #{index_url}"

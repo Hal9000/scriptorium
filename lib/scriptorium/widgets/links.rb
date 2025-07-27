@@ -25,7 +25,7 @@ class Scriptorium::Widget::Links < Scriptorium::Widget::ListWidget
 
   def card
     file = "#{@view.dir}/widgets/#@name/#@name-card.html"
-    File.read(file)
+    read_file(file)
   end
 
   def write_main
@@ -48,8 +48,6 @@ class Scriptorium::Widget::Links < Scriptorium::Widget::ListWidget
       url2, title = line.chomp.split(",")
       content << link_item(url2, title)
     end
-    File.open(cardout, "w") do |f|
-      f.puts html_card(card_title, tag, content)
-    end
+    write_file(cardout, html_card(card_title, tag, content))
   end
 end

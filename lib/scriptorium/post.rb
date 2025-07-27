@@ -1,4 +1,5 @@
 class Scriptorium::Post
+    include Scriptorium::Exceptions
     include Scriptorium::Helpers
 
     attr_reader :repo, :num
@@ -18,6 +19,10 @@ class Scriptorium::Post
   
     def id
       num
+    end
+
+    def num!
+      num.sub(/^0+/, '').to_i
     end 
   
     def blurb
@@ -40,6 +45,17 @@ class Scriptorium::Post
       raise TestModeOnly unless Scriptorium::Repo.testing
       yyyy, mm, dd = ymd.split("-")
       t = Time.new(yyyy.to_i, mm.to_i, dd.to_i)
+      meta["post.pubdate"] = t.strftime("%Y-%m-%d %H:%M:%S") 
+      meta["post.pubdate.month"] = t.strftime("%B") 
+      meta["post.pubdate.day"] = t.strftime("%e") 
+      meta["post.pubdate.year"] = t.strftime("%Y") 
+      save_metadata   # Because it changed
+    end
+
+    def set_pubdate_with_seconds(ymd, seconds)
+      raise TestModeOnly unless Scriptorium::Repo.testing
+      yyyy, mm, dd = ymd.split("-")
+      t = Time.new(yyyy.to_i, mm.to_i, dd.to_i, 12, 0, seconds)  # 12:00:XX
       meta["post.pubdate"] = t.strftime("%Y-%m-%d %H:%M:%S") 
       meta["post.pubdate.month"] = t.strftime("%B") 
       meta["post.pubdate.day"] = t.strftime("%e") 
@@ -89,7 +105,7 @@ class Scriptorium::Post
     def load_metadata
       @meta = {}
       @repo.tree("/tmp/tree.txt")
-      File.readlines(meta_file, chomp: true).each do |line|
+      read_file(meta_file, lines: true, chomp: true).each do |line|
         key, value = line.strip.split(/\s+/, 2)
         next if key.nil? || key.empty?
         @meta[key] = value
@@ -98,9 +114,8 @@ class Scriptorium::Post
     end
 
     def save_metadata
-      File.open(meta_file, "w") do |f|
-        @meta.each_pair {|k,v| f.printf "%-18s  %s\n", k, v }
-      end
+      lines = @meta.map { |k, v| sprintf("%-18s  %s", k, v) }
+      write_file(meta_file, *lines)
     end
   end
   

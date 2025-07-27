@@ -12,6 +12,8 @@ create_3_views
 create_13_posts_manual
 alter_pubdates
 
+view = @repo.lookup_view(view)
+
 instruct <<~EOS
   Three blogs created: blog1 blog2 blog3
   Browser goes to whichever you put on command line: #{view.name}

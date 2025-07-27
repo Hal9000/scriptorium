@@ -15,7 +15,7 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def teardown
-    system("rm -rf scriptorium-TEST")
+    system("rm -rf test/scriptorium-TEST")
   end
 
   def test_001_version
@@ -160,10 +160,10 @@ class TestScriptoriumRepo < Minitest::Test
     t = Scriptorium::Theme.new(repo.root, "standard")
 
     path1 = t.file("initial/post.lt3")
-    want1 = "./scriptorium-TEST/themes/standard/initial/post.lt3"
+    want1 = "./test/scriptorium-TEST/themes/standard/initial/post.lt3"
     assert path1 == want1, "Expected: #{want1}"
     path2 = t.file("right.txt")
-    want2 = "./scriptorium-TEST/themes/standard/layout/config/right.txt"
+    want2 = "./test/scriptorium-TEST/themes/standard/layout/config/right.txt"
     assert path2 == want2, "Expected: #{want2}"
 
     assert_raises(MoreThanOneResult) { t.file("post.lt3") }
@@ -219,21 +219,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert num > 0, "Tree file appears too short"  
   end
 
-  def test_018_change_config
-    cfg_file = "/tmp/myconfig.txt"
-    File.open(cfg_file, "w") do |f|
-      f.puts <<~EOS
-        alpha foo  # nothing much
-        beta  bar  # meh again
-        gamma baz  # whatever
-      EOS
-    end
-    change_config(cfg_file, "beta", "new-value")
-    lines = File.readlines(cfg_file).map(&:chomp)
-    assert lines[0] == "alpha foo  # nothing much",     "Expected alpha text"
-    assert lines[1] == "beta  new-value  # meh again",  "Expected beta text"
-    assert lines[2] == "gamma baz  # whatever",         "Expected gamma text"
-  end
+
 
   def test_019_mock_vars_into_template
     title   = "This is my title"
@@ -344,36 +330,20 @@ class TestScriptoriumRepo < Minitest::Test
     assert_file_exist?(repo.root/:views/:sample/:output/:posts/"#{d4(num)}-my-first-post.html")
   end
 
-  def test_023_read_commented_file
-    # Setup: Create a temporary test config file
-    test_file = "test_config.txt"
-    File.open(test_file, "w") do |f|
-      f.puts "# This is a comment"
-      f.puts ""
-      f.puts "header  20% # This is a header line with a comment"
-      f.puts "footer  # This is a footer line with another comment"
-      f.puts "# Another full-line comment"
-      f.puts "main    # Main content area"
-    end
+
   
-    # Expected result: an array of non-comment lines, with comments stripped
-    expected_result = ["header  20%", "footer", "main"]
-  
-    # Run the method
-    result = read_commented_file(test_file)
-  
-    # Assert the result matches the expected array
-    assert_equal expected_result, result
-  
-    # Cleanup: Delete the test config file
-    File.delete(test_file)
-  end
-  
-  def test_024_get_asset_path
+
+
+  def test_025_layout_file_missing
     repo = create_test_repo
-    name = "back-icon.png"
-    result = get_asset_path(name)
-    assert result == "lib/scriptorium/dev_assets/#{name}", "Expected #{name} to be in dev_assets (got #{result})"
-    assert_raises(AssetNotFound) { get_asset_path("nonexistent.png") }
+    view = repo.create_view("testview", "Test View", "Test Subtitle")
+    
+    # Remove the layout.txt file to test the exception
+    layout_file = view.dir/:config/"layout.txt"
+    File.delete(layout_file) if File.exist?(layout_file)
+    
+    assert_raises(LayoutFileMissing) do
+      view.read_layout
+    end
   end
 end

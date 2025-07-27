@@ -3,7 +3,7 @@ module Scriptorium::Exceptions
   def make_exception(sym, str, target_class = Object)
     return if target_class.constants.include?(sym)
     klass = sym   # :"#{sym}_Class"
-    target_class.const_set(klass, StandardError.dup)
+    target_class.const_set(klass, StandardError)
     define_method(sym) do |*args|
       args = [] unless args.first
       msg = str.dup
@@ -22,6 +22,7 @@ module Scriptorium::Exceptions
   make_exception :ThemeFileNotFound, "Theme file not found: %1"
   make_exception :LayoutHasUnknownTag, "Layout has unknown tag: %1"
   make_exception :LayoutHasDuplicateTags, "Layout has duplicate tags: %1"
+  make_exception :LayoutFileMissing, "Layout file missing: %1"
   make_exception :AssetNotFound, "Asset not found: %1"
   make_exception :NoGemPath, "No gem path"
 

@@ -18,7 +18,7 @@ Symbol.include(PathSep)
 
 module Scriptorium::Helpers
   def getvars(file)
-    lines = File.readlines(file).map(&:chomp)
+    lines = read_file(file, lines: true)
     lines.map! {|line| line.sub(/ #.*$/, "").strip }
     lines.reject! {|line| line.empty? }
     # FIXME - what if variable value has a # in it?
@@ -39,9 +39,161 @@ module Scriptorium::Helpers
   end
 
   def write_file(file, *lines)
-    # dir = file.sub(/\/[a-zA-Z_\.]+$/, "") rescue "."
-    File.open(file, "w") do |f|
-      lines.each {|line| f.puts line }
+    # Input validation
+    if file.nil?
+      raise "Cannot write file: file path is nil"
+    end
+    
+    if file.to_s.strip.empty?
+      raise "Cannot write file: file path is empty or whitespace-only"
+    end
+    
+    # Ensure parent directory exists
+    FileUtils.mkdir_p(File.dirname(file))
+    
+    # Write the file with error handling
+    begin
+      File.open(file, "w") do |f|
+        lines.each {|line| f.puts line }
+      end
+    rescue Errno::ENOSPC => e
+      raise "Cannot write file #{file}: disk full (#{e.message})"
+    rescue Errno::EACCES => e
+      raise "Cannot write file #{file}: permission denied (#{e.message})"
+    rescue Errno::ENOENT => e
+      raise "Cannot write file #{file}: directory not found (#{e.message})"
+    rescue => e
+      raise "Cannot write file #{file}: #{e.message}"
+    end
+  end
+
+  def make_dir(dir, create_parents = false)
+    # Input validation
+    if dir.nil?
+      raise "Cannot create directory: directory path is nil"
+    end
+    
+    if dir.to_s.strip.empty?
+      raise "Cannot create directory: directory path is empty or whitespace-only"
+    end
+    
+    # Create parent directories if requested
+    if create_parents
+      FileUtils.mkdir_p(dir)
+    else
+      # Create single directory with error handling
+      begin
+        Dir.mkdir(dir)
+      rescue Errno::ENOSPC => e
+        raise "Cannot create directory #{dir}: disk full (#{e.message})"
+      rescue Errno::EACCES => e
+        raise "Cannot create directory #{dir}: permission denied (#{e.message})"
+      rescue Errno::ENOENT => e
+        raise "Cannot create directory #{dir}: parent directory not found (#{e.message})"
+      rescue Errno::EEXIST => e
+        # Directory already exists - this is usually not an error
+        # But we could make this configurable if needed
+      rescue => e
+        raise "Cannot create directory #{dir}: #{e.message}"
+      end
+    end
+  end
+
+  def system!(command, description = nil)
+    # Input validation
+    if command.nil?
+      raise "Cannot execute command: command is nil"
+    end
+    
+    if command.to_s.strip.empty?
+      raise "Cannot execute command: command is empty or whitespace-only"
+    end
+    
+    # Execute command with error handling
+    success = system(command)
+    
+    unless success
+      desc = description ? " (#{description})" : ""
+      raise "Command failed#{desc}: #{command}"
+    end
+    
+    success
+  end
+
+  def need(type, path, exception_class = RuntimeError)
+    # Input validation
+    if path.nil?
+      raise "Cannot require #{type}: path is nil"
+    end
+    
+    if path.to_s.strip.empty?
+      raise "Cannot require #{type}: path is empty or whitespace-only"
+    end
+    
+    # Check if file/directory exists
+    exists = case type
+             when :file
+               File.exist?(path)
+             when :dir
+               Dir.exist?(path)
+             else
+               raise "Invalid type: #{type} (must be :file or :dir)"
+             end
+    
+    unless exists
+      if exception_class == RuntimeError
+        raise "Required #{type} not found: #{path}"
+      else
+        # Exception class - try to call it as a method first, then as constructor
+        if exception_class.respond_to?(:call)
+          raise exception_class.call(path)
+        else
+          raise exception_class.new(path)
+        end
+      end
+    end
+    
+    path
+  end
+
+  def read_file(file, options = {})
+    # Input validation
+    if file.nil?
+      raise "Cannot read file: file path is nil"
+    end
+    
+    if file.to_s.strip.empty?
+      raise "Cannot read file: file path is empty or whitespace-only"
+    end
+    
+    # Handle missing file with fallback
+    if options[:missing_fallback]
+      return options[:missing_fallback] unless File.exist?(file)
+    end
+    
+    # Read the file with error handling
+    begin
+      if options[:lines]
+        # Read as lines
+        if options[:chomp]
+          File.readlines(file, chomp: true)
+        else
+          File.readlines(file)
+        end
+      else
+        # Read as content
+        File.read(file)
+      end
+    rescue Errno::ENOENT => e
+      if options[:missing_fallback]
+        return options[:missing_fallback]
+      else
+        raise "Cannot read file #{file}: file not found (#{e.message})"
+      end
+    rescue Errno::EACCES => e
+      raise "Cannot read file #{file}: permission denied (#{e.message})"
+    rescue => e
+      raise "Cannot read file #{file}: #{e.message}"
     end
   end
 
@@ -58,7 +210,7 @@ module Scriptorium::Helpers
       (?<comment>\#.*)?$                               # optional comment
     /x
   
-    lines = File.readlines(file_path)
+    lines = read_file(file_path, lines: true)
     updated_lines = lines.map do |line|
       if match = pattern.match(line)
         leading  = match[:leading]
@@ -70,7 +222,7 @@ module Scriptorium::Helpers
       end
     end
   
-    File.write(file_path, updated_lines.join)
+    write_file(file_path, *updated_lines)
   end
   
   def slugify(id, title)
@@ -87,7 +239,7 @@ module Scriptorium::Helpers
 
   def see_file(file)   # Really from TestHelpers
     puts "----- File: #{file}"
-    system("cat #{file}")
+    system!("cat #{file}", "displaying file contents")
     puts "-----"
   end
 
@@ -104,7 +256,7 @@ module Scriptorium::Helpers
     first_line = lines.shift
     root = first_line.strip.sub(/\/$/, "") # remove trailing slash
     root_path = File.join(base, root)
-    Dir.mkdir(root_path) unless File.exist?(root_path)
+    make_dir(root_path) unless File.exist?(root_path)
   
     # Prepare stack starting from root
     stack = [root_path]
@@ -126,10 +278,10 @@ module Scriptorium::Helpers
       full_path = File.join(stack.last, name)
   
       if name.end_with?("/")
-        Dir.mkdir(full_path) unless File.exist?(full_path)
+        make_dir(full_path) unless File.exist?(full_path)
         stack << full_path
       else
-        File.write(full_path, "Empty file generated at #{Time.now}\n")
+        write_file(full_path, "Empty file generated at #{Time.now}")
       end
     end
   end            
@@ -150,7 +302,7 @@ module Scriptorium::Helpers
   def read_commented_file(file_path)
     return [] unless File.exist?(file_path)
   
-    lines = File.readlines(file_path).map(&:chomp)  # Read file and remove newline characters
+    lines = read_file(file_path, lines: true)  # Read file and remove newline characters
   
     # Process the lines to remove empty lines and comments
     lines.reject! do |line|
