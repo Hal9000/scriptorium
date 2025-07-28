@@ -55,7 +55,7 @@ class Scriptorium::API
   alias_method :use_view, :view
 
   # Post creation with convenience defaults
-  def create_post(title, body, views: nil, tags: nil)
+  def create_post(title, body, views: nil, tags: nil, blurb: nil)
     views ||= @current_view&.name
     raise "No view specified and no current view set" if views.nil?
     
@@ -63,7 +63,8 @@ class Scriptorium::API
       title: title,
       body: body,
       views: views,
-      tags: tags
+      tags: tags,
+      blurb: blurb
     )
   end
 
@@ -127,7 +128,7 @@ class Scriptorium::API
   end
 
   def quick_post(title, body, tags: nil, blurb: nil)
-    post(title, body, tags: tags, blurb: blurb)
+    create_post(title, body, tags: tags, blurb: blurb)
     generate_front_page
     self
   end

@@ -19,7 +19,7 @@
 # This allows me to verify the banner functionality programmatically
 # while you use the manual tests for visual inspection in the browser.
 
-require_relative 'lib/scriptorium/header_svg'
+require_relative 'lib/scriptorium/banner_svg'
 require 'fileutils'
 
 class CursorBannerFeatureTests

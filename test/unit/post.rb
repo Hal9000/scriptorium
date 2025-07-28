@@ -76,7 +76,7 @@ class TestScriptoriumPost < Minitest::Test
   end
 
   def test_id
-    assert_equal "0001", @post.id
+    assert_equal 1, @post.id
   end
 
   def test_num_with_leading_zeros
@@ -94,15 +94,7 @@ class TestScriptoriumPost < Minitest::Test
     assert_equal "0001", post.num
   end
 
-  def test_num_exclamation
-    post = Scriptorium::Post.new(@repo, 1)
-    assert_equal 1, post.num!
-  end
 
-  def test_num_exclamation_with_leading_zeros
-    post = Scriptorium::Post.new(@repo, "00123")
-    assert_equal 123, post.num!
-  end
 
   # Metadata tests
   def test_meta_without_file

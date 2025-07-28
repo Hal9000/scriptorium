@@ -9,7 +9,7 @@ view = @repo.create_view("testview", "Another Test View", "testing pagination fo
 35.times do |i|
   post = @repo.create_post(title: pseudowords(5, "Post #{i}"), body: pseudolines(10))
   post.set_pubdate_with_seconds("2025-07-26", i)  # Set seconds to 00, 01, 02, etc.
-  @repo.generate_post(post.num!)
+  @repo.generate_post(post.id)
 end
 
 view.generate_front_page

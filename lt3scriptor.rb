@@ -44,6 +44,34 @@ def created
   setvar("post.created", Time.now.strftime("%Y-%m-%d-%H-%M-%S"))
 end
 
+def last_updated
+  pub_date = Livetext::Vars["post.created"] || "unknown date"
+  api.out "<p><em>Published: #{pub_date}</em></p>"
+end
+
+def wordcount
+  text = File.read(Livetext::Vars[:File])
+  words = text.split
+  setvar("wordcount", words.size.to_s)
+end
+
+def stats
+  text = File.read(Livetext::Vars[:File])
+  words = text.split
+  word_count = words.size
+  
+  # Calculate reading time (average 200 words per minute)
+  reading_time = (word_count / 200.0).ceil
+  
+  # Calculate character count
+  char_count = text.length
+  
+  # Set all the variables with file. prefix
+  setvar("file.wordcount", word_count.to_s)
+  setvar("file.readingtime", reading_time.to_s)
+  setvar("file.charcount", char_count.to_s)
+end
+
 def views
   setvar("post.views", api.data.strip)
 end
@@ -69,7 +97,6 @@ end
 ##################
   
 def dropcap
-  log!(enter: __method__)
   # Bad form: adds another HEAD
   text = api.data
   api.out " "
@@ -80,7 +107,6 @@ def dropcap
 end
   
 def faq
-  log!(enter: __method__)
   @faq_count ||= 0
   api.out "<br>" if @faq_count == 0
   @faq_count += 1
@@ -95,7 +121,6 @@ def faq
 end
 
 def quote
-  log!(enter: __method__)
   # was _passthru??? via runeblog
   api.out "<blockquote>"
   api.out api.body.join(" ")
@@ -204,6 +229,7 @@ class Livetext::Functions
   end
 end
 
+# Removed old wordcount function - replaced with dot command below
 
 def _passthru(line)
   return if line.nil?

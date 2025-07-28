@@ -206,7 +206,7 @@ module Scriptorium::Helpers
                .gsub(/[^a-z0-9\s_-]/, '')  # remove punctuation
                .gsub(/[\s_-]+/, '-')       # replace spaces and underscores with hyphen
                .gsub(/^-+|-+$/, '')        # trim leading/trailing hyphens
-    format("%04d-%s", id, slug)
+    "#{d4(id)}-#{slug}"
   end
   
   def ymdhms

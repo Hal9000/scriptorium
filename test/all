@@ -9,15 +9,40 @@ puts "\n" + "="*60
 puts "Running all Scriptorium tests..."
 puts "="*60
 
+# Automatically find and load all test files
+test_files = [
+  'unit/*.rb',
+  'banner_svg/*.rb', 
+  'integration/*.rb',
+  '*.rb'
+].flat_map { |pattern| Dir.glob(File.join(__dir__, pattern)) }.select { |f| 
+  f != File.join(__dir__, 'all') && 
+  f != File.join(__dir__, 'test_helpers.rb') && 
+  f != File.join(__dir__, 'api_demo.rb') && 
+  f != File.join(__dir__, 'run_automated_tests.rb') &&
+  f != File.join(__dir__, 'lt3scriptor.rb') &&
+  f != File.join(__dir__, 'test_experimental.rb') &&
+  f != File.join(__dir__, 'temp_concatenated_test.rb') &&
+  f != File.join(__dir__, 'temp_smart_concatenated_test.rb') &&
+  !f.include?('cursor_banner_combinations.rb') &&
+  !f.include?('cursor_banner_features.rb')
+}
+
+# Reorder to put unit/core.rb at the end
+core_file = test_files.find { |f| f.include?('unit/core.rb') }
+other_files = test_files.reject { |f| f.include?('unit/core.rb') }
+ordered_files = other_files + (core_file ? [core_file] : [])
+
+puts "Found #{ordered_files.length} test files:"
+ordered_files.each { |f| puts "  #{f}" }
+
 # Load all test files
-require_relative 'unit/repo'
-require_relative 'unit/post'
-require_relative 'unit/view'
-require_relative 'banner_svg/unit'
-require_relative 'integration/integration_test'
-require_relative 'unit/core' # Tests core helper methods
-require_relative 'tui_integration_test'
-require_relative 'tui_interactive_test'
+ordered_files.each do |file|
+  puts "Loading #{file}..."
+  require file
+rescue => e
+  puts "Error loading #{file}: #{e.message}"
+end
 
 puts "\n" + "="*60
 puts "All tests completed!"

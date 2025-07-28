@@ -2,13 +2,15 @@
 
 require 'open3'
 require 'timeout'
-require 'test/unit'
+require 'minitest/autorun'
 require_relative '../lib/scriptorium'
 
-class TUIInteractiveTest < Test::Unit::TestCase
+class TUIInteractiveTest < Minitest::Test
   def setup
-    @test_repo_path = "test/tui-interactive-test-repo"
+    @test_repo_path = "scriptorium-TEST"
     cleanup_test_repo
+    # Create test repo for TUI tests
+    @api = Scriptorium::API.new(@test_repo_path)
   end
 
   def teardown

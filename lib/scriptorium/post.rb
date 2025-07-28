@@ -2,28 +2,22 @@ class Scriptorium::Post
     include Scriptorium::Exceptions
     include Scriptorium::Helpers
 
-    attr_reader :repo, :num
+    attr_reader :repo, :num, :id
   
     def initialize(repo, num)
-      validate_repo(repo)
-      validate_num(num)
+      validate_initialization(repo, num)
       
       @repo = repo
-      @num = num.to_s.rjust(4, "0")
+      @num = d4(num.to_i)  # num is zero-padded string
+      @id = num.to_i       # id is integer
+      @meta = nil  # Explicitly initialize for clarity
     end
 
-    private def validate_repo(repo)
+    private def validate_initialization(repo, num)
       raise CannotCreatePostRepoNil if repo.nil?
-    end
-
-    private def validate_num(num)
       raise CannotCreatePostNumNil if num.nil?
-      
       raise CannotCreatePostNumEmpty if num.to_s.strip.empty?
-      
-      unless num.to_s.match?(/^\d+$/)
-        raise CannotCreatePostNumInvalid(num)
-      end
+      raise CannotCreatePostNumInvalid(num) unless num.to_s.match?(/^\d+$/)
     end
   
     def dir
@@ -34,14 +28,8 @@ class Scriptorium::Post
       @repo.root/:posts/@num/"meta.txt"
     end
   
-    def id
-      num
-    end
 
-    def num!
-      num.sub(/^0+/, '').to_i
-    end 
-  
+
     def blurb
       meta["post.blurb"]
     end
@@ -58,39 +46,42 @@ class Scriptorium::Post
       meta["post.pubdate"]
     end
 
-    def set_pubdate(ymd)
+    def set_pubdate(ymd, seconds: 0)
       raise TestModeOnly unless Scriptorium::Repo.testing
       
-      validate_date(ymd)
+      validate_date_format(ymd)
       
       yyyy, mm, dd = ymd.split("-")
-      t = Time.new(yyyy.to_i, mm.to_i, dd.to_i)
-      meta["post.pubdate"] = t.strftime("%Y-%m-%d %H:%M:%S") 
-      meta["post.pubdate.month"] = t.strftime("%B") 
-      meta["post.pubdate.day"] = t.strftime("%e") 
-      meta["post.pubdate.year"] = t.strftime("%Y") 
-      save_metadata   # Because it changed
+      t = Time.new(yyyy.to_i, mm.to_i, dd.to_i, 0, 0, seconds)
+      
+      update_pubdate_metadata(t)
+      save_metadata
     end
 
-    private def validate_date(date)
+    private def validate_date_format(date)
       raise CannotSetPubdateYmdNil if date.nil?
-      
       raise CannotSetPubdateYmdEmpty if date.to_s.strip.empty?
-      
-      unless date.to_s.match?(/^\d{4}-\d{2}-\d{2}$/)
-        raise CannotSetPubdateInvalidFormat(date)
-      end
+      raise CannotSetPubdateInvalidFormat(date) unless date.to_s.match?(/^\d{4}-\d{2}-\d{2}$/)
     end
 
+    private def update_pubdate_metadata(time)
+      meta["post.pubdate"] = time.strftime("%Y-%m-%d %H:%M:%S") 
+      meta["post.pubdate.month"] = time.strftime("%B") 
+      meta["post.pubdate.day"] = time.strftime("%e") 
+      meta["post.pubdate.year"] = time.strftime("%Y") 
+    end
+
+    # Legacy method for backward compatibility - preserves 12:00 base time
     def set_pubdate_with_seconds(ymd, seconds)
       raise TestModeOnly unless Scriptorium::Repo.testing
+      
+      validate_date_format(ymd)
+      
       yyyy, mm, dd = ymd.split("-")
-      t = Time.new(yyyy.to_i, mm.to_i, dd.to_i, 12, 0, seconds)  # 12:00:XX
-      meta["post.pubdate"] = t.strftime("%Y-%m-%d %H:%M:%S") 
-      meta["post.pubdate.month"] = t.strftime("%B") 
-      meta["post.pubdate.day"] = t.strftime("%e") 
-      meta["post.pubdate.year"] = t.strftime("%Y") 
-      save_metadata   # Because it changed
+      t = Time.new(yyyy.to_i, mm.to_i, dd.to_i, 12, 0, seconds)  # 12:00:XX for ordering
+      
+      update_pubdate_metadata(t)
+      save_metadata
     end
 
     def pubdate_month_day_year
@@ -118,11 +109,9 @@ class Scriptorium::Post
     end
   
     def meta
-      return @meta if defined?(@meta)
-      return @meta = {} unless File.exist?(meta_file)
-      @meta = load_metadata
+      return @meta if @meta
+      @meta = File.exist?(meta_file) ? load_metadata : {}
     end
-
 
     def vars
       return @vars if defined?(@vars)
@@ -131,7 +120,7 @@ class Scriptorium::Post
       @vars
     end
 
-    # Additional method to load metadata explicitly, so it’s only called once
+    # Additional method to load metadata explicitly, so it's only called once
     def load_metadata
       @meta = {}
       @repo.tree("/tmp/tree.txt")

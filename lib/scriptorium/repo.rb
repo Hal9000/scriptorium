@@ -275,7 +275,7 @@ class Scriptorium::Repo
     views.each do |view|  
       view = lookup_view(view)
       theme = view.theme 
-      vars[:"post.id"] = num
+      vars[:"post.id"] = num.to_s
       vars[:"post.body"] = text
       template = @predef.post_template("standard")
       set_pubdate(vars)

@@ -4,16 +4,18 @@ require 'open3'
 require 'tmpdir'
 require 'fileutils'
 require 'timeout'
-require 'test/unit'
+require 'minitest/autorun'
 require_relative '../lib/scriptorium'
 require_relative 'test_helpers'
 
-class TUIIntegrationTest < Test::Unit::TestCase
+class TUIIntegrationTest < Minitest::Test
   include TestHelpers
   
   def setup
-    @test_repo_path = "test/tui-test-repo"
+    @test_repo_path = "scriptorium-TEST"
     cleanup_test_repo
+    # Create test repo for TUI tests
+    @api = Scriptorium::API.new(@test_repo_path)
   end
 
   def teardown
@@ -61,6 +63,7 @@ class TUIIntegrationTest < Test::Unit::TestCase
   end
 
   def test_command_abbreviations
+    
     commands = [
       "h\n",
       "v\n",
@@ -76,14 +79,8 @@ class TUIIntegrationTest < Test::Unit::TestCase
   end
 
   def test_interactive_create_view
-    # Delete existing scriptorium-TEST if it exists
-    if Dir.exist?("scriptorium-TEST")
-      FileUtils.rm_rf("scriptorium-TEST")
-    end
-    
-    # Create test repo
-    api = Scriptorium::API.new("scriptorium-TEST")
-    api.create_view("existing", "Existing View", "An existing view")
+    # Create an existing view for testing
+    @api.create_view("existing", "Existing View", "An existing view")
     
     # Test fully interactive create view (no arguments)
     commands = [
@@ -127,18 +124,11 @@ class TUIIntegrationTest < Test::Unit::TestCase
   end
 
   def test_list_posts_and_drafts
-    # Delete existing scriptorium-TEST if it exists
-    if Dir.exist?("scriptorium-TEST")
-      FileUtils.rm_rf("scriptorium-TEST")
-    end
-    
     # Create test repo and four views: empty, alpha, beta, gamma
-    api = Scriptorium::API.new("scriptorium-TEST")
-    
-    api.create_view("empty", "Empty View", "A view with no content")
-    api.create_view("alpha", "Alpha View", "First content view")
-    api.create_view("beta", "Beta View", "Second content view") 
-    api.create_view("gamma", "Gamma View", "Third content view")
+    @api.create_view("empty", "Empty View", "A view with no content")
+    @api.create_view("alpha", "Alpha View", "First content view")
+    @api.create_view("beta", "Beta View", "Second content view") 
+    @api.create_view("gamma", "Gamma View", "Third content view")
     
     # Test lsd - should show no drafts initially
     commands = [
@@ -152,8 +142,8 @@ class TUIIntegrationTest < Test::Unit::TestCase
     assert_match(/No drafts found/, output)
     
     # Create 2 drafts
-    api.draft(title: "First Draft", body: "Content of first draft")
-    api.draft(title: "Second Draft", body: "Content of second draft")
+    @api.draft(title: "First Draft", body: "Content of first draft")
+    @api.draft(title: "Second Draft", body: "Content of second draft")
     
     # Test lsd again - should show 2 drafts
     commands = [
@@ -201,7 +191,7 @@ class TUIIntegrationTest < Test::Unit::TestCase
     
     post_distributions.each_with_index do |views, index|
       post_number = index + 1
-      api.create_post("Post number #{post_number}", "Content for post #{post_number}", views: views)
+      @api.create_post("Post number #{post_number}", "Content for post #{post_number}", views: views)
     end
     
     # Test lsp for alpha view
@@ -249,6 +239,164 @@ class TUIIntegrationTest < Test::Unit::TestCase
                    "Post number 9", "Post number 11", "Post number 13", "Post number 17", 
                    "Post number 18", "Post number 19", "Post number 22", "Post number 25"]
     assert_present(output, *gamma_posts)
+  end
+
+  def test_interactive_change_view
+    # Create test repo with multiple views
+    @api.create_view("view1", "First View", "First subtitle")
+    @api.create_view("view2", "Second View", "Second subtitle")
+    @api.create_view("view3", "Third View", "Third subtitle")
+    
+    # Switch to view1 to start
+    @api.view("view1")
+    
+    # Test fully interactive change view (no arguments)
+    commands = [
+      "change view\n",  # Start interactive change view
+      "view2\n",        # Enter view name
+      "view\n",         # Show current view to verify
+      "q\n"
+    ]
+    
+    output = run_tui_commands(commands)
+    
+    # Verify the interactive prompts appeared
+    assert_match(/Available views:/, output)
+    assert_match(/Enter view name:/, output)
+    assert_match(/view1.*First View/, output)
+    assert_match(/view2.*Second View/, output)
+    assert_match(/view3.*Third View/, output)
+    
+    # Verify the view was changed
+    assert_match(/Switched to view 'view2'/, output)
+    assert_match(/Current view: view2/, output)
+    
+    # Test legacy change view (with arguments)
+    commands = [
+      "change view view3\n",  # Change with argument
+      "view\n",               # Show current view to verify
+      "q\n"
+    ]
+    
+    output = run_tui_commands(commands)
+    
+    # Verify no interactive prompts appeared
+    refute_match(/Available views:/, output)
+    refute_match(/Enter view name:/, output)
+    
+    # Verify the view was changed
+    assert_match(/Switched to view 'view3'/, output)
+    assert_match(/Current view: view3/, output)
+  end
+
+  def test_interactive_create_draft
+    # Create test repo with a view
+    @api.create_view("testview", "Test View", "Test subtitle")
+    @api.view("testview")
+    
+    # Test fully interactive create draft (no arguments)
+    commands = [
+      "create draft\n",  # Start interactive create draft
+      "Test Draft Title\n",  # Enter title
+      "This is the body of the test draft.\n",  # Enter body
+      "\n",  # No tags
+      "This is a test blurb.\n",  # Enter blurb
+      "lsd\n",  # List drafts to verify
+      "q\n"
+    ]
+    
+    output = run_tui_commands(commands)
+    
+    # Verify the interactive prompts appeared
+    assert_match(/Enter draft title:/, output)
+    assert_match(/Enter draft body:/, output)
+    assert_match(/Enter tags \(optional, comma-separated\):/, output)
+    assert_match(/Enter blurb \(optional\):/, output)
+    
+    # Verify the draft was created
+    assert_match(/Created draft:/, output)
+    assert_match(/-draft\.lt3/, output)  # Check for draft filename
+    
+    # Test legacy create draft (with title argument)
+    commands = [
+      "create draft Legacy Draft\n",  # Create with title
+      "This is the legacy draft body.\n",  # Enter body
+      "tag1, tag2\n",  # Enter tags
+      "\n",  # No blurb
+      "lsd\n",  # List drafts to verify
+      "q\n"
+    ]
+    
+    output = run_tui_commands(commands)
+    
+    # Verify only body, tags, and blurb were prompted
+    assert_match(/Enter draft body:/, output)
+    assert_match(/Enter tags \(optional, comma-separated\):/, output)
+    assert_match(/Enter blurb \(optional\):/, output)
+    refute_match(/Enter draft title:/, output)
+    
+    # Verify the draft was created
+    assert_match(/Created draft:/, output)
+    assert_match(/-draft\.lt3/, output)  # Check for draft filename
+  end
+
+
+
+  def test_create_post_command
+    # Create test repo with a view
+    @api.create_view("testview", "Test View", "Test subtitle")
+    @api.view("testview")
+    
+    # Set up editor first
+    make_dir("scriptorium-TEST/config")
+    write_file("scriptorium-TEST/config/editor.txt", "echo")  # Use echo for testing
+    
+    # Test create post with title argument
+    commands = [
+      "create post Test Post Title\n",  # Create with title
+      "lsd\n",  # List drafts to verify
+      "q\n"
+    ]
+    
+    output = run_tui_commands(commands)
+    
+    # Verify the post was created
+    assert_match(/Created draft:/, output)
+    assert_match(/Opening in echo/, output)
+    assert_match(/Converting draft to post/, output)
+    assert_match(/Post created:/, output)
+    
+    # Test interactive create post (no title argument)
+    commands = [
+      "create post\n",  # Start interactive create post
+      "Interactive Post Title\n",  # Enter title
+      "lsd\n",  # List drafts to verify
+      "q\n"
+    ]
+    
+    output = run_tui_commands(commands)
+    
+    # Verify the interactive prompts appeared
+    assert_match(/Enter post title:/, output)
+    assert_match(/Created draft:/, output)
+    assert_match(/Opening in echo/, output)
+    assert_match(/Converting draft to post/, output)
+    assert_match(/Post created:/, output)
+    
+    # Test create post without editor configured
+    # Delete editor config
+    FileUtils.rm_rf("scriptorium-TEST/config/editor.txt")
+    
+    commands = [
+      "create post No Editor Post\n",  # Try to create post
+      "q\n"
+    ]
+    
+    output = run_tui_commands(commands)
+    
+    # Verify it shows the setup message
+    assert_match(/No editor configured/, output)
+    assert_match(/Please configure an editor in config\/editor\.txt/, output)
   end
 
   private

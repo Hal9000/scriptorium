@@ -13,7 +13,7 @@ puts "\n1. Creating a view..."
 api.create_view_and_use("demo", "Demo Blog", "A demonstration blog")
 
 puts "\n2. Creating a post..."
-post = api.post("Hello World", "This is my first post!", tags: ["demo", "first"])
+post = api.create_post("Hello World", "This is my first post!", tags: ["demo", "first"])
 
 puts "\n3. Generating front page..."
 api.generate_front_page

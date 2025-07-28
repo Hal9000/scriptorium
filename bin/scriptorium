@@ -93,8 +93,8 @@ class ScriptoriumTUI
       puts "Loaded repository"
     else
       puts "No repository found."
-      if ask_yes_no("Create a new test repository?")
-        create_test_repo
+      if ask_yes_no("Create a new repository?")
+        create_new_repo
       else
         puts "Exiting. Create a repository first or run in a directory with one."
         exit 0
@@ -108,6 +108,15 @@ class ScriptoriumTUI
     @testing = true
     @repo = Scriptorium::Repo.create("scriptorium-TEST")
     puts "Test repository created successfully!"
+  end
+
+  def create_new_repo
+    puts "Creating new repository..."
+    @repo = Scriptorium::Repo.create(".")
+    puts "Created repository successfully."
+    
+    # Run initial setup (like Runeblog)
+    get_started
   end
 
   def mainloop
@@ -159,6 +168,11 @@ class ScriptoriumTUI
       change_view(args)
     elsif cmd == "create" && args.start_with?("view")
       create_view(args)
+    elsif cmd == "create" && args.start_with?("draft")
+      create_draft(args)
+    elsif cmd == "create" && args.start_with?("post")
+      create_post(args)
+
     else
       # Handle single-word commands
       case cmd
@@ -174,6 +188,10 @@ class ScriptoriumTUI
         list_posts
       when "lsd"
         list_drafts
+      when "cd"
+        create_draft("draft")
+      when "cp"
+        create_post("post")
       when "version", "v"
         show_version
       when "quit", "q"
@@ -193,13 +211,16 @@ class ScriptoriumTUI
       
       View Management:
         view                   - Show current view
-        change view <name>     (cv) - Switch to a view
+        change view [<name>]   (cv) - Switch to a view
         list views             (lsv) - List all views
         create view [<name> <title>] - Create a new view
       
       Content:
         list posts             (lsp) - List posts in current view
         list drafts            (lsd) - List all drafts
+        create draft [<title>] (cd)  - Create a new draft
+        create post [<title>]  (cp)  - Create draft, edit, and convert to post
+
       
       Other:
         version                (v)  - Show version
@@ -219,17 +240,36 @@ class ScriptoriumTUI
 
   def change_view(args)
     # Handle "change view <name>" format
-    if args.start_with?("view ")
-      view_name = args[5..-1].strip  # Remove "view " prefix
+    if args == "view" || args.start_with?("view ")
+      # Remove "view " prefix if present, otherwise args is just "view"
+      view_name = args == "view" ? "" : args[5..-1].strip
     else
       view_name = args.strip
     end
     
     if view_name.empty?
+      # Interactive mode - prompt for view name
       puts
-      puts "  Usage: change view <name>"
-      puts
-      return
+      puts "  Available views:"
+      views = @repo.views
+      if views.empty?
+        puts "    No views found"
+        puts
+        return
+      else
+        current_view = @repo.current_view
+        current_view_name = current_view&.name
+        
+        views.each do |view|
+          current = view.name == current_view_name ? "*" : " "
+          puts "    #{current} #{view.name} - #{view.title}"
+        end
+        puts
+      end
+      
+      print "  Enter view name: "
+      view_name = gets&.chomp&.strip
+      return if view_name.nil? || view_name.empty?
     end
 
     view = @repo.lookup_view(view_name)
@@ -300,10 +340,151 @@ class ScriptoriumTUI
     end
   end
 
+  def create_draft(args)
+    # Handle "create draft" format - prompt for all parameters
+    if args == "draft" || args.start_with?("draft ")
+      # Remove "draft " prefix if present, otherwise args is just "draft"
+      draft_args = args == "draft" ? "" : args[6..-1]
+      
+      if draft_args.strip.empty?
+        # Interactive mode - prompt for all parameters
+        print "  Enter draft title: "
+        title = gets&.chomp&.strip
+        return if title.nil? || title.empty?
+        
+        print "  Enter draft body: "
+        body = gets&.chomp&.strip
+        return if body.nil? || body.empty?
+        
+        print "  Enter tags (optional, comma-separated): "
+        tags_input = gets&.chomp&.strip
+        tags = tags_input.empty? ? nil : tags_input.split(",").map(&:strip)
+        
+        print "  Enter blurb (optional): "
+        blurb = gets&.chomp&.strip
+        blurb = nil if blurb.empty?
+        
+        # Create draft with all parameters
+        draft_path = @repo.create_draft(
+          title: title,
+          body: body,
+          views: @repo.current_view&.name,
+          tags: tags,
+          blurb: blurb
+        )
+        puts
+        puts "  Created draft: #{draft_path}"
+        puts
+      else
+        # Legacy mode - still support "create draft <title>"
+        title = draft_args.strip
+        
+        print "  Enter draft body: "
+        body = gets&.chomp&.strip
+        return if body.nil? || body.empty?
+        
+        print "  Enter tags (optional, comma-separated): "
+        tags_input = gets&.chomp&.strip
+        tags = tags_input.empty? ? nil : tags_input.split(",").map(&:strip)
+        
+        print "  Enter blurb (optional): "
+        blurb = gets&.chomp&.strip
+        blurb = nil if blurb.empty?
+        
+        # Create draft with all parameters
+        draft_path = @repo.create_draft(
+          title: title,
+          body: body,
+          views: @repo.current_view&.name,
+          tags: tags,
+          blurb: blurb
+        )
+        puts
+        puts "  Created draft: #{draft_path}"
+        puts
+      end
+    else
+      puts
+      puts "  Usage: create draft [<title>]"
+      puts
+    end
+  end
+
   def show_version
     puts
     puts "  Scriptorium #{Scriptorium::VERSION}"
     puts
+  end
+
+  def get_started
+    puts
+    puts "  === Scriptorium Setup ==="
+    puts
+    
+    puts "  No editor configured. Let's set one up."
+    pick_editor
+    
+    puts
+    puts "  Setup complete!"
+    puts "  You can now use 'create post <title>' to create posts with your editor."
+    puts
+  end
+
+  def pick_editor
+    puts
+    puts "  Available editors:"
+    
+    # Check for common editors (prioritized for single file editing)
+    editors = []
+    %w[nano vim emacs vi micro subl].each do |editor|
+      if which(editor)
+        editors << editor
+      end
+    end
+    
+    # The original Unix line editor - for the brave souls who want ultimate speed
+    if which("ed")
+      editors << "ed"
+    end
+    
+    # Check for Sublime Text in Applications (macOS)
+    subl_path = "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl"
+    if File.exist?(subl_path) && !editors.include?("subl")
+      editors << "subl"
+    end
+    
+
+    
+    if editors.empty?
+      puts "    No common editors found. Please install nano, vim, emacs, vi, micro, or ed."
+      puts "    You can manually set your editor later by editing config/editor.txt"
+      puts
+      return
+    end
+    
+    # Show available editors
+    editors.each_with_index do |editor, index|
+      puts "    #{index + 1}. #{editor}"
+    end
+    
+    # Let user pick
+    print "  Choose editor (1-#{editors.length}): "
+    choice = gets&.chomp&.strip
+    
+    if choice && choice.match?(/^\d+$/) && choice.to_i.between?(1, editors.length)
+      selected_editor = editors[choice.to_i - 1]
+      
+      # Save the choice
+      make_dir(@repo.root/"config")
+      write_file(@repo.root/"config/editor.txt", selected_editor)
+      
+      puts
+      puts "  Selected editor: #{selected_editor}"
+      puts "  Editor preference saved to config/editor.txt"
+    else
+      puts
+      puts "  Invalid choice. Editor not changed."
+    end
   end
 
   def list_views
@@ -327,6 +508,93 @@ class ScriptoriumTUI
     print "#{question} (y/n): "
     response = gets&.chomp&.downcase
     response == "y" || response == "yes"
+  end
+
+  def which(command)
+    # Use File.which if available (Ruby 3.2+)
+    if File.respond_to?(:which)
+      File.which(command)
+    else
+      # Fall back to system call
+      result = `which #{command} 2>/dev/null`.chomp
+      result.empty? ? nil : result
+    end
+  end
+
+  def create_post(args)
+    # Handle "create post <title>" format
+    if args == "post" || args.start_with?("post ")
+      # Remove "post " prefix if present, otherwise args is just "post"
+      post_args = args == "post" ? "" : args[5..-1]
+      
+      if post_args.strip.empty?
+        # Interactive mode - prompt for title
+        print "  Enter post title: "
+        title = gets&.chomp&.strip
+        return if title.nil? || title.empty?
+      else
+        # Use provided title
+        title = post_args.strip
+      end
+      
+      # Check if editor is configured
+      editor_file = @repo.root/"config/editor.txt"
+      unless File.exist?(editor_file)
+        puts
+        puts "  No editor configured. Please configure an editor in config/editor.txt"
+        puts
+        return
+      end
+      
+      editor = read_file(editor_file).strip
+      
+      # Create draft
+      begin
+        draft_path = @repo.create_draft(
+          title: title,
+          body: "",  # Empty body to start
+          views: @repo.current_view&.name,
+          tags: nil,
+          blurb: nil
+        )
+        
+        puts
+        puts "  Created draft: #{File.basename(draft_path)}"
+        puts "  Opening in #{editor}..."
+        puts
+        
+        # Open in editor
+        system("#{editor} #{draft_path}")
+        
+        puts
+        puts "  Converting draft to post..."
+        
+        # Convert draft to post (like Runeblog)
+        begin
+          post_num = @repo.finish_draft(draft_path)
+          post = @repo.post(post_num)
+          if post && post.title
+            puts "  Post created: ##{post_num} - #{post.title}"
+          else
+            puts "  Post created: ##{post_num}"
+          end
+          puts "  Use 'deploy' to publish to server when ready."
+        rescue => e
+          puts "  Error converting to post: #{e.message}"
+        end
+        
+        puts
+        
+      rescue => e
+        puts
+        puts "  Error creating post: #{e.message}"
+        puts
+      end
+    else
+      puts
+      puts "  Usage: create post [<title>]"
+      puts
+    end
   end
 
   def list_posts

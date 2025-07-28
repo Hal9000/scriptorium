@@ -1,0 +1,20 @@
+As i recall, there was some problem with functions -- was it predefined or user-defined or both?
+A lot of this will be thrown away or reworked, like .head for building <head> stuff, which is always horrific.
+I recall a bug where .nopara wasn't working (so that blank lines don't generate HTML paragraphs); it
+exists because some files are just processed for their information, and we don't want it spitting out 
+dumb output. I also seem to recall a bug where the charset went to the terminal sometimes when it
+should not do that. A lot of "expected" fiunctionality is missing or inconsistent or stuck in some plugin
+when it really belongs in the central part. For example .nlist (numbered list) -- I keep thinking it is a 
+standard dot command because it should be and .list is -- but I end up pasting it ad hoc into a document
+and reminding myself to move it. On the other hand, Livetext itself does have quite a few tests and only 
+fails like 4-5 little edge cases. 
+
+The plugin doesn't call Scriptorium methods. Mostly the other way around. A user puts a .dropcap into
+his post, and Scriptorium uses Livetext to process into webbage. I just made up that word, webbage.
+
+Adding api.* to Livetext was the best move I ever made. Things became so much simpler and smoother.
+The variables (in case they changed) can be captured by Scriptorium after processing a livetext file.
+This is essentially how .title sets $title and then Scriptorium gets it back as a hash entry. 
+
+Clearer?
+

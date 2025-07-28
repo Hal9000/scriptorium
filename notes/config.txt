@@ -1,0 +1,15 @@
+Top level:
+---------
+editor
+author.name
+author.email
+default.publish.user
+default.publish.server
+# No default for docroot; don't want to encourage overwrite
+default.font.family
+widgets.available
+default.theme
+
+I usually keep security/key stuff in a separate dir
+
+Getting tired now but still thinking. I'll save this list.

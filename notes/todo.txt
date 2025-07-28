@@ -9,6 +9,9 @@ x Improve livetext support
 x Header: SVG
 x Better error handling (edge cases, garbage input)
 x More tests (what's missing?)
+x Widget tests
+- UI by interaction (TUI)
+- UI by API
   Widget: Pages
   Widget: Featured posts
   Header: banner
@@ -17,9 +20,7 @@ x More tests (what's missing?)
   Well-defined API (Scriptorium::API) - with versioning
 - Gem asset handling
 - Repo asset management
-  UI by API
   UI by command line
-  UI by interaction (TUI)
   Wizards: initial setup, add view, theming, widget setup, ...
   Sample blog additions
 

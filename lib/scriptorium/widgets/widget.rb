@@ -1,4 +1,5 @@
 class Scriptorium::Widget
+  include Scriptorium::Helpers
   attr_reader :repo, :view, :config, :name, :path
 
   def initialize(repo, view)
