@@ -25,6 +25,11 @@ class Scriptorium::Post
     end
   
     def meta_file
+      # Check if post is in deleted directory (with underscore prefix)
+      deleted_meta = @repo.root/:posts/"_#{@num}"/"meta.txt"
+      return deleted_meta if File.exist?(deleted_meta)
+      
+      # Otherwise use normal directory
       @repo.root/:posts/@num/"meta.txt"
     end
   

@@ -9,6 +9,9 @@ puts "\n" + "="*60
 puts "Running all Scriptorium tests..."
 puts "="*60
 
+# Initialize global to track which test files have printed their name
+$printed_files = []
+
 # Automatically find and load all test files
 test_files = [
   'unit/*.rb',
@@ -34,16 +37,16 @@ other_files = test_files.reject { |f| f.include?('unit/core.rb') }
 ordered_files = other_files + (core_file ? [core_file] : [])
 
 puts "Found #{ordered_files.length} test files:"
-ordered_files.each { |f| puts "  #{f}" }
+ordered_files.each { |f| puts "  #{f.sub(/.*\/test\//, 'test/')}" }
 
 # Load all test files
 ordered_files.each do |file|
-  puts "Loading #{file}..."
+  filename = File.basename(file, '.rb')
+  puts "*** #{filename} ***"
   require file
 rescue => e
   puts "Error loading #{file}: #{e.message}"
 end
 
-puts "\n" + "="*60
-puts "All tests completed!"
-puts "="*60 + "\n"
+
+

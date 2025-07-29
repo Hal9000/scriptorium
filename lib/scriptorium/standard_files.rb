@@ -131,6 +131,13 @@ class Scriptorium::StandardFiles
     crossorigin  anonymous
     EOS
   end
+
+  def available_widgets
+    <<~EOS
+      links
+      pages
+    EOS
+  end
   
   def initial_post(mode = :filled, num: "0", title: nil, blurb: nil, views: nil,
                   tags: nil, body:  nil)
@@ -149,6 +156,7 @@ class Scriptorium::StandardFiles
       .created %{created}
       
       .title %{title}
+      .blurb %{blurb}
       
       .views %{views}  
       .tags  %{tags}   
@@ -160,7 +168,7 @@ class Scriptorium::StandardFiles
     return str if mode == :raw
     mytags = tags
     mytags = tags.join(", ") if tags.is_a?(Array)
-    str2 = str % {num: d4(num.to_i), created: ymdhms, title: title, 
+    str2 = str % {num: d4(num.to_i), created: ymdhms, title: title, blurb: blurb,
                   views: views.join(" "), tags: mytags}
     return str2
   end

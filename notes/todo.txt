@@ -11,13 +11,12 @@ x Better error handling (edge cases, garbage input)
 x More tests (what's missing?)
 x Widget tests
 - UI by interaction (TUI)
-- UI by API
+- Well-defined API (Scriptorium::API) - with versioning
   Widget: Pages
   Widget: Featured posts
   Header: banner
   Header: menu
   Widget configuration (selection)
-  Well-defined API (Scriptorium::API) - with versioning
 - Gem asset handling
 - Repo asset management
   UI by command line

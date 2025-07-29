@@ -45,6 +45,7 @@ class Scriptorium::Repo
     write_file(@root/:config/"bootstrap_js.txt",  @predef.bootstrap_js)
     write_file(@root/:config/"bootstrap_css.txt", @predef.bootstrap_css)
     write_file(@root/:config/"common.js",         @predef.common_js)
+    write_file(@root/:config/"widgets.txt",       @predef.available_widgets)
     Scriptorium::Theme.create_standard(@root)     # Theme: templates, etc.
     @repo = self.open(@root)
     Scriptorium::View.create_sample_view(repo)
@@ -140,6 +141,7 @@ class Scriptorium::Repo
     │   └── right.txt        # Content for right.html
     ├── config.txt           # View-specific config file
     ├── layout/              # Unused?
+    ├── pages/               # Static pages for view
     ├── assets/              # Images, etc. (view-specific)
     ├── output/              # Output files (generated HTML)
     │   ├── panes/           # Containers from layout.txt
@@ -221,7 +223,7 @@ class Scriptorium::Repo
     posts = @root/:posts
     make_dir(posts/id4)
     make_dir(posts/id4/:assets)
-    FileUtils.mv(name, posts/id4/"draft.lt3")
+    FileUtils.mv(name, posts/id4/"source.lt3")
     # FIXME - what about views?
     id
   end
@@ -266,7 +268,7 @@ class Scriptorium::Repo
   end
 
   def generate_post(num)
-    draft = @root/:posts/d4(num)/"draft.lt3"
+    draft = @root/:posts/d4(num)/"source.lt3"
     need(:file, draft)
     live = Livetext.customize(mix: "lt3scriptor", call: ".nopara") # vars??
     text = live.xform_file(draft)

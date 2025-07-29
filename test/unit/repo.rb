@@ -67,6 +67,16 @@ class TestScriptoriumRepo < Minitest::Test
     assert repo.current_view.name == "sample", "Expected current view to be 'sample'"
   end
 
+  def test_005_check_widgets_txt_created
+    repo = create_test_repo
+    widgets_file = "#{repo.root}/config/widgets.txt"
+    assert File.exist?(widgets_file), "widgets.txt should exist in config directory"
+    
+    content = read_file(widgets_file)
+    assert_includes content, "links"
+    assert_includes content, "pages"
+  end
+
   def test_006_create_view
     repo = create_test_repo
     vname = "testview"
@@ -77,6 +87,10 @@ class TestScriptoriumRepo < Minitest::Test
 
     t1 = repo.view_exist?(vname)
     assert t1, "View should exist"
+
+    # Check that pages directory was created
+    pages_dir = "#{repo.root}/views/#{vname}/pages"
+    assert Dir.exist?(pages_dir), "Pages directory should exist"
 
     assert_raises(ViewDirAlreadyExists) do
       repo.create_view(vname, "My Other Title", "Just dumbness here")  # testing
@@ -132,7 +146,7 @@ class TestScriptoriumRepo < Minitest::Test
     postnum = "0001"  # Assumes testing started with 0
     postdir = repo.root/:posts/postnum 
     assert_dir_exist?(postdir/:assets)
-    assert_file_exist?(postdir/"draft.lt3") 
+    assert_file_exist?(postdir/"source.lt3") 
     $debug = false
   end
 
@@ -141,7 +155,7 @@ class TestScriptoriumRepo < Minitest::Test
     root = repo.root
     file = "#{root}/themes/standard/initial/post.lt3" # FIXME hardcoded
     assert_file_exist?(file)
-    assert_file_lines(file, 12)
+    assert_file_lines(file, 13)
   end
 
   def test_012_check_interpolated_initial_post

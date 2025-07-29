@@ -1,0 +1,78 @@
+New repo:
+------------
+choose editor
+set global info
+make first view?
+
+New view:
+-------------
+name, title, subtitle
+theme?
+edit layout
+configure each section
+header config
+navbar config: structure, dest pages
+post index config: entry, posts/page, ...
+
+deployment
+widgets? 
+  Links: add items
+  Pages: add item, edit page
+  Featured: Select posts
+  FAQ? add entry
+  Etc.
+
+
+Wizard: just follow the flow
+1. quick choice
+2. later choice
+3. dig in
+
+
+--------------------
+
+this will just be for the first view -- a "newbie" experience.
+
+Assume that wizard_new_view will be called as soon as the repo has been created 
+(IF the sample view is the only one).
+
+So the wizard will do this:
+- create_view
+- ask user if he wants to edit the layout
+    - y: edit_file("..../layout.txt")
+    - n: just leave the initial one
+- now layout is a list of containers (e.g., header, main, right)
+- for each of these:
+     - want to configure <container>?
+         - y: edit_file(whatever)
+         - n: just leave as-is
+
+Now the detail of that works sort of like this:
+  - header (edit view/config/header.txt or skip)
+  - main (just a stub for now)
+  - left, right (add widget(s)? or skip) -- see below
+  - footer (no real config for now)
+
+Widgets:
+   - show available widgets
+   - let user pick (hmm, how to select?)
+   - now we have a list of widgets
+
+  For each widget:
+    - do you want to configure?
+        - y: config for widget
+        - n: just leave as-is
+
+   What config means:
+       Links: want to edit the list of links?
+       Pages:  edit the list of pages?
+
+   If user adds pages, they may not exist.
+   (accidentally hit return)
+
+So for Pages, if a user adds pages, we have a list of pages.
+For each one nonexistent: do you want to edit <whatever>?
+
+Does this all make sense? I know it's complex.
+
+Ask any questions.

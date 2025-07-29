@@ -1,0 +1,3 @@
+title    Demo View
+subtitle Testing Pages Widget
+theme    standard

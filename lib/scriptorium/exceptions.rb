@@ -86,6 +86,9 @@ module Scriptorium::Exceptions
   make_exception :CannotReadFilePermissionDenied, "Cannot read file %1: permission denied (%2)"
   make_exception :CannotReadFileError, "Cannot read file %1: %2"
   
+  make_exception :CannotEditFilePathNil, "Cannot edit file: file path is nil"
+  make_exception :CannotEditFilePathEmpty, "Cannot edit file: file path is empty or whitespace-only"
+  
   make_exception :CannotRequirePathNil, "Cannot require %1: path is nil"
   make_exception :CannotRequirePathEmpty, "Cannot require %1: path is empty or whitespace-only"
   make_exception :RequiredFileNotFound, "Required %1 not found: %2"

@@ -379,4 +379,122 @@ class TestScriptoriumWidgets < Minitest::Test
       @view.build_widgets("invalid@widget")
     end
   end
+
+  # Pages widget tests
+  def test_pages_widget_initialization
+    # Create test list.txt file
+    list_file = "#{@view.dir}/widgets/pages/list.txt"
+    make_dir(File.dirname(list_file))
+    write_file(list_file, "about", "contact", "faq")
+    
+    # Create test HTML files
+    pages_dir = "#{@view.dir}/pages"
+    make_dir(pages_dir)
+    write_file("#{pages_dir}/about.html", "<html><title>About Us</title><body><h1>About Us</h1></body></html>")
+    write_file("#{pages_dir}/contact.html", "<html><title>Contact Information</title><body><h1>Contact</h1></body></html>")
+    write_file("#{pages_dir}/faq.html", "<html><title>FAQ</title><body><h1>FAQ</h1></body></html>")
+    
+    widget = Scriptorium::Widget::Pages.new(@repo, @view)
+    
+    assert_equal @repo, widget.repo
+    assert_equal @view, widget.view
+    assert_equal "pages", widget.name
+    assert_equal ["about", "contact", "faq"], widget.data
+  end
+
+  def test_pages_widget_extract_title_from_title_tag
+    # Create minimal list.txt to avoid initialization error
+    list_file = "#{@view.dir}/widgets/pages/list.txt"
+    make_dir(File.dirname(list_file))
+    write_file(list_file, "test")
+    
+    widget = Scriptorium::Widget::Pages.new(@repo, @view)
+    
+    html = "<html><head><title>My Page Title</title></head><body>Content</body></html>"
+    title = widget.send(:extract_title_from_html, html)
+    
+    assert_equal "My Page Title", title
+  end
+
+  def test_pages_widget_extract_title_from_h1_tag
+    # Create minimal list.txt to avoid initialization error
+    list_file = "#{@view.dir}/widgets/pages/list.txt"
+    make_dir(File.dirname(list_file))
+    write_file(list_file, "test")
+    
+    widget = Scriptorium::Widget::Pages.new(@repo, @view)
+    
+    html = "<html><body><h1>My H1 Title</h1><p>Content</p></body></html>"
+    title = widget.send(:extract_title_from_html, html)
+    
+    assert_equal "My H1 Title", title
+  end
+
+  def test_pages_widget_extract_title_fallback
+    # Create minimal list.txt to avoid initialization error
+    list_file = "#{@view.dir}/widgets/pages/list.txt"
+    make_dir(File.dirname(list_file))
+    write_file(list_file, "test")
+    
+    widget = Scriptorium::Widget::Pages.new(@repo, @view)
+    
+    html = "<html><body><p>No title here</p></body></html>"
+    title = widget.send(:extract_title_from_html, html)
+    
+    assert_equal "Untitled", title
+  end
+
+  def test_pages_widget_generate
+    # Create test list.txt file
+    list_file = "#{@view.dir}/widgets/pages/list.txt"
+    make_dir(File.dirname(list_file))
+    write_file(list_file, "about", "contact")
+    
+    # Create test HTML files
+    pages_dir = "#{@view.dir}/pages"
+    make_dir(pages_dir)
+    write_file("#{pages_dir}/about.html", "<html><title>About Us</title><body></body></html>")
+    write_file("#{pages_dir}/contact.html", "<html><title>Contact</title><body></body></html>")
+    
+    widget = Scriptorium::Widget::Pages.new(@repo, @view)
+    result = widget.generate
+    
+    assert result
+    
+    # Check that card file was created
+    card_file = "#{@view.dir}/widgets/pages/pages-card.html"
+    assert File.exist?(card_file)
+    
+    # Check that card contains links to pages
+    card_content = read_file(card_file)
+    assert_includes card_content, 'onclick="load_main(\'pages/about.html\')"'
+    assert_includes card_content, 'onclick="load_main(\'pages/contact.html\')"'
+    assert_includes card_content, 'About Us'
+    assert_includes card_content, 'Contact'
+  end
+
+  def test_pages_widget_skip_missing_pages
+    # Create test list.txt file with a missing page
+    list_file = "#{@view.dir}/widgets/pages/list.txt"
+    make_dir(File.dirname(list_file))
+    write_file(list_file, "about", "missing", "contact")
+    
+    # Create only one HTML file
+    pages_dir = "#{@view.dir}/pages"
+    make_dir(pages_dir)
+    write_file("#{pages_dir}/about.html", "<html><title>About Us</title><body></body></html>")
+    write_file("#{pages_dir}/contact.html", "<html><title>Contact</title><body></body></html>")
+    
+    widget = Scriptorium::Widget::Pages.new(@repo, @view)
+    result = widget.generate
+    
+    assert result
+    
+    # Check that card file was created and contains only existing pages
+    card_file = "#{@view.dir}/widgets/pages/pages-card.html"
+    card_content = read_file(card_file)
+    assert_includes card_content, 'onclick="load_main(\'pages/about.html\')"'
+    assert_includes card_content, 'onclick="load_main(\'pages/contact.html\')"'
+    refute_includes card_content, 'onclick="load_main(\'pages/missing.html\')"'
+  end
 end 

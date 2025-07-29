@@ -9,21 +9,231 @@ class ScriptoriumTUI
   include Scriptorium::Helpers
 
   def initialize
-    @repo = nil
+    @repo = Scriptorium::API.new("test/scriptorium-TEST").instance_variable_get(:@repo)
+    @api = Scriptorium::API.new("test/scriptorium-TEST")
     @testing = false
+    @log_file = "scriptorium.log"
     setup_readline
   end
 
-  def run
-    puts "=== Scriptorium TUI ==="
-    puts "Type 'help' for commands, 'quit' to exit"
-    puts
+  def log(message)
+    timestamp = Time.now.strftime("%Y-%m-%d %H:%M:%S")
+    File.open(@log_file, "a") do |f|
+      f.puts "[#{timestamp}] #{message}"
+    end
+  end
 
-    # Auto-discovery: check for existing repo
-    discover_repo
+  def discover_repo
+    system("rm -rf test/scriptorium-TEST")
+    return false
 
-    # Main REPL loop
-    mainloop
+    if Dir.exist?("scriptorium-TEST")
+      puts "Found existing test repository: scriptorium-TEST"
+      @testing = "test/scriptorium-TEST"
+      puts "Loaded test repository"
+      return true
+    # elsif Dir.exist?(".scriptorium")
+    # puts "Found existing repository: .scriptorium"
+    #  home = ENV['HOME']
+    #  @repo = Scriptorium::Repo.open("#{home}/.scriptorium")
+    #  puts "Loaded repository"
+    else
+      puts "No repository found."
+      return false
+    end
+  end
+
+  def create_new_repo
+    puts "Creating new repository..."
+    @testing = "test/scriptorium-TEST"
+    puts "Created repository successfully."
+    
+    # Run initial setup (like Runeblog)
+    get_started
+  end
+
+  def wizard_first_view    
+    log("WIZARD: Starting wizard_first_view")
+    puts "[WIZARD] Starting wizard_first_view"
+    # Check if this is the first view (only sample view exists)
+    if @repo.views.length == 1 && @repo.views[0].name == "sample"
+      log("WIZARD: Only sample view exists, proceeding with setup")
+      puts "[WIZARD] Only sample view exists, proceeding with setup"
+      puts "Let's set up your first view!"
+      
+      # Create a new view using existing interactive method
+      log("WIZARD: Calling create_view to create new view")
+      puts "[WIZARD] Calling create_view to create new view"
+      create_view("view")
+      
+      # Get the current view name (the one we just created)
+      current_view = @repo.current_view
+      return unless current_view
+      name = current_view.name
+      log("WIZARD: Created view: #{name}")
+      puts "[WIZARD] Created view: #{name}"
+      
+      # Ask about layout
+      puts
+      puts "[WIZARD] Asking about layout editing"
+      if yesno("Would you like to edit the layout?")
+        puts "[WIZARD] User chose to edit layout"
+        edit_file("#{@repo.root}/views/#{name}/config/layout.txt")
+      else
+        puts "[WIZARD] User chose not to edit layout"
+      end
+      
+      # Read the layout to see what containers we have
+      layout_file = "#{@repo.root}/views/#{name}/config/layout.txt"
+      puts "[WIZARD] Reading layout file: #{layout_file}"
+      layout_content = read_file(layout_file)
+      file_containers = layout_content.lines.map { |line| line.split(/\s+/).first }.compact
+      puts "[WIZARD] Found containers in file: #{file_containers.join(', ')}"
+      
+      # Define logical order for containers
+      logical_order = ['header', 'main', 'left', 'right', 'footer']
+      
+      # Use logical order, but only include containers that exist in the file
+      containers = logical_order.select { |container| file_containers.include?(container) }
+      puts "[WIZARD] Containers in logical order: #{containers.join(', ')}"
+      
+      # Configure each container
+      containers.each do |container|
+        puts
+        puts "[WIZARD] Configuring container: #{container}"
+        if yesno("Would you like to configure #{container}?")
+          case container
+          when 'header'
+            puts "[WIZARD] Configuring header container"
+            # This is complex and will be expanded later
+            edit_file("#{@repo.root}/views/#{name}/config/header.txt")
+          when 'main'
+            puts "[WIZARD] Configuring main container (stub)"
+            puts "Main container is just a stub for now"
+          when 'left', 'right'
+            puts "[WIZARD] Configuring sidebar container: #{container}"
+            configure_sidebar_widgets(name, container)
+          when 'footer'
+            puts "[WIZARD] Configuring footer container (stub)"
+            puts "Footer has no real config for now"
+          end
+        end
+      end
+      
+      puts
+      puts "[WIZARD] View setup complete!"
+      puts "View setup complete!"
+    else
+      puts "[WIZARD] Wizard is only available for the first view setup"
+      puts "Wizard is only available for the first view setup"
+    end
+  end
+
+  def configure_sidebar_widgets(view_name, container)
+    puts "[WIZARD] Starting configure_sidebar_widgets for #{container}"
+    puts "Add widgets to #{container}? (y/n)"
+    return unless yesno("Add widgets to #{container}?")
+    
+    # Show available widgets
+    api = Scriptorium::API.new(@repo.root)
+    available_widgets = api.widgets_available
+    puts "[WIZARD] Available widgets: #{available_widgets.join(', ')}"
+    puts "Available widgets: #{available_widgets.join(', ')}"
+    
+    selected_widgets = []
+    available_widgets.each do |widget|
+      puts "[WIZARD] Asking about widget: #{widget}"
+      if yesno("Add #{widget} widget?")
+        puts "[WIZARD] User selected widget: #{widget}"
+        selected_widgets << widget
+      else
+        puts "[WIZARD] User skipped widget: #{widget}"
+      end
+    end
+    
+    # Configure each selected widget
+    selected_widgets.each do |widget|
+      puts "[WIZARD] Configuring widget: #{widget}"
+      if yesno("Configure #{widget} widget?")
+        case widget
+        when 'links'
+          puts "[WIZARD] Configuring links widget"
+          edit_file("#{@repo.root}/views/#{view_name}/widgets/links/list.txt")
+        when 'pages'
+          puts "[WIZARD] Configuring pages widget"
+          configure_pages_widget(view_name)
+        end
+      end
+    end
+  end
+
+  def configure_pages_widget(view_name)
+    puts "[WIZARD] Starting configure_pages_widget for #{view_name}"
+    list_file = "#{@repo.root}/views/#{view_name}/widgets/pages/list.txt"
+    puts "[WIZARD] Editing pages list file: #{list_file}"
+    edit_file(list_file)
+    
+    # Check for missing pages
+    pages_list = read_file(list_file, lines: true, chomp: true)
+    puts "[WIZARD] Pages in list: #{pages_list.join(', ')}"
+    missing_pages = []
+    
+    pages_list.each do |page|
+      page_file = "#{@repo.root}/views/#{view_name}/pages/#{page}.html"
+      if File.exist?(page_file)
+        puts "[WIZARD] Page exists: #{page}"
+      else
+        puts "[WIZARD] Page missing: #{page}"
+        missing_pages << page
+      end
+    end
+    
+    if missing_pages.any?
+      puts
+      puts "[WIZARD] Found #{missing_pages.length} missing pages: #{missing_pages.join(', ')}"
+      if yesno("Do you want to edit the missing pages?")
+        puts "[WIZARD] User chose to edit missing pages"
+        missing_pages.each do |page|
+          puts "[WIZARD] Asking about editing page: #{page}"
+          if yesno("Edit #{page}?")
+            puts "[WIZARD] User chose to edit page: #{page}"
+            edit_file("#{@repo.root}/views/#{view_name}/pages/#{page}.html")
+          else
+            puts "[WIZARD] User chose to create empty file for page: #{page}"
+            # Create empty .lt3 file
+            write_file("#{@repo.root}/views/#{view_name}/pages/#{page}.lt3", "")
+          end
+        end
+      else
+        puts "[WIZARD] User chose to create empty files for all missing pages"
+        # Create empty .lt3 files for all missing pages
+        missing_pages.each do |page|
+          puts "[WIZARD] Creating empty file for page: #{page}"
+          write_file("#{@repo.root}/views/#{view_name}/pages/#{page}.lt3", "")
+        end
+      end
+    else
+      puts "[WIZARD] No missing pages found"
+    end
+  end
+
+  def yesno(question)
+    print "#{question} (y/n): "
+    response = get_string&.downcase
+    log("YESNO: question='#{question}'\n       response='#{response}'")
+    response == "y" || response == "yes"
+  end
+
+  def get_string
+    if STDIN.tty?
+      result = Readline.readline
+      log("GET_STRING: TTY mode, result=#{result.inspect}")
+      result
+    else
+      result = gets&.chomp&.strip
+      log("GET_STRING: Non-TTY mode, result=#{result.inspect}")
+      result
+    end
   end
 
   private
@@ -61,62 +271,11 @@ class ScriptoriumTUI
     end
   end
 
-  def discover_repo
-    if Dir.exist?("scriptorium-TEST")
-              # Check if this is an interactive TTY session
-        if STDIN.tty?
-          # Interactive session - use a separate repo
-          tty_repo_path = "scriptorium-TEST-tty"
-          if Dir.exist?(tty_repo_path)
-            puts "Found existing interactive test repository: #{tty_repo_path}"
-            @testing = true
-            @repo = Scriptorium::Repo.open(tty_repo_path)
-            puts "Loaded interactive test repository"
-          else
-            puts "Found existing test repository: scriptorium-TEST"
-            puts "Creating interactive test repository: #{tty_repo_path}"
-            @testing = true
-            @repo = Scriptorium::Repo.create(tty_repo_path)
-            puts "Created interactive test repository"
-          end
-        else
-          # Automated test session
-          puts "Found existing test repository: scriptorium-TEST"
-          @testing = true
-          @repo = Scriptorium::Repo.open("scriptorium-TEST")
-          puts "Loaded test repository"
-        end
-    elsif Dir.exist?(".scriptorium")
-      puts "Found existing repository: .scriptorium"
-      home = ENV['HOME']
-      @repo = Scriptorium::Repo.open("#{home}/.scriptorium")
-      puts "Loaded repository"
-    else
-      puts "No repository found."
-      if ask_yes_no("Create a new repository?")
-        create_new_repo
-      else
-        puts "Exiting. Create a repository first or run in a directory with one."
-        exit 0
-      end
-    end
-    puts
-  end
-
   def create_test_repo
     puts "Creating test repository..."
     @testing = true
     @repo = Scriptorium::Repo.create("scriptorium-TEST")
     puts "Test repository created successfully!"
-  end
-
-  def create_new_repo
-    puts "Creating new repository..."
-    @repo = Scriptorium::Repo.create(".")
-    puts "Created repository successfully."
-    
-    # Run initial setup (like Runeblog)
-    get_started
   end
 
   def mainloop
@@ -152,7 +311,7 @@ class ScriptoriumTUI
     puts
   end
 
-  def execute_command(input)
+  private def execute_command(input)
     parts = input.split(/\s+/, 2)
     cmd = parts[0].downcase
     args = parts[1] || ""
@@ -204,7 +363,7 @@ class ScriptoriumTUI
     end
   end
 
-  def show_help
+  private def show_help
     puts
     puts <<~HELP
       Available commands:
@@ -230,7 +389,7 @@ class ScriptoriumTUI
     puts
   end
 
-  def show_current_view
+  private def show_current_view
     current_view = @repo.current_view
     current_view_name = current_view&.name || "none"
     puts
@@ -238,7 +397,7 @@ class ScriptoriumTUI
     puts
   end
 
-  def change_view(args)
+  private def change_view(args)
     # Handle "change view <name>" format
     if args == "view" || args.start_with?("view ")
       # Remove "view " prefix if present, otherwise args is just "view"
@@ -283,7 +442,7 @@ class ScriptoriumTUI
     puts
   end
 
-  def create_view(args)
+  private def create_view(args)
     # Handle "create view" format - prompt for all parameters
     if args == "view" || args.start_with?("view ")
       # Remove "view " prefix if present, otherwise args is just "view"
@@ -292,15 +451,15 @@ class ScriptoriumTUI
       if view_args.strip.empty?
         # Interactive mode - prompt for all parameters
         print "  Enter view name: "
-        name = gets&.chomp&.strip
+        name = get_string
         return if name.nil? || name.empty?
         
         print "  Enter view title: "
-        title = gets&.chomp&.strip
+        title = get_string
         return if title.nil? || title.empty?
         
         print "  Enter subtitle (optional): "
-        subtitle = gets&.chomp&.strip
+        subtitle = get_string
         subtitle = nil if subtitle.empty?
         
         # Create view with all parameters
@@ -323,7 +482,7 @@ class ScriptoriumTUI
         
         # Prompt for subtitle
         print "  Enter subtitle (optional): "
-        subtitle = gets&.chomp&.strip
+        subtitle = get_string
         subtitle = nil if subtitle.empty?
         
         # Create view with all parameters
@@ -340,7 +499,7 @@ class ScriptoriumTUI
     end
   end
 
-  def create_draft(args)
+  private def create_draft(args)
     # Handle "create draft" format - prompt for all parameters
     if args == "draft" || args.start_with?("draft ")
       # Remove "draft " prefix if present, otherwise args is just "draft"
@@ -469,7 +628,7 @@ class ScriptoriumTUI
     
     # Let user pick
     print "  Choose editor (1-#{editors.length}): "
-    choice = gets&.chomp&.strip
+    choice = get_string
     
     if choice && choice.match?(/^\d+$/) && choice.to_i.between?(1, editors.length)
       selected_editor = editors[choice.to_i - 1]
@@ -504,11 +663,9 @@ class ScriptoriumTUI
     puts
   end
 
-  def ask_yes_no(question)
-    print "#{question} (y/n): "
-    response = gets&.chomp&.downcase
-    response == "y" || response == "yes"
-  end
+
+
+
 
   def which(command)
     # Use File.which if available (Ruby 3.2+)
@@ -521,7 +678,7 @@ class ScriptoriumTUI
     end
   end
 
-  def create_post(args)
+  private def create_post(args)
     # Handle "create post <title>" format
     if args == "post" || args.start_with?("post ")
       # Remove "post " prefix if present, otherwise args is just "post"
@@ -597,7 +754,7 @@ class ScriptoriumTUI
     end
   end
 
-  def list_posts
+  private def list_posts
     current_view = @repo.current_view
     if current_view.nil?
       puts
@@ -620,7 +777,7 @@ class ScriptoriumTUI
     puts
   end
 
-  def list_drafts
+  private def list_drafts
     drafts_dir = @repo.root/:drafts
     return unless Dir.exist?(drafts_dir)
     
@@ -630,7 +787,6 @@ class ScriptoriumTUI
     if draft_files.empty?
       puts "  No drafts found"
     else
-      puts "  Drafts:"
       draft_files.each do |file|
         filename = File.basename(file)
         puts "    #{filename}"
@@ -638,9 +794,32 @@ class ScriptoriumTUI
     end
     puts
   end
+
 end
 
-# Run the TUI if this file is executed directly
+###### Main ######
+
+# Only run main code if this file is executed directly
 if __FILE__ == $0
-  ScriptoriumTUI.new.run
-end 
+  s = ScriptoriumTUI.new
+
+  # Auto-discovery: check for existing repo
+  got_repo = s.discover_repo
+
+  unless got_repo
+    s.log("SCRIPT: Creating new repository")
+    s.create_new_repo
+    ques = "Do you want assistance in creating your first view?"
+    s.log("SCRIPT: Asking about wizard: #{ques}")
+    if s.yesno(ques)
+      s.log("SCRIPT: User chose to run wizard")
+      s.wizard_first_view
+    else
+      s.log("SCRIPT: User chose not to run wizard")
+    end
+  end
+
+  # Main REPL loop
+  s.log("SCRIPT: Starting mainloop")
+  s.mainloop
+end
