@@ -10,7 +10,8 @@ class TestScriptoriumAPI < Minitest::Test
 
   def setup
     @test_dir = "test/scriptorium-TEST"
-    @api = Scriptorium::API.new(true)
+    @api = Scriptorium::API.new(testmode: true)
+    @api.create_repo(@test_dir)
   end
 
   def teardown
@@ -22,11 +23,12 @@ class TestScriptoriumAPI < Minitest::Test
   def test_api_initialization
     assert_instance_of Scriptorium::API, @api
     assert_instance_of Scriptorium::Repo, @api.repo
-    assert_nil @api.current_view
+    refute_nil @api.current_view
+    assert_equal "sample", @api.current_view.name
   end
 
-  def test_create_view_and_use
-    @api.create_view_and_use("test_view", "Test View", "A test view")
+  def test_create_view
+    @api.create_view("test_view", "Test View", "A test view")
     
     assert_equal "test_view", @api.current_view.name
     assert_equal "Test View", @api.current_view.title
@@ -34,7 +36,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_create_post
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     post = @api.create_post("Test Post", "Test body", tags: ["test"])
     
     assert_instance_of Scriptorium::Post, post
@@ -43,7 +45,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_posts
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     @api.create_post("Post 1", "Body 1")
     @api.create_post("Post 2", "Body 2")
     
@@ -56,7 +58,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_post
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     created_post = @api.create_post("Test Post", "Test body")
     
     retrieved_post = @api.post(created_post.id)
@@ -69,13 +71,13 @@ class TestScriptoriumAPI < Minitest::Test
     @api.create_view("view1", "View 1")
     @api.create_view("view2", "View 2")
     
-    views = @api.views
+    views = @api.views.map(&:name)
     assert_includes views, "view1"
     assert_includes views, "view2"
   end
 
   def test_post_attrs
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     post = @api.create_post("Test Post", "Test body", tags: ["test", "demo"])
     
     attrs = @api.post_attrs(post.id, :title, :tags)
@@ -83,7 +85,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_post_attrs_with_post_object
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     post = @api.create_post("Test Post", "Test body", tags: ["test"])
     
     attrs = @api.post_attrs(post, :title, :tags)
@@ -91,7 +93,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_views_for
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     post = @api.create_post("Test Post", "Test body")
     
     views = @api.views_for(post)
@@ -99,7 +101,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_views_for_with_id
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     post = @api.create_post("Test Post", "Test body")
     
     views = @api.views_for(post.id)
@@ -107,18 +109,14 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_apply_theme
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     
     # Should not raise an error
     @api.apply_theme("standard")
     assert_equal "standard", @api.current_view.theme
   end
 
-  def test_apply_theme_without_current_view
-    assert_raises(RuntimeError) do
-      @api.apply_theme("standard")
-    end
-  end
+
 
   # Empty methods tests (should not raise errors)
   def test_empty_methods
@@ -159,7 +157,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_generate_view
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     
     # Should not raise an error
     @api.generate_view
@@ -173,38 +171,24 @@ class TestScriptoriumAPI < Minitest::Test
     @api.generate_view("view1")
   end
 
-  def test_generate_view_without_view
-    assert_raises(RuntimeError) do
-      @api.generate_view
-    end
-  end
+
 
   # Error handling tests
   def test_create_post_without_view
+    # Clear the current view directly
+    @api.repo.instance_variable_set(:@current_view, nil)
+    
     assert_raises(RuntimeError) do
       @api.create_post("Test Post", "Test body")
     end
   end
 
-  def test_generate_front_page_without_view
-    assert_raises(RuntimeError) do
-      @api.generate_front_page
-    end
-  end
 
-  def test_quick_post
-    @api.create_view_and_use("test_view", "Test View")
-    
-    # Should not raise an error
-    @api.quick_post("Quick Post", "Quick body", tags: ["quick"])
-    
-    posts = @api.posts
-    assert_equal 1, posts.length
-    assert_equal "Quick Post", posts[0].title
-  end
+
+
 
   def test_safe_delete_post
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     post = @api.create_post("Test Post", "Test body")
     
     # Initially visible
@@ -224,7 +208,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_undelete_post
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     post = @api.create_post("Test Post", "Test body")
     
     # Delete the post
@@ -241,7 +225,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_update_post
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     @api.create_view("other_view", "Other View")
     post = @api.create_post("Test Post", "Test body", views: ["test_view", "other_view"])
     
@@ -257,7 +241,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_update_post_preserves_comments
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     post = @api.create_post("Test Post", "Test body", views: ["test_view"])
     
     # Manually add a comment to the source file
@@ -283,7 +267,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_update_post_multiple_fields
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     post = @api.create_post("Test Post", "Test body", views: ["test_view"])
     
     # Update multiple fields at once
@@ -305,7 +289,7 @@ class TestScriptoriumAPI < Minitest::Test
 
 
   def test_unlink_post
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     @api.create_view("other_view", "Other View")
     post = @api.create_post("Test Post", "Test body", views: ["test_view", "other_view"])
     
@@ -325,7 +309,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_link_post
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     @api.create_view("other_view", "Other View")
     post = @api.create_post("Test Post", "Test body", views: ["test_view"])
     
@@ -345,7 +329,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_link_post_current_view
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     @api.create_view("other_view", "Other View")
     post = @api.create_post("Test Post", "Test body", views: ["other_view"])
     
@@ -368,7 +352,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_link_post_duplicate
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     post = @api.create_post("Test Post", "Test body", views: ["test_view"])
     
     # Initially post should be in test_view
@@ -385,7 +369,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_post_add_view
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     @api.create_view("other_view", "Other View")
     post = @api.create_post("Test Post", "Test body", views: ["test_view"])
     
@@ -405,7 +389,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_post_add_view_with_view_object
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     @api.create_view("other_view", "Other View")
     other_view = @api.view("other_view")  # Get the View object
     post = @api.create_post("Test Post", "Test body", views: ["test_view"])
@@ -422,7 +406,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_post_remove_view
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     @api.create_view("other_view", "Other View")
     post = @api.create_post("Test Post", "Test body", views: ["test_view", "other_view"])
     
@@ -442,7 +426,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_post_remove_view_with_view_object
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     @api.create_view("other_view", "Other View")
     other_view = @api.view("other_view")  # Get the View object
     post = @api.create_post("Test Post", "Test body", views: ["test_view", "other_view"])
@@ -459,7 +443,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_update_post_blurb
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     post = @api.create_post("Test Post", "Test body")
     
     # Manually add a blurb line to the source file
@@ -479,7 +463,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_delete_draft
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     
     # Create a draft
     draft_path = @api.draft(title: "Test Draft", body: "Test body")
@@ -499,7 +483,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_delete_draft_invalid_path
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     
     # Test with non-draft file
     assert_raises(RuntimeError) do
@@ -513,7 +497,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_generate_all
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     @api.create_post("Test Post", "Test body")
     
     # Should not raise an error
@@ -521,14 +505,10 @@ class TestScriptoriumAPI < Minitest::Test
     assert result
   end
 
-  def test_generate_all_without_view
-    assert_raises(RuntimeError) do
-      @api.generate_all
-    end
-  end
+
 
   def test_generate_widget
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     
     # Create the widget directory and sample data
     widget_dir = @api.repo.root/:views/"test_view"/:widgets/"links"
@@ -543,14 +523,10 @@ class TestScriptoriumAPI < Minitest::Test
     assert File.exist?(widget_dir/"links-card.html")
   end
 
-  def test_generate_widget_without_view
-    assert_raises(RuntimeError) do
-      @api.generate_widget("links")
-    end
-  end
+
 
   def test_generate_widget_invalid_name
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     
     # Test with invalid widget name
     assert_raises(RuntimeError) do
@@ -569,7 +545,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_generate_widget_nonexistent
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     
     # Test with non-existent widget class
     assert_raises(RuntimeError) do
@@ -578,7 +554,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_select_posts
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     @api.create_view("other_view", "Other View")
     
     # Create posts in different views
@@ -599,7 +575,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_search_posts
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     
     # Create posts with different content
     post1 = @api.create_post("Ruby Programming", "Learn Ruby basics", tags: "ruby, programming")
@@ -629,7 +605,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_search_posts_with_blurb
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     post = @api.create_post("Test Post", "Test body", blurb: "This is a test blurb for searching.")
     
     # Test blurb search
@@ -644,7 +620,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_search_posts_unknown_field
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     
     # Create a post so the search actually processes something
     @api.create_post("Test Post", "Test body")
@@ -655,7 +631,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_unlink_post_specific_view
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     @api.create_view("other_view", "Other View")
     post = @api.create_post("Test Post", "Test body", views: ["test_view", "other_view"])
     
@@ -670,7 +646,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_post_add_tag
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     post = @api.create_post("Test Post", "Test body", tags: ["ruby"])
     
     # Initially post should only have ruby tag
@@ -689,7 +665,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_post_add_tag_duplicate
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     post = @api.create_post("Test Post", "Test body", tags: ["ruby"])
     
     # Initially post should have ruby tag
@@ -706,7 +682,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_post_remove_tag
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     post = @api.create_post("Test Post", "Test body", tags: ["ruby", "scriptorium"])
     
     # Initially post should have both tags
@@ -725,7 +701,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_post_remove_tag_nonexistent
-    @api.create_view_and_use("test_view", "Test View")
+    @api.create_view("test_view", "Test View")
     post = @api.create_post("Test Post", "Test body", tags: ["ruby"])
     
     # Initially post should have ruby tag

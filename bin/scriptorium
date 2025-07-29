@@ -9,8 +9,7 @@ class ScriptoriumTUI
   include Scriptorium::Helpers
 
   def initialize
-    @repo = Scriptorium::API.new("test/scriptorium-TEST").instance_variable_get(:@repo)
-    @api = Scriptorium::API.new("test/scriptorium-TEST")
+    @api = Scriptorium::API.new(testmode: true)
     @testing = false
     @log_file = "scriptorium.log"
     setup_readline
@@ -24,19 +23,23 @@ class ScriptoriumTUI
   end
 
   def discover_repo
-    system("rm -rf test/scriptorium-TEST")
-    return false
-
-    if Dir.exist?("scriptorium-TEST")
+    if Dir.exist?("test/scriptorium-TEST")
       puts "Found existing test repository: scriptorium-TEST"
       @testing = "test/scriptorium-TEST"
+      @repo = Scriptorium::Repo.open("test/scriptorium-TEST")
+      puts "Loaded test repository"
+      return true
+    elsif Dir.exist?("scriptorium-TEST")
+      puts "Found existing test repository: scriptorium-TEST"
+      @testing = "scriptorium-TEST"
+      @repo = Scriptorium::Repo.open("scriptorium-TEST")
       puts "Loaded test repository"
       return true
     # elsif Dir.exist?(".scriptorium")
     # puts "Found existing repository: .scriptorium"
     #  home = ENV['HOME']
     #  @repo = Scriptorium::Repo.open("#{home}/.scriptorium")
-    #  puts "Loaded repository"
+    #  puts "Loaded test repository"
     else
       puts "No repository found."
       return false
@@ -46,6 +49,7 @@ class ScriptoriumTUI
   def create_new_repo
     puts "Creating new repository..."
     @testing = "test/scriptorium-TEST"
+    @repo = Scriptorium::Repo.create("test/scriptorium-TEST", testmode: true)
     puts "Created repository successfully."
     
     # Run initial setup (like Runeblog)
@@ -236,6 +240,39 @@ class ScriptoriumTUI
     end
   end
 
+  def mainloop
+    loop do
+      begin
+        current_view = @repo.current_view
+        current_view_name = current_view&.name || "no-view"
+        prompt = "[#{current_view_name}] "
+        
+        # Use regular gets for automated tests, Readline for interactive
+        if STDIN.tty?
+          input = Readline.readline(prompt, true)
+        else
+          print prompt
+          input = gets&.chomp&.strip
+        end
+
+        break if input.nil? || input.downcase == "quit" || input.downcase == "q"
+
+        next if input.empty?
+
+        execute_command(input)
+      rescue Interrupt
+        puts "\nUse 'quit' to exit"
+      rescue => e
+        puts "Error: #{e.message}"
+        puts e.backtrace.first if @testing
+      end
+    end
+
+    puts
+    puts "  Goodbye!"
+    puts
+  end
+
   private
 
   def setup_readline
@@ -274,41 +311,8 @@ class ScriptoriumTUI
   def create_test_repo
     puts "Creating test repository..."
     @testing = true
-    @repo = Scriptorium::Repo.create("scriptorium-TEST")
+    @repo = Scriptorium::Repo.create("scriptorium-TEST", testmode: true)
     puts "Test repository created successfully!"
-  end
-
-  def mainloop
-    loop do
-      begin
-        current_view = @repo.current_view
-        current_view_name = current_view&.name || "no-view"
-        prompt = "[#{current_view_name}] "
-        
-        # Use regular gets for automated tests, Readline for interactive
-        if STDIN.tty?
-          input = Readline.readline(prompt, true)
-        else
-          print prompt
-          input = gets&.chomp&.strip
-        end
-
-        break if input.nil? || input.downcase == "quit" || input.downcase == "q"
-
-        next if input.empty?
-
-        execute_command(input)
-      rescue Interrupt
-        puts "\nUse 'quit' to exit"
-      rescue => e
-        puts "Error: #{e.message}"
-        puts e.backtrace.first if @testing
-      end
-    end
-
-    puts
-    puts "  Goodbye!"
-    puts
   end
 
   private def execute_command(input)
@@ -595,7 +599,7 @@ class ScriptoriumTUI
     
     # Check for common editors (prioritized for single file editing)
     editors = []
-    %w[nano vim emacs vi micro subl].each do |editor|
+    %w[nano vim emacs vi micro].each do |editor|
       if which(editor)
         editors << editor
       end
@@ -606,13 +610,6 @@ class ScriptoriumTUI
       editors << "ed"
     end
     
-    # Check for Sublime Text in Applications (macOS)
-    subl_path = "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl"
-    if File.exist?(subl_path) && !editors.include?("subl")
-      editors << "subl"
-    end
-    
-
     
     if editors.empty?
       puts "    No common editors found. Please install nano, vim, emacs, vi, micro, or ed."

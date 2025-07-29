@@ -81,7 +81,7 @@ class TestScriptoriumWidgets < Minitest::Test
   def setup
     @test_dir = "test/widget_test_files"
     make_dir(@test_dir)
-    @repo = Scriptorium::Repo.create("test/scriptorium-TEST")
+    @repo = Scriptorium::Repo.create("test/scriptorium-TEST", testmode: true)
     @view = @repo.create_view("test_view", "Test View", "Test subtitle")
   end
 

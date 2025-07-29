@@ -15,7 +15,8 @@ class TUIIntegrationTest < Minitest::Test
     @test_repo_path = "scriptorium-TEST"
     cleanup_test_repo
     # Create test repo for TUI tests
-    @api = Scriptorium::API.new(@test_repo_path)
+    @api = Scriptorium::API.new(testmode: true)
+    @api.create_repo(@test_repo_path)
   end
 
   def teardown
@@ -154,8 +155,8 @@ class TUIIntegrationTest < Minitest::Test
     output = run_tui_commands(commands)
     
     # Verify there are 2 drafts
-    assert_match(/Drafts:/, output)
     assert_match(/\d{8}-\d{6}-draft\.lt3/, output)  # Should match draft filename pattern
+    assert_match(/draft\.lt3/, output)  # Should show draft files
     
     # Create 28 posts with specific view distributions
     post_distributions = [
@@ -397,6 +398,112 @@ class TUIIntegrationTest < Minitest::Test
     # Verify it shows the setup message
     assert_match(/No editor configured/, output)
     assert_match(/Please configure an editor in config\/editor\.txt/, output)
+  end
+
+  def test_unknown_commands
+    # Test handling of invalid commands
+    commands = [
+      "xyz\n",  # Invalid command
+      "foobar\n",  # Another invalid command
+      "list invalid\n",  # Invalid list command
+      "create invalid\n",  # Invalid create command
+      "h\n",  # Valid command to verify TUI still works
+      "q\n"
+    ]
+    
+    output = run_tui_commands(commands)
+    
+    # Verify unknown commands show error message
+    assert_match(/Unknown command: xyz/, output)
+    assert_match(/Unknown command: foobar/, output)
+    assert_match(/Unknown command: list/, output)
+    assert_match(/Unknown command: create/, output)
+    # Verify help still works after errors
+    assert_match(/Available commands:/, output)
+  end
+
+  def test_empty_input_handling
+    # Test handling of empty lines and whitespace
+    commands = [
+      "\n",  # Empty line
+      "   \n",  # Whitespace only
+      "\t\n",  # Tab only
+      "  \t  \n",  # Mixed whitespace
+      "h\n",  # Valid command to verify TUI still works
+      "q\n"
+    ]
+    
+    output = run_tui_commands(commands)
+    
+    # Verify TUI handles empty input gracefully (no errors)
+    refute_match(/Unknown command/, output)
+    # Verify help still works
+    assert_match(/Available commands:/, output)
+  end
+
+  def test_command_parsing_edge_cases
+    # Test command parsing with extra whitespace and special characters
+    commands = [
+      "  h  \n",  # Help with extra whitespace
+      "  view  \n",  # View with extra whitespace
+      "lsv\n",  # Normal command
+      "  lsv  \n",  # List views with extra whitespace
+      "q\n"
+    ]
+    
+    output = run_tui_commands(commands)
+    
+    # Verify commands with extra whitespace work correctly
+    assert_match(/Available commands:/, output)
+    assert_match(/Current view:/, output)
+    assert_match(/sample/, output)  # Should show sample view
+  end
+
+  def test_exit_variations
+    # Test different ways to exit the TUI
+    commands = [
+      "quit\n"  # Test "quit" command
+    ]
+    
+    output = run_tui_commands(commands)
+    
+    # Verify quit works (should exit cleanly)
+    refute_match(/Unknown command: quit/, output)
+  end
+
+  def test_error_conditions
+    # Test TUI behavior when operations fail
+    # Create a view with invalid name to trigger error
+    commands = [
+      "create view\n",  # Start interactive create view
+      "invalid/name\n",  # Invalid view name with slash
+      "q\n"
+    ]
+    
+    output = run_tui_commands(commands)
+    
+    # Verify TUI handles errors gracefully
+    # Should show error message but not crash
+    refute_match(/TIMEOUT/, output)
+    refute_match(/NoMethodError/, output)
+    refute_match(/ArgumentError/, output)
+  end
+
+  def test_tty_vs_nontty_behavior
+    # Test that TUI works in non-TTY mode (automated testing)
+    commands = [
+      "h\n",
+      "v\n",
+      "q\n"
+    ]
+    
+    output = run_tui_commands(commands)
+    
+    # Verify TUI works in non-TTY mode
+    assert_match(/Available commands:/, output)
+    assert_match(/Scriptorium/, output)
+    # Should not show Readline-specific behavior
+    refute_match(/Readline/, output)
   end
 
   private

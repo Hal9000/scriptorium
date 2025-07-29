@@ -101,6 +101,15 @@ class Scriptorium::Post
       meta["post.tags"]
     end
 
+    def deleted
+      meta["post.deleted"] == "true"
+    end
+
+    def deleted=(value)
+      meta["post.deleted"] = value ? "true" : "false"
+      save_metadata
+    end
+
     # New method to access multiple attributes at once
     def attrs(*keys)
         keys.map { |key| send(key) }

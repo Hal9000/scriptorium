@@ -14,7 +14,7 @@ class TestScriptoriumView < Minitest::Test
     # Use a unique test repo path to avoid conflicts
     @repo_path = "test/view-test-repo"
     FileUtils.rm_rf(@repo_path) if Dir.exist?(@repo_path)
-    @repo = Scriptorium::Repo.create(@repo_path)
+    @repo = Scriptorium::Repo.create(@repo_path, testmode: true)
     @view = @repo.create_view("test_view", "Test View", "A test view", theme: "standard")
   end
 

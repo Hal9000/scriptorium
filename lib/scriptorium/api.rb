@@ -4,23 +4,60 @@ class Scriptorium::API
 
   attr_reader :repo, :current_view
 
-  def initialize(testpath = nil)
-    @testing = testpath
-    @repo = nil # Scriptorium::Repo.new(testpath)
+  def initialize(testmode: false)
+    @testing = testmode
+    @repo = nil
+  end
+
+  def repo_exists?(path)
+    Dir.exist?(path)
+  end
+
+  def create_repo(path)
+    raise RepoDirAlreadyExists if repo_exists?(path)
+    Scriptorium::Repo.create(path)
+    @repo = Scriptorium::Repo.open(path)
+  end
+
+  def open_repo(path)
+    @repo = Scriptorium::Repo.open(path)
   end
 
   # View management
   def create_view(name, title, subtitle = "", theme: "standard")
-    @current_view = @repo.create_view(name, title, subtitle, theme: theme)
+    @repo.create_view(name, title, subtitle, theme: theme)
+    self
   end
 
+  def current_view
+    @repo.current_view
+  end
+
+  def apply_theme(theme)
+    @repo.view.apply_theme(theme)
+  end
+
+  # Post management
   def view(name = nil)
-    @repo.view(name)
+    if name.nil?
+      @repo.current_view
+    else
+      @repo.view(name)
+    end
+  end
+
+  def views
+    @repo.views
+  end
+
+  def views_for(post_or_id)
+    post = post_or_id.is_a?(Integer) ? @repo.post(post_or_id) : post_or_id
+    post.views&.split(/\s+/) || []
   end
 
   # Post creation with convenience defaults
   def create_post(title, body, views: nil, tags: nil, blurb: nil)
-    views ||= @current_view&.name
+    views ||= @repo.current_view&.name
     raise "No view specified and no current view set" if views.nil?
     
     @repo.create_post(
@@ -33,9 +70,9 @@ class Scriptorium::API
   end
 
   # Draft management
-  def create_draft(title: nil, body: nil, views: nil, tags: nil, blurb: nil)
+  def draft(title: nil, body: nil, views: nil, tags: nil, blurb: nil)
     views ||= @repo.current_view&.name
-    views = Array(views)
+    raise "No view specified and no current view set" if views.nil?
     
     @repo.create_draft(
       title: title,
@@ -52,23 +89,23 @@ class Scriptorium::API
 
   # Generation
   def generate_front_page(view = nil)
-    view = @repo.view
+    view ||= @repo.current_view&.name
+    raise "No view specified and no current view set" if view.nil?
+    
     @repo.generate_front_page(view)
   end
 
   def generate_post_index(view = nil)
-    view = @repo.view
+    view ||= @repo.current_view&.name
+    raise "No view specified and no current view set" if view.nil?
+    
     @repo.generate_post_index(view)
   end
 
   # Post retrieval
   def posts(view = nil)
-    view ||= @repo.view
+    view ||= @repo.current_view&.name
     @repo.all_posts(view)
-  end
-
-  def post(id)
-    @repo.post(id)
   end
 
   def post_attrs(post_id, *keys)
@@ -76,18 +113,8 @@ class Scriptorium::API
     post.attrs(*keys)
   end
 
-  # View management
-  def views
-    @repo.instance_variable_get(:@views).map(&:name)
-  end
-
-  def views_for(post_or_id)
-    post = post_or_id.is_a?(Integer) ? @repo.post(post_or_id) : post_or_id
-    post.views&.split(/\s+/) || []
-  end
-
-  def apply_theme(theme)
-    @repo.view.apply_theme(theme)
+  def post(id)
+    @repo.post(id)
   end
 
   # Post management
@@ -96,6 +123,10 @@ class Scriptorium::API
     old_path = @repo.root/:posts/post.num
     new_path = @repo.root/:posts/"_#{post.num}"
     FileUtils.mv(old_path, new_path)
+    
+    # Set the deleted flag in metadata
+    post.meta["post.deleted"] = "true"
+    post.save_metadata
   end
 
   def undelete_post(id)
@@ -103,11 +134,15 @@ class Scriptorium::API
     old_path = @repo.root/:posts/"_#{post.num}"
     new_path = @repo.root/:posts/post.num
     FileUtils.mv(old_path, new_path)
+    
+    # Clear the deleted flag in metadata
+    post.meta["post.deleted"] = "false"
+    post.save_metadata
   end
 
   def unlink_post(id, view = nil)
     # Remove post from a specific view (or current view if none specified)
-    view ||= @current_view&.name
+    view ||= @repo.current_view&.name
     raise "No view specified and no current view set" if view.nil?
     
     post = @repo.post(id)
@@ -132,7 +167,7 @@ class Scriptorium::API
 
   def link_post(id, view = nil)
     # Add post to a specific view (or current view if none specified)
-    view ||= @repo.view
+    view ||= @repo.current_view&.name
     raise "No view specified and no current view set" if view.nil?
     
     post = @repo.post(id)
@@ -224,7 +259,7 @@ class Scriptorium::API
     # widget_name: string name of the widget (e.g., "links", "news")
     # Returns true on success, raises error on failure
     
-    raise "No current view set" if @current_view.nil?
+    raise "No current view set" if @repo.current_view.nil?
     raise "Widget name cannot be nil" if widget_name.nil?
     raise "Widget name cannot be empty" if widget_name.to_s.strip.empty?
     
@@ -244,7 +279,7 @@ class Scriptorium::API
     end
     
     # Create widget instance and generate
-    widget = widget_class.new(@repo, @current_view)
+    widget = widget_class.new(@repo, @repo.current_view)
     widget.generate
     
     true
@@ -318,7 +353,7 @@ class Scriptorium::API
 
   # Generation
   def generate_view(view = nil)
-    view ||= @current_view&.name
+    view ||= @repo.current_view&.name
     raise "No view specified and no current view set" if view.nil?
     
     @repo.generate_front_page(view)
@@ -329,7 +364,7 @@ class Scriptorium::API
     # This is currently a simple wrapper around generate_front_page
     # TODO: Later implement "makefile" type checking to avoid unnecessary work
     
-    view ||= @current_view&.name
+    view ||= @repo.current_view&.name
     raise "No view specified and no current view set" if view.nil?
     
     generate_front_page(view)
@@ -448,31 +483,19 @@ class Scriptorium::API
   # end
 
   # Utility methods
-  def tree(file = nil)
-    @repo.tree(file)
-  end
-
-  def destroy
-    raise "Cannot destroy non-testing repository" unless @testing
-    Scriptorium::Repo.destroy
-  end
 
   # Convenience workflow methods
-  def create_view(name, title, subtitle = "", theme: "standard")
-    @current_view = @repo.create_view(name, title, subtitle, theme: theme)
-    self
-  end
 
-#  # Delegate common repo methods
-#  def method_missing(method, *args, &block)
-#    if @repo.respond_to?(method)
-#      @repo.send(method, *args, &block)
-#    else
-#      super
-#    end
-#  end
-#
-#  def respond_to_missing?(method, include_private = false)
-#    @repo.respond_to?(method, include_private) || super
-#  end
+#   # Delegate common repo methods
+#   def method_missing(method, *args, &block)
+#     if @repo.respond_to?(method)
+#       @repo.send(method, *args, &block)
+#     else
+#       super
+#     end
+#   end
+# 
+#   def respond_to_missing?(method, include_private = false)
+#     @repo.respond_to?(method, include_private) || super
+#   end
 end 

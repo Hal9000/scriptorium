@@ -57,7 +57,7 @@ class WizardTest < Minitest::Test
     FileUtils.rm_rf("test/scriptorium-TEST") if Dir.exist?("test/scriptorium-TEST")
     
     # Create a test repo (this will have only the sample view)
-    repo = Scriptorium::Repo.create("test/scriptorium-TEST")
+    repo = Scriptorium::Repo.create("test/scriptorium-TEST", testmode: true)
     
     # Create a TUI instance to test the wizard
     tui = ScriptoriumTUI.new
@@ -107,7 +107,7 @@ class WizardTest < Minitest::Test
         puts "Starting interactive test..."
         
         # Wait for editor selection and choose nano
-        await_output(stdout, "Choose editor (1-5):")
+        await_output(stdout, "Choose editor (1-4):")
         stdin.puts "1"
         stdin.flush
         

@@ -1,35 +1,4 @@
-New repo:
-------------
-choose editor
-set global info
-make first view?
 
-New view:
--------------
-name, title, subtitle
-theme?
-edit layout
-configure each section
-header config
-navbar config: structure, dest pages
-post index config: entry, posts/page, ...
-
-deployment
-widgets? 
-  Links: add items
-  Pages: add item, edit page
-  Featured: Select posts
-  FAQ? add entry
-  Etc.
-
-
-Wizard: just follow the flow
-1. quick choice
-2. later choice
-3. dig in
-
-
---------------------
 
 this will just be for the first view -- a "newbie" experience.
 
@@ -68,7 +37,6 @@ Widgets:
        Pages:  edit the list of pages?
 
    If user adds pages, they may not exist.
-   (accidentally hit return)
 
 So for Pages, if a user adds pages, we have a list of pages.
 For each one nonexistent: do you want to edit <whatever>?

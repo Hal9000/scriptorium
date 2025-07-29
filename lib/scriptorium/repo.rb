@@ -19,13 +19,18 @@ class Scriptorium::Repo
     Dir.exist?(dir)
   end
 
-  def self.create(testpath = nil)
-    Scriptorium::Repo.testing = testpath
+  def self.create(path = nil, testmode: false)
+    # Handle backward compatibility: boolean true means testing mode
+    if testmode == true
+      Scriptorium::Repo.testing = path
+    else
+      Scriptorium::Repo.testing = nil
+    end
     home = ENV['HOME']
     @predef = Scriptorium::StandardFiles.new
-    @root = testpath || "#{home}/.scriptorium"
-    parent = testpath ? "." : home
-    file = testpath || ".scriptorium"
+    @root = path || "#{home}/.scriptorium"
+    parent = path ? "." : home
+    file = path || ".scriptorium"
     @root = parent/file
     raise self.RepoDirAlreadyExists(@root) if Dir.exist?(@root)
     make_tree(parent, <<~EOS)
@@ -299,6 +304,8 @@ class Scriptorium::Repo
     posts = []
     dirs = Dir.children(@root/:posts)
     dirs.each do |id4|
+      # Skip deleted posts (directories starting with underscore)
+      next if id4.start_with?('_')
       posts << Scriptorium::Post.read(self, id4)
     end
     return posts if view.nil?
@@ -314,9 +321,16 @@ class Scriptorium::Repo
   def post(id)
     validate_post_id(id)
     
+    # Check normal directory first
     meta = @root/:posts/d4(id)/"meta.txt"
-    return nil unless File.exist?(meta)
-    Scriptorium::Post.new(self, id)
+    return Scriptorium::Post.new(self, id) if File.exist?(meta)
+    
+    # Check deleted directory (with underscore prefix)
+    deleted_meta = @root/:posts/"_#{d4(id)}"/"meta.txt"
+    return Scriptorium::Post.new(self, id) if File.exist?(deleted_meta)
+    
+    # Post not found in either location
+    nil
   end
 
   private def validate_post_id(id)

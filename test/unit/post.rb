@@ -12,7 +12,7 @@ class TestScriptoriumPost < Minitest::Test
   def setup
     @test_dir = "test/post_test_files"
     make_dir(@test_dir)
-    @repo = Scriptorium::Repo.create("test/scriptorium-TEST")
+    @repo = Scriptorium::Repo.create("test/scriptorium-TEST", testmode: true)
     @post = Scriptorium::Post.new(@repo, 1)
   end
 
