@@ -10,40 +10,26 @@ class ScriptoriumTUI
 
   def initialize
     @api = Scriptorium::API.new(testmode: true)
-    @testing = false
-    @log_file = "scriptorium.log"
+    @testing = true
     setup_readline
   end
 
-  def log(message)
-    timestamp = Time.now.strftime("%Y-%m-%d %H:%M:%S")
-    File.open(@log_file, "a") do |f|
-      f.puts "[#{timestamp}] #{message}"
-    end
-  end
-
   def discover_repo
-    if Dir.exist?("test/scriptorium-TEST")
-      puts "Found existing test repository: scriptorium-TEST"
-      @testing = "test/scriptorium-TEST"
-      @repo = Scriptorium::Repo.open("test/scriptorium-TEST")
-      puts "Loaded test repository"
-      return true
-    elsif Dir.exist?("scriptorium-TEST")
-      puts "Found existing test repository: scriptorium-TEST"
-      @testing = "scriptorium-TEST"
-      @repo = Scriptorium::Repo.open("scriptorium-TEST")
-      puts "Loaded test repository"
-      return true
-    # elsif Dir.exist?(".scriptorium")
-    # puts "Found existing repository: .scriptorium"
-    #  home = ENV['HOME']
-    #  @repo = Scriptorium::Repo.open("#{home}/.scriptorium")
-    #  puts "Loaded test repository"
+    if @testing
+      if Dir.exist?("scriptorium-TEST")
+        puts "Found existing test repository: scriptorium-TEST"
+        @testing = "scriptorium-TEST"
+        @repo = Scriptorium::Repo.open("scriptorium-TEST")
+        puts "Loaded test repository"
+        return true
+      else
+        puts "No repository found."
+        return false
+      end
     else
-      puts "No repository found."
-      return false
+     # Later: for production
     end
+    return false
   end
 
   def create_new_repo
@@ -57,16 +43,13 @@ class ScriptoriumTUI
   end
 
   def wizard_first_view    
-    log("WIZARD: Starting wizard_first_view")
     puts "[WIZARD] Starting wizard_first_view"
     # Check if this is the first view (only sample view exists)
     if @repo.views.length == 1 && @repo.views[0].name == "sample"
-      log("WIZARD: Only sample view exists, proceeding with setup")
       puts "[WIZARD] Only sample view exists, proceeding with setup"
       puts "Let's set up your first view!"
       
       # Create a new view using existing interactive method
-      log("WIZARD: Calling create_view to create new view")
       puts "[WIZARD] Calling create_view to create new view"
       create_view("view")
       
@@ -74,7 +57,6 @@ class ScriptoriumTUI
       current_view = @repo.current_view
       return unless current_view
       name = current_view.name
-      log("WIZARD: Created view: #{name}")
       puts "[WIZARD] Created view: #{name}"
       
       # Ask about layout
@@ -224,18 +206,15 @@ class ScriptoriumTUI
   def yesno(question)
     print "#{question} (y/n): "
     response = get_string&.downcase
-    log("YESNO: question='#{question}'\n       response='#{response}'")
     response == "y" || response == "yes"
   end
 
   def get_string
     if STDIN.tty?
       result = Readline.readline
-      log("GET_STRING: TTY mode, result=#{result.inspect}")
       result
     else
       result = gets&.chomp&.strip
-      log("GET_STRING: Non-TTY mode, result=#{result.inspect}")
       result
     end
   end
@@ -804,19 +783,13 @@ if __FILE__ == $0
   got_repo = s.discover_repo
 
   unless got_repo
-    s.log("SCRIPT: Creating new repository")
     s.create_new_repo
     ques = "Do you want assistance in creating your first view?"
-    s.log("SCRIPT: Asking about wizard: #{ques}")
     if s.yesno(ques)
-      s.log("SCRIPT: User chose to run wizard")
       s.wizard_first_view
-    else
-      s.log("SCRIPT: User chose not to run wizard")
     end
   end
 
   # Main REPL loop
-  s.log("SCRIPT: Starting mainloop")
   s.mainloop
 end

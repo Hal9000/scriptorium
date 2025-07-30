@@ -10,9 +10,9 @@ x Header: SVG
 x Better error handling (edge cases, garbage input)
 x More tests (what's missing?)
 x Widget tests
+x Well-defined API (Scriptorium::API) - with versioning
+x Widget: Pages
 - UI by interaction (TUI)
-- Well-defined API (Scriptorium::API) - with versioning
-  Widget: Pages
   Widget: Featured posts
   Header: banner
   Header: menu

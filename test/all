@@ -26,6 +26,7 @@ test_files = %w[
   unit/core.rb
   tui_integration_test.rb
   tui_setup_test.rb
+  ed_test.rb
 ]
 
 
@@ -35,6 +36,3 @@ test_files.each do |file|
 rescue => e
   puts "Error loading #{file}: #{e.message}"
 end
-
-
-
