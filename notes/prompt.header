@@ -1,0 +1,12 @@
+This one may be hard to figure out. Ask questions as needed.
+
+The header.txt file specifies the contents of the header container (including 
+the banner and later on, the navbar). The banner can essentially be an image
+or an SVG. The syntax I am thinking of is this: the word "banner" can be 
+followed either by "svg" or an image name.
+
+If it says "svg" the code will read svg.txt which contains lines of text that
+can be parsed by BannerSVG. Otherwise the following string should be an image
+file name (such as mypic.png). The header container should then contain 
+either SVG or an img tag. 
+

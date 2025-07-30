@@ -1,0 +1,10 @@
+cap Boolean
+don't say: monkey-patch(ing), truthy, falsy, truthiness
+
+Try to keep lines under 80 chars
+
+private def rather than private block
+
+
+don't say You're absolutely right!
+

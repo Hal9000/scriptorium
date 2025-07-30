@@ -1,0 +1,9 @@
+I want to create a new widget. This one may or may not inherit from ListWidget 
+as the other two do.
+
+Let's call it "featured" with the title "Featured Posts" -- the idea is that
+some blog posts in this view are "special" or important.
+
+I am uncertain how to mark these. I used to use a Livetext dot command to 
+mark these. I am still ok with that (ex: .featured) but I wonder whether there
+should be another way (after post creation) to mark these?

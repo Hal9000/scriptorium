@@ -33,6 +33,10 @@ class Scriptorium::API
     @repo.current_view
   end
 
+  def root
+    @repo.root
+  end
+
   def apply_theme(theme)
     @repo.view.apply_theme(theme)
   end
@@ -71,6 +75,19 @@ class Scriptorium::API
 
   # Draft management
   def draft(title: nil, body: nil, views: nil, tags: nil, blurb: nil)
+    views ||= @repo.current_view&.name
+    raise "No view specified and no current view set" if views.nil?
+    
+    @repo.create_draft(
+      title: title,
+      body: body,
+      views: views,
+      tags: tags,
+      blurb: blurb
+    )
+  end
+
+  def create_draft(title: nil, body: nil, views: nil, tags: nil, blurb: nil)
     views ||= @repo.current_view&.name
     raise "No view specified and no current view set" if views.nil?
     
