@@ -323,6 +323,12 @@ class ScriptoriumTUI
         create_post("post")
       when "version", "v"
         show_version
+      when "deploy"
+        deploy_current_view
+      when "preview"
+        preview_current_view
+      when "browse"
+        browse_deployed_view
       when "quit", "q"
         exit 0
       else
@@ -350,6 +356,10 @@ class ScriptoriumTUI
         create draft [<title>] (cd)  - Create a new draft
         create post [<title>]  (cp)  - Create draft, edit, and convert to post
 
+      Deployment:
+        deploy                 - Deploy current view to server
+        preview                - Preview current view locally
+        browse                 - Browse deployed view on server
       
       Other:
         version                (v)  - Show version
@@ -795,6 +805,191 @@ class ScriptoriumTUI
       end
     end
     puts
+  end
+
+  private def deploy_current_view
+    current_view = @api.current_view
+    if current_view.nil?
+      puts
+      puts "  No current view selected"
+      puts
+      return
+    end
+
+    # Check if deploy config exists
+    deploy_config_file = current_view.dir/:config/"deploy.txt"
+    unless File.exist?(deploy_config_file)
+      puts
+      puts "  No deployment configuration found."
+      puts "  Create #{deploy_config_file} with format:"
+      puts "    user@server:path"
+      puts
+      return
+    end
+
+    # Read deployment configuration
+    deploy_config = read_file(deploy_config_file).strip
+    if deploy_config.empty?
+      puts
+      puts "  Deployment configuration is empty."
+      puts
+      return
+    end
+
+    # Check if output directory exists
+    output_dir = current_view.dir/:output
+    unless Dir.exist?(output_dir)
+      puts
+      puts "  Output directory does not exist: #{output_dir}"
+      puts "  Generate content first with 'create post' or similar."
+      puts
+      return
+    end
+
+    # Create deployment marker file
+    marker_content = "Deployed: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
+    marker_file = output_dir/"last-deployed.txt"
+    write_file(marker_file, marker_content)
+
+    # Execute rsync command
+    puts
+    puts "  Deploying view '#{current_view.name}' to #{deploy_config}..."
+    
+    cmd = "rsync -r -z #{output_dir}/ #{deploy_config}/"
+    puts "  Executing: #{cmd}"
+    
+    result = system(cmd)
+    
+    if result
+      puts "  Deployment successful!"
+      
+      # Extract domain and verify deployment
+      domain = extract_domain_from_deploy_config(deploy_config)
+      if domain
+        verify_deployment(domain)
+      end
+    else
+      puts "  Deployment failed!"
+    end
+    puts
+  end
+
+  private def extract_domain_from_deploy_config(config)
+    # user@example.com:/path/ -> example.com
+    if config =~ /@([^:]+):/
+      $1
+    end
+  end
+
+  private def verify_deployment(domain)
+    url = "https://#{domain}/last-deployed.txt"
+    puts "  Verifying deployment..."
+    
+    require 'net/http'
+    begin
+      response = Net::HTTP.get_response(URI(url))
+      if response.code == "200"
+        puts "  ✅ Deployment verified!"
+      else
+        puts "  ⚠️  Deployment verification failed (HTTP #{response.code})"
+      end
+    rescue => e
+      puts "  ⚠️  Deployment verification failed: #{e.message}"
+    end
+  end
+
+  private def preview_current_view
+    current_view = @api.current_view
+    if current_view.nil?
+      puts
+      puts "  No current view selected"
+      puts
+      return
+    end
+
+    # Check if output directory exists
+    output_dir = current_view.dir/:output
+    unless Dir.exist?(output_dir)
+      puts
+      puts "  Output directory does not exist: #{output_dir}"
+      puts "  Generate content first with 'create post' or similar."
+      puts
+      return
+    end
+
+    # Find the main index file
+    index_file = output_dir/"index.html"
+    unless File.exist?(index_file)
+      puts
+      puts "  No index.html found in output directory"
+      puts "  Generate content first with 'create post' or similar."
+      puts
+      return
+    end
+
+    # Load OS-specific helper and open the file
+    load_os_helpers
+    puts
+    puts "  Opening preview of view '#{current_view.name}'..."
+    open_file(index_file)
+    puts
+  end
+
+  private def browse_deployed_view
+    current_view = @api.current_view
+    if current_view.nil?
+      puts
+      puts "  No current view selected"
+      puts
+      return
+    end
+
+    # Check if deploy config exists
+    deploy_config_file = current_view.dir/:config/"deploy.txt"
+    unless File.exist?(deploy_config_file)
+      puts
+      puts "  No deployment configuration found."
+      puts "  Create #{deploy_config_file} with format:"
+      puts "    user@server:path"
+      puts
+      return
+    end
+
+    # Read deployment configuration and extract domain
+    deploy_config = read_file(deploy_config_file).strip
+    if deploy_config.empty?
+      puts
+      puts "  Deployment configuration is empty."
+      puts
+      return
+    end
+
+    # Extract domain for browsing
+    domain = extract_domain_from_deploy_config(deploy_config)
+    unless domain
+      puts
+      puts "  Could not extract domain from deployment configuration."
+      puts
+      return
+    end
+
+    # Load OS-specific helper and open the URL
+    load_os_helpers
+    url = "https://#{domain}/"
+    puts
+    puts "  Opening deployed view at: #{url}"
+    open_file(url)
+    puts
+  end
+
+  private def load_os_helpers
+    # Load the OS-specific helper functions
+    os_helpers_file = @api.root/:config/"os_helpers.rb"
+    if File.exist?(os_helpers_file)
+      load os_helpers_file
+    else
+      puts "  Warning: OS helpers not found. Preview/browse may not work."
+    end
   end
 
 end

@@ -18,6 +18,9 @@ x Header: banner
 x Header: menu
 x Single-page post for viewing in isolation
 x Permalinks
+x Deployment
+x Preview feature
+x Live view (browse) feature
   Widget configuration (selection)
 - Gem asset handling
 - Repo asset management
@@ -29,9 +32,6 @@ SOONISH:
   Theme components?
   Work on dependency tree? (user action triggers regeneration)
   Find dead code
-  Deployment
-  Preview feature
-  Live view (browse) feature
   UI by curses (RubyText)
   Syntax coloring
   reddit support

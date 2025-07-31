@@ -52,6 +52,10 @@ class Scriptorium::Repo
     write_file(@root/:config/"common.js",         @predef.common_js)
     write_file(@root/:config/"widgets.txt",       @predef.available_widgets)
     Scriptorium::Theme.create_standard(@root)     # Theme: templates, etc.
+    
+    # Generate OS-specific helper code
+    generate_os_helpers(@root)
+    
     @repo = self.open(@root)
     Scriptorium::View.create_sample_view(repo)
     return repo
@@ -364,6 +368,41 @@ class Scriptorium::Repo
     raise CannotCreateViewTitleNil if title.nil?
     
     raise CannotCreateViewTitleEmpty if title.to_s.strip.empty?
+  end
+
+  def self.generate_os_helpers(root)
+    os_code = case RbConfig::CONFIG['host_os']
+    when /darwin/     # macOS
+      <<~RUBY
+        # Generated at repo creation for macOS
+        def open_file(file_path)
+          system("open", file_path)
+        end
+      RUBY
+    when /linux/      # Linux
+      <<~RUBY
+        # Generated at repo creation for Linux
+        def open_file(file_path)
+          system("xdg-open", file_path)
+        end
+      RUBY
+    when /mswin|mingw|cygwin/  # Windows
+      <<~RUBY
+        # Generated at repo creation for Windows
+        def open_file(file_path)
+          system("start", file_path)
+        end
+      RUBY
+    else
+      <<~RUBY
+        # Generated at repo creation for unknown OS
+        def open_file(file_path)
+          puts "  Unable to open file on this OS"
+        end
+      RUBY
+    end
+    
+    write_file(root/:config/"os_helpers.rb", os_code)
   end
     
 end
