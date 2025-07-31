@@ -497,4 +497,108 @@ class TestScriptoriumWidgets < Minitest::Test
     assert_includes card_content, 'onclick="load_main(\'pages/contact.html\')"'
     refute_includes card_content, 'onclick="load_main(\'pages/missing.html\')"'
   end
+
+  def test_029_featured_posts_widget_initialization
+    # Create test list.txt file
+    list_file = "#{@view.dir}/widgets/featuredposts/list.txt"
+    make_dir(File.dirname(list_file))
+    write_file(list_file, "001 My Important Post", "002 Another Post")
+    
+    widget = Scriptorium::Widget::FeaturedPosts.new(@repo, @view)
+    assert_equal "featuredposts", widget.name
+    assert_equal "Featured Posts", widget.widget_title
+  end
+
+  def test_030_featured_posts_widget_parse_line
+    # Create test list.txt file
+    list_file = "#{@view.dir}/widgets/featuredposts/list.txt"
+    make_dir(File.dirname(list_file))
+    write_file(list_file, "001 My Important Post", "002 Another Post")
+    
+    widget = Scriptorium::Widget::FeaturedPosts.new(@repo, @view)
+    
+    # Test parsing with title
+    post_id, title = widget.parse_featured_line("001 My Important Post")
+    assert_equal "001", post_id
+    assert_equal "My Important Post", title
+    
+    # Test parsing without title
+    post_id, title = widget.parse_featured_line("002")
+    assert_equal "002", post_id
+    assert_nil title
+    
+    # Test parsing with multiple spaces
+    post_id, title = widget.parse_featured_line("003   Another Post Title")
+    assert_equal "003", post_id
+    assert_equal "Another Post Title", title
+  end
+
+  def test_031_featured_posts_widget_get_post_title
+    # Create test list.txt file
+    list_file = "#{@view.dir}/widgets/featuredposts/list.txt"
+    make_dir(File.dirname(list_file))
+    write_file(list_file, "001 My Important Post", "002 Another Post")
+    
+    widget = Scriptorium::Widget::FeaturedPosts.new(@repo, @view)
+    
+    # Create a test post first
+    post = @repo.create_post(title: "Test Featured Post", views: ["sample"])
+    
+    # Test getting title from existing post
+    title = widget.get_post_title(post.id)
+    assert_equal "Test Featured Post", title
+    
+    # Test getting title from non-existent post
+    title = widget.get_post_title("999")
+    assert_equal "Error: Post 999 not found", title
+  end
+
+  def test_032_featured_posts_widget_generate
+    # Create test list.txt file
+    list_file = "#{@view.dir}/widgets/featuredposts/list.txt"
+    make_dir(File.dirname(list_file))
+    write_file(list_file, "001 My Important Post", "002 Another Post")
+    
+    # Create test posts
+    post1 = @repo.create_post(title: "My Important Post", views: ["sample"])
+    post2 = @repo.create_post(title: "Another Post", views: ["sample"])
+    
+    widget = Scriptorium::Widget::FeaturedPosts.new(@repo, @view)
+    result = widget.generate
+    
+    assert result
+    
+    # Check that card file was created
+    card_file = "#{@view.dir}/widgets/featuredposts/featuredposts-card.html"
+    assert File.exist?(card_file)
+    
+    # Check that card contains links to posts
+    card_content = read_file(card_file)
+    assert_includes card_content, 'onclick="load_main(\'posts/001.html\')"'
+    assert_includes card_content, 'onclick="load_main(\'posts/002.html\')"'
+    assert_includes card_content, 'My Important Post'
+    assert_includes card_content, 'Another Post'
+  end
+
+  def test_033_featured_posts_widget_handles_missing_posts
+    # Create test list.txt file with a missing post
+    list_file = "#{@view.dir}/widgets/featuredposts/list.txt"
+    make_dir(File.dirname(list_file))
+    write_file(list_file, "001 My Important Post", "999 Missing Post")
+    
+    # Create only one post
+    post1 = @repo.create_post(title: "My Important Post", views: ["sample"])
+    
+    widget = Scriptorium::Widget::FeaturedPosts.new(@repo, @view)
+    result = widget.generate
+    
+    assert result
+    
+    # Check that card file was created and contains error for missing post
+    card_file = "#{@view.dir}/widgets/featuredposts/featuredposts-card.html"
+    card_content = read_file(card_file)
+    assert_includes card_content, 'onclick="load_main(\'posts/001.html\')"'
+    assert_includes card_content, 'My Important Post'
+    assert_includes card_content, 'Error: Post 999 not found'
+  end
 end 

@@ -136,6 +136,7 @@ class Scriptorium::StandardFiles
     <<~EOS
       links
       pages
+      featuredposts
     EOS
   end
   

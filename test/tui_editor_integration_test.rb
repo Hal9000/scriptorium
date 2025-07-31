@@ -177,8 +177,8 @@ class TUIEditorIntegrationTest < Minitest::Test
                    "Should ask about adding widgets to left")
     
     # Say yes to add widgets
-    send_and_expect(read, write, "y", "Available widgets: links, pages",
-                   "Should show available widgets")
+        send_and_expect(read, write, "y", "Available widgets: links, pages, featuredposts",
+      "Should show available widgets")
     
     get_string(read, "Add links widget", "Should ask about adding links widget")
     send_and_expect(read, write, "y", "Add pages widget",
