@@ -266,7 +266,7 @@ class TUIEditorIntegrationTest < Minitest::Test
     send_and_expect(read, write, "n", "[sample]", "Should show main prompt")
     
     # Create a post
-    send_and_expect(read, write, "create post Test Post", "Created draft",
+    send_and_expect(read, write, "new post Test Post", "Created draft",
                    "Should show draft created")
     
     # Wait for editor opening

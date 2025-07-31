@@ -252,7 +252,7 @@ class ScriptoriumTUI
       
       if args.empty?
         # Complete command names
-        commands = %w[view change list create version help quit cv lsv v h q]
+        commands = %w[view change list new version help quit cv lsv v h q]
         completions = commands.select { |cmd| cmd.start_with?(command || "") }
       elsif command == "change" || command == "cv"
         # Complete view names
@@ -263,8 +263,8 @@ class ScriptoriumTUI
       elsif command == "list" && args.length == 1 && args[0] == "views"
         # Complete "list views" command
         completions = []
-      elsif command == "create" && args.length == 1 && args[0] == "view"
-        # Suggest common view names for create view
+      elsif command == "new" && args.length == 1 && args[0] == "view"
+        # Suggest common view names for new view
         suggestions = %w[blog personal work tech travel]
         completions = suggestions
       end
@@ -295,11 +295,11 @@ class ScriptoriumTUI
       list_drafts
     elsif cmd == "change" && args.start_with?("view")
       change_view(args)
-    elsif cmd == "create" && args.start_with?("view")
+    elsif cmd == "new" && args.start_with?("view")
       create_view(args)
-    elsif cmd == "create" && args.start_with?("draft")
+    elsif cmd == "new" && args.start_with?("draft")
       create_draft(args)
-    elsif cmd == "create" && args.start_with?("post")
+    elsif cmd == "new" && args.start_with?("post")
       create_post(args)
 
     else
@@ -319,8 +319,6 @@ class ScriptoriumTUI
         list_drafts
       when "cd"
         create_draft("draft")
-      when "cp"
-        create_post("post")
       when "version", "v"
         show_version
       when "deploy"
@@ -329,6 +327,12 @@ class ScriptoriumTUI
         preview_current_view
       when "browse"
         browse_deployed_view
+      when "list" && args.start_with?("widgets")
+        list_widgets
+      when "add" && args.start_with?("widget")
+        add_widget(args)
+      when "config" && args.start_with?("widget")
+        config_widget(args)
       when "quit", "q"
         exit 0
       else
@@ -342,29 +346,31 @@ class ScriptoriumTUI
   private def show_help
     puts
     puts <<~HELP
-      Available commands:
       
-      View Management:
-        view                   - Show current view
-        change view [<name>]   (cv) - Switch to a view
-        list views             (lsv) - List all views
-        create view [<name> <title>] - Create a new view
+        view                       - Show current view
+        change view [<name>]       - Switch to a view
+        cv [<name>]                  
+        list views                 - List all views
+        lsv
+        new view [<name> <title>]  - Create a new view
       
-      Content:
-        list posts             (lsp) - List posts in current view
-        list drafts            (lsd) - List all drafts
-        create draft [<title>] (cd)  - Create a new draft
-        create post [<title>]  (cp)  - Create draft, edit, and convert to post
+        list posts                 - List posts in current view
+        lsp
+        list drafts                - List all drafts
+        lsd
+        new post [<title>]         - Create draft, edit, and convert to post
 
-      Deployment:
         deploy                 - Deploy current view to server
         preview                - Preview current view locally
         browse                 - Browse deployed view on server
       
-      Other:
-        version                (v)  - Show version
-        help                   (h)  - Show this help
-        quit                   (q)  - Exit
+        list widgets           - List available and configured widgets
+        add widget <name>      - Add widget to current view
+        config widget <name>   - Configure widget data
+      
+        version, v                - Show version
+        help, h                   - Show this help
+        quit, q, ^D                   - Exit
     HELP
     puts
   end
@@ -423,7 +429,7 @@ class ScriptoriumTUI
   end
 
   private def create_view(args)
-    # Handle "create view" format - prompt for all parameters
+    # Handle "new view" format - prompt for all parameters
     if args == "view" || args.start_with?("view ")
       # Remove "view " prefix if present, otherwise args is just "view"
       view_args = args == "view" ? "" : args[5..-1]
@@ -465,11 +471,11 @@ class ScriptoriumTUI
           puts "DEBUG: Exception caught in create_view (interactive): #{e.class}: #{e.message}"
         end
       else
-        # Legacy mode - still support "create view <name> <title>"
+        # Legacy mode - still support "new view <name> <title>"
         parts = view_args.split(/\s+/, 2)
         if parts.length < 2
           puts
-          puts "  Usage: create view [<name> <title>]"
+          puts "  Usage: new view [<name> <title>]"
           puts
           return
         end
@@ -506,13 +512,13 @@ class ScriptoriumTUI
       end
     else
       puts
-      puts "  Usage: create view [<name> <title>]"
+      puts "  Usage: new view [<name> <title>]"
       puts
     end
   end
 
   private def create_draft(args)
-    # Handle "create draft" format - prompt for all parameters
+    # Handle "new draft" format - prompt for all parameters
     if args == "draft" || args.start_with?("draft ")
       # Remove "draft " prefix if present, otherwise args is just "draft"
       draft_args = args == "draft" ? "" : args[6..-1]
@@ -547,7 +553,7 @@ class ScriptoriumTUI
         puts "  Created draft: #{draft_path}"
         puts
       else
-        # Legacy mode - still support "create draft <title>"
+        # Legacy mode - still support "new draft <title>"
         title = draft_args.strip
         
         print "  Enter draft body: "
@@ -576,7 +582,7 @@ class ScriptoriumTUI
       end
     else
       puts
-      puts "  Usage: create draft [<title>]"
+      puts "  Usage: new draft [<title>]"
       puts
     end
   end
@@ -594,7 +600,7 @@ class ScriptoriumTUI
     
     puts
     puts "  Setup complete!"
-    puts "  You can now use 'create post <title>' to create posts with your editor."
+    puts "  You can now use 'new post <title>' to create posts with your editor."
     puts
   end
 
@@ -691,7 +697,7 @@ class ScriptoriumTUI
   end
 
   private def create_post(args)
-    # Handle "create post <title>" format
+    # Handle "new post <title>" format
     if args == "post" || args.start_with?("post ")
       # Remove "post " prefix if present, otherwise args is just "post"
       post_args = args == "post" ? "" : args[5..-1]
@@ -761,7 +767,7 @@ class ScriptoriumTUI
       end
     else
       puts
-      puts "  Usage: create post [<title>]"
+      puts "  Usage: new post [<title>]"
       puts
     end
   end
@@ -841,7 +847,7 @@ class ScriptoriumTUI
     unless Dir.exist?(output_dir)
       puts
       puts "  Output directory does not exist: #{output_dir}"
-      puts "  Generate content first with 'create post' or similar."
+      puts "  Generate content first with 'new post' or similar."
       puts
       return
     end
@@ -912,7 +918,7 @@ class ScriptoriumTUI
     unless Dir.exist?(output_dir)
       puts
       puts "  Output directory does not exist: #{output_dir}"
-      puts "  Generate content first with 'create post' or similar."
+      puts "  Generate content first with 'new post' or similar."
       puts
       return
     end
@@ -922,7 +928,7 @@ class ScriptoriumTUI
     unless File.exist?(index_file)
       puts
       puts "  No index.html found in output directory"
-      puts "  Generate content first with 'create post' or similar."
+      puts "  Generate content first with 'new post' or similar."
       puts
       return
     end
@@ -989,6 +995,218 @@ class ScriptoriumTUI
       load os_helpers_file
     else
       puts "  Warning: OS helpers not found. Preview/browse may not work."
+    end
+  end
+
+  private def list_widgets
+    current_view = @api.current_view
+    if current_view.nil?
+      puts
+      puts "  No current view selected"
+      puts
+      return
+    end
+
+    # Get available widgets
+    available_widgets = @api.widgets_available
+    puts
+    puts "  Available widgets: #{available_widgets.join(', ')}"
+    
+    # Check which widgets are configured
+    configured_widgets = []
+    available_widgets.each do |widget|
+      widget_dir = current_view.dir/:widgets/widget
+      if Dir.exist?(widget_dir)
+        configured_widgets << widget
+      end
+    end
+    
+    puts "  Configured widgets: #{configured_widgets.empty? ? 'none' : configured_widgets.join(', ')}"
+    puts
+  end
+
+  private def add_widget(args)
+    current_view = @api.current_view
+    if current_view.nil?
+      puts
+      puts "  No current view selected"
+      puts
+      return
+    end
+
+    # Parse widget name from args
+    widget_name = args.sub(/^widget\s+/, '').strip
+    if widget_name.empty?
+      puts
+      puts "  Usage: add widget <name>"
+      puts "  Example: add widget links"
+      puts
+      return
+    end
+
+    # Check if widget is available
+    available_widgets = @api.widgets_available
+    unless available_widgets.include?(widget_name)
+      puts
+      puts "  Widget '#{widget_name}' is not available."
+      puts "  Available widgets: #{available_widgets.join(', ')}"
+      puts
+      return
+    end
+
+    # Check if widget is already configured
+    widget_dir = current_view.dir/:widgets/widget_name
+    if Dir.exist?(widget_dir)
+      puts
+      puts "  Widget '#{widget_name}' is already configured."
+      puts
+      return
+    end
+
+    # Determine container (left/right)
+    container = determine_widget_container(current_view)
+    unless container
+      puts
+      puts "  Error: No left or right container found in layout."
+      puts "  Add a left or right container to your layout first."
+      puts
+      return
+    end
+
+    # Create widget directory and list.txt
+    make_dir(widget_dir)
+    list_file = widget_dir/"list.txt"
+    write_file(list_file, "# Add #{widget_name} items here\n")
+    
+    puts
+    puts "  Added widget '#{widget_name}' to #{container} container."
+    puts "  Use 'config widget #{widget_name}' to configure it."
+    puts
+  end
+
+  private def config_widget(args)
+    current_view = @api.current_view
+    if current_view.nil?
+      puts
+      puts "  No current view selected"
+      puts
+      return
+    end
+
+    # Parse widget name from args
+    widget_name = args.sub(/^widget\s+/, '').strip
+    if widget_name.empty?
+      puts
+      puts "  Usage: config widget <name>"
+      puts "  Example: config widget links"
+      puts
+      return
+    end
+
+    # Check if widget is configured
+    widget_dir = current_view.dir/:widgets/widget_name
+    unless Dir.exist?(widget_dir)
+      puts
+      puts "  Widget '#{widget_name}' is not configured."
+      puts "  Use 'add widget #{widget_name}' to add it first."
+      puts
+      return
+    end
+
+    list_file = widget_dir/"list.txt"
+    unless File.exist?(list_file)
+      puts
+      puts "  Error: Widget list file not found: #{list_file}"
+      puts
+      return
+    end
+
+    # Show widget-specific instructions
+    show_widget_instructions(widget_name)
+    
+    puts "  Press Enter to edit the widget data file..."
+    gets
+    
+    @api.edit_file(list_file)
+    
+    # Regenerate the widget after editing
+    puts "  Regenerating widget..."
+    begin
+      @api.generate_widget(widget_name)
+      puts "  ✅ Widget regenerated successfully!"
+    rescue => e
+      puts "  ⚠️  Widget regeneration failed: #{e.message}"
+    end
+    puts
+  end
+
+  private def determine_widget_container(view)
+    # Check which containers exist in the layout
+    layout_file = view.dir/:config/"layout.txt"
+    return nil unless File.exist?(layout_file)
+    
+    layout_content = read_file(layout_file)
+    has_left = layout_content.include?('left')
+    has_right = layout_content.include?('right')
+    
+    if has_left && has_right
+      # Both exist, prompt user
+      puts
+      puts "  Both left and right containers found."
+      puts "  Which container should the widget go in?"
+      puts "  (l) left  (r) right"
+      print "  Choice: "
+      choice = gets&.chomp&.downcase
+      
+      case choice
+      when 'l', 'left'
+        'left'
+      when 'r', 'right'
+        'right'
+      else
+        puts "  Invalid choice. Widget not added."
+        nil
+      end
+    elsif has_left
+      'left'
+    elsif has_right
+      'right'
+    else
+      nil
+    end
+  end
+
+  private def show_widget_instructions(widget_name)
+    case widget_name
+    when 'links'
+      puts
+      puts "  Links Widget Configuration:"
+      puts "  Format: <url> <title>"
+      puts "  Example:"
+      puts "    https://example.com My Website"
+      puts "    https://github.com GitHub"
+      puts
+    when 'pages'
+      puts
+      puts "  Pages Widget Configuration:"
+      puts "  Format: <filename> <title>"
+      puts "  Example:"
+      puts "    about.html About Us"
+      puts "    contact.html Contact"
+      puts
+    when 'featuredposts'
+      puts
+      puts "  Featured Posts Widget Configuration:"
+      puts "  Format: <post_id> <optional_title>"
+      puts "  Example:"
+      puts "    0001 My First Post"
+      puts "    0002"
+      puts
+    else
+      puts
+      puts "  Widget Configuration:"
+      puts "  Edit the list.txt file to configure widget data."
+      puts
     end
   end
 

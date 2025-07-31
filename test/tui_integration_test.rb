@@ -131,7 +131,7 @@ class TUIIntegrationTest < Minitest::Test
       get_string(read, /Found existing test repository/, "Should find existing repository")
       
       # Send help command
-      send_and_expect(read, write, "h", /Available commands:/, "Should show help")
+      send_and_expect(read, write, "h", /view/, "Should show help")
       
       # Send list views command
       send_and_expect(read, write, "lsv", /sample/, "Should show sample view")
@@ -160,7 +160,7 @@ class TUIIntegrationTest < Minitest::Test
       send_and_expect(read, write, "lsv", /sample/, "Should show sample view")
       
       # Create a new view first
-      write.puts "create view testview123 This is just a test..."
+      write.puts "new view testview123 This is just a test..."
       get_string(read, /Enter subtitle \(optional\):/, "Should prompt for subtitle")
       write.puts ""  # Empty subtitle
       get_string(read, /Created view 'testview123' with title/, "Should create new view")
@@ -172,7 +172,7 @@ class TUIIntegrationTest < Minitest::Test
       send_and_expect(read, write, "view", /Current view:/, "Should show view info")
       
       # Create new view (this should fail because view already exists)
-      write.puts "create view testview123 This is just a test..."
+      write.puts "new view testview123 This is just a test..."
       get_string(read, /Enter subtitle \(optional\):/, "Should prompt for subtitle")
       write.puts ""  # Empty subtitle
       get_string(read, /View 'testview123' already exists/, "Should show view already exists error")
@@ -199,7 +199,7 @@ class TUIIntegrationTest < Minitest::Test
       get_string(read, /Found existing test repository/, "Should find existing repository")
       
       # Send help command
-      send_and_expect(read, write, "h", /Available commands:/, "Should show help")
+      send_and_expect(read, write, "h", /view/, "Should show help")
       
       # Send version command
       send_and_expect(read, write, "v", /Scriptorium/, "Should show version")
@@ -222,7 +222,7 @@ class TUIIntegrationTest < Minitest::Test
       get_string(read, /Found existing test repository/, "Should find existing repository")
       
       # Start interactive create view
-      send_and_expect(read, write, "create view", /Enter view name:/, "Should prompt for view name")
+      send_and_expect(read, write, "new view", /Enter view name:/, "Should prompt for view name")
       
       # Enter view name
       send_and_expect(read, write, "interactiveview", /Enter view title:/, "Should prompt for view title")
@@ -277,7 +277,7 @@ class TUIIntegrationTest < Minitest::Test
       write.puts "   "
       
       # Send help command to verify we're still working
-      send_and_expect(read, write, "h", /Available commands:/, "Should show help after empty input")
+      send_and_expect(read, write, "h", /view/, "Should show help after empty input")
       
       # Quit
       send_and_expect(read, write, "q", /Goodbye!/, "Should show goodbye")
@@ -308,7 +308,7 @@ class TUIIntegrationTest < Minitest::Test
       get_string(read, /Found existing test repository/, "Should find existing repository")
       
       # Start interactive create view
-      send_and_expect(read, write, "create view", /Enter view name:/, "Should prompt for view name")
+      send_and_expect(read, write, "new view", /Enter view name:/, "Should prompt for view name")
       
       # Enter invalid view name
       send_and_expect(read, write, "invalid/name", /Enter view title:/, "Should prompt for view title")
