@@ -55,4 +55,41 @@
 5. Scriptorium is far less mature than Runeblog was, but is being rewritten to be FAR more sturdy and robust. The basics of the API are in place; we can create a repo, create a view, add posts to a view, modify a layout, add a "Links" widget, generate a front page. There is currently no UI, no deployment, etc. There are unit tests of about 770 assertions, as well as manual and semi-manual tests I am using Bootstrap a little (for widgets and the navbar); that is a fairly complex piece. I haven't added the navbar piece yet; that will come soon. Some next things I want to accomplish: a "convenience module" API; a TUI; a curses UI; at least two new widgets; better features in the Livetext "Scriptorium plugin"; etc. Probably will encapsulate the API soon so as to start UI development.
 
 **ASST:** 
-[See above content] 
+[See above content] 2025-07-30 16:30:00 - TUI Test Refactoring Learnings
+
+## TUI Test Refactoring Patterns
+
+### Helper Method Pattern
+- Extract test logic into helper methods that take `read, write` parameters
+- Keep PTY.spawn blocks clean and focused on setup/teardown
+- Helper methods contain all the `get_string` calls and `write.puts` commands
+
+### send_and_expect Helper
+- Combines common pattern: `write.puts input` + `get_string(read, pattern, description)`
+- Reduces code duplication and makes tests more readable
+- Accepts both strings and regex patterns for flexibility
+- Includes error handling for I/O errors when TUI terminates
+
+### String vs Regex Patterns
+- String patterns are more reliable than regex for TUI testing
+- Avoid escaping issues with brackets and special characters
+- Easier to debug and maintain
+- Use strings by default, regex only when needed
+
+### Error Handling for TUI Termination
+- TUI processes may terminate immediately after outputting expected text
+- Handle Errno::EIO gracefully in helper methods
+- Don't treat TUI termination as an error if expected output was found
+- Wrap PTY.spawn blocks in rescue blocks for cleanup
+
+### Test Structure Best Practices
+- Use `send_and_expect` for input/output pairs
+- Use `get_string` for waiting for output without sending input
+- Keep test methods focused on setup and calling helper methods
+- Helper methods contain the detailed test logic
+
+### Common Issues and Solutions
+- I/O errors when TUI terminates: Handle gracefully with rescue blocks
+- Pattern matching failures: Use strings instead of regex when possible
+- Leftover code from edits: Always verify test method structure after refactoring
+- Timing issues: Add small delays in helper methods if needed

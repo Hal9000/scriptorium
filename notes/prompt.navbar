@@ -1,3 +1,17 @@
+The header.txt file can contain a navbar line. If it has no args, it refers to 
+a navbar.txt file; otherwise the arg is taken as a filename.
+
+Here is an example file. The first character in the line determines the nature
+of the menu item:
+
+   =        top-level, has children
+   (space)  child of previous "="
+   -        top-level, no children
+
+In the case of =label, there is nothing else on the line. Otherwise, the label
+is followed by a title (the string in the menu item) and a filename (referring 
+to the HTML file that opens). 
+
 =About                 
  Vision &amp; Mission  mission
  Board of Directors    board
