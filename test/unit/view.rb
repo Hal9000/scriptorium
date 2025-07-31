@@ -235,4 +235,124 @@ class TestScriptoriumView < Minitest::Test
     end
     assert_raises(LayoutHasDuplicateTags) { @view.read_layout }
   end
+
+  def test_025_build_banner_svg_format
+    # Create svg.txt config file
+    svg_config = @view.dir/:config/"svg.txt"
+    make_dir(File.dirname(svg_config))
+    write_file(svg_config, "back.color #f0f0f0", "text.color #333333", "aspect 4.0")
+    
+    result = @view.build_banner("svg")
+    
+    # Should generate JavaScript with SVG content
+    assert_includes result, "<script>"
+    assert_includes result, "insert_svg_header"
+    assert_includes result, "svg_text"
+  end
+
+  def test_026_build_banner_image_format
+    # Create test image in view assets
+    image_path = @view.dir/:assets/"testbanner.jpg"
+    make_dir(File.dirname(image_path))
+    write_file(image_path, "fake image content")
+    
+    result = @view.build_banner("testbanner.jpg")
+    
+    # Should generate img tag with relative path
+    assert_includes result, "<img src='assets/testbanner.jpg'"
+    assert_includes result, "alt='Banner Image'"
+    assert_includes result, "style='width: 100%; height: auto;'"
+  end
+
+  def test_027_build_banner_image_missing_with_warning
+    result = @view.build_banner("missing.jpg")
+    
+    # Should show warning message
+    assert_includes result, "<p>Banner image missing: missing.jpg</p>"
+  end
+
+  def test_028_build_navbar_with_default_file
+    # Create navbar.txt file
+    navbar_file = @view.dir/:config/"navbar.txt"
+    make_dir(File.dirname(navbar_file))
+    write_file(navbar_file, 
+      "=About",
+      " Vision & Mission  mission",
+      " Board of Directors    board",
+      "-Contact               contact")
+    
+    result = @view.build_nav(nil)
+    
+    # Should generate Bootstrap navbar
+    assert_includes result, "navbar navbar-expand-lg"
+    assert_includes result, "dropdown-toggle"
+    assert_includes result, "About"
+    assert_includes result, "Vision &amp; Mission"
+    assert_includes result, "Contact"
+    assert_includes result, "load_main('pages/mission.html')"
+    assert_includes result, "load_main('pages/contact.html')"
+  end
+
+  def test_029_build_navbar_with_specified_file
+    # Create custom navbar file
+    navbar_file = @view.dir/:config/"custom-nav.txt"
+    make_dir(File.dirname(navbar_file))
+    write_file(navbar_file, 
+      "=Resources",
+      " Documentation  docs",
+      " API Reference    api",
+      "-Support               support")
+    
+    result = @view.build_nav("custom-nav.txt")
+    
+    # Should generate Bootstrap navbar
+    assert_includes result, "Resources"
+    assert_includes result, "Documentation"
+    assert_includes result, "Support"
+    assert_includes result, "load_main('pages/docs.html')"
+  end
+
+  def test_030_build_navbar_with_missing_pages
+    # Create navbar.txt with references to non-existent pages
+    navbar_file = @view.dir/:config/"navbar.txt"
+    make_dir(File.dirname(navbar_file))
+    write_file(navbar_file, 
+      "-Home                   home",
+      "-Missing Page          missing")
+    
+    result = @view.build_nav(nil)
+    
+    # Should still generate links but include warnings
+    assert_includes result, "load_main('pages/home.html')"
+    assert_includes result, "load_main('pages/missing.html')"
+    assert_includes result, "Warning: Page file 'missing.html' not found"
+  end
+
+  def test_031_build_navbar_parsing
+    # Test parsing of different line types
+    navbar_content = <<~EOS
+      =About
+       Vision & Mission  mission
+       Board of Directors    board
+      -Contact               contact
+      =Resources
+       Documentation  docs
+      -Support               support
+    EOS
+    
+    menu_items = @view.send(:parse_navbar_content, navbar_content)
+    
+    # Should parse correctly
+    assert_equal 4, menu_items.length
+    
+    # Check dropdown items
+    about_dropdown = menu_items.find { |item| item[:label] == "About" }
+    assert_equal :dropdown, about_dropdown[:type]
+    assert_equal 2, about_dropdown[:children].length
+    
+    # Check regular items
+    contact_item = menu_items.find { |item| item[:title] == "Contact" }
+    assert_equal :item, contact_item[:type]
+    assert_equal "contact", contact_item[:filename]
+  end
 end 

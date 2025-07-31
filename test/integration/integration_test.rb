@@ -277,7 +277,7 @@ class IntegrationTest < Minitest::Test
     testdir = File.expand_path("../../test", __dir__)
     FileUtils.cp("#{testdir}/assets/testbanner.jpg", @sample_view.dir/:assets/"testbanner.jpg")
     str = @sample_view.build_banner("testbanner.jpg")
-    expected = %[<img src='#{@sample_view.dir}/assets/testbanner.jpg' alt='Banner Image' style='width: 100%; height: auto;']
+    expected = %[<img src='assets/testbanner.jpg' alt='Banner Image' style='width: 100%; height: auto;']
     assert_includes str, expected
   end
   

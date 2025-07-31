@@ -12,15 +12,13 @@ x More tests (what's missing?)
 x Widget tests
 x Well-defined API (Scriptorium::API) - with versioning
 x Widget: Pages
-- UI by interaction (TUI)
-  Widget: Featured posts
-  Header: banner
+x UI by interaction (TUI)
+x Widget: Featured posts
+- Header: banner
   Header: menu
   Widget configuration (selection)
 - Gem asset handling
 - Repo asset management
-  UI by command line
-  Wizards: initial setup, add view, theming, widget setup, ...
   Sample blog additions
 
 

@@ -30,3 +30,9 @@ to the HTML file that opens).
  Privacy               legal/privacy
  Terms of Service      legal/tos
  General Information   legal/general
+
+The generated code should be Bootstrap; we have already included that lib
+elsewhere.
+
+Questions?
+

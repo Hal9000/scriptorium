@@ -10,3 +10,8 @@ can be parsed by BannerSVG. Otherwise the following string should be an image
 file name (such as mypic.png). The header container should then contain 
 either SVG or an img tag. 
 
+It's acceptable to swap the img tag for a "behind the scenes" svg if it is
+necessary/appropriate/easier.
+
+Discuss and ask any questions.
+

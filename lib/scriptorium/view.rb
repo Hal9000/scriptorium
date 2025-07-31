@@ -263,14 +263,88 @@ write output:      write the result to output/panes/header.html
   ### Helpers for header
 
   def build_banner(arg)
-    image_path = @dir/:assets/"#{arg}"
-    if File.exist?(image_path)
-      html = %[<img src='#{image_path}' alt='Banner Image' style='width: 100%; height: auto;' />]
+    # Check if this is an SVG banner request
+    if arg == "svg"
+      return build_banner_svg_from_file
+    end
+    
+    # Otherwise, treat as image filename
+    return build_banner_image(arg)
+  end
+
+  def build_banner_svg_from_file
+    bsvg = Scriptorium::BannerSVG.new(@title, @subtitle)
+    
+    # Look for svg.txt file in the view's config directory
+    svg_config_file = @dir/:config/"svg.txt"
+    if File.exist?(svg_config_file)
+      # Temporarily change to the config directory so BannerSVG can find svg.txt
+      Dir.chdir(@dir/:config) do
+        # Temporarily rename svg.txt to config.txt for BannerSVG compatibility
+        if File.exist?("config.txt")
+          File.rename("config.txt", "config.txt.backup")
+        end
+        File.rename("svg.txt", "config.txt")
+        
+        begin
+          bsvg.parse_header_svg
+        ensure
+          # Restore original files
+          File.rename("config.txt", "svg.txt")
+          if File.exist?("config.txt.backup")
+            File.rename("config.txt.backup", "config.txt")
+          end
+        end
+      end
+    else
+      # No svg.txt file, use defaults
+      bsvg.parse_header_svg
+    end
+    
+    bsvg.get_svg
+  end
+
+  def build_banner_image(image_filename)
+    # Search for image in multiple locations
+    image_paths = [
+      @dir/:assets/image_filename,           # view/assets/
+      @repo.root/:assets/image_filename,     # repo/assets/
+    ]
+    
+    # Find the first existing image
+    image_path = image_paths.find { |path| File.exist?(path) }
+    
+    if image_path
+      # Use relative path for the img src
+      if image_path.to_s.start_with?(@dir.to_s)
+        # Image is in view directory, use relative path
+        relative_path = image_path.to_s.sub(@dir.to_s + "/", "")
+      else
+        # Image is in repo directory, use relative path from view
+        relative_path = "../assets/#{image_filename}"
+      end
+      html = %[<img src='#{relative_path}' alt='Banner Image' style='width: 100%; height: auto;' />]
       return html
     else
-      # warn "[build_banner] Missing banner image: #{arg}"
-      html = %[<p>Banner image missing: #{arg}</p>]
-      return html
+      # Try to copy from global assets
+      global_assets_dir = @repo.root/:assets
+      global_image_path = global_assets_dir/image_filename
+      
+      if File.exist?(global_image_path)
+        # Copy to view assets
+        view_assets_dir = @dir/:assets
+        make_dir(view_assets_dir) unless Dir.exist?(view_assets_dir)
+        FileUtils.cp(global_image_path, view_assets_dir/image_filename)
+        
+        # Use relative path
+        relative_path = "assets/#{image_filename}"
+        html = %[<img src='#{relative_path}' alt='Banner Image' style='width: 100%; height: auto;' />]
+        return html
+      else
+        # Image not found anywhere
+        html = %[<p>Banner image missing: #{image_filename}</p>]
+        return html
+      end
     end
   end
 
@@ -293,20 +367,167 @@ write output:      write the result to output/panes/header.html
   end
 
   def build_nav(arg)
-    nav_file = @dir/:config/"#{arg}"
+    # Determine navbar file - if no arg, use navbar.txt, otherwise use specified file
+    nav_file = if arg.nil? || arg.strip.empty?
+      @dir/:config/"navbar.txt"
+    else
+      @dir/:config/"#{arg}"
+    end
     
-    # Read nav content with fallback for missing files
+    # Read navbar content with fallback for missing files
     nav_content = read_file(nav_file, missing_fallback: "<p>Navigation not available</p>")
-  
-    # Wrap the nav content in the appropriate container
+    
+    # Parse and generate Bootstrap navbar
+    generate_bootstrap_navbar(nav_content)
+  end
+
+  def generate_bootstrap_navbar(nav_content)
+    menu_items = parse_navbar_content(nav_content)
+    
+    # Generate Bootstrap navbar HTML
     html = <<~HTML
-      <nav class="topmenu">
-        #{nav_content}
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+              #{generate_navbar_items(menu_items)}
+            </ul>
+          </div>
+        </div>
       </nav>
     HTML
     
-    # Return the generated HTML for the navigation section
     html
+  end
+
+  def parse_navbar_content(content)
+    menu_items = []
+    current_dropdown = nil
+    
+    content.lines.each do |line|
+      line = line.rstrip  # Keep leading spaces, remove trailing
+      next if line.empty? || line.start_with?('#')
+      
+      if line.start_with?('=')
+        # Top-level dropdown item
+        label = line[1..-1].strip
+        current_dropdown = { type: :dropdown, label: label, children: [] }
+        menu_items << current_dropdown
+      elsif line.start_with?(' ')
+        # Child of previous dropdown
+        if current_dropdown
+          # Remove leading spaces and split on multiple spaces
+          clean_line = line.strip
+          if clean_line.include?('  ')  # Look for multiple spaces
+            parts = clean_line.split(/\s{2,}/, 2)  # Split on 2+ spaces
+            if parts.length >= 2
+              title, filename = parts[0], parts[1]
+              current_dropdown[:children] << { type: :child, title: title, filename: filename }
+            end
+          end
+        end
+      elsif line.start_with?('-')
+        # Top-level item (no children)
+        clean_line = line[1..-1].strip
+        if clean_line.include?('  ')  # Look for multiple spaces
+          parts = clean_line.split(/\s{2,}/, 2)  # Split on 2+ spaces
+          if parts.length >= 2
+            title, filename = parts[0], parts[1]
+            menu_items << { type: :item, title: title, filename: filename }
+          end
+        end
+      end
+    end
+    
+    menu_items
+  end
+
+  def generate_navbar_items(menu_items)
+    html = ""
+    
+    menu_items.each do |item|
+      case item[:type]
+      when :dropdown
+        html << generate_dropdown_item(item)
+      when :item
+        html << generate_nav_item(item)
+      end
+    end
+    
+    html
+  end
+
+  def generate_dropdown_item(item)
+    dropdown_id = "dropdown-#{item[:label].downcase.gsub(/\s+/, '-')}"
+    
+    html = <<~HTML
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          #{escape_html(item[:label])}
+        </a>
+        <ul class="dropdown-menu">
+    HTML
+    
+    item[:children].each do |child|
+      html << generate_dropdown_child(child)
+    end
+    
+    html << <<~HTML
+        </ul>
+      </li>
+    HTML
+    
+    html
+  end
+
+  def generate_dropdown_child(child)
+    link_url, warning = get_page_link(child[:filename])
+    
+    html = <<~HTML
+      <li><a class="dropdown-item" href="javascript:void(0)" onclick="load_main('#{link_url}')">#{escape_html(child[:title])}</a></li>
+    HTML
+    
+    if warning
+      html << "<!-- #{warning} -->\n"
+    end
+    
+    html
+  end
+
+  def generate_nav_item(item)
+    link_url, warning = get_page_link(item[:filename])
+    
+    html = <<~HTML
+      <li class="nav-item">
+        <a class="nav-link" href="javascript:void(0)" onclick="load_main('#{link_url}')">#{escape_html(item[:title])}</a>
+      </li>
+    HTML
+    
+    if warning
+      html << "<!-- #{warning} -->\n"
+    end
+    
+    html
+  end
+
+  def get_page_link(filename)
+    # Check if the page file exists
+    page_file = @dir/:pages/"#{filename}.html"
+    
+    if File.exist?(page_file)
+      # Page exists, return relative path
+      link_url = "pages/#{filename}.html"
+      warning = nil
+    else
+      # Page doesn't exist, still create link but warn
+      link_url = "pages/#{filename}.html"
+      warning = "Warning: Page file '#{filename}.html' not found in pages directory"
+    end
+    
+    [link_url, warning]
   end
   
   def build_widgets(arg)
