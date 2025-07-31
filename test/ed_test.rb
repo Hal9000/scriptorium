@@ -11,7 +11,7 @@ require 'expect'
 require 'tempfile'
 
 class EdTest < Minitest::Test
-  def test_ed_basic_functionality_pty
+  def test_001_ed_basic_functionality_pty
     # Test that ed can create and edit a file using PTY
     temp_file = Tempfile.new(['test', '.txt'])
     temp_file.close
@@ -46,7 +46,7 @@ class EdTest < Minitest::Test
     temp_file.unlink
   end
 
-  def test_ed_file_creation_pty
+  def test_002_ed_file_creation_pty
     # Test that ed can create a new file using PTY
     temp_file = Tempfile.new(['new', '.txt'])
     file_path = temp_file.path  # Save the path before closing
@@ -86,7 +86,7 @@ class EdTest < Minitest::Test
     File.unlink(file_path) if File.exist?(file_path)
   end
 
-  def test_ed_simulate_edit_file_usage_pty
+  def test_003_ed_simulate_edit_file_usage_pty
     # Test how edit_file would use ed with PTY
     temp_file = Tempfile.new(['test', '.txt'])
     temp_file.close
@@ -121,7 +121,7 @@ class EdTest < Minitest::Test
     temp_file.unlink
   end
 
-  def test_ed_with_empty_file_pty
+  def test_004_ed_with_empty_file_pty
     # Test ed behavior with an empty file using PTY
     temp_file = Tempfile.new(['empty', '.txt'])
     temp_file.close
@@ -155,7 +155,7 @@ class EdTest < Minitest::Test
     temp_file.unlink
   end
 
-  def test_ed_which_command
+  def test_005_ed_which_command
     # Test that ed is available on the system
     require 'open3'
     stdout, stderr, status = Open3.capture3("which ed")
@@ -164,7 +164,7 @@ class EdTest < Minitest::Test
     assert_includes stdout, "ed", "which should find ed"
   end
 
-  def test_ed_error_handling
+  def test_006_ed_error_handling
     # Test that ed handles errors gracefully
     require 'open3'
     stdout, stderr, status = Open3.capture3("ed /nonexistent/directory/file.txt", stdin_data: "q\n")
@@ -173,7 +173,7 @@ class EdTest < Minitest::Test
     refute_equal 0, status.exitstatus, "ed should fail on non-existent directory"
   end
 
-  def test_ed_stderr_behavior
+  def test_007_ed_stderr_behavior
     # Test that ed puts error messages on stderr, not stdout
     require 'open3'
     temp_file = Tempfile.new(['stderr_test', '.txt'])

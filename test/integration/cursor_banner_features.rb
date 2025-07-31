@@ -101,7 +101,7 @@ class CursorBannerFeatureTests
     pass_count == test_count
   end
 
-  def test_banner(config_content, title, subtitle, expectations)
+  def test_001_banner(config_content, title, subtitle, expectations)
     # Write config file
     File.write("#{@test_dir}/config.txt", config_content)
     
@@ -140,7 +140,7 @@ class CursorBannerFeatureTests
   end
 
   # Background color tests
-  def test_red_background
+  def test_002_red_background
     test_banner(
       "back.color #ff0000",
       "Red Background",
@@ -152,7 +152,7 @@ class CursorBannerFeatureTests
     )
   end
 
-  def test_blue_background
+  def test_003_blue_background
     test_banner(
       "back.color #0000ff",
       "Blue Background",
@@ -164,7 +164,7 @@ class CursorBannerFeatureTests
     )
   end
 
-  def test_green_background
+  def test_004_green_background
     test_banner(
       "back.color #00ff00",
       "Green Background",
@@ -177,7 +177,7 @@ class CursorBannerFeatureTests
   end
 
   # Linear gradient tests
-  def test_red_to_blue_gradient
+  def test_005_red_to_blue_gradient
     test_banner(
       "back.linear red blue lr",
       "Red to Blue Gradient",
@@ -191,7 +191,7 @@ class CursorBannerFeatureTests
     )
   end
 
-  def test_green_to_yellow_gradient
+  def test_006_green_to_yellow_gradient
     test_banner(
       "back.linear green yellow lr",
       "Green to Yellow Gradient",
@@ -205,7 +205,7 @@ class CursorBannerFeatureTests
     )
   end
 
-  def test_top_to_bottom_gradient
+  def test_007_top_to_bottom_gradient
     test_banner(
       "back.linear blue red tb",
       "Top to Bottom Gradient",
@@ -220,7 +220,7 @@ class CursorBannerFeatureTests
   end
 
   # Radial gradient tests
-  def test_radial_red_to_blue
+  def test_008_radial_red_to_blue
     test_banner(
       "back.radial red blue",
       "Radial Red to Blue",
@@ -234,7 +234,7 @@ class CursorBannerFeatureTests
     )
   end
 
-  def test_radial_green_to_yellow
+  def test_009_radial_green_to_yellow
     test_banner(
       "back.radial green yellow",
       "Radial Green to Yellow",
@@ -249,7 +249,7 @@ class CursorBannerFeatureTests
   end
 
   # Text size tests
-  def test_small_text
+  def test_010_small_text
     test_banner(
       "title.scale 0.5\nsubtitle.scale 0.3",
       "Small Text",
@@ -261,7 +261,7 @@ class CursorBannerFeatureTests
     )
   end
 
-  def test_large_text
+  def test_011_large_text
     test_banner(
       "title.scale 1.2\nsubtitle.scale 0.8",
       "Large Text",
@@ -274,7 +274,7 @@ class CursorBannerFeatureTests
   end
 
   # Text style tests
-  def test_bold_text
+  def test_012_bold_text
     test_banner(
       "title.style bold",
       "Bold Text",
@@ -285,7 +285,7 @@ class CursorBannerFeatureTests
     )
   end
 
-  def test_italic_text
+  def test_013_italic_text
     test_banner(
       "title.style italic",
       "Italic Text",
@@ -296,7 +296,7 @@ class CursorBannerFeatureTests
     )
   end
 
-  def test_bold_italic_text
+  def test_014_bold_italic_text
     test_banner(
       "title.style bold italic",
       "Bold Italic Text",
@@ -309,7 +309,7 @@ class CursorBannerFeatureTests
   end
 
   # Text color tests
-  def test_blue_text
+  def test_015_blue_text
     test_banner(
       "text.color #0000ff",
       "Blue Text",
@@ -320,7 +320,7 @@ class CursorBannerFeatureTests
     )
   end
 
-  def test_green_text
+  def test_016_green_text
     test_banner(
       "text.color #00ff00",
       "Green Text",
@@ -332,7 +332,7 @@ class CursorBannerFeatureTests
   end
 
   # Text positioning tests
-  def test_left_position
+  def test_017_left_position
     test_banner(
       "text.position left",
       "Left Position",
@@ -343,7 +343,7 @@ class CursorBannerFeatureTests
     )
   end
 
-  def test_center_position
+  def test_018_center_position
     test_banner(
       "text.position center",
       "Center Position",
@@ -354,7 +354,7 @@ class CursorBannerFeatureTests
     )
   end
 
-  def test_right_position
+  def test_019_right_position
     test_banner(
       "text.position right",
       "Right Position",

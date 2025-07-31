@@ -21,7 +21,7 @@ class TUIIntegrationTest < Minitest::Test
     cleanup_test_repo
   end
 
-  def test_basic_tui_interaction
+  def test_001_basic_tui_interaction
     # Test TUI interaction with existing scriptorium-TEST repo
     ENV['NOREADLINE'] = '1'
     
@@ -32,7 +32,7 @@ class TUIIntegrationTest < Minitest::Test
     ENV.delete('NOREADLINE')
   end
 
-  def test_view_management
+  def test_002_view_management
     ENV['NOREADLINE'] = '1'
     
     PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
@@ -42,7 +42,7 @@ class TUIIntegrationTest < Minitest::Test
     ENV.delete('NOREADLINE')
   end
 
-  def test_command_abbreviations
+  def test_003_command_abbreviations
     ENV['NOREADLINE'] = '1'
     
     PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
@@ -52,7 +52,7 @@ class TUIIntegrationTest < Minitest::Test
     ENV.delete('NOREADLINE')
   end
 
-  def test_interactive_create_view
+  def test_004_interactive_create_view
     # Create an existing view for testing
     @api.create_view("existing", "Existing View", "An existing view")
     
@@ -65,7 +65,7 @@ class TUIIntegrationTest < Minitest::Test
     ENV.delete('NOREADLINE')
   end
 
-  def test_unknown_commands
+  def test_005_unknown_commands
     ENV['NOREADLINE'] = '1'
     
     PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
@@ -75,7 +75,7 @@ class TUIIntegrationTest < Minitest::Test
     ENV.delete('NOREADLINE')
   end
 
-  def test_empty_input_handling
+  def test_006_empty_input_handling
     ENV['NOREADLINE'] = '1'
     
     PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
@@ -85,7 +85,7 @@ class TUIIntegrationTest < Minitest::Test
     ENV.delete('NOREADLINE')
   end
 
-  def test_exit_variations
+  def test_007_exit_variations
     ENV['NOREADLINE'] = '1'
     
     PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
@@ -95,7 +95,7 @@ class TUIIntegrationTest < Minitest::Test
     ENV.delete('NOREADLINE')
   end
 
-  def test_error_conditions
+  def test_008_error_conditions
     ENV['NOREADLINE'] = '1'
     
     PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
@@ -110,7 +110,10 @@ class TUIIntegrationTest < Minitest::Test
   def send_and_expect(read, write, input, expected_pattern, description)
     write.puts input
     sleep 0.1  # Small delay to ensure input is processed
-    get_string(read, expected_pattern, description)
+    result = get_string(read, expected_pattern, description)
+    # Add explicit assertion for the expected pattern
+    assert result.match?(expected_pattern), "#{description}: Expected pattern '#{expected_pattern}' not found in output"
+    result
   rescue Errno::EIO => e
     # Handle case where TUI terminates immediately after output
     if expected_pattern.to_s.include?("Goodbye!")

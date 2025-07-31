@@ -8,7 +8,7 @@ class LivetextPluginTest < Minitest::Test
   include TestHelpers
 
   def setup
-    @test_repo_path = "test/livetext-test-repo"
+    @test_repo_path = "scriptorium-TEST"
     cleanup_test_repo
   end
 
@@ -16,7 +16,7 @@ class LivetextPluginTest < Minitest::Test
     cleanup_test_repo
   end
 
-  def test_basic_dot_commands
+  def test_001_basic_dot_commands
     # Test basic dot commands that should work
     content = <<~EOS
       .title My Test Post
@@ -41,7 +41,7 @@ class LivetextPluginTest < Minitest::Test
     assert_match(/This is the body content/, result[:text])
   end
 
-  def test_html_formatting_commands
+  def test_002_html_formatting_commands
     # Test HTML formatting commands
     content = <<~EOS
       .h1 Main Heading
@@ -74,7 +74,7 @@ class LivetextPluginTest < Minitest::Test
     assert_match(/<hr>/, result[:text])
   end
 
-  def test_special_formatting
+  def test_003_special_formatting
     # Test special formatting like dropcap and inset
     content = <<~EOS
       .dropcap This is a dropcap test
@@ -96,7 +96,7 @@ class LivetextPluginTest < Minitest::Test
     assert_match(/width: 25%/, result[:text])
   end
 
-  def test_functions
+  def test_004_functions
     # Test Livetext functions
     content = <<~EOS
       $$br:2
@@ -114,7 +114,7 @@ class LivetextPluginTest < Minitest::Test
     assert_match(/<img src='test\.jpg'><\/img>/, result[:text])
   end
 
-  def test_faq_command
+  def test_005_faq_command
     # Test the FAQ command
     content = <<~EOS
       .faq What is this?
@@ -134,7 +134,7 @@ class LivetextPluginTest < Minitest::Test
     assert_match(/Another question\?/, result[:text])
   end
 
-  def test_last_updated_command
+  def test_006_last_updated_command
     # Test the last_updated command
     content = <<~EOS
       .created
@@ -150,7 +150,7 @@ class LivetextPluginTest < Minitest::Test
     assert_match(/#{today}/, result[:text])  # Should match today's date
   end
 
-          def test_wordcount_function
+          def test_007_wordcount_function
           # Test the wordcount function
           content = <<~EOS
             .title Test Post
@@ -174,7 +174,7 @@ class LivetextPluginTest < Minitest::Test
         refute_match(/\$wordcount/, result[:text])
   end
   
-  def test_stats_command
+  def test_008_stats_command
     # Test the stats command that sets multiple variables
     content = <<~EOS
       .title Test Post

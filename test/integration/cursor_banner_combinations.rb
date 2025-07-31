@@ -63,7 +63,7 @@ class CursorBannerCombinationTests
     pass_count == test_count
   end
 
-  def test_banner(config_content, title, subtitle, expectations)
+  def test_001_banner(config_content, title, subtitle, expectations)
     # Write config file
     File.write("#{@test_dir}/config.txt", config_content)
     
@@ -102,7 +102,7 @@ class CursorBannerCombinationTests
   end
 
   # Red gradient with bold text and center positioning
-  def test_red_gradient_bold_center
+  def test_002_red_gradient_bold_center
     test_banner(
       "back.linear red blue lr\ntitle.style bold\ntext.position center",
       "Red Gradient Bold Center",
@@ -118,7 +118,7 @@ class CursorBannerCombinationTests
   end
 
   # Blue gradient with large text and italic style
-  def test_blue_gradient_large_italic
+  def test_003_blue_gradient_large_italic
     test_banner(
       "back.linear blue green tb\ntitle.scale 1.2\ntitle.style italic",
       "Blue Gradient Large Italic",
@@ -134,7 +134,7 @@ class CursorBannerCombinationTests
   end
 
   # Green radial gradient with small text and right positioning
-  def test_green_radial_small_right
+  def test_004_green_radial_small_right
     test_banner(
       "back.radial green yellow\ntitle.scale 0.6\ntext.position right",
       "Green Radial Small Right",
@@ -150,7 +150,7 @@ class CursorBannerCombinationTests
   end
 
   # Yellow gradient with blue text
-  def test_yellow_gradient_blue_text
+  def test_005_yellow_gradient_blue_text
     test_banner(
       "back.linear yellow orange lr\ntext.color #0000ff",
       "Yellow Gradient Blue Text",
@@ -165,7 +165,7 @@ class CursorBannerCombinationTests
   end
 
   # Complex combination with multiple features
-  def test_complex_combination
+  def test_006_complex_combination
     test_banner(
       "back.radial red blue\ntitle.scale 1.1\nsubtitle.scale 0.6\ntitle.style bold italic\ntext.color #00ff00\ntext.position center",
       "Complex Combination",

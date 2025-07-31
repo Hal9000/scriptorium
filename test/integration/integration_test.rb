@@ -24,7 +24,7 @@ class IntegrationTest < Minitest::Test
     FileUtils.remove_entry(@tmpdir)
   end
 
-  def test_sample_view_generates_header_html
+  def test_001_sample_view_generates_header_html
     header_txt = @sample_view.dir/:config/"header.txt"
     File.write(header_txt, "title")
     sections = @sample_view.read_layout
@@ -36,7 +36,7 @@ class IntegrationTest < Minitest::Test
     assert_includes content, "<h1>", "Expected header content to include <h1>"
   end
 
-  def test_posts_generated_and_indexed_across_multiple_views
+  def test_002_posts_generated_and_indexed_across_multiple_views
     srand(42)  # for random posts
 
     create_3_views
@@ -55,7 +55,7 @@ class IntegrationTest < Minitest::Test
     try_blog1_index
   end
 
-  def test_integration_index_contains_titles_and_dates
+  def test_003_integration_index_contains_titles_and_dates
     create_3_views
     create_13_posts
     alter_pubdates
@@ -101,7 +101,7 @@ class IntegrationTest < Minitest::Test
     end
   end
   
-  def test_posts_generated_and_indexed_across_multiple_views
+  def test_002_posts_generated_and_indexed_across_multiple_views
     srand(42)
     create_3_views
     create_13_posts
@@ -114,7 +114,7 @@ class IntegrationTest < Minitest::Test
     try_blog1_index_with_post_checks
   end
   
-  def test_generate_front_page_outputs_index_html
+  def test_005_generate_front_page_outputs_index_html
     # Setup test view and layout
     view = @repo.create_view("landing", "Landing Page", "Unit test front page")
   
@@ -142,7 +142,7 @@ class IntegrationTest < Minitest::Test
     assert_ordered(content, *targets)
   end
   
-  def test_all_containers_are_present
+  def test_006_all_containers_are_present
     # layout_file = @sample_view.dir/:config/"layout.txt"
     layout = @sample_view.read_layout.keys  
     layout.each do |container|
@@ -151,7 +151,7 @@ class IntegrationTest < Minitest::Test
     end
   end
   
-  def test_missing_container_in_layout
+  def test_007_missing_container_in_layout
     layout_file = @sample_view.dir/:config/"layout.txt"
     layout = read_commented_file(layout_file)
   
@@ -164,7 +164,7 @@ class IntegrationTest < Minitest::Test
     end
   end
   
-  def test_front_page_handles_missing_containers
+  def test_008_front_page_handles_missing_containers
     @repo.generate_front_page("sample")
     index_file = @repo.root/:views/"sample"/:output/"index.html"
     assert File.exist?(index_file), "Expected index.html to be generated"
@@ -180,7 +180,7 @@ class IntegrationTest < Minitest::Test
     end
   end
     
-  def test_create_view_and_generate_front_page_with_placeholders
+  def test_009_create_view_and_generate_front_page_with_placeholders
     view = @repo.create_view("test_view", "Test View", "A test view")
   
     layout_txt = <<~LAYOUT
@@ -234,7 +234,7 @@ class IntegrationTest < Minitest::Test
     assert_ordered(index_html, *targets)
   end
     
-  def test_content_of_nonempty_main_section
+  def test_010_content_of_nonempty_main_section
     create_3_views
     create_13_posts
     alter_pubdates
@@ -254,7 +254,7 @@ class IntegrationTest < Minitest::Test
     assert_equal 7, num_posts, "Expected 7 posts, found #{num_posts}"
   end
 
-  def test_content_of_empty_main_section
+  def test_011_content_of_empty_main_section
     create_3_views
     @repo.generate_front_page("blog1")
     index_file = @repo.root/:views/"blog1"/:output/"index.html"
@@ -273,7 +273,7 @@ class IntegrationTest < Minitest::Test
     assert_includes index_html, "No posts yet!", "Expected 'no posts yet' message"
   end
 
-  def test_build_banner_with_image_found
+  def test_012_build_banner_with_image_found
     testdir = File.expand_path("../../test", __dir__)
     FileUtils.cp("#{testdir}/assets/testbanner.jpg", @sample_view.dir/:assets/"testbanner.jpg")
     str = @sample_view.build_banner("testbanner.jpg")
@@ -281,13 +281,13 @@ class IntegrationTest < Minitest::Test
     assert_includes str, expected
   end
   
-  def test_build_banner_with_image_missing
+  def test_013_build_banner_with_image_missing
     str = @sample_view.build_banner("nosuchbanner.jpg")
     expected = %[<p>Banner image missing: nosuchbanner.jpg</p>]
     assert_includes str, expected
   end
   
-  def test_generate_full_front_page
+  def test_014_generate_full_front_page
     view = @repo.lookup_view("sample")
     testdir = File.expand_path("../../test", __dir__)
     FileUtils.cp("#{testdir}/assets/testbanner.jpg", @sample_view.dir/:assets/"testbanner.jpg")

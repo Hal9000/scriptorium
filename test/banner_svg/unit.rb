@@ -31,76 +31,76 @@ class BannerSVGTest < Minitest::Test
   end
 
   # Test handle_style method
-  def test_handle_style_title_bold
+  def test_001_handle_style_title_bold
     @banner.handle_style("title", "bold")
     assert_equal "bold", @banner.instance_variable_get(:@title_weight)
     assert_equal "normal", @banner.instance_variable_get(:@title_style)
   end
 
-  def test_handle_style_title_italic
+  def test_002_handle_style_title_italic
     @banner.handle_style("title", "italic")
     assert_equal "italic", @banner.instance_variable_get(:@title_style)
     assert_equal "normal", @banner.instance_variable_get(:@title_weight)
   end
 
-  def test_handle_style_title_bold_and_italic
+  def test_003_handle_style_title_bold_and_italic
     @banner.handle_style("title", "bold", "italic")
     assert_equal "bold", @banner.instance_variable_get(:@title_weight)
     assert_equal "italic", @banner.instance_variable_get(:@title_style)
   end
 
-  def test_handle_style_subtitle_bold
+  def test_004_handle_style_subtitle_bold
     @banner.handle_style("subtitle", "bold")
     assert_equal "bold", @banner.instance_variable_get(:@subtitle_weight)
     assert_equal "normal", @banner.instance_variable_get(:@subtitle_style)
   end
 
-  def test_handle_style_subtitle_italic
+  def test_005_handle_style_subtitle_italic
     @banner.handle_style("subtitle", "italic")
     assert_equal "italic", @banner.instance_variable_get(:@subtitle_style)
     assert_equal "normal", @banner.instance_variable_get(:@subtitle_weight)
   end
 
-  def test_handle_style_subtitle_bold_and_italic
+  def test_006_handle_style_subtitle_bold_and_italic
     @banner.handle_style("subtitle", "bold", "italic")
     assert_equal "bold", @banner.instance_variable_get(:@subtitle_weight)
     assert_equal "italic", @banner.instance_variable_get(:@subtitle_style)
   end
 
-  def test_handle_style_case_insensitive_bold
+  def test_007_handle_style_case_insensitive_bold
     @banner.handle_style("title", "BOLD")
     assert_equal "bold", @banner.instance_variable_get(:@title_weight)
   end
 
-  def test_handle_style_case_insensitive_italic
+  def test_008_handle_style_case_insensitive_italic
     @banner.handle_style("subtitle", "ITALIC")
     assert_equal "italic", @banner.instance_variable_get(:@subtitle_style)
   end
 
-  def test_handle_style_unknown_style
+  def test_009_handle_style_unknown_style
     @banner.handle_style("title", "unknown")
     assert_equal "unknown", @banner.instance_variable_get(:@title_style)
     assert_equal "unknown", @banner.instance_variable_get(:@subtitle_style)
   end
 
-  def test_handle_style_multiple_args
+  def test_010_handle_style_multiple_args
     @banner.handle_style("title", "bold", "italic")
     assert_equal "bold", @banner.instance_variable_get(:@title_weight)
     assert_equal "italic", @banner.instance_variable_get(:@title_style)
   end
 
   # Test handle_scale method
-  def test_handle_scale_title
+  def test_011_handle_scale_title
     @banner.handle_scale("title", "1.5")
     assert_equal 1.5, @banner.instance_variable_get(:@title_scale)
   end
 
-  def test_handle_scale_subtitle
+  def test_012_handle_scale_subtitle
     @banner.handle_scale("subtitle", "0.6")
     assert_equal 0.6, @banner.instance_variable_get(:@subtitle_scale)
   end
 
-  def test_handle_scale_unknown_which
+  def test_013_handle_scale_unknown_which
     original_title_scale = @banner.instance_variable_get(:@title_scale)
     original_subtitle_scale = @banner.instance_variable_get(:@subtitle_scale)
     
@@ -111,17 +111,17 @@ class BannerSVGTest < Minitest::Test
   end
 
   # Test handle_xy method
-  def test_handle_xy_title
+  def test_014_handle_xy_title
     @banner.handle_xy("title", "10%", "20%")
     assert_equal ["10%", "20%"], @banner.instance_variable_get(:@title_xy)
   end
 
-  def test_handle_xy_subtitle
+  def test_015_handle_xy_subtitle
     @banner.handle_xy("subtitle", "15%", "25%")
     assert_equal ["15%", "25%"], @banner.instance_variable_get(:@subtitle_xy)
   end
 
-  def test_handle_xy_unknown_which
+  def test_016_handle_xy_unknown_which
     # Should raise an error for invalid "which" value
     assert_raises(CannotHandleXYInvalidWhich) do
       @banner.handle_xy("unknown", "30%", "40%")
@@ -129,50 +129,50 @@ class BannerSVGTest < Minitest::Test
   end
 
   # Test handle_background method
-  def test_handle_background
+  def test_017_handle_background
     @banner.handle_background("#ff0000")
     assert_equal "#ff0000", @banner.instance_variable_get(:@background)
   end
 
   # Test handle_aspect method
-  def test_handle_aspect
+  def test_018_handle_aspect
     @banner.handle_aspect("16.0")
     assert_equal 16.0, @banner.instance_variable_get(:@aspect)
   end
 
   # Test handle_font method
-  def test_handle_font_single_word
+  def test_019_handle_font_single_word
     @banner.handle_font("Arial")
     assert_equal "Arial", @banner.instance_variable_get(:@font)
   end
 
-  def test_handle_font_multiple_words
+  def test_020_handle_font_multiple_words
     @banner.handle_font("Times", "New", "Roman")
     assert_equal "Times New Roman", @banner.instance_variable_get(:@font)
   end
 
   # Test handle_text_color method
-  def test_handle_text_color
+  def test_021_handle_text_color
     @banner.handle_text_color("#0000ff")
     assert_equal "#0000ff", @banner.instance_variable_get(:@text_color)
   end
 
   # Test linear gradient functionality
-  def test_handle_linear_gradient_basic
+  def test_022_handle_linear_gradient_basic
     @banner.handle_linear_gradient("red", "blue", "lr")
     assert_equal "red", @banner.instance_variable_get(:@gradient_start_color)
     assert_equal "blue", @banner.instance_variable_get(:@gradient_end_color)
     assert_equal "lr", @banner.instance_variable_get(:@gradient_direction)
   end
 
-  def test_handle_linear_gradient_default_direction
+  def test_023_handle_linear_gradient_default_direction
     @banner.handle_linear_gradient("green", "yellow")
     assert_equal "green", @banner.instance_variable_get(:@gradient_start_color)
     assert_equal "yellow", @banner.instance_variable_get(:@gradient_end_color)
     assert_equal "lr", @banner.instance_variable_get(:@gradient_direction)
   end
 
-  def test_handle_linear_gradient_all_directions
+  def test_024_handle_linear_gradient_all_directions
     directions = ["lr", "tb", "ul-lr", "ll-ur"]
     directions.each do |direction|
       @banner.handle_linear_gradient("red", "blue", direction)
@@ -180,7 +180,7 @@ class BannerSVGTest < Minitest::Test
     end
   end
 
-  def test_parse_header_svg_with_gradient
+  def test_025_parse_header_svg_with_gradient
     # Create a temporary config file with gradient
     File.write("config.txt", "back.linear red blue lr")
     
@@ -194,7 +194,7 @@ class BannerSVGTest < Minitest::Test
     File.delete("config.txt") if File.exist?("config.txt")
   end
 
-  def test_parse_header_svg_without_gradient
+  def test_026_parse_header_svg_without_gradient
     # Create a temporary config file without gradient
     File.write("config.txt", "back.color #fff")
     
@@ -210,19 +210,19 @@ class BannerSVGTest < Minitest::Test
   end
 
   # Test radial gradient functionality
-  def test_handle_radial_gradient_basic
+  def test_027_handle_radial_gradient_basic
     @banner.handle_radial_gradient("red", "blue")
     assert_equal "red", @banner.instance_variable_get(:@radial_start_color)
     assert_equal "blue", @banner.instance_variable_get(:@radial_end_color)
   end
 
-  def test_handle_radial_gradient_different_colors
+  def test_028_handle_radial_gradient_different_colors
     @banner.handle_radial_gradient("green", "yellow")
     assert_equal "green", @banner.instance_variable_get(:@radial_start_color)
     assert_equal "yellow", @banner.instance_variable_get(:@radial_end_color)
   end
 
-  def test_parse_header_svg_with_radial_gradient
+  def test_029_parse_header_svg_with_radial_gradient
     # Create a temporary config file with radial gradient
     File.write("config.txt", "back.radial red blue")
     
@@ -235,7 +235,7 @@ class BannerSVGTest < Minitest::Test
     File.delete("config.txt") if File.exist?("config.txt")
   end
 
-  def test_radial_gradient_priority_over_linear
+  def test_030_radial_gradient_priority_over_linear
     # Create a temporary config file with both gradients
     File.write("config.txt", "back.linear green yellow lr\nback.radial red blue")
     
@@ -254,17 +254,17 @@ class BannerSVGTest < Minitest::Test
   end
 
   # Test image background functionality
-  def test_handle_image_background_basic
+  def test_031_handle_image_background_basic
     @banner.handle_image_background("background.jpg")
     assert_equal "background.jpg", @banner.instance_variable_get(:@image_background)
   end
 
-  def test_handle_image_background_with_path
+  def test_032_handle_image_background_with_path
     @banner.handle_image_background("images/banner-bg.png")
     assert_equal "images/banner-bg.png", @banner.instance_variable_get(:@image_background)
   end
 
-  def test_parse_header_svg_with_image_background
+  def test_033_parse_header_svg_with_image_background
     # Create a temporary config file with image background
     File.write("config.txt", "back.image background.jpg")
     
@@ -276,7 +276,7 @@ class BannerSVGTest < Minitest::Test
     File.delete("config.txt") if File.exist?("config.txt")
   end
 
-  def test_image_background_priority_over_all
+  def test_034_image_background_priority_over_all
     # Create a temporary config file with all background types
     File.write("config.txt", "back.color #fff\nback.linear green yellow lr\nback.radial red blue\nback.image background.jpg")
     
@@ -297,7 +297,7 @@ class BannerSVGTest < Minitest::Test
   end
 
   # Test initialization
-  def test_initialize_sets_defaults
+  def test_035_initialize_sets_defaults
     assert_equal "Test Title", @banner.instance_variable_get(:@title)
     assert_equal "Test Subtitle", @banner.instance_variable_get(:@subtitle)
     assert_equal 0.8, @banner.instance_variable_get(:@title_scale)
@@ -325,36 +325,36 @@ class BannerSVGTest < Minitest::Test
   # EDGE CASES & ERROR HANDLING TESTS
   # ============================================================================
 
-  def test_read_commented_file_with_nonexistent_file
+  def test_036_read_commented_file_with_nonexistent_file
     result = @banner.read_commented_file("nonexistent.txt")
     assert_equal [], result
   end
 
-  def test_read_commented_file_with_empty_file
+  def test_037_read_commented_file_with_empty_file
     File.write("config.txt", "")
     result = @banner.read_commented_file("config.txt")
     assert_equal [], result
   end
 
-  def test_read_commented_file_with_comments_only
+  def test_038_read_commented_file_with_comments_only
     File.write("config.txt", "# This is a comment\n# Another comment\n  # Indented comment")
     result = @banner.read_commented_file("config.txt")
     assert_equal [], result
   end
 
-  def test_read_commented_file_with_mixed_content
+  def test_039_read_commented_file_with_mixed_content
     File.write("config.txt", "# Comment\nback.color #fff\n# Another comment\nback.linear red blue\n# End comment")
     result = @banner.read_commented_file("config.txt")
     assert_equal ["back.color #fff", "back.linear red blue"], result
   end
 
-  def test_read_commented_file_with_trailing_comments
+  def test_040_read_commented_file_with_trailing_comments
     File.write("config.txt", "back.color #fff # This is a color\nback.linear red blue # Gradient")
     result = @banner.read_commented_file("config.txt")
     assert_equal ["back.color #fff", "back.linear red blue"], result
   end
 
-  def test_parse_header_svg_with_malformed_config_line
+  def test_041_parse_header_svg_with_malformed_config_line
     File.write("config.txt", "back.color\nback.linear\nback.radial")
     @banner.parse_header_svg
     # Should handle gracefully without raising exceptions
@@ -362,28 +362,28 @@ class BannerSVGTest < Minitest::Test
     assert_equal "#fff", @banner.instance_variable_get(:@background)
   end
 
-  def test_handle_scale_with_invalid_numeric_values
+  def test_042_handle_scale_with_invalid_numeric_values
     @banner.handle_scale("title", "invalid")
     # Should handle gracefully - keep default value
     # Note: Currently returns 0.0 for invalid input, which may need fixing
     assert_equal 0.0, @banner.instance_variable_get(:@title_scale)
   end
 
-  def test_handle_aspect_with_invalid_numeric_values
+  def test_043_handle_aspect_with_invalid_numeric_values
     # Should raise an error for invalid numeric value
     assert_raises(CannotHandleAspectInvalidValue) do
       @banner.handle_aspect("invalid")
     end
   end
 
-  def test_handle_xy_with_insufficient_arguments
+  def test_044_handle_xy_with_insufficient_arguments
     @banner.handle_xy("title", "10%")
     # Should handle gracefully - keep default value
     # Note: Currently sets partial array, which may need fixing
     assert_equal ["10%"], @banner.instance_variable_get(:@title_xy)
   end
 
-  def test_handle_linear_gradient_with_insufficient_arguments
+  def test_045_handle_linear_gradient_with_insufficient_arguments
     @banner.handle_linear_gradient("red")
     # Should handle gracefully
     assert_equal "red", @banner.instance_variable_get(:@gradient_start_color)
@@ -391,21 +391,21 @@ class BannerSVGTest < Minitest::Test
     assert_equal "lr", @banner.instance_variable_get(:@gradient_direction) # Default
   end
 
-  def test_handle_radial_gradient_with_insufficient_arguments
+  def test_046_handle_radial_gradient_with_insufficient_arguments
     @banner.handle_radial_gradient("red")
     # Should handle gracefully
     assert_equal "red", @banner.instance_variable_get(:@radial_start_color)
     assert_nil @banner.instance_variable_get(:@radial_end_color)
   end
 
-  def test_handle_style_with_empty_arguments
+  def test_047_handle_style_with_empty_arguments
     @banner.handle_style("title")
     # Should handle gracefully - keep default values
     assert_equal "normal", @banner.instance_variable_get(:@title_weight)
     assert_equal "normal", @banner.instance_variable_get(:@title_style)
   end
 
-  def test_handle_font_with_empty_arguments
+  def test_048_handle_font_with_empty_arguments
     @banner.handle_font()
     # Should handle gracefully - keep default value
     # Note: Currently returns empty string, which may need fixing
@@ -416,7 +416,7 @@ class BannerSVGTest < Minitest::Test
   # SVG OUTPUT VALIDATION TESTS
   # ============================================================================
 
-  def test_svg_output_has_required_structure
+  def test_049_svg_output_has_required_structure
     svg_output = @banner.parse_header_svg
     
     # Check for required SVG elements
@@ -428,7 +428,7 @@ class BannerSVGTest < Minitest::Test
     assert_present(svg_output, '</svg>')
   end
 
-  def test_svg_output_has_background_rect
+  def test_050_svg_output_has_background_rect
     svg_output = @banner.parse_header_svg
     
     # Should have a background rect
@@ -437,7 +437,7 @@ class BannerSVGTest < Minitest::Test
     assert_present(svg_output, "fill='#fff'")
   end
 
-  def test_svg_output_has_text_elements
+  def test_051_svg_output_has_text_elements
     svg_output = @banner.parse_header_svg
     
     # Should have two text elements
@@ -451,7 +451,7 @@ class BannerSVGTest < Minitest::Test
     assert_equal 2, text_count, "Expected 2 text elements, found #{text_count}"
   end
 
-  def test_svg_output_text_has_required_attributes
+  def test_052_svg_output_text_has_required_attributes
     svg_output = @banner.parse_header_svg
     
     # Check text attributes
@@ -463,7 +463,7 @@ class BannerSVGTest < Minitest::Test
     assert_present(svg_output, 'font-size: 24px') # subtitle
   end
 
-  def test_svg_output_with_linear_gradient
+  def test_053_svg_output_with_linear_gradient
     @banner.handle_linear_gradient("red", "blue", "lr")
     svg_output = @banner.parse_header_svg
     
@@ -481,7 +481,7 @@ class BannerSVGTest < Minitest::Test
     assert_present(svg_output, "fill='url(#grad1)'")
   end
 
-  def test_svg_output_with_radial_gradient
+  def test_054_svg_output_with_radial_gradient
     @banner.handle_radial_gradient("red", "blue")
     svg_output = @banner.parse_header_svg
     
@@ -499,7 +499,7 @@ class BannerSVGTest < Minitest::Test
     assert_present(svg_output, "fill='url(#radial1)'")
   end
 
-  def test_svg_output_with_image_background
+  def test_055_svg_output_with_image_background
     @banner.handle_image_background("background.jpg")
     svg_output = @banner.parse_header_svg
     
@@ -514,7 +514,7 @@ class BannerSVGTest < Minitest::Test
     assert_present(svg_output, "fill='url(#bg-pattern)'")
   end
 
-  def test_svg_output_text_positioning
+  def test_056_svg_output_text_positioning
     @banner.handle_xy("title", "10%", "20%")
     @banner.handle_xy("subtitle", "15%", "25%")
     svg_output = @banner.parse_header_svg
@@ -526,7 +526,7 @@ class BannerSVGTest < Minitest::Test
     assert_present(svg_output, "y='25%'")
   end
 
-  def test_svg_output_text_styling
+  def test_057_svg_output_text_styling
     @banner.handle_style("title", "bold", "italic")
     @banner.handle_style("subtitle", "bold")
     svg_output = @banner.parse_header_svg
@@ -536,7 +536,7 @@ class BannerSVGTest < Minitest::Test
     assert_present(svg_output, 'font-style: italic')
   end
 
-  def test_svg_output_font_family
+  def test_058_svg_output_font_family
     @banner.handle_font("Arial", "sans-serif")
     svg_output = @banner.parse_header_svg
     
@@ -544,7 +544,7 @@ class BannerSVGTest < Minitest::Test
     assert_present(svg_output, 'font-family: Arial sans-serif')
   end
 
-  def test_svg_output_text_color
+  def test_059_svg_output_text_color
     @banner.handle_text_color("#0000ff")
     svg_output = @banner.parse_header_svg
     
@@ -556,7 +556,7 @@ class BannerSVGTest < Minitest::Test
   # INTEGRATION TESTS
   # ============================================================================
 
-  def test_full_config_file_parsing
+  def test_060_full_config_file_parsing
     config_content = <<~CONFIG
       # Banner configuration
       back.color #f0f0f0
@@ -601,7 +601,7 @@ class BannerSVGTest < Minitest::Test
     assert_equal ["50%", "70%"], @banner.instance_variable_get(:@subtitle_xy)
   end
 
-  def test_end_to_end_workflow
+  def test_061_end_to_end_workflow
     # Test complete workflow from config to final output
     config_content = "back.color #e0e0e0\ntext.color #000\ntitle.style bold\nsubtitle.xy 10% 80%"
     File.write("config.txt", config_content)
@@ -626,7 +626,7 @@ class BannerSVGTest < Minitest::Test
     assert_present(svg_output, 'Test Subtitle')
   end
 
-  def test_javascript_generation
+  def test_062_javascript_generation
     # Test that get_svg generates valid JavaScript
     js_output = @banner.get_svg
     
@@ -648,7 +648,7 @@ class BannerSVGTest < Minitest::Test
     assert_present(js_output, 'const subtitleScale = 0.4')
   end
 
-  def test_javascript_with_custom_settings
+  def test_063_javascript_with_custom_settings
     @banner.handle_text_color("#ff0000")
     @banner.handle_aspect("4.0")
     @banner.handle_scale("title", "1.5")
@@ -663,7 +663,7 @@ class BannerSVGTest < Minitest::Test
     assert_present(js_output, "fill='#ff0000'")
   end
 
-  def test_background_priority_integration
+  def test_064_background_priority_integration
     # Test that background priority works correctly in full workflow
     config_content = "back.color #fff\nback.linear red blue\nback.radial green yellow\nback.image bg.jpg"
     File.write("config.txt", config_content)
@@ -681,7 +681,7 @@ class BannerSVGTest < Minitest::Test
     refute svg_output.include?('fill="#fff"')
   end
 
-  def test_special_characters_in_text
+  def test_065_special_characters_in_text
     # Test handling of special characters in titles
     special_banner = Scriptorium::BannerSVG.new("Title with \"quotes\" & ampersands", "Subtitle with <tags> & 'apostrophes'")
     special_banner.parse_header_svg
@@ -692,7 +692,7 @@ class BannerSVGTest < Minitest::Test
     assert_present(svg_output, 'Subtitle with <tags> & \'apostrophes\'')
   end
 
-  def test_unicode_characters_in_text
+  def test_066_unicode_characters_in_text
     # Test handling of Unicode characters
     unicode_banner = Scriptorium::BannerSVG.new("Título con acentos", "Subtítulo con ñ y é")
     unicode_banner.parse_header_svg
@@ -703,7 +703,7 @@ class BannerSVGTest < Minitest::Test
     assert_present(svg_output, 'Subtítulo con ñ y é')
   end
 
-  def test_handle_text_align
+  def test_067_handle_text_align
     @banner.handle_text_align("left")
     assert_equal "start", @banner.instance_variable_get(:@title_text_anchor)
     assert_equal "start", @banner.instance_variable_get(:@subtitle_text_anchor)
@@ -722,7 +722,7 @@ class BannerSVGTest < Minitest::Test
     end
   end
 
-  def test_svg_output_text_anchor
+  def test_068_svg_output_text_anchor
     @banner.handle_text_align("center")
     svg_output = @banner.parse_header_svg
     assert_present(svg_output, "text-anchor='middle'")
@@ -736,7 +736,7 @@ class BannerSVGTest < Minitest::Test
     assert_present(svg_output, "text-anchor='start'")
   end
 
-  def test_title_align_center_auto_warns_on_conflict
+  def test_069_title_align_center_auto_warns_on_conflict
     captured = capture_stderr do
       banner = Scriptorium::BannerSVG.new("Title", "Subtitle")
       banner.handle_title_align("center", "5%", "70%")
@@ -744,7 +744,7 @@ class BannerSVGTest < Minitest::Test
     assert_match(/Warning: title.align center with x=5%/, captured)
   end
 
-  def test_title_and_subtitle_color_independent
+  def test_070_title_and_subtitle_color_independent
     banner = Scriptorium::BannerSVG.new("Title", "Subtitle")
     banner.handle_title_color("#ff0000")
     banner.handle_subtitle_color("#00ff00")
@@ -754,7 +754,7 @@ class BannerSVGTest < Minitest::Test
     assert_includes svg, "fill='#00ff00'"
   end
 
-  def test_align_and_xy_conflict_warning
+  def test_071_align_and_xy_conflict_warning
     captured = capture_stderr do
       banner = Scriptorium::BannerSVG.new("Title", "Subtitle")
       banner.handle_title_align("center", "50%", "70%")

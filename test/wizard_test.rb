@@ -15,59 +15,76 @@ class WizardTest < Minitest::Test
     cleanup_test_repo
   end
 
-  def test_wizard_first_view_flow
-    # Create a test repo with only sample view
-    api = Scriptorium::API.new(@test_repo_path)
+  def test_001_wizard_first_view_flow
+    # Test the wizard flow for creating the first view
+    # This should create a new repository and set up the first view
     
-    # Simulate wizard interaction
-    script_path = File.expand_path("../../bin/scriptorium", __FILE__)
-    ruby_path = "/Users/Hal/.rbenv/versions/3.2.3/bin/ruby"
+    # Ensure clean start
+    cleanup_test_repo
     
-    # Commands to simulate wizard interaction
-    commands = [
-      "n\n",  # No to creating new repo (we'll create it manually)
-      "q\n"   # Quit after wizard
-    ]
+    # Run the wizard
+    result = system("echo -e 'y\n4\nn' | ruby bin/scriptorium")
+    assert result, "Wizard should complete successfully"
     
-    input = commands.join("")
+    # Verify repository was created
+    assert Dir.exist?(TEST_REPO_PATH), "Repository should be created"
     
-    Timeout.timeout(30) do
-      stdout, stderr, status = Open3.capture3(
-        "#{ruby_path} #{script_path}",
-        stdin_data: input
-      )
-      output = stdout + stderr
-      
-      # Check that the script ran without crashing
-      assert_equal 0, status.exitstatus, "Script should exit successfully"
-      
-      # Check that it found the test repo
-      assert_match(/Found existing test repository: scriptorium-TEST/, output)
-    end
+    # Verify sample view was created
+    sample_view_path = File.join(TEST_REPO_PATH, "views", "sample")
+    assert Dir.exist?(sample_view_path), "Sample view should be created"
+    
+    # Verify config files were created
+    config_path = File.join(TEST_REPO_PATH, "config")
+    assert Dir.exist?(config_path), "Config directory should be created"
+    
+    # Verify current view is set
+    current_view_file = File.join(config_path, "currentview.txt")
+    assert File.exist?(current_view_file), "Current view file should be created"
+    assert_equal "sample", File.read(current_view_file).strip, "Current view should be 'sample'"
   end
 
-  def test_wizard_method_exists
+  def test_002_wizard_method_exists
     # Test that the wizard method exists and can be called
-    script_path = File.expand_path("../../bin/scriptorium", __FILE__)
+    # This is a basic smoke test to ensure the wizard is available
     
-    # Load the script to access the TUI class
-    load script_path
+    # Load the scriptorium binary to access the wizard method
+    load 'bin/scriptorium'
     
-    # Clean up any existing test repo
-    FileUtils.rm_rf("test/scriptorium-TEST") if Dir.exist?("test/scriptorium-TEST")
+    # The wizard method should be available in the TUI class
+    assert defined?(TUI), "TUI class should be defined"
+    assert TUI.instance_methods.include?(:wizard), "TUI should have wizard method"
+  end
+
+  def test_003_wizard_with_new_repo
+    # Test wizard behavior when creating a completely new repository
+    # This tests the full wizard flow including repository creation
     
-    # Create a test repo (this will have only the sample view)
-    repo = Scriptorium::Repo.create("test/scriptorium-TEST", testmode: true)
+    # Ensure clean start
+    cleanup_test_repo
     
-    # Create a TUI instance to test the wizard
-    tui = ScriptoriumTUI.new
-    tui.instance_variable_set(:@repo, repo)
+    # Create a new API instance to simulate fresh start
+    api = Scriptorium::API.new(testmode: true)
     
-    # Test that the wizard method exists
-    assert tui.respond_to?(:wizard_first_view), "wizard_first_view method should exist"
+    # Verify no repository exists initially
+    refute Dir.exist?(TEST_REPO_PATH), "Repository should not exist initially"
     
-    # Clean up
-    FileUtils.rm_rf("test/scriptorium-TEST")
+    # Run wizard with new repo creation
+    result = system("echo -e 'y\n4\ny\ntestview\nTest View\nTest Subtitle\nn\nn\nn\nn\nn' | ruby bin/scriptorium")
+    assert result, "Wizard should complete successfully with new repo"
+    
+    # Verify repository was created
+    assert Dir.exist?(TEST_REPO_PATH), "Repository should be created"
+    
+    # Verify test view was created
+    test_view_path = File.join(TEST_REPO_PATH, "views", "testview")
+    assert Dir.exist?(test_view_path), "Test view should be created"
+    
+    # Verify view config
+    view_config = File.join(test_view_path, "config.txt")
+    assert File.exist?(view_config), "View config should be created"
+    config_content = File.read(view_config)
+    assert_includes config_content, "title    Test View", "View title should be set"
+    assert_includes config_content, "subtitle Test Subtitle", "View subtitle should be set"
   end
 
   def await_output(stdout, expected_str, timeout_secs = 10)
@@ -92,86 +109,6 @@ class WizardTest < Minitest::Test
         sleep 0.1
       rescue EOFError
         raise "EOF reached while waiting for '#{expected_str}'. Buffer: #{buffer.inspect}"
-      end
-    end
-  end
-
-  def test_wizard_with_new_repo
-    # Test the full wizard flow with a new repository
-    script_path = File.expand_path("../../bin/scriptorium", __FILE__)
-    ruby_path = "/Users/Hal/.rbenv/versions/3.2.3/bin/ruby"
-    
-    Timeout.timeout(60) do
-      Open3.popen3("#{ruby_path} #{script_path}") do |stdin, stdout, stderr, wait_thr|
-        # Send commands one by one and read responses
-        puts "Starting interactive test..."
-        
-        # Wait for editor selection and choose nano
-        await_output(stdout, "Choose editor (1-4):")
-        stdin.puts "1"
-        stdin.flush
-        
-        # Wait for wizard prompt and start wizard
-        await_output(stdout, "Would you like to run the first view setup wizard? (y/n):")
-        stdin.puts "y"
-        
-        # Wait for view name prompt
-        await_output(stdout, "Enter view name:")
-        stdin.puts "test-view"
-        
-        # Wait for view title prompt
-        await_output(stdout, "Enter view title:")
-        stdin.puts "Test View"
-        
-        # Wait for subtitle prompt
-        await_output(stdout, "Enter subtitle (optional):")
-        stdin.puts ""
-        
-        # Wait for each widget prompt and respond
-        await_output(stdout, "Add header widget? (y/n):")
-        stdin.puts "y"
-        
-        await_output(stdout, "Add main widget? (y/n):")
-        stdin.puts "y"
-        
-        await_output(stdout, "Add left widget? (y/n):")
-        stdin.puts "y"
-        
-        await_output(stdout, "Add right widget? (y/n):")
-        stdin.puts "y"
-        
-        await_output(stdout, "Add footer widget? (y/n):")
-        stdin.puts "y"
-        
-        # Wait for completion message
-        await_output(stdout, "View 'test-view' created successfully")
-        
-        # Send "q" to quit
-        stdin.puts "q"
-        
-        # Close stdin to signal end of input
-        stdin.close
-        
-        # Wait for process to finish
-        status = wait_thr.value
-        
-        # Read any remaining output
-        final_output = stdout.read
-        error_output = stderr.read
-        
-        puts "Final output: #{final_output}"
-        puts "Error output: #{error_output}"
-        puts "Exit status: #{status.exitstatus}"
-        
-        # Check that the script ran without crashing
-        assert_equal 0, status.exitstatus, "Script should exit successfully"
-        
-        # Check that it went through the wizard flow
-        full_output = final_output + error_output
-        assert_match(/First View Setup Wizard/, full_output)
-        assert_match(/Let's set up your first view!/, full_output)
-        assert_match(/Created view 'testview'/, full_output)
-        assert_match(/View setup complete!/, full_output)
       end
     end
   end

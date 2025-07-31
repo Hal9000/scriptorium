@@ -18,7 +18,7 @@ class TUIEditorIntegrationTest < Minitest::Test
     cleanup_test_repo
   end
 
-  def test_links_widget_editing_workflow
+  def test_001_links_widget_editing_workflow
     # Test the complete links widget editing workflow using PTY
     # Start with no repo, let TUI create it, trigger wizard, configure links widget, edit content
     
@@ -40,7 +40,7 @@ class TUIEditorIntegrationTest < Minitest::Test
     ENV.delete('NOREADLINE')
   end
 
-  def test_basic_tui_flow
+  def test_002_basic_tui_flow
     # Test basic TUI flow without complex wizard
     ENV['NOREADLINE'] = '1'
     
@@ -58,7 +58,7 @@ class TUIEditorIntegrationTest < Minitest::Test
     ENV.delete('NOREADLINE')
   end
 
-  def test_create_post_workflow
+  def test_003_create_post_workflow
     # Test creating a post through the TUI
     ENV['NOREADLINE'] = '1'
     
@@ -106,7 +106,10 @@ class TUIEditorIntegrationTest < Minitest::Test
   def send_and_expect(read, write, input, expected_pattern, description)
     write.puts input
     sleep 0.1  # Small delay to ensure input is processed
-    get_string(read, expected_pattern, description)
+    result = get_string(read, expected_pattern, description)
+    # Add explicit assertion for the expected pattern
+    assert result.match?(expected_pattern), "#{description}: Expected pattern '#{expected_pattern}' not found in output"
+    result
   rescue Errno::EIO => e
     # Handle case where TUI terminates immediately after output
     if expected_pattern.to_s.include?("Goodbye!")

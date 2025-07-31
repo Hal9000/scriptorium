@@ -94,7 +94,7 @@ class TestScriptoriumWidgets < Minitest::Test
   # Base Widget Class Tests
   # ========================================
 
-  def test_base_widget_initialization
+  def test_001_base_widget_initialization
     widget = TestWidget.new(@repo, @view)
     
     assert_equal @repo, widget.repo
@@ -104,7 +104,7 @@ class TestScriptoriumWidgets < Minitest::Test
     assert_equal "#{@view.dir}/widgets/testwidget", widget.path
   end
 
-  def test_base_widget_abstract_methods
+  def test_002_base_widget_abstract_methods
     widget = TestWidget2.new(@repo, @view)
     
     # Test that we can call the abstract methods on concrete implementation
@@ -112,7 +112,7 @@ class TestScriptoriumWidgets < Minitest::Test
     assert_equal({ test: "config" }, widget.load_config)
   end
 
-  def test_html_body_without_css
+  def test_003_html_body_without_css
     widget = TestWidget3.new(@repo, @view)
     result = widget.html_body { "test content" }
     
@@ -121,7 +121,7 @@ class TestScriptoriumWidgets < Minitest::Test
     refute_match(/<head>/, result)
   end
 
-  def test_html_body_with_css
+  def test_004_html_body_with_css
     widget = TestWidget4.new(@repo, @view)
     result = widget.html_body("body { color: red; }") { "test content" }
     
@@ -130,7 +130,7 @@ class TestScriptoriumWidgets < Minitest::Test
     assert_match(/<body>test content<\/body>/, result)
   end
 
-  def test_html_card
+  def test_005_html_card
     widget = TestWidget5.new(@repo, @view)
     result = widget.html_card("Test Title", "test-tag", "test content")
     
@@ -143,7 +143,7 @@ class TestScriptoriumWidgets < Minitest::Test
     assert_match(/test content/, result)
   end
 
-  def test_html_container
+  def test_006_html_container
     widget = TestWidget6.new(@repo, @view)
     result = widget.html_container("test content")
     
@@ -155,7 +155,7 @@ class TestScriptoriumWidgets < Minitest::Test
   # ListWidget Tests
   # ========================================
 
-  def test_list_widget_initialization
+  def test_007_list_widget_initialization
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/testlistwidget/list.txt"
     make_dir(File.dirname(list_file))
@@ -177,14 +177,14 @@ class TestScriptoriumWidgets < Minitest::Test
     ], widget.instance_variable_get(:@data)
   end
 
-  def test_list_widget_load_data_missing_file
+  def test_008_list_widget_load_data_missing_file
     # Should raise error when list.txt doesn't exist
     assert_raises(CannotReadFileNotFound) do
       TestListWidget2.new(@repo, @view)
     end
   end
 
-  def test_list_widget_load_data_empty_file
+  def test_009_list_widget_load_data_empty_file
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/testlistwidget3/list.txt"
     make_dir(File.dirname(list_file))
@@ -198,7 +198,7 @@ class TestScriptoriumWidgets < Minitest::Test
   # Links Widget Tests
   # ========================================
 
-  def test_links_widget_initialization
+  def test_010_links_widget_initialization
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/links/list.txt"
     make_dir(File.dirname(list_file))
@@ -219,7 +219,7 @@ class TestScriptoriumWidgets < Minitest::Test
     ], widget.instance_variable_get(:@lines)
   end
 
-  def test_links_widget_get_list
+  def test_011_links_widget_get_list
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/links/list.txt"
     make_dir(File.dirname(list_file))
@@ -239,7 +239,7 @@ class TestScriptoriumWidgets < Minitest::Test
     ], result
   end
 
-  def test_links_widget_link_item
+  def test_012_links_widget_link_item
     # Create test list.txt file for initialization
     list_file = "#{@view.dir}/widgets/links/list.txt"
     make_dir(File.dirname(list_file))
@@ -252,7 +252,7 @@ class TestScriptoriumWidgets < Minitest::Test
     assert_match(/<a href="https:\/\/example\.com" target="_blank" style="text-decoration: none;">Example Site<\/a>/, result)
   end
 
-  def test_links_widget_write_card
+  def test_013_links_widget_write_card
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/links/list.txt"
     make_dir(File.dirname(list_file))
@@ -279,7 +279,7 @@ class TestScriptoriumWidgets < Minitest::Test
     assert_match(/Test Site/, content)
   end
 
-  def test_links_widget_generate
+  def test_014_links_widget_generate
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/links/list.txt"
     make_dir(File.dirname(list_file))
@@ -300,7 +300,7 @@ class TestScriptoriumWidgets < Minitest::Test
     assert_match(/Example Site/, content)
   end
 
-  def test_links_widget_card_method
+  def test_015_links_widget_card_method
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/links/list.txt"
     make_dir(File.dirname(list_file))
@@ -317,7 +317,7 @@ class TestScriptoriumWidgets < Minitest::Test
     assert_match(/Example Site/, card_content)
   end
 
-  def test_links_widget_missing_list_file
+  def test_016_links_widget_missing_list_file
     # Should raise error when list.txt doesn't exist
     assert_raises(CannotReadFileNotFound) do
       Scriptorium::Widget::Links.new(@repo, @view)
@@ -328,7 +328,7 @@ class TestScriptoriumWidgets < Minitest::Test
   # Widget Integration Tests
   # ========================================
 
-  def test_build_widgets_with_links
+  def test_017_build_widgets_with_links
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/links/list.txt"
     make_dir(File.dirname(list_file))
@@ -349,7 +349,7 @@ class TestScriptoriumWidgets < Minitest::Test
     assert_file_exist?(card_file)
   end
 
-  def test_build_widgets_multiple_widgets
+  def test_018_build_widgets_multiple_widgets
     # Create test list.txt file for links widget
     list_file = "#{@view.dir}/widgets/links/list.txt"
     make_dir(File.dirname(list_file))
@@ -368,20 +368,20 @@ class TestScriptoriumWidgets < Minitest::Test
     assert_equal 2, result.scan(/External links/).length
   end
 
-  def test_build_widgets_invalid_widget_name
+  def test_019_build_widgets_invalid_widget_name
     assert_raises(NameError) do
       @view.build_widgets("nonexistent")
     end
   end
 
-  def test_build_widgets_with_special_characters
+  def test_020_build_widgets_with_special_characters
     assert_raises(CannotBuildWidgetNameInvalid) do
       @view.build_widgets("invalid@widget")
     end
   end
 
   # Pages widget tests
-  def test_pages_widget_initialization
+  def test_021_pages_widget_initialization
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/pages/list.txt"
     make_dir(File.dirname(list_file))
@@ -402,7 +402,7 @@ class TestScriptoriumWidgets < Minitest::Test
     assert_equal ["about", "contact", "faq"], widget.data
   end
 
-  def test_pages_widget_extract_title_from_title_tag
+  def test_022_pages_widget_extract_title_from_title_tag
     # Create minimal list.txt to avoid initialization error
     list_file = "#{@view.dir}/widgets/pages/list.txt"
     make_dir(File.dirname(list_file))
@@ -416,7 +416,7 @@ class TestScriptoriumWidgets < Minitest::Test
     assert_equal "My Page Title", title
   end
 
-  def test_pages_widget_extract_title_from_h1_tag
+  def test_023_pages_widget_extract_title_from_h1_tag
     # Create minimal list.txt to avoid initialization error
     list_file = "#{@view.dir}/widgets/pages/list.txt"
     make_dir(File.dirname(list_file))
@@ -430,7 +430,7 @@ class TestScriptoriumWidgets < Minitest::Test
     assert_equal "My H1 Title", title
   end
 
-  def test_pages_widget_extract_title_fallback
+  def test_024_pages_widget_extract_title_fallback
     # Create minimal list.txt to avoid initialization error
     list_file = "#{@view.dir}/widgets/pages/list.txt"
     make_dir(File.dirname(list_file))
@@ -444,7 +444,7 @@ class TestScriptoriumWidgets < Minitest::Test
     assert_equal "Untitled", title
   end
 
-  def test_pages_widget_generate
+  def test_025_pages_widget_generate
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/pages/list.txt"
     make_dir(File.dirname(list_file))
@@ -473,7 +473,7 @@ class TestScriptoriumWidgets < Minitest::Test
     assert_includes card_content, 'Contact'
   end
 
-  def test_pages_widget_skip_missing_pages
+  def test_026_pages_widget_skip_missing_pages
     # Create test list.txt file with a missing page
     list_file = "#{@view.dir}/widgets/pages/list.txt"
     make_dir(File.dirname(list_file))
