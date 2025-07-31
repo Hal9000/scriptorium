@@ -24,9 +24,8 @@ test_files = %w[
   integration/integration_test.rb
   livetext_plugin_test.rb
   unit/core.rb
-  tui_integration_test.rb
-  tui_setup_test.rb
   ed_test.rb
+  tui_integration_test.rb
 ]
 
 

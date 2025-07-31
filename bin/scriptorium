@@ -20,10 +20,16 @@ class ScriptoriumTUI
         puts "Found existing test repository: scriptorium-TEST"
         @testing = "scriptorium-TEST"
         @api = Scriptorium::API.new(testmode: true)
-        @api.open_repo("scriptorium-TEST")
-        puts "Current view: #{@api.current_view&.name || 'nil'}"
-        puts "Loaded test repository"
-        return true
+        begin
+          @api.open_repo("scriptorium-TEST")
+          puts "Current view: #{@api.current_view&.name || 'nil'}"
+          puts "Loaded test repository"
+          return true
+        rescue => e
+          puts "Error opening repository: #{e.message}"
+          puts e.backtrace.first if @testing
+          return false
+        end
       else
         puts "No repository found."
         return false
@@ -38,11 +44,17 @@ class ScriptoriumTUI
     puts "Creating new repository..."
     @testing = "scriptorium-TEST"
     @api = Scriptorium::API.new(testmode: true)
-    @api.create_repo("scriptorium-TEST")
-    puts "Created repository successfully."
-    
-    # Run initial setup (like Runeblog)
-    get_started
+    begin
+      @api.create_repo("scriptorium-TEST")
+      puts "Created repository successfully."
+      
+      # Run initial setup (like Runeblog)
+      get_started
+    rescue => e
+      puts "Error creating repository: #{e.message}"
+      puts e.backtrace.first if @testing
+      return false
+    end
   end
 
   def wizard_first_view    
@@ -186,6 +198,12 @@ class ScriptoriumTUI
   def mainloop
     loop do
       begin
+        # Ensure we have a valid API with repository
+        if @api.nil? || @api.instance_variable_get(:@repo).nil?
+          puts "Error: No valid repository loaded. Exiting."
+          return
+        end
+        
         current_view = @api.current_view
         current_view_name = current_view&.name || "no-view"
         prompt = "[#{current_view_name}] "
@@ -208,6 +226,7 @@ class ScriptoriumTUI
       rescue => e
         puts "Error: #{e.message}"
         puts e.backtrace.first if @testing
+        puts "DEBUG: Exception caught in mainloop: #{e.class}: #{e.message}"
       end
     end
 
@@ -413,12 +432,28 @@ class ScriptoriumTUI
         subtitle = get_string
         subtitle = nil if subtitle.empty?
         
+        # Check if view already exists
+        existing_views = @api.views
+        if existing_views.any? { |view| view.name == name }
+          puts
+          puts "  View '#{name}' already exists"
+          puts
+          return
+        end
+        
         # Create view with all parameters
-        @api.create_view(name, title, subtitle, theme: "standard")
-        puts
-        puts "  Created view '#{name}' with title '#{title}'"
-        puts "  Switched to view '#{name}'"
-        puts
+        begin
+          @api.create_view(name, title, subtitle, theme: "standard")
+          puts
+          puts "  Created view '#{name}' with title '#{title}'"
+          puts "  Switched to view '#{name}'"
+          puts
+        rescue Exception => e
+          puts
+          puts "  #{e.message}"
+          puts
+          puts "DEBUG: Exception caught in create_view (interactive): #{e.class}: #{e.message}"
+        end
       else
         # Legacy mode - still support "create view <name> <title>"
         parts = view_args.split(/\s+/, 2)
@@ -436,12 +471,28 @@ class ScriptoriumTUI
         subtitle = get_string
         subtitle = nil if subtitle.empty?
         
+        # Check if view already exists
+        existing_views = @api.views
+        if existing_views.any? { |view| view.name == name }
+          puts
+          puts "  View '#{name}' already exists"
+          puts
+          return
+        end
+        
         # Create view with all parameters
-        @api.create_view(name, title, subtitle, theme: "standard")
-        puts
-        puts "  Created view '#{name}' with title '#{title}'"
-        puts "  Switched to view '#{name}'"
-        puts
+        begin
+          @api.create_view(name, title, subtitle, theme: "standard")
+          puts
+          puts "  Created view '#{name}' with title '#{title}'"
+          puts "  Switched to view '#{name}'"
+          puts
+        rescue Exception => e
+          puts
+          puts "  #{e.message}"
+          puts
+          puts "DEBUG: Exception caught in create_view (legacy): #{e.class}: #{e.message}"
+        end
       end
     else
       puts
