@@ -262,6 +262,12 @@ class Scriptorium::Repo
     #   view/.../output/posts/0123-this-is-me.html
     path  = view.dir/:output/:posts/slug    
     write_file(path, final)
+    #   view/.../output/permalink/0123-this-is-me.html (for direct access)
+    permalink_path = view.dir/:output/:permalink/slug
+    make_dir(File.dirname(permalink_path))
+    # Add "Visit Blog" link only to permalink version
+    permalink_content = final + "\n<div style=\"text-align: center; margin-top: 20px;\">\n<a href=\"../index.html\">Visit Blog</a>\n</div>"
+    write_file(permalink_path, permalink_content)
     write_file("/tmp"/slug)  # for debugging
   end
 

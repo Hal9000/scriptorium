@@ -188,7 +188,7 @@ class TestScriptoriumRepo < Minitest::Test
     root = repo.root
     file = "#{root}/themes/standard/templates/post.lt3" # FIXME hardcoded
     assert_file_exist?(file)
-    assert_file_lines(file, 13)
+    assert_file_lines(file, 13)  # Removed "Visit Blog" link from template
   end
 
   def test_015_change_view
@@ -259,7 +259,7 @@ class TestScriptoriumRepo < Minitest::Test
     File.open("/tmp/mock.html", "w") do |f|
       f.puts result
     end
-    assert_file_lines("/tmp/mock.html", 21)
+    assert_file_lines("/tmp/mock.html", 21)  # Removed "Visit Blog" link from template
   end
 
 
@@ -304,5 +304,43 @@ class TestScriptoriumRepo < Minitest::Test
     assert_raises(LayoutFileMissing) do
       view.read_layout
     end
+  end
+
+  def test_026_verify_permalink_generation
+    repo = create_test_repo
+    dname = repo.create_draft(title: "Permalink Test Post", tags: %w[test permalink])
+    body = <<~EOS
+    This is a test post for permalink functionality.
+
+    <p>
+    It should be generated in both the posts/ and permalink/ directories.
+    EOS
+    text = File.read(dname)
+    text.sub!(/BEGIN HERE.../, body)
+    write_file(dname, text)
+    num = repo.finish_draft(dname)
+    repo.generate_post(num)
+    
+    # Check that post was generated in both locations
+    # Use the same pattern as the working test
+    regular_post = repo.root/:views/:sample/:output/:posts/"#{d4(num)}-permalink-test-post.html"
+    assert File.exist?(regular_post), "Regular post should exist at #{regular_post}"
+    
+    # Permalink location
+    permalink_post = repo.root/:views/:sample/:output/:permalink/"#{d4(num)}-permalink-test-post.html"
+    assert File.exist?(permalink_post), "Permalink post should exist at #{permalink_post}"
+    
+    # Both files should have different content (permalink has "Visit Blog" link)
+    regular_content = File.read(regular_post)
+    permalink_content = File.read(permalink_post)
+    refute_equal regular_content, permalink_content, "Post content should differ (permalink has 'Visit Blog' link)"
+    
+    # Regular post should NOT contain the "Visit Blog" link
+    refute_includes regular_content, "Visit Blog"
+    refute_includes regular_content, 'href="../index.html"'
+    
+    # Permalink post should contain the "Visit Blog" link
+    assert_includes permalink_content, "Visit Blog"
+    assert_includes permalink_content, 'href="../index.html"'
   end
 end

@@ -14,8 +14,10 @@ x Well-defined API (Scriptorium::API) - with versioning
 x Widget: Pages
 x UI by interaction (TUI)
 x Widget: Featured posts
-- Header: banner
-  Header: menu
+x Header: banner
+x Header: menu
+x Single-page post for viewing in isolation
+x Permalinks
   Widget configuration (selection)
 - Gem asset handling
 - Repo asset management
@@ -25,8 +27,6 @@ x Widget: Featured posts
 SOONISH:
 --------
   Theme components?
-  Single-page post for viewing in isolation
-  Permalinks
   Work on dependency tree? (user action triggers regeneration)
   Find dead code
   Deployment
