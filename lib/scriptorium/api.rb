@@ -37,6 +37,10 @@ class Scriptorium::API
     @repo.root
   end
 
+  def version
+    Scriptorium::VERSION
+  end
+
   def apply_theme(theme)
     @repo.view.apply_theme(theme)
   end

@@ -81,6 +81,7 @@ class Scriptorium::Repo
     self.class.instance_variable_set(:@root, root)
     self.class.instance_variable_set(:@repo, self)  
     load_views
+    @reddit = nil  # Lazy load Reddit integration
   end
 
   private def load_views
@@ -175,6 +176,8 @@ class Scriptorium::Repo
     write_file(dir/:config/"bootstrap_js.txt", @predef.bootstrap_js)
     write_file(dir/:config/"bootstrap_css.txt", @predef.bootstrap_css)
     write_file(dir/:config/"common.js",       @predef.common_js)
+    write_file(dir/:config/"social.txt",      @predef.social_config)
+    write_file(dir/:config/"reddit.txt",      @predef.reddit_config)
     view = open_view(name)
     @views -= [view]
     @views << view
@@ -269,8 +272,10 @@ class Scriptorium::Repo
     #   view/.../output/permalink/0123-this-is-me.html (for direct access)
     permalink_path = view.dir/:output/:permalink/slug
     make_dir(File.dirname(permalink_path))
+    # Generate complete HTML document with social meta tags for permalink
+    post_html = view.generate_post_html(data)
     # Add "Visit Blog" link only to permalink version
-    permalink_content = final + "\n<div style=\"text-align: center; margin-top: 20px;\">\n<a href=\"../index.html\">Visit Blog</a>\n</div>"
+    permalink_content = post_html + "\n<div style=\"text-align: center; margin-top: 20px;\">\n<a href=\"../index.html\">Visit Blog</a>\n</div>"
     write_file(permalink_path, permalink_content)
     write_file("/tmp"/slug)  # for debugging
   end
@@ -296,6 +301,8 @@ class Scriptorium::Repo
       vars[:"post.body"] = text
       template = @predef.post_template("standard")
       set_pubdate(vars)
+      # Add Reddit button if enabled
+      vars[:"reddit_button"] = view.generate_reddit_button(vars)
       final = substitute(vars, template) 
       tree("/tmp/tree.txt")
       write_generated_post(vars, view, final)
@@ -356,6 +363,19 @@ class Scriptorium::Repo
   def generate_front_page(view)
     view = lookup_view(view)
     view.generate_front_page
+  end
+
+  # Reddit integration
+  def reddit
+    @reddit ||= Scriptorium::Reddit.new(self)
+  end
+
+  def autopost_to_reddit(post_data, subreddit = nil)
+    reddit.autopost(post_data, subreddit)
+  end
+
+  def reddit_configured?
+    reddit.configured?
   end
 
   private def validate_view_name(name)

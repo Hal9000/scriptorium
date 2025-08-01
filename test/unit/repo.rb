@@ -251,7 +251,7 @@ class TestScriptoriumRepo < Minitest::Test
       That's all.
       EOS
     vars = {:"post.title" => title, :"post.pubdate" => pubdate, 
-            :"post.tags" => tags,   :"post.body" => body}
+            :"post.tags" => tags,   :"post.body" => body, :"reddit_button" => ""}
     predef = Scriptorium::StandardFiles.new
     template = predef.post_template("standard")
     result = template % vars

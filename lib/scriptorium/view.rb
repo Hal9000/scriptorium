@@ -659,6 +659,8 @@ write output:      write the result to output/panes/header.html
       #   content << get_common_js(view)
       when "bootstrap"
         content << generate_bootstrap_css(view)
+      when "social"
+        content << generate_social_meta_tags(args)
       end
     end
     content << "</head>\n"
@@ -719,6 +721,126 @@ write output:      write the result to output/panes/header.html
     # content = %[<script src="#{src}" integrity="#{integrity}" crossorigin="#{crossorigin}"></script>\n]
     content = %[<script src="#{src}"></script>\n]
     content
+  end
+
+  def generate_social_meta_tags(args = nil, post_data = nil)
+    # Check if social is enabled for this view
+    social_config_file = @dir/:config/"social.txt"
+    return "" unless File.exist?(social_config_file)
+    
+    # Read social configuration
+    social_config = read_commented_file(social_config_file)
+    platforms = []
+    
+    # Each non-comment line is a platform name
+    social_config.each do |line|
+      platform = line.strip.downcase
+      platforms << platform if platform.match?(/^(facebook|twitter|linkedin|reddit)$/)
+    end
+    
+    return "" if platforms.empty?
+    
+    # Determine if this is for a specific post or the main page
+    is_post = !post_data.nil?
+    
+    # Get the appropriate title, description, and URL
+    if is_post
+      title = post_data[:"post.title"] || @title
+      description = post_data[:"post.blurb"] || post_data[:"post.body"]&.truncate(200) || @desc || @subtitle || @title
+      url = "posts/#{post_data[:"post.slug"] || slugify(post_data[:"post.id"], title)}.html"
+      type = "article"
+    else
+      title = @title
+      description = @desc || @subtitle || @title
+      url = "index.html"
+      type = "website"
+    end
+    
+    # Generate meta tags
+    content = ""
+    
+    # Open Graph meta tags (Facebook, LinkedIn, etc.)
+    if platforms.include?("facebook") || platforms.include?("linkedin")
+      content << %[<meta property="og:title" content="#{escape_html(title)}">\n]
+      content << %[<meta property="og:type" content="#{type}">\n]
+      content << %[<meta property="og:url" content="#{url}">\n]
+      content << %[<meta property="og:description" content="#{escape_html(description)}">\n]
+      content << %[<meta property="og:site_name" content="#{escape_html(@title)}">\n]
+      if is_post && post_data[:"post.pubdate"]
+        content << %[<meta property="article:published_time" content="#{post_data[:"post.pubdate"]}">\n]
+      end
+    end
+    
+    # Twitter Card meta tags
+    if platforms.include?("twitter")
+      content << %[<meta name="twitter:card" content="summary">\n]
+      content << %[<meta name="twitter:title" content="#{escape_html(title)}">\n]
+      content << %[<meta name="twitter:description" content="#{escape_html(description)}">\n]
+      content << %[<meta name="twitter:url" content="#{url}">\n]
+    end
+    
+    content
+  end
+
+  def generate_reddit_button(post_data = nil)
+    # Check if Reddit is enabled in social config
+    social_config_file = @dir/:config/"social.txt"
+    return "" unless File.exist?(social_config_file)
+    
+    social_config = read_commented_file(social_config_file)
+    reddit_enabled = social_config.any? { |line| line.strip.downcase == "reddit" }
+    return "" unless reddit_enabled
+    
+    # Check if Reddit button is enabled
+    reddit_config_file = @dir/:config/"reddit.txt"
+    return "" unless File.exist?(reddit_config_file)
+    
+    reddit_config = read_commented_file(reddit_config_file)
+    button_enabled = false
+    subreddit = ""
+    hover_text = ""
+    
+    reddit_config.each do |line|
+      component, args = line.split(/\s+/, 2)
+      case component.downcase
+      when "button"
+        button_enabled = (args&.downcase == "true")
+      when "subreddit"
+        subreddit = args&.strip || ""
+      when "hover_text"
+        hover_text = args&.strip || ""
+      end
+    end
+    
+    return "" unless button_enabled
+    
+    # Determine post URL and title
+    if post_data
+      title = post_data[:"post.title"] || @title
+      url = "posts/#{post_data[:"post.slug"] || slugify(post_data[:"post.id"], title)}.html"
+    else
+      title = @title
+      url = "index.html"
+    end
+    
+    # Build Reddit share URL
+    if subreddit.empty?
+      reddit_url = "https://reddit.com/submit?url=#{escape_html(url)}&title=#{escape_html(title)}"
+    else
+      reddit_url = "https://reddit.com/r/#{subreddit}/submit?url=#{escape_html(url)}&title=#{escape_html(title)}"
+    end
+    
+    # Determine hover text
+    if hover_text.empty?
+      hover_text = subreddit.empty? ? "Share on Reddit" : "Share on r/#{subreddit}"
+    end
+    
+    # Generate button HTML
+    button_html = %[<a href="#{reddit_url}" target="_blank" title="#{hover_text}" style="text-decoration: none; margin-right: 8px;">
+      <img src="assets/reddit-logo.png" width="16" height="16" alt="Share on Reddit" style="vertical-align: middle;">
+    </a>]
+    
+    button_html
   end
 
   def build_containers
@@ -810,6 +932,98 @@ write output:      write the result to output/panes/header.html
     rescue => e
       # Debug file write failed, but this is not critical
     end
+  end
+
+  def generate_post_html(post_data)
+    # Generate HTML head with post-specific social meta tags
+    html_head = generate_html_head_with_post_data(post_data)
+    common = get_common_js
+    boot = generate_bootstrap_js
+    
+    # Create a simple post layout
+    post_content = post_data[:"post.body"] || ""
+    post_title = post_data[:"post.title"] || @title
+    post_date = post_data[:"post.pubdate"] || ""
+    post_tags = post_data[:"post.tags"] || ""
+    
+    full_html = <<~HTML
+      <!DOCTYPE html>
+      #{html_head}
+      <html>
+        <body style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
+          <div style="margin-bottom: 20px;">
+            <a href="../index.html" style="text-decoration: none; color: #666;">← Back to Blog</a>
+          </div>
+          
+          <article>
+            <header>
+              <h1>#{escape_html(post_title)}</h1>
+              <div style="color: #666; margin-bottom: 20px;">
+                <time>#{post_date}</time>
+                #{post_tags ? "<span style='margin-left: 10px;'>#{escape_html(post_tags)}</span>" : ""}
+              </div>
+            </header>
+            
+            <div style="line-height: 1.6;">
+              #{post_content}
+            </div>
+          </article>
+          
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+            <a href="../index.html">← Back to Blog</a>
+          </div>
+          
+          #{boot.strip}
+          #{common.strip}
+        </body>
+      </html>
+    HTML
+
+    # Beautify HTML if HtmlBeautifier is available
+    begin
+      full_html = ::HtmlBeautifier.beautify(full_html)
+    rescue NameError, LoadError => e
+      # HtmlBeautifier not available, continue without beautification
+    end
+
+    full_html
+  end
+
+  def generate_html_head_with_post_data(post_data)
+    # Generate HTML head with post-specific social meta tags
+    global_head = @root/:config/"global-head.txt"
+    view_head = @dir/:config/"global-head.txt"
+    head_file = view_head
+    which = "view"
+    line1 = "<!-- head info from #{which} -->"
+    lines = read_commented_file(head_file)
+    content = "<head>\n#{line1}\n<title>#{escape_html(post_data[:"post.title"] || @title)}</title>\n"
+    
+    lines.each do |line|
+      component, args = line.split(/\s+/, 2)
+      case component.downcase
+      when "charset"
+        @charset = args
+        content << %[<meta charset="#{args}">\n]
+      when "desc"
+        @desc = args
+        content << %[<meta name="description" content="#{args}">\n]
+      when "viewport"
+        @viewport = args
+        str = args.split.join(" ")
+        content << %[<meta name="viewport" content="#{str}">\n]
+      when "robots"
+        @robots = args
+        str = args.split.join(", ")  
+        content << %[<meta name="robots" content="#{str}">\n]
+      when "bootstrap"
+        content << generate_bootstrap_css(true)
+      when "social"
+        content << generate_social_meta_tags(args, post_data)
+      end
+    end
+    content << "</head>\n"
+    content
   end
 
 end

@@ -301,6 +301,10 @@ class ScriptoriumTUI
       create_draft(args)
     elsif cmd == "new" && args.start_with?("post")
       create_post(args)
+    elsif cmd == "list" && args.start_with?("themes")
+      list_themes
+    elsif cmd == "clone" && args.include?(" ")
+      clone_theme(args)
 
     else
       # Handle single-word commands
@@ -333,6 +337,12 @@ class ScriptoriumTUI
         add_widget(args)
       when "config" && args.start_with?("widget")
         config_widget(args)
+      when "config" && args.start_with?("social")
+        config_social
+      when "config" && args.start_with?("reddit")
+        config_reddit
+      when "generate"
+        generate_current_view
       when "quit", "q"
         exit 0
       else
@@ -367,6 +377,13 @@ class ScriptoriumTUI
         list widgets           - List available and configured widgets
         add widget <name>      - Add widget to current view
         config widget <name>   - Configure widget data
+      
+        config social          - Configure social media sharing
+        config reddit          - Configure Reddit sharing buttons
+        generate               - Regenerate current view
+      
+        list themes            - List available themes
+        clone <old> <new>      - Clone a theme
       
         version, v                - Show version
         help, h                   - Show this help
@@ -1140,6 +1157,120 @@ class ScriptoriumTUI
     puts
   end
 
+  private def config_social
+    current_view = @api.current_view
+    if current_view.nil?
+      puts
+      puts "  No current view selected"
+      puts
+      return
+    end
+
+    social_config_file = current_view.dir/:config/"social.txt"
+    unless File.exist?(social_config_file)
+      puts
+      puts "  Social configuration file not found: #{social_config_file}"
+      puts
+      return
+    end
+
+    puts
+    puts "  Social Media Sharing Configuration"
+    puts "  ================================="
+    puts
+    puts "  This feature adds social media meta tags to your posts for better sharing."
+    puts "  When enabled, posts will have proper Open Graph and Twitter Card meta tags."
+    puts
+    puts "  Configuration:"
+    puts "  - List one platform per line to enable (facebook, twitter, linkedin, reddit)"
+    puts "  - If no platforms listed, social meta tags are disabled"
+    puts "  - For Reddit buttons, also configure reddit.txt file"
+    puts
+    puts "  No Facebook App ID or Twitter username required for basic meta tags."
+    puts "  These are only needed if you want to add social sharing buttons later."
+    puts
+    puts "  Press Enter to edit the configuration file..."
+    gets
+
+    @api.edit_file(social_config_file)
+    
+    puts
+    puts "  Social configuration updated."
+    puts "  Regenerate your view to apply changes:"
+    puts "    generate"
+    puts
+  end
+
+  private def config_reddit
+    current_view = @api.current_view
+    if current_view.nil?
+      puts
+      puts "  No current view selected"
+      puts
+      return
+    end
+
+    reddit_config_file = current_view.dir/:config/"reddit.txt"
+    unless File.exist?(reddit_config_file)
+      puts
+      puts "  Reddit configuration file not found: #{reddit_config_file}"
+      puts "  Creating new Reddit configuration file..."
+      puts
+      # Create the file with default content
+      write_file(reddit_config_file, @api.repo.predef.reddit_config)
+    end
+
+    puts
+    puts "  Reddit Sharing Button Configuration"
+    puts "  =================================="
+    puts
+    puts "  This feature adds Reddit share buttons to your posts."
+    puts "  When enabled, readers can easily share your posts to Reddit."
+    puts
+    puts "  Configuration options:"
+    puts "  - button: true/false - Enable or disable Reddit share button"
+    puts "  - subreddit: <name> - Specify a subreddit for direct posting (optional)"
+    puts "  - hover_text: <text> - Custom hover text (optional)"
+    puts
+    puts "  Examples:"
+    puts "    button true"
+    puts "    subreddit RubyElixirEtc"
+    puts "    hover_text \"Share on RubyElixirEtc\""
+    puts
+    puts "  Note: Reddit must also be enabled in social.txt for buttons to appear."
+    puts
+    puts "  Press Enter to edit the configuration file..."
+    gets
+
+    @api.edit_file(reddit_config_file)
+    
+    puts
+    puts "  Reddit configuration updated."
+    puts "  Regenerate your view to apply changes:"
+    puts "    generate"
+    puts
+  end
+
+  private def generate_current_view
+    current_view = @api.current_view
+    if current_view.nil?
+      puts
+      puts "  No current view selected"
+      puts
+      return
+    end
+
+    puts
+    puts "  Regenerating view '#{current_view.name}'..."
+    begin
+      @api.generate_view(current_view.name)
+      puts "  ✅ View regenerated successfully!"
+    rescue => e
+      puts "  ⚠️  View regeneration failed: #{e.message}"
+    end
+    puts
+  end
+
   private def determine_widget_container(view)
     # Check which containers exist in the layout
     layout_file = view.dir/:config/"layout.txt"
@@ -1206,6 +1337,66 @@ class ScriptoriumTUI
       puts
       puts "  Widget Configuration:"
       puts "  Edit the list.txt file to configure widget data."
+      puts
+    end
+  end
+
+  private def list_themes
+    puts
+    themes = @api.themes_available
+    if themes.empty?
+      puts "  No themes found"
+    else
+      puts "  Available themes:"
+      themes.each do |theme|
+        puts "    #{theme}"
+      end
+    end
+    puts
+  end
+
+  private def clone_theme(args)
+    parts = args.split(/\s+/)
+    if parts.length != 2
+      puts
+      puts "  Usage: clone <oldtheme> <newtheme>"
+      puts "  Example: clone standard mytheme"
+      puts
+      return
+    end
+
+    old_theme, new_theme = parts[0], parts[1]
+    
+    begin
+      # Check if old theme exists
+      old_theme_path = @api.root/:themes/old_theme
+      unless Dir.exist?(old_theme_path)
+        puts
+        puts "  Theme '#{old_theme}' not found"
+        puts
+        return
+      end
+
+      # Check if new theme already exists
+      new_theme_path = @api.root/:themes/new_theme
+      if Dir.exist?(new_theme_path)
+        puts
+        puts "  Theme '#{new_theme}' already exists"
+        puts
+        return
+      end
+
+      # Clone the theme
+      require 'fileutils'
+      FileUtils.cp_r(old_theme_path, new_theme_path)
+      
+      puts
+      puts "  ✅ Theme '#{old_theme}' cloned to '#{new_theme}'"
+      puts "  Edit #{new_theme_path} to customize your theme"
+      puts
+    rescue => e
+      puts
+      puts "  ❌ Failed to clone theme: #{e.message}"
       puts
     end
   end

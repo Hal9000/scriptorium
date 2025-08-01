@@ -20,6 +20,7 @@ class Scriptorium::StandardFiles
       robots     index  follow
       javascript # See common.js 
       bootstrap  # See bootstrap.txt
+      social     # See social.txt for configuration
     EOS
   end
 
@@ -139,6 +140,33 @@ class Scriptorium::StandardFiles
       featuredposts
     EOS
   end
+
+  def social_config
+    <<~EOS
+      # Available platforms: facebook twitter linkedin reddit
+      # List one platform per line to enable social meta tags
+      facebook
+      twitter
+      
+      # Note: No Facebook App ID or Twitter username required for basic meta tags
+      # These are only needed if you want to add social sharing buttons later
+    EOS
+  end
+
+  def reddit_config
+    <<~EOS
+      # Reddit sharing button configuration
+      # Set to true to show Reddit share button on posts
+      button true
+      
+      # Optional: specify a subreddit for direct posting
+      # Leave empty or omit to let users choose subreddit
+      subreddit
+      
+      # Optional: custom hover text (defaults to "Share on Reddit" or "Share on [subreddit]")
+      hover_text
+    EOS
+  end
   
   def initial_post(mode = :filled, num: "0", title: nil, blurb: nil, views: nil,
                   tags: nil, body:  nil)
@@ -183,7 +211,7 @@ class Scriptorium::StandardFiles
       </div>
       <div style="display: flex; justify-content: space-between; align-items: baseline;">
         <!<span style="text-align: left; font-size: 1.5em;">%{post.title}</span>
-        <span style="text-align: right; font-size: 0.9em;">%{post.pubdate}</span>
+        <span style="text-align: right; font-size: 0.9em;">%{reddit_button}%{post.pubdate}</span>
       </div>
       <hr>
       %{post.body}

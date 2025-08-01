@@ -21,7 +21,10 @@ x Permalinks
 x Deployment
 x Preview feature
 x Live view (browse) feature
-  Widget configuration (selection)
+x Widget configuration (selection)
+x facebook metadata
+x x/twitter metadata
+x LinkedIn metadata
 - Gem asset handling
 - Repo asset management
   Sample blog additions
@@ -35,8 +38,8 @@ SOONISH:
   UI by curses (RubyText)
   Syntax coloring
   reddit support
-  facebook support
-  x/twitter support
+  facebook button
+  x/twitter button
   Docs: Project contributor level
   Docs: Widget creator level
   Docs: Livetext for Scriptorium
