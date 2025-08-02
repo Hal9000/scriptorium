@@ -311,7 +311,6 @@ class Scriptorium::Repo
       # Add Reddit button if enabled
       vars[:"reddit_button"] = view.generate_reddit_button(vars)
       final = substitute(vars, template) 
-      tree("/tmp/tree.txt")
       write_generated_post(vars, view, final)
     end
   end

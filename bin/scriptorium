@@ -223,10 +223,19 @@ class ScriptoriumTUI
         execute_command(input)
       rescue Interrupt
         puts "\nUse 'quit' to exit"
+      rescue CannotLookupView => e
+        # Extract view name from error message for user-friendly display
+        if e.message =~ /Cannot lookup view: (.+)/
+          view_name = $1
+          puts
+          puts "  View '#{view_name}' not found"
+          puts
+        else
+          puts "Error: #{e.message}"
+        end
       rescue => e
         puts "Error: #{e.message}"
         puts e.backtrace.first if @testing
-        puts "DEBUG: Exception caught in mainloop: #{e.class}: #{e.message}"
       end
     end
 
@@ -351,9 +360,6 @@ class ScriptoriumTUI
         puts
       end
     end
-  rescue => e
-    puts "DEBUG: Exception caught in execute_command: #{e.class.name} - #{e.message}"
-    puts e.backtrace.join("\n")
   end
 
   private def show_help
@@ -443,7 +449,6 @@ class ScriptoriumTUI
     puts "  Switched to view '#{view_name}'"
     puts
   rescue => e
-    puts "DEBUG: Exception caught in change_view: #{e.class.name} - #{e.message}"
     puts
     puts "  View '#{view_name}' not found"
     puts
@@ -691,10 +696,6 @@ class ScriptoriumTUI
     end
     puts
   end
-
-
-
-
 
   def which(command)
     # Mock which in test mode to avoid hanging

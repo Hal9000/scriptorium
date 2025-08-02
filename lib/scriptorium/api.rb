@@ -50,9 +50,7 @@ class Scriptorium::API
     if name.nil?
       @repo.current_view
     else
-      puts "DEBUG: API view method called with: #{name}"
       result = @repo.view(name)
-      puts "DEBUG: API view method result: #{result.inspect}"
       result
     end
   end

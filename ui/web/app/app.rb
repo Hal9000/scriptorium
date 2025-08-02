@@ -30,75 +30,35 @@ class ScriptoriumWeb < Sinatra::Base
   # Initialize API instance
   before do
     begin
-      puts "DEBUG: Initializing API..."
-      @api = Scriptorium::API.new(testmode: true)
-      puts "DEBUG: API created successfully"
-      
-      # Try to discover existing repo
-      unless @api.instance_variable_get(:@repo)
-        puts "DEBUG: No repo loaded, checking for scriptorium-TEST"
-        if Dir.exist?("scriptorium-TEST")
-          puts "DEBUG: Found scriptorium-TEST directory"
-          begin
-            @api.open_repo("scriptorium-TEST")
-            puts "DEBUG: Successfully opened repo"
-          rescue => e
-            puts "DEBUG: Error opening repo: #{e.message}"
-            @error = "Error opening repository: #{e.message}"
-          end
-        else
-          puts "DEBUG: scriptorium-TEST directory not found"
-        end
-      else
-        puts "DEBUG: Repo already loaded"
-      end
+      @api = Scriptorium::API.new
+      @api.open_repo("scriptorium-TEST") if Dir.exist?("scriptorium-TEST")
     rescue => e
-      puts "DEBUG: Error in before block: #{e.message}"
-      puts "DEBUG: Backtrace: #{e.backtrace.first}"
       @api = nil
-      @error = "Error initializing API: #{e.message}"
     end
   end
   
   # Main dashboard
   get '/' do
-    puts "DEBUG: Root route accessed"
     @current_view = @api&.current_view
     @views = @api&.views || []
     begin
       if @api&.instance_variable_get(:@repo)
-        puts "DEBUG: Repository exists"
-        puts "DEBUG: Repository root: #{@api.instance_variable_get(:@repo).root}"
         
         # Only try to load posts if we have a current view
         if @current_view
-          puts "DEBUG: Current view: #{@current_view.name}"
-          puts "DEBUG: About to call @api.posts(#{@current_view.name})"
-          puts "DEBUG: About to call @api.posts(#{@current_view.name})"
           @posts = @api.posts(@current_view.name) || []
-          puts "DEBUG: Posts loaded successfully: #{@posts.length} posts"
           if @posts.length > 0
-            puts "DEBUG: First post: #{@posts.first.title} (ID: #{@posts.first.id})"
           end
         else
-          puts "DEBUG: No current view"
           @posts = []
         end
       else
-        puts "DEBUG: No repository loaded"
         @posts = []
       end
     rescue => e
-      puts "DEBUG: Error loading posts: #{e.message}"
-      puts "DEBUG: Full backtrace:"
-      e.backtrace.each { |line| puts "  #{line}" }
       @posts = []
     end
     @error = @error || params[:error]
-    
-    puts "DEBUG: Current view: #{@current_view&.name}"
-    puts "DEBUG: Views count: #{@views&.length || 0}"
-    puts "DEBUG: Posts count: #{@posts&.length || 0}"
     
     erb :dashboard
   end
@@ -135,24 +95,17 @@ class ScriptoriumWeb < Sinatra::Base
 
   # Create new view
   post '/create_view' do
-    puts "DEBUG: create_view called with params: #{params.inspect}"
     begin
       validate_required_params(params, :name, :title)
-      puts "DEBUG: validation passed"
       
       name = params[:name].strip
       title = params[:title].strip
       subtitle = params[:subtitle]&.strip || ""
       
-      puts "DEBUG: calling @api.create_view(#{name.inspect}, #{title.inspect}, #{subtitle.inspect})"
       @api.create_view(name, title, subtitle, theme: "standard")
-      puts "DEBUG: create_view succeeded"
       redirect "/?message=View '#{name}' created successfully"
     rescue => e
-      puts "DEBUG: Error in create_view: #{e.class.name} - #{e.message}"
-      puts "DEBUG: Backtrace: #{e.backtrace.first(3).join("\n")}"
       error_info = friendly_error_message(e)
-      puts "DEBUG: Error info: #{error_info.inspect}"
       redirect "/?error=#{error_info[:message]}&suggestion=#{error_info[:suggestion]}"
     end
   end
