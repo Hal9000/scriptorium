@@ -27,31 +27,50 @@ function load_main(slug) {
     const rightDiv = document.querySelector(".right");
     console.log('Loading main with slug:', slug); // Log the slug
 
-  fetch(slug)
+    // Check if we're in preview mode (served from Sinatra)
+    // If the URL contains '/preview_view', we need to use the Sinatra route
+    let fetchUrl = slug;
+    console.log('Current location:', window.location.href);
+    console.log('Checking for preview mode...');
+    
+    if (window.location.href.includes('localhost:4567') || window.location.href.includes('127.0.0.1:4567')) {
+        // Extract view name from the current URL or use a default
+        const viewName = 'mystuff'; // This should be dynamic based on the current view
+        fetchUrl = `/preview/${viewName}/posts/${slug.split('/').pop()}`;
+        console.log('Using preview URL:', fetchUrl);
+    } else {
+        console.log('Using original URL:', fetchUrl);
+    }
+
+  fetch(fetchUrl)
     .then(response => {
         if (response.ok) {
             console.log('Response is ok');
             return response.text();
         } else {
             console.error('Failed to load:', response.status); // Log the failed response
+            contentDiv.innerHTML = `<p>Error loading content: ${response.status}</p>`;
         }
     })
     .then(content => {
-        console.log('Loaded content into div'); // Log successful content insertion
+        if (content) {
+            console.log('Loaded content into div'); // Log successful content insertion
 
-        // Now, reload the content into the respective containers:
-        // Main section
-        contentDiv.innerHTML = content;
+            // Now, reload the content into the respective containers:
+            // Main section
+            contentDiv.innerHTML = content;
 
-        // Re-insert header, footer, left, and right (if necessary)
-        // If you want the static layout to be kept, you can preserve these parts
-        // with additional logic or predefined structure (here it's assumed 
-        // that header/footer/left/right are already statically included).
-        
-        // You can also replace the other parts (left, right, header, footer) if needed.
-        history.pushState({slug: slug}, "", slug);  // Update browser history
+            // Re-insert header, footer, left, and right (if necessary)
+            // If you want the static layout to be kept, you can preserve these parts
+            // with additional logic or predefined structure (here it's assumed 
+            // that header/footer/left/right are already statically included).
+            
+            // You can also replace the other parts (left, right, header, footer) if needed.
+            history.pushState({slug: slug}, "", slug);  // Update browser history
+        }
     })
     .catch(error => {
         console.log("Error loading content:", error); // Log any errors during fetch
+        contentDiv.innerHTML = `<p>Error loading content: ${error.message}</p>`;
     });
   }

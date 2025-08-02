@@ -501,12 +501,12 @@ class TestScriptoriumAPI < Minitest::Test
     end
   end
 
-  def test_035_generate_all
+  def test_035_generate_view
     @api.create_view("test_view", "Test View")
     @api.create_post("Test Post", "Test body")
     
     # Should not raise an error
-    result = @api.generate_all
+    result = @api.generate_view
     assert result
   end
 

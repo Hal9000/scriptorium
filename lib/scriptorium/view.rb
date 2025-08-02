@@ -884,7 +884,10 @@ write output:      write the result to output/panes/header.html
       page << %[<div style="position: absolute; bottom: 0; width: 100%;">#{bar}</div>]
       write_file(out/"page#{i+1}.html", page.join)
     end
-    FileUtils.ln(out/"page1.html", out/"post_index.html")
+    # Remove existing link if it exists, then create new one
+    post_index_link = out/"post_index.html"
+    File.delete(post_index_link) if File.exist?(post_index_link)
+    FileUtils.ln(out/"page1.html", post_index_link)
   end
 
   def generate_front_page

@@ -129,10 +129,18 @@ class Scriptorium::API
   end
 
   def generate_post(post_id)
-    post = @repo.post(post_id)
-    raise "Post not found" if post.nil?
-    
-    @repo.generate_post(post_id)
+    # Check if the post directory exists first
+    post_dir = @repo.root/:posts/d4(post_id)
+    if Dir.exist?(post_dir)
+      # Post directory exists, proceed with generation
+      @repo.generate_post(post_id)
+    else
+      # Try to find the post through normal means
+      post = @repo.post(post_id)
+      raise "Post not found" if post.nil?
+      
+      @repo.generate_post(post_id)
+    end
   end
 
   def lookup_view(view_name)
@@ -437,17 +445,7 @@ class Scriptorium::API
     @repo.generate_front_page(view)
   end
 
-  def generate_all
-    # Generate all content for the current view
-    # This is currently a simple wrapper around generate_front_page
-    # TODO: Later implement "makefile" type checking to avoid unnecessary work
-    
-    view ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if view.nil?
-    
-    generate_front_page(view)
-    true
-  end
+
 
   # Draft management
   def drafts

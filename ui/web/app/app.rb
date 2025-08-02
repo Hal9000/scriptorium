@@ -31,7 +31,9 @@ class ScriptoriumWeb < Sinatra::Base
   before do
     begin
       @api = Scriptorium::API.new
-      @api.open_repo("scriptorium-TEST") if Dir.exist?("scriptorium-TEST")
+      # Use absolute path to the test repository
+      test_repo_path = File.join(__dir__, "..", "scriptorium-TEST")
+      @api.open_repo(test_repo_path) if Dir.exist?(test_repo_path)
     rescue => e
       @api = nil
     end
@@ -59,6 +61,7 @@ class ScriptoriumWeb < Sinatra::Base
       @posts = []
     end
     @error = @error || params[:error]
+    @message = params[:message]
     
     erb :dashboard
   end
@@ -133,8 +136,24 @@ class ScriptoriumWeb < Sinatra::Base
       # Convert draft to post immediately
       post_num = @api.finish_draft(draft_path)
       # Generate the post to create meta.txt and other files
-      @api.generate_post(post_num)
-      redirect "/?message=Post '#{params[:title].strip}' created successfully (##{post_num})"
+      begin
+        STDERR.puts "DEBUG: About to call generate_post for post #{post_num}"
+        STDERR.puts "DEBUG: Current working directory: #{Dir.pwd}"
+        STDERR.puts "DEBUG: API root: #{@api.root}"
+        @api.generate_post(post_num)
+        STDERR.puts "DEBUG: generate_post completed successfully"
+        # Check if meta.txt was created
+        meta_file = @api.root/"posts"/"#{post_num.to_s.rjust(4, '0')}"/"meta.txt"
+        STDERR.puts "DEBUG: Meta file path: #{meta_file}"
+        STDERR.puts "DEBUG: Meta file exists: #{File.exist?(meta_file)}"
+        redirect "/?message=Post '#{params[:title].strip}' created successfully (##{post_num})"
+              rescue => e
+          # Log the actual error for debugging
+          STDERR.puts "ERROR in generate_post: #{e.class}: #{e.message}"
+          STDERR.puts e.backtrace.join("\n")
+          error_info = friendly_error_message(e)
+          redirect "/?error=#{error_info[:message]}&suggestion=#{error_info[:suggestion]}"
+      end
     rescue => e
       error_info = friendly_error_message(e)
       redirect "/?error=#{error_info[:message]}&suggestion=#{error_info[:suggestion]}"
@@ -221,7 +240,10 @@ class ScriptoriumWeb < Sinatra::Base
       source_file = @api.root/"posts"/post.num/"source.lt3"
       File.write(source_file, content)
       
-      redirect "/?message=Post ##{post_id} saved successfully"
+      # Generate the post after saving
+      @api.generate_post(post_id)
+      
+      redirect "/?message=Post ##{post_id} saved and generated successfully"
     rescue => e
       redirect "/edit_post/#{post_id}?error=Failed to save post: #{e.message}"
     end
@@ -248,6 +270,87 @@ class ScriptoriumWeb < Sinatra::Base
       redirect "/?message=Post ##{post_id} generated successfully"
     rescue => e
       redirect "/?error=Failed to generate post: #{e.message}"
+    end
+  end
+
+  # Generate view
+  post '/generate_view' do
+    view_name = params[:view_name]
+    
+    begin
+      if view_name.nil? || view_name.strip.empty?
+        redirect "/?error=No view specified"
+        return
+      end
+      
+      # Generate the view
+      @api.generate_view(view_name)
+      redirect "/?message=View '#{view_name}' generated successfully"
+    rescue => e
+      redirect "/?error=Failed to generate view: #{e.message}"
+    end
+  end
+
+  # Preview view
+  post '/preview_view' do
+    view_name = params[:view_name]
+    
+    begin
+      if view_name.nil? || view_name.strip.empty?
+        redirect "/?error=No view specified"
+        return
+      end
+      
+      # Generate the view first to ensure it's up to date
+      @api.generate_view(view_name)
+      
+      # Redirect to the generated index.html file
+      view_dir = @api.root/"views"/view_name
+      index_file = view_dir/"output"/"index.html"
+      
+      if File.exist?(index_file)
+        # Return the HTML content directly for preview
+        content_type :html
+        File.read(index_file)
+      else
+        redirect "/?error=Preview file not found - view may not have been generated properly"
+      end
+    rescue => e
+      redirect "/?error=Failed to preview view: #{e.message}"
+    end
+  end
+
+  # Serve post files for preview
+  get '/preview/:view_name/posts/:filename' do
+    view_name = params[:view_name]
+    filename = params[:filename]
+    
+    STDERR.puts "DEBUG: Preview request - view_name: #{view_name}, filename: #{filename}"
+    
+    begin
+      if view_name.nil? || view_name.strip.empty? || filename.nil? || filename.strip.empty?
+        STDERR.puts "DEBUG: Missing parameters"
+        status 404
+        return "File not found"
+      end
+      
+      # Construct the file path
+      post_file = @api.root/"views"/view_name/"output"/"posts"/filename
+      STDERR.puts "DEBUG: Looking for file: #{post_file}"
+      STDERR.puts "DEBUG: File exists: #{File.exist?(post_file)}"
+      
+      if File.exist?(post_file)
+        content_type :html
+        File.read(post_file)
+      else
+        STDERR.puts "DEBUG: File not found"
+        status 404
+        "File not found: #{filename}"
+      end
+    rescue => e
+      STDERR.puts "DEBUG: Error: #{e.message}"
+      status 500
+      "Error loading file: #{e.message}"
     end
   end
 

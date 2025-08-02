@@ -72,10 +72,10 @@ api.delete_draft(draft_path)
 drafts = api.drafts
 puts "Drafts after deletion: #{drafts.length}"
 
-# Demo generate_all
-puts "\n=== Generate All ==="
-result = api.generate_all
-puts "Generated all content: #{result}"
+# Demo generate_view
+puts "\n=== Generate View ==="
+result = api.generate_view
+puts "Generated view content: #{result}"
 
 # Demo widget generation
 puts "\n=== Widget Generation ==="
