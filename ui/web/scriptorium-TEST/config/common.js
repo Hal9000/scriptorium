@@ -56,9 +56,29 @@ function load_main(slug) {
         if (content) {
             console.log('Loaded content into div'); // Log successful content insertion
 
+            // Clean up the content - remove any HTML/head/body tags if present
+            // since we're inserting into an existing HTML document
+            let cleanContent = content;
+            
+            // Remove DOCTYPE if present
+            cleanContent = cleanContent.replace(/<!DOCTYPE[^>]*>/i, '');
+            
+            // Remove <html> tags and their content
+            cleanContent = cleanContent.replace(/<html[^>]*>[\s\S]*?<\/html>/i, function(match) {
+                // Extract content between <html> tags, excluding <head> and <body> tags
+                return match.replace(/<head[^>]*>[\s\S]*?<\/head>/i, '')
+                           .replace(/<body[^>]*>|<\/body>/gi, '');
+            });
+            
+            // Remove any remaining <head> or <body> tags
+            cleanContent = cleanContent.replace(/<head[^>]*>[\s\S]*?<\/head>/i, '')
+                                     .replace(/<body[^>]*>|<\/body>/gi, '');
+            
+            console.log('Cleaned content length:', cleanContent.length);
+
             // Now, reload the content into the respective containers:
             // Main section
-            contentDiv.innerHTML = content;
+            contentDiv.innerHTML = cleanContent;
 
             // Re-insert header, footer, left, and right (if necessary)
             // If you want the static layout to be kept, you can preserve these parts

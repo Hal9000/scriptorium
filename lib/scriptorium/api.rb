@@ -443,6 +443,7 @@ class Scriptorium::API
     raise "No view specified and no current view set" if view.nil?
     
     @repo.generate_front_page(view)
+    true
   end
 
 

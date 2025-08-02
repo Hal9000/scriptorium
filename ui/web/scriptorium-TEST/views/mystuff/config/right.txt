@@ -1,5 +1,2 @@
-# <!-- Section: right -->
-# Contents of right sidebar
-# (may be widgets or whatever)
-
+# Right sidebar content
 text This is right...

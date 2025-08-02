@@ -253,8 +253,7 @@ write output:      write the result to output/panes/header.html
       "title"      => ->(arg = nil) { "  <h1>#{escape_html(@title)}</h1>" },
       "subtitle"   => ->(arg = nil) { "  <p>#{escape_html(@subtitle)}</p>" },
       "nav"        => ->(arg = nil) { build_nav(arg) },
-      "banner"     => ->(arg = nil) { build_banner(arg) },
-      "banner_svg" => ->(arg = nil) { build_banner_svg(arg) }
+      "banner"     => ->(arg = nil) { build_banner(arg) }
     }
 
     build_section("header", h2, args)

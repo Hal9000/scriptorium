@@ -12,23 +12,57 @@
     .button:hover { background: #005a87; }
     .button.secondary { background: #6c757d; }
     .button.secondary:hover { background: #545b62; }
+    .button:disabled { background: #ccc; cursor: not-allowed; }
     .section { margin: 20px 0; }
     .section h2 { margin: 0 0 15px 0; font-size: 18px; }
-    textarea { width: 100%; height: 300px; font-family: 'Courier New', monospace; font-size: 14px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+    textarea { width: 100%; height: 200px; font-family: 'Courier New', monospace; font-size: 14px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+    input[type="text"], select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; }
     .view-info { background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
     .view-info h2 { margin: 0 0 10px 0; }
     .view-info p { margin: 5px 0; }
-    .tabs { border-bottom: 1px solid #ddd; margin-bottom: 20px; }
-    .tab { display: inline-block; padding: 10px 20px; cursor: pointer; border: 1px solid transparent; border-bottom: none; margin-bottom: -1px; }
-    .tab.active { background: white; border-color: #ddd; border-radius: 4px 4px 0 0; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
+    
+    /* Step Navigation */
+    .step-nav { display: flex; margin-bottom: 30px; border-bottom: 2px solid #eee; }
+    .step { flex: 1; text-align: center; padding: 15px; cursor: pointer; border-bottom: 3px solid transparent; }
+    .step.active { border-bottom-color: #007cba; background: #f0f8ff; }
+    .step.completed { border-bottom-color: #28a745; }
+    .step-number { display: inline-block; width: 30px; height: 30px; line-height: 30px; border-radius: 50%; background: #ccc; color: white; margin-right: 10px; }
+    .step.active .step-number { background: #007cba; }
+    .step.completed .step-number { background: #28a745; }
+    
+    /* Step Content */
+    .step-content { display: none; }
+    .step-content.active { display: block; }
+    
+    /* Layout Builder */
+    .layout-builder { border: 1px solid #ddd; padding: 20px; border-radius: 4px; }
+    .container-option { margin: 10px 0; padding: 10px; border: 1px solid #eee; border-radius: 4px; }
+    .container-option label { display: flex; align-items: center; cursor: pointer; }
+    .container-option input[type="checkbox"] { margin-right: 10px; }
+    .container-option input[type="text"] { width: 80px; margin-left: 10px; }
+    .layout-preview { margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px; }
+    .layout-preview-grid { display: grid; gap: 5px; }
+    .layout-preview-grid.header { grid-template-columns: 1fr; }
+    .layout-preview-grid.body { grid-template-columns: 1fr 2fr 1fr; }
+    .layout-preview-grid.footer { grid-template-columns: 1fr; }
+    .layout-preview-cell { padding: 10px; background: #e9ecef; border-radius: 3px; text-align: center; font-size: 12px; }
+    
+    /* Container Tabs */
+    .container-tabs { border-bottom: 1px solid #ddd; margin-bottom: 20px; }
+    .container-tab { display: inline-block; padding: 10px 20px; cursor: pointer; border: 1px solid transparent; border-bottom: none; margin-bottom: -1px; }
+    .container-tab.active { background: white; border-color: #ddd; border-radius: 4px 4px 0 0; }
+    .container-content { display: none; }
+    .container-content.active { display: block; }
+    
+    /* Form Navigation */
+    .form-nav { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }
+    .form-nav .button { margin-right: 10px; }
   </style>
 </head>
 <body>
   <div class="header">
     <h1>Configure View: <%= @view.name %></h1>
-    <p>Edit view configuration and layout settings</p>
+    <p>Step-by-step view configuration wizard</p>
   </div>
 
   <% if params[:error] %>
@@ -47,68 +81,321 @@
     <p><strong>Path:</strong> views/<%= @view.name %></p>
   </div>
 
-  <div class="tabs">
-    <div class="tab active" onclick="showTab('config')">Configuration</div>
-    <div class="tab" onclick="showTab('layout')">Layout</div>
-    <div class="tab" onclick="showTab('widgets')">Widgets</div>
+  <!-- Step Navigation -->
+  <div class="step-nav">
+    <div class="step active" onclick="showStep(1)">
+      <span class="step-number">1</span>
+      <span>Basic Info</span>
+    </div>
+    <div class="step" onclick="showStep(2)">
+      <span class="step-number">2</span>
+      <span>Layout</span>
+    </div>
+    <div class="step" onclick="showStep(3)">
+      <span class="step-number">3</span>
+      <span>Containers</span>
+    </div>
   </div>
 
-  <form method="post" action="/save_view_config/<%= @view.name %>">
-    <div id="config" class="tab-content active">
+  <form method="post" action="/save_view_config/<%= @view.name %>" id="configForm">
+    <!-- Step 1: Basic Information -->
+    <div id="step1" class="step-content active">
       <div class="section">
-        <h2>View Configuration</h2>
-        <p>Edit the view's configuration file (config.txt):</p>
-        <textarea name="config_content" placeholder="Enter view configuration..."><%= @config_content %></textarea>
+        <h2>Basic View Information</h2>
+        <p>Configure the basic properties of your view.</p>
+        
+        <label for="view_title">View Title:</label>
+        <input type="text" id="view_title" name="view_title" value="<%= @view.title %>" required>
+        
+        <label for="view_subtitle">Subtitle:</label>
+        <input type="text" id="view_subtitle" name="view_subtitle" value="<%= @view.subtitle %>">
+        
+        <label for="view_theme">Theme:</label>
+        <select id="view_theme" name="view_theme">
+          <option value="standard" <%= 'selected' if @view.theme == 'standard' %>>Standard</option>
+          <!-- Add more themes as they become available -->
+        </select>
       </div>
     </div>
 
-    <div id="layout" class="tab-content">
+    <!-- Step 2: Layout Definition -->
+    <div id="step2" class="step-content">
       <div class="section">
-        <h2>Layout Template</h2>
-        <p>Edit the view's layout file (config/layout.txt):</p>
-        <textarea name="layout_content" placeholder="Enter layout HTML..."><%= @layout_content %></textarea>
+        <h2>Layout Definition</h2>
+        <p>Choose which containers to include in your layout and set their properties.</p>
+        
+        <div class="layout-builder">
+          <div class="container-option">
+            <label>
+              <input type="checkbox" id="container_header" name="containers[]" value="header" checked>
+              Header (top section for banner, title, navigation)
+            </label>
+          </div>
+          
+          <div class="container-option">
+            <label>
+              <input type="checkbox" id="container_left" name="containers[]" value="left">
+              Left Sidebar
+              <input type="text" id="left_width" name="left_width" value="15%" placeholder="15%">
+            </label>
+          </div>
+          
+          <div class="container-option">
+            <label>
+              <input type="checkbox" id="container_main" name="containers[]" value="main" checked>
+              Main Content (posts, content)
+            </label>
+          </div>
+          
+          <div class="container-option">
+            <label>
+              <input type="checkbox" id="container_right" name="containers[]" value="right">
+              Right Sidebar
+              <input type="text" id="right_width" name="right_width" value="15%" placeholder="15%">
+            </label>
+          </div>
+          
+          <div class="container-option">
+            <label>
+              <input type="checkbox" id="container_footer" name="containers[]" value="footer" checked>
+              Footer (bottom section for copyright, links)
+            </label>
+          </div>
+        </div>
+        
+        <div class="layout-preview">
+          <h3>Layout Preview</h3>
+          <div id="layoutPreview">
+            <!-- Dynamic preview will be generated here -->
+          </div>
+        </div>
       </div>
     </div>
 
-    <div id="widgets" class="tab-content">
+    <!-- Step 3: Container Configuration -->
+    <div id="step3" class="step-content">
       <div class="section">
-        <h2>Widget Management</h2>
-        <p>Widget configuration coming soon...</p>
-        <p>This will allow you to:</p>
-        <ul>
-          <li>Enable/disable widgets</li>
-          <li>Configure widget settings</li>
-          <li>Edit widget data files</li>
-        </ul>
+        <h2>Container Configuration</h2>
+        <p>Configure the content for each container in your layout.</p>
+        
+        <div class="container-tabs" id="containerTabs">
+          <!-- Dynamic tabs will be generated here -->
+        </div>
+        
+        <div id="containerContents">
+          <!-- Dynamic container content will be generated here -->
+        </div>
       </div>
     </div>
 
-    <div style="margin-top: 20px;">
-      <button type="submit" class="button">Save Configuration</button>
-      <a href="/" class="button secondary" style="text-decoration: none;">Back to Dashboard</a>
+    <!-- Form Navigation -->
+    <div class="form-nav">
+      <button type="button" class="button secondary" onclick="previousStep()" id="prevBtn" style="display: none;">Previous</button>
+      <button type="button" class="button" onclick="nextStep()" id="nextBtn">Next</button>
+      <button type="submit" class="button" id="saveBtn" style="display: none;">Save Configuration</button>
+      <a href="/" class="button secondary" style="text-decoration: none;">Cancel</a>
     </div>
   </form>
 
   <script>
-    function showTab(tabName) {
-      // Hide all tab contents
-      var tabContents = document.getElementsByClassName('tab-content');
-      for (var i = 0; i < tabContents.length; i++) {
-        tabContents[i].classList.remove('active');
+    let currentStep = 1;
+    const totalSteps = 3;
+    
+    function showStep(step) {
+      // Hide all step contents
+      for (let i = 1; i <= totalSteps; i++) {
+        document.getElementById(`step${i}`).classList.remove('active');
+        document.querySelector(`.step:nth-child(${i})`).classList.remove('active');
       }
+      
+      // Show selected step
+      document.getElementById(`step${step}`).classList.add('active');
+      document.querySelector(`.step:nth-child(${step})`).classList.add('active');
+      
+      currentStep = step;
+      updateNavigation();
+      
+      if (step === 2) {
+        updateLayoutPreview();
+      } else if (step === 3) {
+        generateContainerTabs();
+      }
+    }
+    
+    function nextStep() {
+      if (currentStep < totalSteps) {
+        showStep(currentStep + 1);
+      }
+    }
+    
+    function previousStep() {
+      if (currentStep > 1) {
+        showStep(currentStep - 1);
+      }
+    }
+    
+    function updateNavigation() {
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const saveBtn = document.getElementById('saveBtn');
+      
+      prevBtn.style.display = currentStep > 1 ? 'inline-block' : 'none';
+      nextBtn.style.display = currentStep < totalSteps ? 'inline-block' : 'none';
+      saveBtn.style.display = currentStep === totalSteps ? 'inline-block' : 'none';
+    }
+    
+    function updateLayoutPreview() {
+      const containers = [];
+      const checkboxes = document.querySelectorAll('input[name="containers[]"]:checked');
+      
+      checkboxes.forEach(checkbox => {
+        const container = checkbox.value;
+        let width = '';
+        
+        if (container === 'left') {
+          width = document.getElementById('left_width').value;
+        } else if (container === 'right') {
+          width = document.getElementById('right_width').value;
+        }
+        
+        containers.push({ name: container, width: width });
+      });
+      
+      const preview = document.getElementById('layoutPreview');
+      let html = '';
+      
+      // Header
+      const header = containers.find(c => c.name === 'header');
+      if (header) {
+        html += '<div class="layout-preview-grid header"><div class="layout-preview-cell">Header</div></div>';
+      }
+      
+      // Body (left, main, right)
+      const bodyContainers = containers.filter(c => ['left', 'main', 'right'].includes(c.name));
+      if (bodyContainers.length > 0) {
+        const columns = bodyContainers.map(c => {
+          if (c.name === 'left' || c.name === 'right') {
+            return c.width || '1fr';
+          }
+          return '2fr'; // main gets more space
+        }).join(' ');
+        
+        html += `<div class="layout-preview-grid body" style="grid-template-columns: ${columns}">`;
+        bodyContainers.forEach(c => {
+          html += `<div class="layout-preview-cell">${c.name.charAt(0).toUpperCase() + c.name.slice(1)}</div>`;
+        });
+        html += '</div>';
+      }
+      
+      // Footer
+      const footer = containers.find(c => c.name === 'footer');
+      if (footer) {
+        html += '<div class="layout-preview-grid footer"><div class="layout-preview-cell">Footer</div></div>';
+      }
+      
+      preview.innerHTML = html;
+    }
+    
+    function generateContainerTabs() {
+      const containers = [];
+      const checkboxes = document.querySelectorAll('input[name="containers[]"]:checked');
+      
+      checkboxes.forEach(checkbox => {
+        containers.push(checkbox.value);
+      });
+      
+      const tabsContainer = document.getElementById('containerTabs');
+      const contentsContainer = document.getElementById('containerContents');
+      
+      // Generate tabs
+      let tabsHtml = '';
+      let contentsHtml = '';
+      
+      containers.forEach((container, index) => {
+        const isActive = index === 0 ? 'active' : '';
+        const containerName = container.charAt(0).toUpperCase() + container.slice(1);
+        
+        tabsHtml += `<div class="container-tab ${isActive}" onclick="showContainerTab('${container}')">${containerName}</div>`;
+        contentsHtml += `<div id="container_${container}" class="container-content ${isActive}">`;
+        contentsHtml += generateContainerContent(container);
+        contentsHtml += '</div>';
+      });
+      
+      tabsContainer.innerHTML = tabsHtml;
+      contentsContainer.innerHTML = contentsHtml;
+    }
+    
+    function showContainerTab(containerName) {
+      // Hide all container contents
+      const contents = document.querySelectorAll('.container-content');
+      contents.forEach(content => content.classList.remove('active'));
       
       // Remove active class from all tabs
-      var tabs = document.getElementsByClassName('tab');
-      for (var i = 0; i < tabs.length; i++) {
-        tabs[i].classList.remove('active');
-      }
+      const tabs = document.querySelectorAll('.container-tab');
+      tabs.forEach(tab => tab.classList.remove('active'));
       
-      // Show selected tab content
-      document.getElementById(tabName).classList.add('active');
+      // Show selected container content
+      document.getElementById(`container_${containerName}`).classList.add('active');
       
       // Add active class to clicked tab
       event.target.classList.add('active');
     }
+    
+    function generateContainerContent(container) {
+      switch (container) {
+        case 'header':
+          return `
+            <h3>Header Configuration</h3>
+            <p>Configure the header section (banner, title, navigation).</p>
+                            <label for="header_content">Header Content:</label>
+                <textarea name="header_content" placeholder="Enter header configuration (e.g., 'banner svg', 'title', 'title&#10;subtitle')...">banner svg</textarea>
+                <small class="form-text text-muted">Note: When using 'banner svg', the title and subtitle are automatically included from the view settings.</small>
+          `;
+        case 'main':
+          return `
+            <h3>Main Content Configuration</h3>
+            <p>Configure the main content area (usually populated by JavaScript with posts).</p>
+            <label for="main_content">Main Content:</label>
+            <textarea name="main_content" placeholder="Enter main content configuration..."># Main content (usually populated by JavaScript)</textarea>
+          `;
+        case 'left':
+          return `
+            <h3>Left Sidebar Configuration</h3>
+            <p>Configure the left sidebar content.</p>
+            <label for="left_content">Left Sidebar Content:</label>
+            <textarea name="left_content" placeholder="Enter left sidebar configuration..."># Left sidebar content</textarea>
+          `;
+        case 'right':
+          return `
+            <h3>Right Sidebar Configuration</h3>
+            <p>Configure the right sidebar content.</p>
+            <label for="right_content">Right Sidebar Content:</label>
+            <textarea name="right_content" placeholder="Enter right sidebar configuration..."># Right sidebar content</textarea>
+          `;
+        case 'footer':
+          return `
+            <h3>Footer Configuration</h3>
+            <p>Configure the footer section (copyright, links, etc.).</p>
+            <label for="footer_content">Footer Content:</label>
+            <textarea name="footer_content" placeholder="Enter footer configuration..."># Footer content</textarea>
+          `;
+        default:
+          return `<p>Configuration for ${container} container.</p>`;
+      }
+    }
+    
+    // Event listeners for layout changes
+    document.addEventListener('DOMContentLoaded', function() {
+      const checkboxes = document.querySelectorAll('input[name="containers[]"]');
+      checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateLayoutPreview);
+      });
+      
+      const widthInputs = document.querySelectorAll('input[id$="_width"]');
+      widthInputs.forEach(input => {
+        input.addEventListener('input', updateLayoutPreview);
+      });
+    });
   </script>
 </body>
 </html> 

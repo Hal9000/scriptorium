@@ -390,8 +390,6 @@ class ScriptoriumWeb < Sinatra::Base
   # Save view configuration
   post '/save_view_config/:name' do
     view_name = params[:name]
-    config_content = params[:config_content]
-    layout_content = params[:layout_content]
     
     begin
       view = @api.lookup_view(view_name)
@@ -400,14 +398,68 @@ class ScriptoriumWeb < Sinatra::Base
         return
       end
       
-      # Save config file
-      config_file = @api.root/"views"/view_name/"config.txt"
-      File.write(config_file, config_content) if config_content
+      # Step 1: Save basic view information
+      if params[:view_title] && params[:view_subtitle] && params[:view_theme]
+        config_content = "title    #{params[:view_title]}\n"
+        config_content += "subtitle #{params[:view_subtitle]}\n"
+        config_content += "theme    #{params[:view_theme]}\n"
+        
+        config_file = @api.root/"views"/view_name/"config.txt"
+        File.write(config_file, config_content)
+      end
       
-      # Save layout file
-      layout_file = @api.root/"views"/view_name/"config"/"layout.txt"
-      FileUtils.mkdir_p(File.dirname(layout_file))
-      File.write(layout_file, layout_content) if layout_content
+      # Step 2: Save layout configuration
+      if params[:containers]
+        layout_content = ""
+        containers = Array(params[:containers])
+        
+        containers.each do |container|
+          case container
+          when 'header'
+            layout_content += "header      # Top (banner? title? navbar? etc.)\n"
+          when 'left'
+            width = params[:left_width] || "15%"
+            layout_content += "left   #{width}  # Left sidebar, #{width} width\n"
+          when 'main'
+            layout_content += "main        # Main (center) container - posts/etc.\n"
+          when 'right'
+            width = params[:right_width] || "15%"
+            layout_content += "right   #{width}  # Right sidebar, #{width} width\n"
+          when 'footer'
+            layout_content += "footer      # Footer (copyright? mail? social media? etc.)\n"
+          end
+        end
+        
+        layout_file = @api.root/"views"/view_name/"config"/"layout.txt"
+        FileUtils.mkdir_p(File.dirname(layout_file))
+        File.write(layout_file, layout_content)
+      end
+      
+      # Step 3: Save container content files
+      containers = Array(params[:containers])
+      
+      containers.each do |container|
+        content_param = "#{container}_content"
+        if params[content_param]
+          content_file = @api.root/"views"/view_name/"config"/"#{container}.txt"
+          FileUtils.mkdir_p(File.dirname(content_file))
+          File.write(content_file, params[content_param])
+          
+          # If this is header with "banner svg", create default svg.txt
+          if container == 'header' && params[content_param].strip == 'banner svg'
+            svg_file = @api.root/"views"/view_name/"config"/"svg.txt"
+            unless File.exist?(svg_file)
+              # Create default SVG configuration
+              default_svg_content = "# SVG Banner Configuration\n"
+              default_svg_content += "# Light gradient background with dark text\n"
+              default_svg_content += "back.linear #f8f9fa #e9ecef lr\n"
+              default_svg_content += "text.color #374151\n"
+              default_svg_content += "title.style bold\n"
+              File.write(svg_file, default_svg_content)
+            end
+          end
+        end
+      end
       
       redirect "/?message=View '#{view_name}' configuration saved successfully"
     rescue => e

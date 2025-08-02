@@ -1,4 +1,2 @@
-# <!-- Section: footer -->
-# Contents of footer
-
+# Footer content
 text This is footer...

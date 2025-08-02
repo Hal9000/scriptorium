@@ -1,9 +1,9 @@
 Puma starting in single mode...
 * Puma version: 6.6.0 ("Return to Forever")
-* Ruby verDEBUG: Preview request - view_name: mystuff, filename: 0003-this-post-is-in-mystuff-only.html
-DEBUG: Looking for file: /Users/Hal/Dropbox/topx/git/scriptorium/ui/web/app/../scriptorium-TEST/views/mystuff/output/posts/0003-this-post-is-in-mystuff-only.html
-DEBUG: File exists: true
-DEBUG: Preview request - view_name: mystuff, filename: index.html
-DEBUG: Looking for file: /Users/Hal/Dropbox/topx/git/scriptorium/ui/web/app/../scriptorium-TEST/views/mystuff/output/posts/index.html
-DEBUG: File exists: false
-DEBUG: File not found
+* Ruby version: ruby 3.2.3 (2024-01-18 revision 52bb2ac0a6) [x86_64-darwin22]
+*  Min threads: 0
+*  Max threads: 5
+*  Environment: development
+*          PID: 33561
+* Listening on http://0.0.0.0:4567
+Use Ctrl-C to stop

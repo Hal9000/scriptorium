@@ -16,9 +16,7 @@ view.generate_empty_containers
 
 # Configure the header to include the SVG banner
 File.open(view.dir/:config/"header.txt", "w") do |f|
-  f.puts "banner_svg"
-  f.puts "title"
-  f.puts "subtitle"
+  f.puts "banner svg"
 end
 
 # Generate the front page
@@ -28,12 +26,10 @@ instruct <<~EOS
   This test shows how to insert an SVG banner into the header.
   
   The header.txt contains:
-  - banner_svg (inserts the SVG banner)
-  - title (inserts the view title)
-  - subtitle (inserts the view subtitle)
+  - banner svg (inserts the SVG banner)
   
-  The SVG banner will appear at the top of the header, followed by the title and subtitle.
-  The banner uses the view's title and subtitle as its content.
+  The SVG banner will appear at the top of the header.
+  The banner automatically uses the view's title and subtitle as its content.
 EOS
 
 examine view 
