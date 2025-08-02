@@ -159,10 +159,8 @@ class TestScriptoriumWidgets < Minitest::Test
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/testlistwidget/list.txt"
     make_dir(File.dirname(list_file))
-    write_file(list_file, [
-      "https://example.com, Example Site",
-      "https://test.com, Test Site"
-    ])
+    write_file!(list_file, "https://example.com, Example Site", 
+                           "https://test.com, Test Site")
     
     widget = TestListWidget.new(@repo, @view)
     
@@ -188,10 +186,10 @@ class TestScriptoriumWidgets < Minitest::Test
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/testlistwidget3/list.txt"
     make_dir(File.dirname(list_file))
-    write_file(list_file, [])
+    write_file(list_file, "")
     
     widget = TestListWidget3.new(@repo, @view)
-    assert_equal [], widget.instance_variable_get(:@data)
+    assert_equal [""], widget.instance_variable_get(:@data)
   end
 
   # ========================================
@@ -202,10 +200,8 @@ class TestScriptoriumWidgets < Minitest::Test
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/links/list.txt"
     make_dir(File.dirname(list_file))
-    write_file(list_file, [
-      "https://example.com, Example Site",
-      "https://test.com, Test Site"
-    ])
+    write_file!(list_file, "https://example.com, Example Site", 
+                          "https://test.com, Test Site")
     
     widget = Scriptorium::Widget::Links.new(@repo, @view)
     
@@ -223,11 +219,9 @@ class TestScriptoriumWidgets < Minitest::Test
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/links/list.txt"
     make_dir(File.dirname(list_file))
-    write_file(list_file, [
-      "https://example.com, Example Site",
-      "https://test.com, Test Site",
-      "https://spaced.com , Spaced Site"
-    ])
+    write_file!(list_file, "https://example.com, Example Site", 
+                           "https://test.com, Test Site", 
+                           "https://space.com , Space News")
     
     widget = Scriptorium::Widget::Links.new(@repo, @view)
     result = widget.get_list
@@ -235,7 +229,7 @@ class TestScriptoriumWidgets < Minitest::Test
     assert_equal [
       ["https://example.com", "Example Site"],
       ["https://test.com", "Test Site"],
-      ["https://spaced.com ", "Spaced Site"]
+      ["https://space.com ", "Space News"]
     ], result
   end
 
@@ -243,7 +237,7 @@ class TestScriptoriumWidgets < Minitest::Test
     # Create test list.txt file for initialization
     list_file = "#{@view.dir}/widgets/links/list.txt"
     make_dir(File.dirname(list_file))
-    write_file(list_file, ["https://example.com, Example Site"])
+    write_file(list_file, "https://example.com, Example Site")
     
     widget = Scriptorium::Widget::Links.new(@repo, @view)
     result = widget.link_item("https://example.com", "Example Site")
@@ -256,10 +250,8 @@ class TestScriptoriumWidgets < Minitest::Test
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/links/list.txt"
     make_dir(File.dirname(list_file))
-    write_file(list_file, [
-      "https://example.com, Example Site",
-      "https://test.com, Test Site"
-    ])
+    write_file!(list_file, "https://example.com, Example Site",
+                           "https://test.com, Test Site")
     
     widget = Scriptorium::Widget::Links.new(@repo, @view)
     widget.write_card
@@ -283,9 +275,7 @@ class TestScriptoriumWidgets < Minitest::Test
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/links/list.txt"
     make_dir(File.dirname(list_file))
-    write_file(list_file, [
-      "https://example.com, Example Site"
-    ])
+    write_file(list_file, "https://example.com, Example Site")
     
     widget = Scriptorium::Widget::Links.new(@repo, @view)
     widget.generate
@@ -304,9 +294,7 @@ class TestScriptoriumWidgets < Minitest::Test
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/links/list.txt"
     make_dir(File.dirname(list_file))
-    write_file(list_file, [
-      "https://example.com, Example Site"
-    ])
+    write_file(list_file, "https://example.com, Example Site")
     
     widget = Scriptorium::Widget::Links.new(@repo, @view)
     widget.generate
@@ -332,9 +320,7 @@ class TestScriptoriumWidgets < Minitest::Test
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/links/list.txt"
     make_dir(File.dirname(list_file))
-    write_file(list_file, [
-      "https://example.com, Example Site"
-    ])
+    write_file(list_file, "https://example.com, Example Site")
     
     # Build widgets through view
     result = @view.build_widgets("links")
@@ -353,9 +339,7 @@ class TestScriptoriumWidgets < Minitest::Test
     # Create test list.txt file for links widget
     list_file = "#{@view.dir}/widgets/links/list.txt"
     make_dir(File.dirname(list_file))
-    write_file(list_file, [
-      "https://example.com, Example Site"
-    ])
+    write_file(list_file, "https://example.com, Example Site")
     
     # Build multiple widgets (just links for now, but tests the multiple widget handling)
     result = @view.build_widgets("links links")
@@ -385,14 +369,14 @@ class TestScriptoriumWidgets < Minitest::Test
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/pages/list.txt"
     make_dir(File.dirname(list_file))
-    write_file(list_file, "about", "contact", "faq")
+    write_file!(list_file, "about", "contact", "faq")
     
     # Create test HTML files
     pages_dir = "#{@view.dir}/pages"
     make_dir(pages_dir)
-    write_file("#{pages_dir}/about.html", "<html><title>About Us</title><body><h1>About Us</h1></body></html>")
+    write_file("#{pages_dir}/about.html",   "<html><title>About Us</title><body><h1>About Us</h1></body></html>")
     write_file("#{pages_dir}/contact.html", "<html><title>Contact Information</title><body><h1>Contact</h1></body></html>")
-    write_file("#{pages_dir}/faq.html", "<html><title>FAQ</title><body><h1>FAQ</h1></body></html>")
+    write_file("#{pages_dir}/faq.html",     "<html><title>FAQ</title><body><h1>FAQ</h1></body></html>")
     
     widget = Scriptorium::Widget::Pages.new(@repo, @view)
     
@@ -448,12 +432,12 @@ class TestScriptoriumWidgets < Minitest::Test
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/pages/list.txt"
     make_dir(File.dirname(list_file))
-    write_file(list_file, "about", "contact")
+    write_file!(list_file, "about", "contact")
     
     # Create test HTML files
     pages_dir = "#{@view.dir}/pages"
     make_dir(pages_dir)
-    write_file("#{pages_dir}/about.html", "<html><title>About Us</title><body></body></html>")
+    write_file("#{pages_dir}/about.html",   "<html><title>About Us</title><body></body></html>")
     write_file("#{pages_dir}/contact.html", "<html><title>Contact</title><body></body></html>")
     
     widget = Scriptorium::Widget::Pages.new(@repo, @view)
@@ -477,12 +461,12 @@ class TestScriptoriumWidgets < Minitest::Test
     # Create test list.txt file with a missing page
     list_file = "#{@view.dir}/widgets/pages/list.txt"
     make_dir(File.dirname(list_file))
-    write_file(list_file, "about", "missing", "contact")
+    write_file!(list_file, "about", "missing", "contact")
     
     # Create only one HTML file
     pages_dir = "#{@view.dir}/pages"
     make_dir(pages_dir)
-    write_file("#{pages_dir}/about.html", "<html><title>About Us</title><body></body></html>")
+    write_file("#{pages_dir}/about.html",   "<html><title>About Us</title><body></body></html>")
     write_file("#{pages_dir}/contact.html", "<html><title>Contact</title><body></body></html>")
     
     widget = Scriptorium::Widget::Pages.new(@repo, @view)
@@ -502,7 +486,7 @@ class TestScriptoriumWidgets < Minitest::Test
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/featuredposts/list.txt"
     make_dir(File.dirname(list_file))
-    write_file(list_file, "001 My Important Post", "002 Another Post")
+    write_file!(list_file, "001 My Important Post", "002 Another Post")
     
     widget = Scriptorium::Widget::FeaturedPosts.new(@repo, @view)
     assert_equal "featuredposts", widget.name
@@ -513,7 +497,7 @@ class TestScriptoriumWidgets < Minitest::Test
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/featuredposts/list.txt"
     make_dir(File.dirname(list_file))
-    write_file(list_file, "001 My Important Post", "002 Another Post")
+    write_file!(list_file, "001 My Important Post", "002 Another Post")
     
     widget = Scriptorium::Widget::FeaturedPosts.new(@repo, @view)
     
@@ -537,7 +521,7 @@ class TestScriptoriumWidgets < Minitest::Test
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/featuredposts/list.txt"
     make_dir(File.dirname(list_file))
-    write_file(list_file, "001 My Important Post", "002 Another Post")
+    write_file!(list_file, "001 My Important Post", "002 Another Post")
     
     widget = Scriptorium::Widget::FeaturedPosts.new(@repo, @view)
     
@@ -557,7 +541,7 @@ class TestScriptoriumWidgets < Minitest::Test
     # Create test list.txt file
     list_file = "#{@view.dir}/widgets/featuredposts/list.txt"
     make_dir(File.dirname(list_file))
-    write_file(list_file, "001 My Important Post", "002 Another Post")
+    write_file!(list_file, "001 My Important Post", "002 Another Post")
     
     # Create test posts
     post1 = @repo.create_post(title: "My Important Post", views: ["sample"])
@@ -584,7 +568,7 @@ class TestScriptoriumWidgets < Minitest::Test
     # Create test list.txt file with a missing post
     list_file = "#{@view.dir}/widgets/featuredposts/list.txt"
     make_dir(File.dirname(list_file))
-    write_file(list_file, "001 My Important Post", "999 Missing Post")
+    write_file!(list_file, "001 My Important Post", "999 Missing Post")
     
     # Create only one post
     post1 = @repo.create_post(title: "My Important Post", views: ["sample"])

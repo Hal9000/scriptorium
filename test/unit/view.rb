@@ -240,8 +240,8 @@ class TestScriptoriumView < Minitest::Test
     # Create svg.txt config file
     svg_config = @view.dir/:config/"svg.txt"
     make_dir(File.dirname(svg_config))
-    write_file(svg_config, "back.color #f0f0f0", "text.color #333333", "aspect 4.0")
-    
+    write_file!(svg_config, "back.color #f0f0f0", 
+                "text.color #333333", "aspect 4.0")
     result = @view.build_banner("svg")
     
     # Should generate JavaScript with SVG content
@@ -275,12 +275,11 @@ class TestScriptoriumView < Minitest::Test
     # Create navbar.txt file
     navbar_file = @view.dir/:config/"navbar.txt"
     make_dir(File.dirname(navbar_file))
-    write_file(navbar_file, 
-      "=About",
-      " Vision & Mission  mission",
-      " Board of Directors    board",
-      "-Contact               contact")
-    
+    write_file!(navbar_file, 
+                "=About",
+                " Vision & Mission  mission",
+                " Board of Directors    board",
+                "-Contact               contact")
     result = @view.build_nav(nil)
     
     # Should generate Bootstrap navbar
@@ -297,12 +296,11 @@ class TestScriptoriumView < Minitest::Test
     # Create custom navbar file
     navbar_file = @view.dir/:config/"custom-nav.txt"
     make_dir(File.dirname(navbar_file))
-    write_file(navbar_file, 
-      "=Resources",
-      " Documentation  docs",
-      " API Reference    api",
-      "-Support               support")
-    
+    write_file!(navbar_file, 
+                "=Resources",
+                " Documentation  docs",
+                " API Reference    api",
+                "-Support               support")
     result = @view.build_nav("custom-nav.txt")
     
     # Should generate Bootstrap navbar
@@ -316,10 +314,9 @@ class TestScriptoriumView < Minitest::Test
     # Create navbar.txt with references to non-existent pages
     navbar_file = @view.dir/:config/"navbar.txt"
     make_dir(File.dirname(navbar_file))
-    write_file(navbar_file, 
-      "-Home                   home",
-      "-Missing Page          missing")
-    
+    write_file!(navbar_file, 
+                "-Home                   home",
+                "-Missing Page          missing")
     result = @view.build_nav(nil)
     
     # Should still generate links but include warnings

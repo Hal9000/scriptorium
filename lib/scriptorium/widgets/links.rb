@@ -17,6 +17,7 @@ class Scriptorium::Widget::Links < Scriptorium::Widget::ListWidget
   def generate
     write_main
     write_card
+    true
   end
 
   def widget_title
@@ -41,7 +42,7 @@ class Scriptorium::Widget::Links < Scriptorium::Widget::ListWidget
   def write_card
     tag = @name
     cardout = "#{@view.dir}/widgets/#@name/#@name-card.html"
-    url = "../widgets/#@name/#@name-card.html"
+    # url = "../widgets/#@name/#@name-card.html"
     card_title = Title
     content = ""
     @data.each do |line|

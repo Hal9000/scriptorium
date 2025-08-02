@@ -227,7 +227,7 @@ class TestReadWrite < Minitest::Test
     file_path = "#{@test_dir}/basic.txt"
     content = ["line1", "line2", "line3"]
     
-    write_file(file_path, *content)
+    write_file(file_path, content.join("\n"))
     
     assert File.exist?(file_path)
     assert_equal content.join("\n") + "\n", File.read(file_path)
@@ -237,7 +237,7 @@ class TestReadWrite < Minitest::Test
     file_path = "#{@test_dir}/nested/deep/path/file.txt"
     content = ["test content"]
     
-    write_file(file_path, *content)
+    write_file(file_path, content.join("\n"))
     
     assert File.exist?(file_path)
     assert File.exist?("#{@test_dir}/nested/deep/path")
@@ -246,10 +246,10 @@ class TestReadWrite < Minitest::Test
   def test_026_write_file_empty_content
     file_path = "#{@test_dir}/empty.txt"
     
-    write_file(file_path)
+    write_file(file_path, "")
     
     assert File.exist?(file_path)
-    assert_equal "", File.read(file_path)
+    assert_equal "\n", File.read(file_path)
   end
 
   def test_027_write_file_single_line
@@ -266,7 +266,7 @@ class TestReadWrite < Minitest::Test
     file_path = "#{@test_dir}/multi.txt"
     content = ["first line", "second line", "third line"]
     
-    write_file(file_path, *content)
+    write_file(file_path, content.join("\n"))
     
     assert File.exist?(file_path)
     expected = content.join("\n") + "\n"
@@ -478,7 +478,7 @@ class TestReadWrite < Minitest::Test
     original_content = ["first line", "second line", "third line"]
     
     # Write content
-    write_file(file_path, *original_content)
+    write_file(file_path, original_content.join("\n"))
     
     # Read it back
     read_content = read_file(file_path)
@@ -493,7 +493,7 @@ class TestReadWrite < Minitest::Test
     original_content = ["first line", "second line", "third line"]
     
     # Write content
-    write_file(file_path, *original_content)
+    write_file(file_path, original_content.join("\n"))
     
     # Read it back as lines
     read_content = read_file(file_path, lines: true)
@@ -518,7 +518,7 @@ class TestReadWrite < Minitest::Test
     file_path = "#{@test_dir}/special.txt"
     content = ["line with spaces", "line\twith\ttabs", "line with # comments"]
     
-    write_file(file_path, *content)
+    write_file(file_path, content.join("\n"))
     
     result = read_file(file_path, lines: true)
     assert_equal ["line with spaces\n", "line\twith\ttabs\n", "line with # comments\n"], result
@@ -528,7 +528,7 @@ class TestReadWrite < Minitest::Test
     file_path = "#{@test_dir}/unicode.txt"
     content = ["café", "naïve", "résumé", "über"]
     
-    write_file(file_path, *content)
+    write_file(file_path, content.join("\n"))
     
     result = read_file(file_path, lines: true)
     assert_equal ["café\n", "naïve\n", "résumé\n", "über\n"], result
@@ -541,7 +541,7 @@ class TestReadWrite < Minitest::Test
   def test_055_write_file_with_nil_lines
     file_path = "#{@test_dir}/nil_lines.txt"
     
-    write_file(file_path, nil, "content", nil)
+    write_file!(file_path, nil, "content", nil)
     
     result = read_file(file_path, lines: true)
     assert_equal ["\n", "content\n", "\n"], result
@@ -550,7 +550,7 @@ class TestReadWrite < Minitest::Test
   def test_056_write_file_with_empty_strings
     file_path = "#{@test_dir}/empty_strings.txt"
     
-    write_file(file_path, "", "content", "")
+    write_file!(file_path, "", "content", "")
     
     result = read_file(file_path, lines: true)
     assert_equal ["\n", "content\n", "\n"], result
@@ -588,7 +588,7 @@ class TestReadWrite < Minitest::Test
     file_path = "#{@test_dir}/many_lines.txt"
     many_lines = (1..1000).map { |i| "line #{i}" }
     
-    write_file(file_path, *many_lines)
+    write_file(file_path, many_lines.join("\n"))
     
     result = read_file(file_path, lines: true)
     expected_lines = many_lines.map { |line| line + "\n" }

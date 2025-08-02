@@ -135,26 +135,3 @@ This post has $$word_count words.
 
 LiveText's syntax is designed to be readable and writable, making it easy to create content without getting bogged down in complex templating syntax. [Complete LiveText documentation is provided in Section 3.]
 
----
-
-**Questions for refinement:**
-
-1. **Multi-view examples**: Should I provide more specific examples of how views might be used in practice? (e.g., different audiences, different content types)
-
-**REPLY:** One essential point is that views may overlap in content. If there is a music-related view and a hometown-related view, then a large concert in my hometown might go in both. A large part of the reason for views is so that blogs can share posts, assets, and a common backend.
-
-2. **Repository structure**: Is the directory structure I've shown accurate to the current implementation? Should I include more detail about specific files and their purposes?
-
-**REPLY:** Fine for now. More detail when we dig into views.
-
-3. **Deployment options**: Are there specific deployment methods or services that should be highlighted or avoided?
-
-**REPLY:** Currently I only have deployment to any host where you have ssh access and keys set up.
-
-4. **LiveText integration**: Should I mention how LiveText specifically integrates with Scriptorium's view system and content management?
-
-**REPLY:** No deep details for now, I guess.
-
-5. **Technical depth**: Is this level of technical detail appropriate for the user guide, or should I adjust the depth for the target audience? 
-
-**REPLY:** I think this is fine for now.

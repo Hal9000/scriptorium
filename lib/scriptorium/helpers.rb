@@ -39,7 +39,7 @@ module Scriptorium::Helpers
     @root/:views/name
   end
 
-  def write_file(file, *lines)
+  def write_file(file, content)
     # Input validation
     raise CannotWriteFilePathNil if file.nil?
     
@@ -51,7 +51,7 @@ module Scriptorium::Helpers
     # Write the file with error handling
     begin
       File.open(file, "w") do |f|
-        lines.each {|line| f.puts line }
+        f.puts content
       end
     rescue Errno::ENOSPC => e
       raise CannotWriteFileDiskFull(file, e.message)
@@ -62,6 +62,15 @@ module Scriptorium::Helpers
     rescue => e
       raise CannotWriteFileError(file, e.message)
     end
+  end
+
+  def write_file!(file, *lines)
+    # Convert nil values to empty strings for proper joining
+    processed_lines = lines.map { |line| line.nil? ? "" : line.to_s }
+    content = processed_lines.join("\n")
+    # Always add a newline at the end to ensure there's an empty line
+    content += "\n"
+    write_file(file, content)
   end
 
   def make_dir(dir, create_parents = false)
@@ -173,10 +182,7 @@ module Scriptorium::Helpers
     end
   end
 
-  def write_predef(sym, path)
-    contents = @predef.send(sym, :raw)
-    write_file(@root/path, [contents])
-  end
+
 
   def change_config(file_path, target_key, new_value)
     pattern = /
@@ -198,7 +204,7 @@ module Scriptorium::Helpers
       end
     end
   
-    write_file(file_path, *updated_lines)
+    write_file(file_path, updated_lines.join)
   end
   
   def slugify(id, title)

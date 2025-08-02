@@ -168,16 +168,16 @@ class Scriptorium::Repo
     ### 
 
     dir = "#@root/views/#{name}"
-    write_file(dir/"config.txt", 
-               "title    #{title}", 
+    write_file!(dir/"config.txt", 
+               "title    #{title}",
                "subtitle #{subtitle}",
                "theme    #{theme}")
-    write_file(dir/:config/"global-head.txt", @predef.html_head_content(true))  # true = view-specific
-    write_file(dir/:config/"bootstrap_js.txt", @predef.bootstrap_js)
+    write_file(dir/:config/"global-head.txt",   @predef.html_head_content(true))  # true = view-specific
+    write_file(dir/:config/"bootstrap_js.txt",  @predef.bootstrap_js)
     write_file(dir/:config/"bootstrap_css.txt", @predef.bootstrap_css)
-    write_file(dir/:config/"common.js",       @predef.common_js)
-    write_file(dir/:config/"social.txt",      @predef.social_config)
-    write_file(dir/:config/"reddit.txt",      @predef.reddit_config)
+    write_file(dir/:config/"common.js",         @predef.common_js)
+    write_file(dir/:config/"social.txt",        @predef.social_config)
+    write_file(dir/:config/"reddit.txt",        @predef.reddit_config)
     view = open_view(name)
     @views -= [view]
     @views << view
@@ -253,7 +253,7 @@ class Scriptorium::Repo
     data.delete(:"post.body")
     data[:"post.slug"] = slugify(num, title) + ".html"
     lines = data.map { |k, v| sprintf("%-12s  %s", k, v) }
-    write_file(@root/:posts/d4(num)/"meta.txt", *lines)
+    write_file(@root/:posts/d4(num)/"meta.txt", lines.join("\n"))
     # FIXME - standardize key names!
   end
 
@@ -277,7 +277,6 @@ class Scriptorium::Repo
     # Add "Visit Blog" link only to permalink version
     permalink_content = post_html + "\n<div style=\"text-align: center; margin-top: 20px;\">\n<a href=\"../index.html\">Visit Blog</a>\n</div>"
     write_file(permalink_path, permalink_content)
-    write_file("/tmp"/slug)  # for debugging
   end
 
   def create_post(title: nil, views: nil, tags: nil, body: nil, blurb: nil)
@@ -294,6 +293,7 @@ class Scriptorium::Repo
     text = live.xform_file(draft)
     vars, body = live.vars.vars, live.body
     views = vars[:"post.views"].strip.split(/\s+/)
+    vars[:"post.views"] = views.join(" ")  # Ensure post.views is set in vars
     views.each do |view|  
       view = lookup_view(view)
       theme = view.theme 

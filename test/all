@@ -26,6 +26,7 @@ test_files = %w[
   unit/core.rb
   ed_test.rb
   tui_integration_test.rb
+  tui_editor_integration_test.rb
 ]
 
 

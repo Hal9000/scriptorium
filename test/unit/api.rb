@@ -1,6 +1,7 @@
 # test/unit/api.rb
 
 require 'minitest/autorun'
+require 'open3'
 require_relative '../../lib/scriptorium'
 require_relative '../test_helpers'
 
@@ -8,15 +9,19 @@ class TestScriptoriumAPI < Minitest::Test
   include Scriptorium::Exceptions
   include Scriptorium::Helpers
 
-  def setup
-    @test_dir = "test/scriptorium-TEST"
-    @api = Scriptorium::API.new(testmode: true)
-    @api.create_repo(@test_dir)
-  end
+
 
   def teardown
     FileUtils.rm_rf(@test_dir) if Dir.exist?(@test_dir)
     Scriptorium::Repo.destroy if Scriptorium::Repo.testing
+  end
+
+  def setup
+    @test_dir = "test/scriptorium-TEST"
+    # Clean up any existing test directory first
+    FileUtils.rm_rf(@test_dir) if Dir.exist?(@test_dir)
+    @api = Scriptorium::API.new(testmode: true)
+    @api.create_repo(@test_dir)
   end
 
   # Basic API functionality tests
@@ -254,7 +259,7 @@ class TestScriptoriumAPI < Minitest::Test
         line
       end
     end
-    write_file(source_file, *lines)
+    write_file(source_file, lines.join)
     
     # Update the views field
     result = @api.update_post(post.id, {views: ["new_view"]})
@@ -450,7 +455,7 @@ class TestScriptoriumAPI < Minitest::Test
     source_file = post.dir/"source.lt3"
     lines = read_file(source_file, lines: true, chomp: false)
     lines.insert(-2, ".blurb This is just a short intro to this post.\n")  # Insert before the body
-    write_file(source_file, *lines)
+    write_file(source_file, lines.join)
     
     # Update the blurb
     result = @api.update_post(post.id, {blurb: "Updated blurb for this post"})
@@ -755,15 +760,179 @@ class TestScriptoriumAPI < Minitest::Test
   def test_052_edit_file_uses_vim_fallback
     # Mock ENV to return nil (no EDITOR set)
     ENV.stub :[], nil do
-      # Mock system! to verify it uses vim as fallback
-      mock_system = Minitest::Mock.new
-      mock_system.expect :call, true, ["vim", "/path/to/file"]
-      
-      @api.stub :system!, mock_system do
-        @api.edit_file("/path/to/file")
+      # Mock system to return true (vim available)
+      @api.stub :system, true do
+        # Mock Open3.popen3 to return a mock process
+        mock_process = Minitest::Mock.new
+        mock_process.expect :pid, 123
+        mock_process.expect :wait, nil
+        
+        Open3.stub :popen3, mock_process do
+          @api.edit_file("test.txt")
+        end
       end
-      
-      mock_system.verify
+    end
+  end
+
+  # Convenience file editing method tests
+  
+  def test_053_edit_layout
+    @api.create_view("test_view", "Test View")
+    
+    # Mock edit_file to track calls
+    called_path = nil
+    @api.stub :edit_file, ->(path) { called_path = path } do
+      @api.edit_layout
+      assert_equal "views/test_view/layout.txt", called_path
+    end
+  end
+
+  def test_054_edit_layout_with_specific_view
+    @api.create_view("test_view", "Test View")
+    @api.create_view("other_view", "Other View")
+    
+    # Mock edit_file to track calls
+    called_path = nil
+    @api.stub :edit_file, ->(path) { called_path = path } do
+      @api.edit_layout("other_view")
+      assert_equal "views/other_view/layout.txt", called_path
+    end
+  end
+
+  def test_055_edit_layout_no_view
+    # Clear the current view
+    @api.repo.instance_variable_set(:@current_view, nil)
+    
+    assert_raises(RuntimeError, "No view specified and no current view set") do
+      @api.edit_layout
+    end
+  end
+
+  def test_065_edit_config
+    @api.create_view("test_view", "Test View")
+    
+    # Mock edit_file to track calls
+    called_path = nil
+    @api.stub :edit_file, ->(path) { called_path = path } do
+      @api.edit_config
+      assert_equal "views/test_view/config.txt", called_path
+    end
+  end
+
+  def test_066_edit_config_with_specific_view
+    @api.create_view("test_view", "Test View")
+    @api.create_view("other_view", "Other View")
+    
+    # Mock edit_file to track calls
+    called_path = nil
+    @api.stub :edit_file, ->(path) { called_path = path } do
+      @api.edit_config("other_view")
+      assert_equal "views/other_view/config.txt", called_path
+    end
+  end
+
+  def test_067_edit_config_no_view
+    # Clear the current view
+    @api.repo.instance_variable_set(:@current_view, nil)
+    
+    assert_raises(RuntimeError, "No view specified and no current view set") do
+      @api.edit_config
+    end
+  end
+
+  def test_056_edit_widget_data
+    @api.create_view("test_view", "Test View")
+    
+    # Mock edit_file to track calls
+    called_path = nil
+    @api.stub :edit_file, ->(path) { called_path = path } do
+      @api.edit_widget_data(nil, "links")
+      assert_equal "views/test_view/widgets/links/list.txt", called_path
+    end
+  end
+
+  def test_057_edit_widget_data_with_specific_view
+    @api.create_view("test_view", "Test View")
+    @api.create_view("other_view", "Other View")
+    
+    # Mock edit_file to track calls
+    called_path = nil
+    @api.stub :edit_file, ->(path) { called_path = path } do
+      @api.edit_widget_data("other_view", "news")
+      assert_equal "views/other_view/widgets/news/list.txt", called_path
+    end
+  end
+
+  def test_058_edit_widget_data_nil_widget
+    @api.create_view("test_view", "Test View")
+    
+    assert_raises(RuntimeError, "Widget name cannot be nil") do
+      @api.edit_widget_data(nil, nil)
+    end
+  end
+
+  def test_059_open_repo
+    # Mock edit_file to track calls
+    called_path = nil
+    @api.stub :edit_file, ->(path) { called_path = path } do
+      @api.open_repo
+      assert_equal ".", called_path
+    end
+  end
+
+  def test_060_edit_repo_config
+    # Mock edit_file to track calls
+    called_path = nil
+    @api.stub :edit_file, ->(path) { called_path = path } do
+      @api.edit_repo_config
+      assert_equal "config/repo.txt", called_path
+    end
+  end
+
+  def test_061_edit_deploy_config
+    # Mock edit_file to track calls
+    called_path = nil
+    @api.stub :edit_file, ->(path) { called_path = path } do
+      @api.edit_deploy_config
+      assert_equal "config/deploy.txt", called_path
+    end
+  end
+
+  def test_062_edit_post_with_source
+    @api.create_view("test_view", "Test View")
+    post = @api.create_post("Test Post", "Test body")
+    
+    # Create source.lt3 file to test smart selection
+    source_path = "posts/#{post.num}/source.lt3"
+    write_file(source_path, "Test source content")
+    
+    # Mock edit_file to track calls
+    called_path = nil
+    @api.stub :edit_file, ->(path) { called_path = path } do
+      @api.edit_post(post.id)
+      assert_equal source_path, called_path
+    end
+  end
+
+  def test_063_edit_post_without_source
+    @api.create_view("test_view", "Test View")
+    post = @api.create_post("Test Post", "Test body")
+    
+    # Ensure source.lt3 doesn't exist, only body.html
+    source_path = "posts/#{post.num}/source.lt3"
+    File.delete(source_path) if File.exist?(source_path)
+    
+    # Mock edit_file to track calls
+    called_path = nil
+    @api.stub :edit_file, ->(path) { called_path = path } do
+      @api.edit_post(post.id)
+      assert_equal "posts/#{post.num}/body.html", called_path
+    end
+  end
+
+  def test_064_edit_post_nonexistent
+    assert_raises(NoMethodError) do
+      @api.edit_post(999)
     end
   end
 end 

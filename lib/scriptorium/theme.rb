@@ -37,20 +37,20 @@ class Scriptorium::Theme
     write_file("/tmp/ttree.txt", `tree`)
     predef = Scriptorium::StandardFiles.new
     std = root/:themes/:standard
-    write_file(std/:initial/"post.lt3", predef.initial_post(:raw))
-    write_file(std/:templates/"post.lt3", predef.post_template("standard"))
+    write_file(std/:initial/"post.lt3",          predef.initial_post(:raw))
+    write_file(std/:templates/"post.lt3",        predef.post_template("standard"))
     write_file(std/:templates/"index_entry.lt3", predef.index_entry)
     layout_text = std/:layout/"layout.txt"
-    write_file(layout_text, predef.layout_text)
+    write_file(layout_text,                      predef.layout_text)
     layout = Scriptorium::Layout.new(layout_text)
     config, gen = std/:layout/:config, std/:layout/:gen
-    write_file(config/"header.txt", predef.theme_header)
-    write_file(config/"footer.txt", predef.theme_footer)
-    write_file(config/"left.txt",   predef.theme_left)
-    write_file(config/"right.txt",  predef.theme_right)
-    write_file(config/"main.txt",   predef.theme_main)
-    write_file(gen/"layout.html",   layout.html)
-    write_file(gen/"layout.css",    layout.css)
+    write_file(config/"header.txt",              predef.theme_header)
+    write_file(config/"footer.txt",              predef.theme_footer)
+    write_file(config/"left.txt",                predef.theme_left)
+    write_file(config/"right.txt",               predef.theme_right)
+    write_file(config/"main.txt",                predef.theme_main)
+    write_file(gen/"layout.html",                layout.html)        # Whaaaat?
+    write_file(gen/"layout.css",                 layout.css)
   end
 
   def file(portion)

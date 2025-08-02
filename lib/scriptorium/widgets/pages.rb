@@ -14,6 +14,7 @@ class Scriptorium::Widget::Pages < Scriptorium::Widget::ListWidget
   def generate
     write_main
     write_card
+    true
   end
 
   def widget_title

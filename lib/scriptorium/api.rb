@@ -306,6 +306,51 @@ class Scriptorium::API
     true
   end
 
+  # Convenience file editing methods
+  
+  def edit_layout(view = nil)
+    view ||= @repo.current_view&.name
+    raise "No view specified and no current view set" if view.nil?
+    edit_file("views/#{view}/layout.txt")
+  end
+
+  def edit_config(view = nil)
+    view ||= @repo.current_view&.name
+    raise "No view specified and no current view set" if view.nil?
+    edit_file("views/#{view}/config.txt")
+  end
+
+  def edit_widget_data(view = nil, widget)
+    view ||= @repo.current_view&.name
+    raise "No view specified and no current view set" if view.nil?
+    raise "Widget name cannot be nil" if widget.nil?
+    edit_file("views/#{view}/widgets/#{widget}/list.txt")
+  end
+
+  def open_repo
+    edit_file(".")
+  end
+
+  def edit_repo_config
+    edit_file("config/repo.txt")
+  end
+
+  def edit_deploy_config
+    edit_file("config/deploy.txt")
+  end
+
+  def edit_post(post_id)
+    post = @repo.post(post_id)
+    source_path = "posts/#{post.num}/source.lt3"
+    body_path = "posts/#{post.num}/body.html"
+    
+    if File.exist?(source_path)
+      edit_file(source_path)
+    else
+      edit_file(body_path)
+    end
+  end
+
   # File operations
   
   def edit_file(path)
@@ -389,6 +434,7 @@ class Scriptorium::API
     raise "No view specified and no current view set" if view.nil?
     
     generate_front_page(view)
+    true
   end
 
   # Draft management
@@ -489,7 +535,7 @@ class Scriptorium::API
     return false unless updated
     
     # Write the updated file
-    write_file(source_file, *lines)
+    write_file(source_file, lines.join)
     true
   end
 

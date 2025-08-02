@@ -24,33 +24,6 @@ class Scriptorium::StandardFiles
     EOS
   end
 
-  def xxxcommon_js
-    <<~EOS
-      // This is the common JavaScript file for all views.
-      // It is included in all views.
-
-      // Handle the back button (or JavaScript history.go(-1))
-      window.onpopstate = function(event) {
-        if (event.state && event.state.slug) {
-          load_main(event.state.slug);  // Load the post for the previous history state
-        }
-      };
-
-      // Initialize with the front page when navigating via the back button or similar
-      function load_main(slug) {
-        const contentDiv = document.getElementById("main");
-
-        fetch(slug)
-          .then(response => response.text())
-          .then(content => {
-            contentDiv.innerHTML = content;
-            history.pushState({slug: slug}, "", slug);  // Update browser history
-          })
-          .catch(error => console.log("Error loading content:", error));
-      }
-    EOS
-  end
-
   def common_js
     <<~EOS
       // Handle the back button (or JavaScript history.go(-1))

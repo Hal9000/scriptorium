@@ -882,7 +882,7 @@ write output:      write the result to output/panes/header.html
     pages.each.with_index do |page, i|
       bar = pagination_bar(page, pages.size, i+1)
       page << %[<div style="position: absolute; bottom: 0; width: 100%;">#{bar}</div>]
-      write_file(out/"page#{i+1}.html", page)
+      write_file(out/"page#{i+1}.html", page.join)
     end
     FileUtils.ln(out/"page1.html", out/"post_index.html")
   end

@@ -148,7 +148,7 @@ class Scriptorium::Post
 
     def save_metadata
       lines = @meta.map { |k, v| sprintf("%-18s  %s", k, v) }
-      write_file(meta_file, *lines)
+      write_file(meta_file, lines.join("\n"))
     end
   end
   
