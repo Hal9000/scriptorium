@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Configure View - Scriptorium Web UI</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .header { border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; }
+    .status { padding: 8px; margin: 8px 0; border-radius: 3px; }
+    .error { background-color: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+    .success { background-color: #e8f5e8; color: #2e7d32; border: 1px solid #c8e6c9; }
+    .button { background: #007cba; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; }
+    .button:hover { background: #005a87; }
+    .button.secondary { background: #6c757d; }
+    .button.secondary:hover { background: #545b62; }
+    .section { margin: 20px 0; }
+    .section h2 { margin: 0 0 15px 0; font-size: 18px; }
+    textarea { width: 100%; height: 300px; font-family: 'Courier New', monospace; font-size: 14px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+    .view-info { background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+    .view-info h2 { margin: 0 0 10px 0; }
+    .view-info p { margin: 5px 0; }
+    .tabs { border-bottom: 1px solid #ddd; margin-bottom: 20px; }
+    .tab { display: inline-block; padding: 10px 20px; cursor: pointer; border: 1px solid transparent; border-bottom: none; margin-bottom: -1px; }
+    .tab.active { background: white; border-color: #ddd; border-radius: 4px 4px 0 0; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Configure View: <%= @view.name %></h1>
+    <p>Edit view configuration and layout settings</p>
+  </div>
+
+  <% if params[:error] %>
+    <div class="status error">
+      <strong>Error:</strong> <%= params[:error] %>
+      <% if params[:suggestion] %>
+        <br><em>Suggestion:</em> <%= params[:suggestion] %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="view-info">
+    <h2><%= @view.title %></h2>
+    <p><strong>Name:</strong> <%= @view.name %></p>
+    <p><strong>Theme:</strong> <%= @view.theme %></p>
+    <p><strong>Path:</strong> views/<%= @view.name %></p>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('config')">Configuration</div>
+    <div class="tab" onclick="showTab('layout')">Layout</div>
+    <div class="tab" onclick="showTab('widgets')">Widgets</div>
+  </div>
+
+  <form method="post" action="/save_view_config/<%= @view.name %>">
+    <div id="config" class="tab-content active">
+      <div class="section">
+        <h2>View Configuration</h2>
+        <p>Edit the view's configuration file (config.txt):</p>
+        <textarea name="config_content" placeholder="Enter view configuration..."><%= @config_content %></textarea>
+      </div>
+    </div>
+
+    <div id="layout" class="tab-content">
+      <div class="section">
+        <h2>Layout Template</h2>
+        <p>Edit the view's layout file (config/layout.txt):</p>
+        <textarea name="layout_content" placeholder="Enter layout HTML..."><%= @layout_content %></textarea>
+      </div>
+    </div>
+
+    <div id="widgets" class="tab-content">
+      <div class="section">
+        <h2>Widget Management</h2>
+        <p>Widget configuration coming soon...</p>
+        <p>This will allow you to:</p>
+        <ul>
+          <li>Enable/disable widgets</li>
+          <li>Configure widget settings</li>
+          <li>Edit widget data files</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <button type="submit" class="button">Save Configuration</button>
+      <a href="/" class="button secondary" style="text-decoration: none;">Back to Dashboard</a>
+    </div>
+  </form>
+
+  <script>
+    function showTab(tabName) {
+      // Hide all tab contents
+      var tabContents = document.getElementsByClassName('tab-content');
+      for (var i = 0; i < tabContents.length; i++) {
+        tabContents[i].classList.remove('active');
+      }
+      
+      // Remove active class from all tabs
+      var tabs = document.getElementsByClassName('tab');
+      for (var i = 0; i < tabs.length; i++) {
+        tabs[i].classList.remove('active');
+      }
+      
+      // Show selected tab content
+      document.getElementById(tabName).classList.add('active');
+      
+      // Add active class to clicked tab
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html> 

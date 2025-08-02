@@ -1,6 +1,6 @@
 #!/Users/Hal/.rbenv/versions/3.2.3/bin/ruby
 
-require_relative "../lib/scriptorium"
+require_relative "../../../lib/scriptorium"
 require 'readline' unless ENV['NOREADLINE']
 
 # Main entry point for Scriptorium TUI
@@ -351,9 +351,6 @@ class ScriptoriumTUI
         puts
       end
     end
-  rescue => e
-    puts "DEBUG: Exception caught in execute_command: #{e.class.name} - #{e.message}"
-    puts e.backtrace.join("\n")
   end
 
   private def show_help
@@ -443,12 +440,11 @@ class ScriptoriumTUI
     puts "  Switched to view '#{view_name}'"
     puts
   rescue => e
-    puts "DEBUG: Exception caught in change_view: #{e.class.name} - #{e.message}"
     puts
     puts "  View '#{view_name}' not found"
     puts
   end
-  
+
   private def create_view(args)
     # Handle "new view" format - prompt for all parameters
     if args == "view" || args.start_with?("view ")
@@ -691,10 +687,6 @@ class ScriptoriumTUI
     end
     puts
   end
-
-
-
-
 
   def which(command)
     # Mock which in test mode to avoid hanging
@@ -1425,4 +1417,4 @@ unless got_repo
 end
 
 # Main REPL loop
-s.mainloop
+s.mainloop 

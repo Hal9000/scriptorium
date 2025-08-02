@@ -30,7 +30,7 @@ class Scriptorium::API
   end
 
   def current_view
-    @repo.current_view
+    @repo&.current_view
   end
 
   def root
@@ -50,12 +50,19 @@ class Scriptorium::API
     if name.nil?
       @repo.current_view
     else
-      @repo.view(name)
+      puts "DEBUG: API view method called with: #{name}"
+      result = @repo.view(name)
+      puts "DEBUG: API view method result: #{result.inspect}"
+      result
     end
   end
 
   def views
-    @repo.views
+    @repo&.views || []
+  end
+
+  def lookup_view(target)
+    @repo&.lookup_view(target)
   end
 
   def views_for(post_or_id)
@@ -121,6 +128,17 @@ class Scriptorium::API
     raise "No view specified and no current view set" if view.nil?
     
     @repo.generate_post_index(view)
+  end
+
+  def generate_post(post_id)
+    post = @repo.post(post_id)
+    raise "Post not found" if post.nil?
+    
+    @repo.generate_post(post_id)
+  end
+
+  def lookup_view(view_name)
+    @repo.lookup_view(view_name)
   end
 
   # Post retrieval
@@ -325,10 +343,6 @@ class Scriptorium::API
     raise "No view specified and no current view set" if view.nil?
     raise "Widget name cannot be nil" if widget.nil?
     edit_file("views/#{view}/widgets/#{widget}/list.txt")
-  end
-
-  def open_repo
-    edit_file(".")
   end
 
   def edit_repo_config

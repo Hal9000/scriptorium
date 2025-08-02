@@ -871,15 +871,6 @@ class TestScriptoriumAPI < Minitest::Test
     end
   end
 
-  def test_059_open_repo
-    # Mock edit_file to track calls
-    called_path = nil
-    @api.stub :edit_file, ->(path) { called_path = path } do
-      @api.open_repo
-      assert_equal ".", called_path
-    end
-  end
-
   def test_060_edit_repo_config
     # Mock edit_file to track calls
     called_path = nil

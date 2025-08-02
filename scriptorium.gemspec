@@ -21,23 +21,30 @@ spec = Gem::Specification.new do |s|
   s.authors     = ["Hal Fulton"]
   s.email       = 'rubyhacker@gmail.com'
   s.executables << "sblog"
+  s.executables << "scriptorium"
 
   s.add_runtime_dependency 'livetext', '~> 0.9',  '>= 0.9.41'
   s.add_runtime_dependency 'rubytext', '~> 0.1',  '>= 0.1.26'
   s.add_runtime_dependency 'rouge',    '~> 3.25', '>= 3.25.0'
+  s.add_runtime_dependency 'sinatra',  '~> 3.0',  '>= 3.0.0'
 
   s.add_development_dependency 'minitest', '~> 5.10', '>= 5.10.0'
 
   # Files...
 
-  main = Find.find("bin").to_a + 
-         Find.find("lib").to_a + 
-         Find.find("doc").to_a 
+  # Core library files
+  main = Find.find("lib").to_a + 
+         Find.find("doc").to_a
+  
+  # UI-specific files
+  ui_files = Find.find("ui").to_a
+  
+  # Test files
   test = Find.find("test").to_a
 
   misc = %w[./README.lt3 ./README.md ./scriptorium.gemspec]
 
-  s.files       =  main + misc + test
+  s.files       =  main + ui_files + misc + test
   s.homepage    = 'https://github.com/Hal9000/scriptorium'
   s.license     = "Ruby"
   s.post_install_message = 

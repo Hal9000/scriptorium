@@ -1,0 +1,20 @@
+I want to create a web-based tool that works in essence the same as the TUI. 
+Constraints follow:
+
+0. Let's develop incrementally. Ask me clarifying questions and seek feedback.
+
+1. Use webrick as needed. Try to track whether it is running, and be able to
+kill it and restart it.
+
+2. Use Sinatra
+
+3. Keep the file-based data storage; there will be no database.
+
+4. Avoid extra installations if possible.
+
+5. Add tests as we go, if possible. I believe web testing is problematic.
+
+6. At a conceptual level, follow the flow of the TUI and use the calls we 
+have available in the API.
+
+7. For edit_file, I suggest a simple textarea (unless you have a better idea).

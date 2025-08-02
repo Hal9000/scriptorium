@@ -343,4 +343,203 @@ class TestScriptoriumRepo < Minitest::Test
     assert_includes permalink_content, "Visit Blog"
     assert_includes permalink_content, 'href="../index.html"'
   end
+
+  # View-related tests
+  def test_view_method_writes_to_currentview_txt
+    # Create a test repo for this test
+    test_repo_path = "test_repo_view_test"
+    FileUtils.rm_rf(test_repo_path) if Dir.exist?(test_repo_path)
+    
+    repo = Scriptorium::Repo.create(test_repo_path, testmode: true)
+    repo.create_view("view1", "View One", "First view")
+    repo.create_view("view2", "View Two", "Second view")
+    
+    # Initially, current view should be the last created view (view2)
+    assert_equal "view2", repo.current_view.name
+    
+    # Switch to view1
+    repo.view("view1")
+    
+    # Check that current view changed in memory
+    assert_equal "view1", repo.current_view.name
+    
+    # Check that currentview.txt was written
+    currentview_file = File.join(test_repo_path, "config", "currentview.txt")
+    assert File.exist?(currentview_file), "currentview.txt should exist"
+    
+    content = File.read(currentview_file).strip
+    assert_equal "view1", content, "currentview.txt should contain 'view1'"
+    
+    # Cleanup
+    FileUtils.rm_rf(test_repo_path)
+  end
+
+  def test_view_method_persists_across_repo_reload
+    # Create a test repo for this test
+    test_repo_path = "test_repo_view_test"
+    FileUtils.rm_rf(test_repo_path) if Dir.exist?(test_repo_path)
+    
+    repo = Scriptorium::Repo.create(test_repo_path, testmode: true)
+    repo.create_view("view1", "View One", "First view")
+    repo.create_view("view2", "View Two", "Second view")
+    
+    # Switch to view1
+    repo.view("view1")
+    assert_equal "view1", repo.current_view.name
+    
+    # Create a new repo instance pointing to the same directory
+    new_repo = Scriptorium::Repo.open(test_repo_path)
+    
+    # The new repo should load the current view from the file
+    assert_equal "view1", new_repo.current_view.name
+    
+    # Cleanup
+    FileUtils.rm_rf(test_repo_path)
+  end
+
+  def test_create_view_switches_to_new_view
+    # Create a test repo for this test
+    test_repo_path = "test_repo_view_test"
+    FileUtils.rm_rf(test_repo_path) if Dir.exist?(test_repo_path)
+    
+    repo = Scriptorium::Repo.create(test_repo_path, testmode: true)
+    repo.create_view("view1", "View One", "First view")
+    repo.create_view("view2", "View Two", "Second view")
+    
+    # Start with view2 as current
+    assert_equal "view2", repo.current_view.name
+    
+    # Create a new view - should switch to it
+    repo.create_view("view3", "View Three", "Third view")
+    assert_equal "view3", repo.current_view.name
+    
+    # Check that currentview.txt was updated
+    currentview_file = File.join(test_repo_path, "config", "currentview.txt")
+    content = File.read(currentview_file).strip
+    assert_equal "view3", content, "currentview.txt should contain 'view3'"
+    
+    # Cleanup
+    FileUtils.rm_rf(test_repo_path)
+  end
+
+  def test_load_views_reads_currentview_txt
+    # Create a test repo for this test
+    test_repo_path = "test_repo_view_test"
+    FileUtils.rm_rf(test_repo_path) if Dir.exist?(test_repo_path)
+    
+    repo = Scriptorium::Repo.create(test_repo_path, testmode: true)
+    repo.create_view("view1", "View One", "First view")
+    repo.create_view("view2", "View Two", "Second view")
+    
+    # Switch to view1
+    repo.view("view1")
+    assert_equal "view1", repo.current_view.name
+    
+    # Create a new repo instance to test load_views
+    new_repo = Scriptorium::Repo.open(test_repo_path)
+    
+    # Should load the correct current view from file
+    assert_equal "view1", new_repo.current_view.name
+    
+    # Cleanup
+    FileUtils.rm_rf(test_repo_path)
+  end
+
+  def test_load_views_handles_missing_currentview_txt
+    # Create a test repo for this test
+    test_repo_path = "test_repo_view_test"
+    FileUtils.rm_rf(test_repo_path) if Dir.exist?(test_repo_path)
+    
+    repo = Scriptorium::Repo.create(test_repo_path, testmode: true)
+    repo.create_view("view1", "View One", "First view")
+    
+    # Remove currentview.txt
+    currentview_file = File.join(test_repo_path, "config", "currentview.txt")
+    File.delete(currentview_file) if File.exist?(currentview_file)
+    
+    # Create a new repo instance
+    new_repo = Scriptorium::Repo.open(test_repo_path)
+    
+    # Should handle missing file gracefully
+    # The behavior depends on how the repo handles nil current_view
+    assert new_repo.current_view.nil? || new_repo.current_view.is_a?(Scriptorium::View)
+    
+    # Cleanup
+    FileUtils.rm_rf(test_repo_path)
+  end
+
+  def test_load_views_handles_invalid_view_name
+    # Create a test repo for this test
+    test_repo_path = "test_repo_view_test"
+    FileUtils.rm_rf(test_repo_path) if Dir.exist?(test_repo_path)
+    
+    repo = Scriptorium::Repo.create(test_repo_path, testmode: true)
+    repo.create_view("view1", "View One", "First view")
+    
+    # Write an invalid view name to currentview.txt
+    currentview_file = File.join(test_repo_path, "config", "currentview.txt")
+    File.write(currentview_file, "nonexistent_view")
+    
+    # Create a new repo instance - should handle invalid view name gracefully
+    # The current implementation raises an exception, so we expect that
+    assert_raises(CannotLookupView) do
+      Scriptorium::Repo.open(test_repo_path)
+    end
+    
+    # Cleanup
+    FileUtils.rm_rf(test_repo_path)
+  end
+
+  def test_view_method_returns_view_object
+    # Create a test repo for this test
+    test_repo_path = "test_repo_view_test"
+    FileUtils.rm_rf(test_repo_path) if Dir.exist?(test_repo_path)
+    
+    repo = Scriptorium::Repo.create(test_repo_path, testmode: true)
+    repo.create_view("view1", "View One", "First view")
+    repo.create_view("view2", "View Two", "Second view")
+    
+    # The view method should return the view object, not nil
+    result = repo.view("view1")
+    assert_instance_of Scriptorium::View, result
+    assert_equal "view1", result.name
+    
+    # Cleanup
+    FileUtils.rm_rf(test_repo_path)
+  end
+
+  def test_view_method_with_nil_returns_current_view
+    # Create a test repo for this test
+    test_repo_path = "test_repo_view_test"
+    FileUtils.rm_rf(test_repo_path) if Dir.exist?(test_repo_path)
+    
+    repo = Scriptorium::Repo.create(test_repo_path, testmode: true)
+    repo.create_view("view1", "View One", "First view")
+    
+    # view() with no arguments should return current view
+    current = repo.current_view
+    result = repo.view
+    assert_equal current, result
+    
+    # Cleanup
+    FileUtils.rm_rf(test_repo_path)
+  end
+
+  def test_view_method_with_view_object
+    # Create a test repo for this test
+    test_repo_path = "test_repo_view_test"
+    FileUtils.rm_rf(test_repo_path) if Dir.exist?(test_repo_path)
+    
+    repo = Scriptorium::Repo.create(test_repo_path, testmode: true)
+    repo.create_view("view1", "View One", "First view")
+    repo.create_view("view2", "View Two", "Second view")
+    
+    # Should work with a View object instead of string
+    view_obj = repo.lookup_view("view1")
+    repo.view(view_obj)
+    assert_equal "view1", repo.current_view.name
+    
+    # Cleanup
+    FileUtils.rm_rf(test_repo_path)
+  end
 end

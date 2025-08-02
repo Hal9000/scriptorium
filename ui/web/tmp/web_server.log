@@ -1,0 +1,825 @@
+Puma starting in single mode...
+* Puma version: 6.6.0 ("Return to Forever")
+* Ruby ver2025-08-02 03:27:54 - CannotReadFileNotFound - Cannot read file scriptorium-TEST/posts/0002/meta.txt: file not found (No such file or directory @ rb_sysopen - scriptorium-TEST/posts/0002/meta.txt) (CannotReadFileNotFound):
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:176:in `rescue in read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:160:in `read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:147:in `load_metadata'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:127:in `read'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:333:in `block in all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `each'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/api.rb:147:in `posts'
+	app/app.rb:78:in `block in <class:ScriptoriumWeb>'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `block in compile!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (3 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1092:in `route_eval'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (2 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1123:in `block in process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1072:in `block in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `each'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1193:in `block in dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1188:in `dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `block in call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:993:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/xss_header.rb:20:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/path_traversal.rb:18:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/json_csrf.rb:28:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/frame_options.rb:33:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/middleware/logger.rb:17:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-3.1.16/lib/rack/head.rb:15:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:227:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:2138:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `block in call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1898:in `synchronize'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/configuration.rb:279:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:99:in `block in handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:390:in `with_force_shutdown'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:98:in `handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:472:in `process_client'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:254:in `block in run'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:167:in `block in spawn_thread'
+2025-08-02 03:27:58 - CannotReadFileNotFound - Cannot read file scriptorium-TEST/posts/0002/meta.txt: file not found (No such file or directory @ rb_sysopen - scriptorium-TEST/posts/0002/meta.txt) (CannotReadFileNotFound):
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:176:in `rescue in read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:160:in `read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:147:in `load_metadata'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:127:in `read'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:333:in `block in all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `each'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/api.rb:147:in `posts'
+	app/app.rb:78:in `block in <class:ScriptoriumWeb>'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `block in compile!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (3 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1092:in `route_eval'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (2 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1123:in `block in process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1072:in `block in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `each'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1193:in `block in dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1188:in `dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `block in call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:993:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/xss_header.rb:20:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/path_traversal.rb:18:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/json_csrf.rb:28:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/frame_options.rb:33:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/middleware/logger.rb:17:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-3.1.16/lib/rack/head.rb:15:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:227:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:2138:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `block in call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1898:in `synchronize'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `call'
+	/DEBUG: Initializing API...
+DEBUG: API created successfully
+DEBUG: No repo loaded, checking for scriptorium-TEST
+DEBUG: Found scriptorium-TEST directory
+DEBUG: Successfully opened repo
+DEBUG: Root route accessed
+DEBUG: Repository exists
+DEBUG: Repository root: scriptorium-TEST
+DEBUG: Current view: mystuff
+DEBUG: About to call @api.posts(mystuff)
+DEBUG: About to call @api.posts(mystuff)
+DEBUG: Initializing API...
+DEBUG: API created successfully
+DEBUG: No repo loaded, checking for scriptorium-TEST
+DEBUG: Found scriptorium-TEST directory
+DEBUG: Successfully opened repo
+DEBUG: Root route accessed
+DEBUG: Repository exists
+DEBUG: Repository root: scriptorium-TEST
+DEBUG: Current view: mystuff
+DEBUG: About to call @api.posts(mystuff)
+DEBUG: About to call @api.posts(mystuff)
+DEBUG: Initializing API...
+DEBUG: API created successfully
+DEBUG: No repo loaded, checking for scriptorium-TEST
+DEBUG: Found scriptorium-TEST directory
+DEBUG: Successfully opened repo
+DEBUG: Root route accessed
+DEBUG: Repository exists
+DEBUG: Repository root: scriptorium-TEST
+DEBUG: Current view: mystuff
+DEBUG: About to call @api.posts(mystuff)
+DEBUG: About to call @api.posts(mystuff)
+DEBUG: Initializing API...
+DEBUG: API created successfully
+DEBUG: No repo loaded, checking for scriptorium-TEST
+DEBUG: Found scriptorium-TEST directory
+DEBUG: Successfully opened repo
+DEBUG: Initializing API...
+DEBUG: API created successfully
+DEBUG: No repo loaded, checking for scriptorium-TEST
+DEBUG: Found scriptorium-TEST directory
+DEBUG: Successfully opened repo
+DEBUG: Root route accessed
+DEBUG: Repository exists
+DEBUG: Repository root: scriptorium-TEST
+DEBUG: Current view: mystuff
+DEBUG: About to call @api.posts(mystuff)
+DEBUG: About to call @api.posts(mystuff)
+DEBUG: Initializing API...
+DEBUG: API created successfully
+DEBUG: No repo loaded, checking for scriptorium-TEST
+DEBUG: Found scriptorium-TEST directory
+DEBUG: Successfully opened repo
+DEBUG: API view method called with: sample
+DEBUG: API view method result: <View: sample "My first view" theme: standard>
+DEBUG: Initializing API...
+DEBUG: API created successfully
+DEBUG: No repo loaded, checking for scriptorium-TEST
+DEBUG: Found scriptorium-TEST directory
+DEBUG: Successfully opened repo
+DEBUG: Root route accessed
+DEBUG: Repository exists
+DEBUG: Repository root: scriptorium-TEST
+DEBUG: Current view: sample
+DEBUG: About to call @api.posts(sample)
+DEBUG: About to call @api.posts(sample)
+DEBUG: Initializing API...
+DEBUG: API created successfully
+DEBUG: No repo loaded, checking for scriptorium-TEST
+DEBUG: Found scriptorium-TEST directory
+DEBUG: Successfully opened repo
+DEBUG: Root route accessed
+DEBUG: Repository exists
+DEBUG: Repository root: scriptorium-TEST
+DEBUG: Current view: sample
+DEBUG: About to call @api.posts(sample)
+DEBUG: About to call @api.posts(sample)
+DEBUG: Initializing API...
+DEBUG: API created successfully
+DEBUG: No repo loaded, checking for scriptorium-TEST
+DEBUG: Found scriptorium-TEST directory
+DEBUG: Successfully opened repo
+DEBUG: Root route accessed
+DEBUG: Repository exists
+DEBUG: Repository root: scriptorium-TEST
+DEBUG: Current view: sample
+DEBUG: About to call @api.posts(sample)
+DEBUG: About to call @api.posts(sample)
+DEBUG: Initializing API...
+DEBUG: API created successfully
+DEBUG: No repo loaded, checking for scriptorium-TEST
+DEBUG: Found scriptorium-TEST directory
+DEBUG: Successfully opened repo
+DEBUG: Root route accessed
+DEBUG: Repository exists
+DEBUG: Repository root: scriptorium-TEST
+DEBUG: Current view: sample
+DEBUG: About to call @api.posts(sample)
+DEBUG: About to call @api.posts(sample)
+DEBUG: Initializing API...
+DEBUG: API created successfully
+DEBUG: No repo loaded, checking for scriptorium-TEST
+DEBUG: Found scriptorium-TEST directory
+DEBUG: Successfully opened repo
+DEBUG: Initializing API...
+DEBUG: API created successfully
+DEBUG: No repo loaded, checking for scriptorium-TEST
+DEBUG: Found scriptorium-TEST directory
+DEBUG: Successfully opened repo
+DEBUG: Root route accessed
+DEBUG: Repository exists
+DEBUG: Repository root: scriptorium-TEST
+DEBUG: Current view: sample
+DEBUG: About to call @api.posts(sample)
+DEBUG: About to call @api.posts(sample)
+DEBUG: Initializing API...
+DEBUG: API created successfully
+DEBUG: No repo loaded, checking for scriptorium-TEST
+DEBUG: Found scriptorium-TEST directory
+DEBUG: Successfully opened repo
+DEBUG: Root route accessed
+DEBUG: Repository exists
+DEBUG: Repository root: scriptorium-TEST
+DEBUG: Current view: sample
+DEBUG: About to call @api.posts(sample)
+DEBUG: About to call @api.posts(sample)
+DEBUG: Initializing API...
+DEBUG: API created successfully
+DEBUG: No repo loaded, checking for scriptorium-TEST
+DEBUG: Found scriptorium-TEST directory
+DEBUG: Successfully opened repo
+DEBUG: Initializing API...
+DEBUG: API created successfully
+DEBUG: No repo loaded, checking for scriptorium-TEST
+DEBUG: Found scriptorium-TEST directory
+DEBUG: Successfully opened repo
+DEBUG: Initializing API...
+DEBUG: API created successfully
+DEBUG: No repo loaded, checking for scriptorium-TEST
+DEBUG: Found scriptorium-TEST directory
+DEBUG: Successfully opened repo
+DEBUG: Root route accessed
+DEBUG: Repository exists
+DEBUG: Repository root: scriptorium-TEST
+DEBUG: Current view: sample
+DEBUG: About to call @api.posts(sample)
+DEBUG: About to call @api.posts(sample)
+DEBUG: Initializing API...
+DEBUG: API created successfully
+DEBUG: No repo loaded, checking for scriptorium-TEST
+DEBUG: Found scriptorium-TEST directory
+DEBUG: Successfully opened repo
+DEBUG: Root route accessed
+DEBUG: Repository exists
+DEBUG: Repository root: scriptorium-TEST
+DEBUG: Current view: sample
+DEBUG: About to call @api.posts(sample)
+DEBUG: About to call @api.posts(sample)
+/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/configuration.rb:279:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:99:in `block in handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:390:in `with_force_shutdown'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:98:in `handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:472:in `process_client'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:254:in `block in run'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:167:in `block in spawn_thread'
+2025-08-02 03:28:03 - CannotReadFileNotFound - Cannot read file scriptorium-TEST/posts/0002/meta.txt: file not found (No such file or directory @ rb_sysopen - scriptorium-TEST/posts/0002/meta.txt) (CannotReadFileNotFound):
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:176:in `rescue in read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:160:in `read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:147:in `load_metadata'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:127:in `read'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:333:in `block in all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `each'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/api.rb:147:in `posts'
+	app/app.rb:78:in `block in <class:ScriptoriumWeb>'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `block in compile!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (3 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1092:in `route_eval'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (2 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1123:in `block in process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1072:in `block in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `each'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1193:in `block in dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1188:in `dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `block in call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:993:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/xss_header.rb:20:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/path_traversal.rb:18:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/json_csrf.rb:28:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/frame_options.rb:33:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/middleware/logger.rb:17:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-3.1.16/lib/rack/head.rb:15:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:227:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:2138:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `block in call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1898:in `synchronize'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/configuration.rb:279:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:99:in `block in handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:390:in `with_force_shutdown'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:98:in `handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:472:in `process_client'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:254:in `block in run'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:167:in `block in spawn_thread'
+2025-08-02 03:28:04 - CannotReadFileNotFound - Cannot read file scriptorium-TEST/posts/0002/meta.txt: file not found (No such file or directory @ rb_sysopen - scriptorium-TEST/posts/0002/meta.txt) (CannotReadFileNotFound):
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:176:in `rescue in read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:160:in `read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:147:in `load_metadata'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:127:in `read'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:333:in `block in all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `each'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/api.rb:147:in `posts'
+	app/app.rb:78:in `block in <class:ScriptoriumWeb>'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `block in compile!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (3 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1092:in `route_eval'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (2 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1123:in `block in process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1072:in `block in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `each'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1193:in `block in dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1188:in `dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `block in call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:993:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/xss_header.rb:20:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/path_traversal.rb:18:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/json_csrf.rb:28:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/frame_options.rb:33:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/middleware/logger.rb:17:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-3.1.16/lib/rack/head.rb:15:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:227:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:2138:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `block in call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1898:in `synchronize'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/configuration.rb:279:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:99:in `block in handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:390:in `with_force_shutdown'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:98:in `handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:472:in `process_client'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:254:in `block in run'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:167:in `block in spawn_thread'
+2025-08-02 03:28:09 - CannotReadFileNotFound - Cannot read file scriptorium-TEST/posts/0003/meta.txt: file not found (No such file or directory @ rb_sysopen - scriptorium-TEST/posts/0003/meta.txt) (CannotReadFileNotFound):
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:176:in `rescue in read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:160:in `read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:147:in `load_metadata'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:127:in `read'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:333:in `block in all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `each'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/api.rb:147:in `posts'
+	app/app.rb:78:in `block in <class:ScriptoriumWeb>'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `block in compile!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (3 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1092:in `route_eval'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (2 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1123:in `block in process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1072:in `block in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `each'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1193:in `block in dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1188:in `dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `block in call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:993:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/xss_header.rb:20:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/path_traversal.rb:18:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/json_csrf.rb:28:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/frame_options.rb:33:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/middleware/logger.rb:17:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-3.1.16/lib/rack/head.rb:15:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:227:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:2138:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `block in call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1898:in `synchronize'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/configuration.rb:279:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:99:in `block in handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:390:in `with_force_shutdown'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:98:in `handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:472:in `process_client'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:254:in `block in run'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:167:in `block in spawn_thread'
+2025-08-02 03:28:21 - CannotReadFileNotFound - Cannot read file scriptorium-TEST/posts/0003/meta.txt: file not found (No such file or directory @ rb_sysopen - scriptorium-TEST/posts/0003/meta.txt) (CannotReadFileNotFound):
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:176:in `rescue in read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:160:in `read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:147:in `load_metadata'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:127:in `read'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:333:in `block in all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `each'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/api.rb:147:in `posts'
+	app/app.rb:78:in `block in <class:ScriptoriumWeb>'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `block in compile!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (3 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1092:in `route_eval'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (2 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1123:in `block in process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1072:in `block in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `each'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1193:in `block in dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1188:in `dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `block in call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:993:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/xss_header.rb:20:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/path_traversal.rb:18:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/json_csrf.rb:28:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/frame_options.rb:33:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/middleware/logger.rb:17:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-3.1.16/lib/rack/head.rb:15:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:227:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:2138:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `block in call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1898:in `synchronize'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/configuration.rb:279:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:99:in `block in handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:390:in `with_force_shutdown'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:98:in `handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:472:in `process_client'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:254:in `block in run'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:167:in `block in spawn_thread'
+2025-08-02 03:28:23 - CannotReadFileNotFound - Cannot read file scriptorium-TEST/posts/0003/meta.txt: file not found (No such file or directory @ rb_sysopen - scriptorium-TEST/posts/0003/meta.txt) (CannotReadFileNotFound):
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:176:in `rescue in read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:160:in `read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:147:in `load_metadata'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:127:in `read'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:333:in `block in all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `each'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/api.rb:147:in `posts'
+	app/app.rb:78:in `block in <class:ScriptoriumWeb>'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `block in compile!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (3 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1092:in `route_eval'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (2 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1123:in `block in process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1072:in `block in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `each'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1193:in `block in dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1188:in `dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `block in call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:993:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/xss_header.rb:20:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/path_traversal.rb:18:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/json_csrf.rb:28:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/frame_options.rb:33:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/middleware/logger.rb:17:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-3.1.16/lib/rack/head.rb:15:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:227:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:2138:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `block in call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1898:in `synchronize'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/configuration.rb:279:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:99:in `block in handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:390:in `with_force_shutdown'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:98:in `handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:472:in `process_client'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:254:in `block in run'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:167:in `block in spawn_thread'
+2025-08-02 03:28:30 - CannotReadFileNotFound - Cannot read file scriptorium-TEST/posts/0003/meta.txt: file not found (No such file or directory @ rb_sysopen - scriptorium-TEST/posts/0003/meta.txt) (CannotReadFileNotFound):
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:176:in `rescue in read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:160:in `read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:147:in `load_metadata'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:127:in `read'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:333:in `block in all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `each'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/api.rb:147:in `posts'
+	app/app.rb:78:in `block in <class:ScriptoriumWeb>'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `block in compile!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (3 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1092:in `route_eval'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (2 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1123:in `block in process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1072:in `block in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `each'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1193:in `block in dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1188:in `dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `block in call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:993:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/xss_header.rb:20:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/path_traversal.rb:18:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/json_csrf.rb:28:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/frame_options.rb:33:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/middleware/logger.rb:17:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-3.1.16/lib/rack/head.rb:15:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:227:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:2138:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `block in call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1898:in `synchronize'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/configuration.rb:279:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:99:in `block in handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:390:in `with_force_shutdown'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:98:in `handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:472:in `process_client'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:254:in `block in run'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:167:in `block in spawn_thread'
+2025-08-02 03:28:32 - CannotReadFileNotFound - Cannot read file scriptorium-TEST/posts/0003/meta.txt: file not found (No such file or directory @ rb_sysopen - scriptorium-TEST/posts/0003/meta.txt) (CannotReadFileNotFound):
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:176:in `rescue in read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:160:in `read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:147:in `load_metadata'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:127:in `read'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:333:in `block in all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `each'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/api.rb:147:in `posts'
+	app/app.rb:78:in `block in <class:ScriptoriumWeb>'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `block in compile!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (3 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1092:in `route_eval'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (2 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1123:in `block in process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1072:in `block in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `each'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1193:in `block in dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1188:in `dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `block in call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:993:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/xss_header.rb:20:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/path_traversal.rb:18:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/json_csrf.rb:28:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/frame_options.rb:33:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/middleware/logger.rb:17:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-3.1.16/lib/rack/head.rb:15:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:227:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:2138:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `block in call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1898:in `synchronize'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/configuration.rb:279:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:99:in `block in handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:390:in `with_force_shutdown'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:98:in `handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:472:in `process_client'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:254:in `block in run'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:167:in `block in spawn_thread'
+2025-08-02 03:28:40 - CannotReadFileNotFound - Cannot read file scriptorium-TEST/posts/0003/meta.txt: file not found (No such file or directory @ rb_sysopen - scriptorium-TEST/posts/0003/meta.txt) (CannotReadFileNotFound):
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:176:in `rescue in read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:160:in `read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:147:in `load_metadata'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:127:in `read'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:333:in `block in all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `each'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/api.rb:147:in `posts'
+	app/app.rb:78:in `block in <class:ScriptoriumWeb>'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `block in compile!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (3 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1092:in `route_eval'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (2 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1123:in `block in process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1072:in `block in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `each'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1193:in `block in dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1188:in `dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `block in call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:993:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/xss_header.rb:20:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/path_traversal.rb:18:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/json_csrf.rb:28:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/frame_options.rb:33:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/middleware/logger.rb:17:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-3.1.16/lib/rack/head.rb:15:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:227:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:2138:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `block in call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1898:in `synchronize'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/configuration.rb:279:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:99:in `block in handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:390:in `with_force_shutdown'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:98:in `handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:472:in `process_client'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:254:in `block in run'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:167:in `block in spawn_thread'
+2025-08-02 03:28:42 - CannotReadFileNotFound - Cannot read file scriptorium-TEST/posts/0003/meta.txt: file not found (No such file or directory @ rb_sysopen - scriptorium-TEST/posts/0003/meta.txt) (CannotReadFileNotFound):
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:176:in `rescue in read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:160:in `read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:147:in `load_metadata'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:127:in `read'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:333:in `block in all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `each'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/api.rb:147:in `posts'
+	app/app.rb:78:in `block in <class:ScriptoriumWeb>'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `block in compile!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (3 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1092:in `route_eval'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (2 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1123:in `block in process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1072:in `block in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `each'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1193:in `block in dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1188:in `dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `block in call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:993:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/xss_header.rb:20:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/path_traversal.rb:18:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/json_csrf.rb:28:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/frame_options.rb:33:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/middleware/logger.rb:17:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-3.1.16/lib/rack/head.rb:15:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:227:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:2138:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `block in call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1898:in `synchronize'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/configuration.rb:279:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:99:in `block in handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:390:in `with_force_shutdown'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:98:in `handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:472:in `process_client'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:254:in `block in run'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:167:in `block in spawn_thread'
+2025-08-02 03:38:15 - CannotReadFileNotFound - Cannot read file scriptorium-TEST/posts/0003/meta.txt: file not found (No such file or directory @ rb_sysopen - scriptorium-TEST/posts/0003/meta.txt) (CannotReadFileNotFound):
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:176:in `rescue in read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:160:in `read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:147:in `load_metadata'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:127:in `read'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:333:in `block in all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `each'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/api.rb:147:in `posts'
+	app/app.rb:78:in `block in <class:ScriptoriumWeb>'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `block in compile!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (3 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1092:in `route_eval'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (2 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1123:in `block in process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1072:in `block in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `each'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1193:in `block in dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1188:in `dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `block in call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:993:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/xss_header.rb:20:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/path_traversal.rb:18:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/json_csrf.rb:28:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/frame_options.rb:33:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/middleware/logger.rb:17:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-3.1.16/lib/rack/head.rb:15:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:227:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:2138:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `block in call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1898:in `synchronize'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/configuration.rb:279:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:99:in `block in handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:390:in `with_force_shutdown'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:98:in `handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:472:in `process_client'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:254:in `block in run'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:167:in `block in spawn_thread'
+2025-08-02 03:38:17 - CannotReadFileNotFound - Cannot read file scriptorium-TEST/posts/0003/meta.txt: file not found (No such file or directory @ rb_sysopen - scriptorium-TEST/posts/0003/meta.txt) (CannotReadFileNotFound):
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:176:in `rescue in read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/helpers.rb:160:in `read_file'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:147:in `load_metadata'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/post.rb:127:in `read'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:333:in `block in all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `each'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/repo.rb:330:in `all_posts'
+	/Users/Hal/Dropbox/topx/git/scriptorium/lib/scriptorium/api.rb:147:in `posts'
+	app/app.rb:78:in `block in <class:ScriptoriumWeb>'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1807:in `block in compile!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (3 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1092:in `route_eval'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1074:in `block (2 levels) in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1123:in `block in process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1121:in `process_route'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1072:in `block in route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `each'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1069:in `route!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1193:in `block in dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1188:in `dispatch!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `block in call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `catch'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1164:in `invoke'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1004:in `call!'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:993:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/xss_header.rb:20:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/path_traversal.rb:18:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/json_csrf.rb:28:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/base.rb:53:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-protection-4.1.1/lib/rack/protection/frame_options.rb:33:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/middleware/logger.rb:17:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/rack-3.1.16/lib/rack/head.rb:15:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:227:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:2138:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `block in call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1898:in `synchronize'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/sinatra-4.1.1/lib/sinatra/base.rb:1677:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/configuration.rb:279:in `call'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:99:in `block in handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:390:in `with_force_shutdown'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/request.rb:98:in `handle_request'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:472:in `process_client'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/server.rb:254:in `block in run'
+	/Users/Hal/.rbenv/versions/3.2.3/lib/ruby/gems/3.2.0/gems/puma-6.6.0/lib/puma/thread_pool.rb:167:in `block in spawn_thread'

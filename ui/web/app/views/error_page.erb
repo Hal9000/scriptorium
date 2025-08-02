@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Error - Scriptorium Web UI</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .header { border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; }
+    .error { background-color: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 15px; border-radius: 4px; }
+    .button { background: #007cba; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; }
+    .button:hover { background: #005a87; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Oops! Something went wrong</h1>
+  </div>
+
+  <div class="error">
+    <h2><%= @error %></h2>
+    <% if @suggestion %>
+      <p><em><%= @suggestion %></em></p>
+    <% end %>
+  </div>
+
+  <p>
+    <a href="/" class="button">Return to Dashboard</a>
+  </p>
+</body>
+</html> 

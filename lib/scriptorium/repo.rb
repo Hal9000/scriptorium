@@ -123,7 +123,13 @@ class Scriptorium::Repo
   def view(change = nil)   # get/set current view
     return @current_view if change.nil?
     vnew = change.is_a?(Scriptorium::View) ? change : lookup_view(change)
+    write_file(@root/:config/"currentview.txt", vnew.name)
     @current_view = vnew
+    @current_view
+  end
+
+  def current_view
+    @current_view
   end
 
   def view_exist?(name)
@@ -199,8 +205,9 @@ class Scriptorium::Repo
     view = Scriptorium::View.new(name, title, subtitle, theme)
     @views -= [view]
     @views << view
-    @current_view = view
-    write_file(@root/:config/"currentview.txt", view.name)
+    # Remove this line - current view should only be set from currentview.txt
+    # @current_view = view
+    # write_file(@root/:config/"currentview.txt", view.name)
     view
   end
 

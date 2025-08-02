@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Scriptorium Web UI</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .error { color: red; background: #ffe6e6; padding: 10px; margin: 10px 0; }
+    .message { color: green; background: #e6ffe6; padding: 10px; margin: 10px 0; }
+    .suggestion { color: #666; font-style: italic; }
+    table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    .button { background: #007cba; color: white; padding: 5px 10px; text-decoration: none; border-radius: 3px; }
+    .button:hover { background: #005a87; }
+    .section { margin: 20px 0; }
+    .section h3 { margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Scriptorium Web UI</h1>
+  
+  <% if @error %>
+    <div class="error">
+      <strong>Error:</strong> <%= @error %>
+      <% if @suggestion %>
+        <div class="suggestion"><%= @suggestion %></div>
+      <% end %>
+    </div>
+  <% end %>
+  
+  <% if @message %>
+    <div class="message"><%= @message %></div>
+  <% end %>
+
+  <% if @api && @api.repo %>
+    <div class="section">
+      <h3>Repository loaded: <%= @api.repo.root %></h3>
+      
+      <div class="section">
+        <h3>Views</h3>
+        <% if @views && !@views.empty? %>
+          <table>
+            <tr>
+              <th>Name <em style="font-size: 0.8em; font-weight: normal;">(Click to switch views)</em></th>
+              <th>Title</th>
+              <th>Actions</th>
+            </tr>
+            <% @views.each do |view| %>
+              <tr style="<%= 'background-color: #e3f2fd;' if @current_view && view.name == @current_view.name %>">
+                <td>
+                  <form method="post" action="/change_view" style="display: inline;">
+                    <input type="hidden" name="view_name" value="<%= view.name %>">
+                    <button type="submit" style="background: none; border: none; color: #007cba; cursor: pointer; font-family: monospace; font-size: inherit;" title="Change to <%= view.name %>">
+                      <%= view.name %>
+                    </button>
+                  </form>
+                </td>
+                <td><%= view.title %><%= ' (Current)' if @current_view && view.name == @current_view.name %></td>
+                <td style="text-align: center;">
+                  <a href="/configure_view/<%= view.name %>" class="button" style="text-decoration: none;">Configure</a>
+                </td>
+              </tr>
+            <% end %>
+          </table>
+        <% else %>
+          <p>No views found</p>
+        <% end %>
+        
+        <form method="post" action="/create_view" style="margin-top: 10px;">
+          <input type="text" name="name" placeholder="View name" required>
+          <input type="text" name="title" placeholder="View title" required>
+          <input type="text" name="subtitle" placeholder="View subtitle" required>
+          <button type="submit" class="button">Create new view</button>
+        </form>
+      </div>
+
+      <% if @current_view %>
+        <div class="section">
+          <h3>Create new post in <%= @current_view.name %></h3>
+          <form method="post" action="/create_post">
+            <input type="text" name="title" placeholder="Post title" required>
+            <button type="submit" class="button">Create new post</button>
+          </form>
+        </div>
+
+        <% if @posts && !@posts.empty? %>
+          <div class="section">
+            <table>
+              <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Views</th>
+                <th>Actions</th>
+              </tr>
+              <% @posts.each do |post| %>
+                <tr>
+                  <td><%= post.num %></td>
+                  <td><%= post.title %></td>
+                  <td><%= post.views_array.join(', ') %></td>
+                  <td style="text-align: center;">
+                    <a href="/edit_post/<%= post.num %>" class="button" style="text-decoration: none;">Edit</a>
+                    <form method="post" action="/generate_post" style="display: inline;">
+                      <input type="hidden" name="post_id" value="<%= post.num %>">
+                      <button type="submit" class="button" style="margin-left: 5px;">Generate</button>
+                    </form>
+                  </td>
+                </tr>
+              <% end %>
+            </table>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="section">
+      <h3>No repository loaded</h3>
+      <form method="post" action="/create_repo">
+        <input type="text" name="name" placeholder="Repository name" value="scriptorium-TEST" required>
+        <button type="submit" class="button">Create Repository</button>
+      </form>
+    </div>
+  <% end %>
+</body>
+</html> 

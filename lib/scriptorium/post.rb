@@ -97,6 +97,12 @@ class Scriptorium::Post
       meta["post.views"]
     end
 
+    def views_array
+      views_str = meta["post.views"]
+      return [] if views_str.nil? || views_str.strip.empty?
+      views_str.strip.split(/\s+/)
+    end
+
     def tags
       meta["post.tags"]
     end
