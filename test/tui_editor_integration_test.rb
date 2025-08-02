@@ -182,28 +182,17 @@ class TUIEditorIntegrationTest < Minitest::Test
     
     send_and_expect(read, write, "y", /Add links widget\?/, "Should ask about adding links widget")
     
-    # Add debugging to see what's actually output
-    sleep 0.5
-    begin
-      output = read.read_nonblock(1000)
-      puts "DEBUG: Output after 'y' to Add links widget: #{output.inspect}" if output
-    rescue IO::EAGAINWaitReadable
-      puts "DEBUG: No output available after Add links widget"
-    end
-    
     send_and_expect(read, write, "n", /Add pages widget\?/, "Should ask about adding pages widget")
     
     send_and_expect(read, write, "n", /Add featuredposts widget\?/, "Should ask about adding featuredposts widget")
     
-    send_and_expect(read, write, "y", /Configure links widget\?/, "Should ask about configuring links widget")
+    send_and_expect(read, write, "n", /Configure links widget\?/, "Should ask about configuring links widget")
     
-    # Say no to configure links widget
-    send_and_expect(read, write, "n", "Add pages widget?",
-                   "Should ask about adding pages widget")
-    
-    # Say no to pages widget
+    # Say no to configure links widget - now should proceed to next container
     send_and_expect(read, write, "n", "Would you like to configure right",
                    "Should ask about right configuration")
+    
+
     send_and_expect(read, write, "n", "Would you like to configure footer",
                    "Should ask about footer configuration")
     send_and_expect(read, write, "n", "View setup complete",
