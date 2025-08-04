@@ -6,13 +6,13 @@ require 'fileutils'
 require 'find'
 
 # Create test directory if it doesn't exist
-test_dir = "banner-tests"
+test_dir = File.dirname(__FILE__)/"banner-tests"
 FileUtils.rm_rf(test_dir) if Dir.exist?(test_dir)
 Dir.mkdir(test_dir)
 
 @pid = nil
-# Start server from the current directory (test/manual)
-server_dir = File.expand_path("..", __FILE__)
+# Start server from the project root directory
+server_dir = File.expand_path("../..", __FILE__)
 Dir.chdir(server_dir) do
   Process.spawn ("ruby -run -e httpd . -p 8000 >/dev/null 2>&1") 
   sleep 1
@@ -34,13 +34,13 @@ def examine(view_name)
   
   if ARGV.include?('--automated')
     # Basic validation for automated mode
-    index_file = "test/manual/banner-tests/index.html"
+    index_file = File.dirname(__FILE__)/"banner-tests/index.html"
     if File.exist?(index_file)
       content = File.read(index_file)
       test_count = content.scan(/<div class='test-item'>/).count
       
       # Check that at least one test file has custom content
-      test_file = "test/manual/banner-tests/test04.html"  # Red to Blue gradient test
+      test_file = File.dirname(__FILE__)/"banner-tests/test04.html"  # Red to Blue gradient test
       if File.exist?(test_file)
         test_content = File.read(test_file)
         unless test_content.include?('linearGradient') || test_content.include?('radialGradient') || test_content.include?('fill=\'#ff0000\'')

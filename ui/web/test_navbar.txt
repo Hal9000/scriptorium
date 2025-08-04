@@ -1,0 +1,7 @@
+=About
+ Vision & Mission  mission
+ Board of Directors    board
+-Social Media          socmed
+=Resources
+ Space links           links
+-Blog                  embed-blog

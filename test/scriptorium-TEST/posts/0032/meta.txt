@@ -1,0 +1,11 @@
+post.id       32
+post.created  2025-08-03-17-28-29
+post.title    Post 31 tre telkon detos retretem veldo
+post.blurb    ADD BLURB HERE
+post.views    testview
+post.tags     
+post.pubdate  2025-08-03 17:28:29
+post.pubdate.month  August
+post.pubdate.day  03
+post.pubdate.year  2025
+post.slug     0032-post-31-tre-telkon-detos-retretem-veldo.html

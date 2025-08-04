@@ -326,4 +326,26 @@ class Scriptorium::StandardFiles
       # a widget, or whatever)
     EOS
   end
+
+  def svg_txt
+    <<~EOS
+      aspect          7.0  
+      text.font       verdana  
+      title.color     #cccccc
+      subtitle.color  #cccccc
+      text.justify    left   
+
+      title.scale     0.7   
+      subtitle.scale  0.3  
+
+      title.style     bold  
+      subtitle.style  bold italic 
+      title.xy        15 60
+      subtitle.xy     15 85
+
+      back.linear #0000cc #000077 lr
+
+
+    EOS
+  end
 end

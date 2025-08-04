@@ -312,6 +312,8 @@ class Scriptorium::BannerSVG
     @subtitle_color = args.first
   end
 
+
+
   private def validate_color_args(args)
     raise CannotHandleColorNoArgs if args.nil? || args.empty?
     
@@ -342,6 +344,7 @@ class Scriptorium::BannerSVG
         "text.color"     => ->(args) { handle_text_color(*args) },
         "title.color"    => ->(args) { handle_title_color(*args) },
         "subtitle.color" => ->(args) { handle_subtitle_color(*args) },
+
         "title.align"    => ->(args) { handle_title_align(*args) },
         "subtitle.align" => ->(args) { handle_subtitle_align(*args) },
         "title.scale"    => ->(args) { handle_scale("title", *args) },

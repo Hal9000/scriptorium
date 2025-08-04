@@ -1,0 +1,12 @@
+aspect          7.0         # Aspect ratio (width:height)
+text.font       verdana     # For both title and subtitle
+text.color      #cccccc
+text.justify    left        # For both title and subtitle
+
+title.scale     0.8         # ~48px (1.5x <h1>)
+subtitle.scale  0.4         # 24px ~= <h2>
+
+title.style     bold        # boldfaced title
+subtitle.style  bold italic # bold *and* italic (actually uses SVG weight and style)
+title.xy        5 10
+subtitle.xy     5 40 

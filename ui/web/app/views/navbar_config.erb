@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Navbar Configuration - Scriptorium</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #007cba;
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        .content {
+            padding: 20px;
+        }
+        .navbar-preview {
+            margin-bottom: 30px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .navbar-preview h3 {
+            margin: 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+        }
+        .navbar-content {
+            padding: 20px;
+            background: #f8f9fa;
+            min-height: 200px;
+        }
+        .config-section {
+            margin-bottom: 30px;
+        }
+        .config-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .button-group {
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        .btn-primary {
+            background: #007cba;
+            color: white;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.8;
+        }
+        .message {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .preview-navbar {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .preview-parent-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-right: 30px;
+        }
+        .preview-parent-label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .preview-children-list {
+            margin-left: 0;
+        }
+        .preview-child-item {
+            padding: 3px 0;
+            color: #666;
+        }
+        .preview-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .preview-dropdown-label {
+            color: #007cba;
+            text-decoration: underline;
+            cursor: pointer;
+            display: inline-block;
+            margin-right: 20px;
+        }
+        .preview-dropdown-content {
+            display: none;
+            position: absolute;
+            background: white;
+            min-width: 160px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 4px;
+            z-index: 1;
+            border: 1px solid #ddd;
+        }
+        .preview-dropdown:hover .preview-dropdown-content {
+            display: block;
+        }
+        .preview-dropdown-label:hover {
+            background: #005a8b;
+        }
+        .preview-item {
+            padding: 8px 16px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .preview-item:last-child {
+            border-bottom: none;
+        }
+        .preview-item:hover {
+            background: #f8f9fa;
+        }
+        .preview-direct-item {
+            color: #007cba;
+            cursor: pointer;
+            display: inline-block;
+            margin-right: 20px;
+        }
+        .preview-direct-item:hover {
+            color: #005a8b;
+        }
+        .structure-tree {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .parent-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+        .parent-label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .children-list {
+            margin-left: 20px;
+        }
+        .child-item {
+            padding: 5px 0;
+            color: #666;
+        }
+        .top-level-link {
+            padding: 10px 0;
+            color: #007cba;
+            font-weight: bold;
+        }
+        .preview-parent-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+        .preview-parent-label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Navbar Configuration</h1>
+            <p>Configure the navigation menu for view: <strong><%= @current_view.name %></strong></p>
+        </div>
+        
+        <div class="content">
+            <% if params[:message] %>
+                <div class="message success">
+                    <%= params[:message] %>
+                </div>
+            <% end %>
+            
+            <% if params[:error] %>
+                <div class="message error">
+                    <%= params[:error] %>
+                </div>
+            <% end %>
+            
+            <div class="navbar-preview">
+                <h3>Navbar Preview</h3>
+                <div class="navbar-content">
+                    <% if @navbar_config.strip.empty? %>
+                        <p style="color: #666; font-style: italic;">No navbar configuration yet. Add some menu items below to see a preview.</p>
+                    <% else %>
+                        <div class="preview-navbar">
+                            <% 
+                            # Simple preview generation without real links
+                            lines = @navbar_config.lines
+                            current_parent = nil
+                            lines.each do |line|
+                                line = line.rstrip
+                                next if line.empty? || line.start_with?('#')
+                                
+                                if line.start_with?('=')
+                                    # Close previous parent if exists
+                                    if current_parent
+                            %>
+                                        </div>
+                                        <button type="button" class="btn btn-secondary" style="margin-top: 10px; padding: 6px 12px; font-size: 12px;" onclick="showAddChildForm('<%= current_parent %>')">Add child</button>
+                                        <div id="add-child-form-<%= current_parent.gsub(/\s+/, '-') %>" style="display: none; margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                                            <form method="post" action="/navbar_config/add_child" style="display: flex; gap: 8px; align-items: end;">
+                                                <input type="hidden" name="parent" value="<%= current_parent %>">
+                                                <div>
+                                                    <label style="font-size: 12px;">Label:</label>
+                                                    <input type="text" name="label" required style="width: 120px; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+                                                </div>
+                                                <div>
+                                                    <label style="font-size: 12px;">Filename:</label>
+                                                    <input type="text" name="filename" required style="width: 120px; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+                                                </div>
+                                                <button type="submit" class="btn btn-primary" style="padding: 4px 8px; font-size: 12px;">Add</button>
+                                                <button type="button" class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="hideAddChildForm('<%= current_parent.gsub(/\s+/, '-') %>')">Cancel</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                            <%      end
+                                    label = line[1..-1].strip
+                                    current_parent = label
+                            %>
+                                <div class="preview-parent-group">
+                                    <div class="preview-parent-label"><%= label %></div>
+                                    <div class="preview-children-list">
+                            <% elsif line.start_with?(' ') && current_parent
+                                clean_line = line.strip
+                                if clean_line.include?('  ')
+                                    parts = clean_line.split(/\s{2,}/, 2)
+                                    if parts.length >= 2
+                                        title, filename = parts[0], parts[1]
+                            %>
+                                        <div class="preview-child-item"><%= title %></div>
+                            <%      end
+                                end
+                            elsif line.start_with?('-')
+                                clean_line = line[1..-1].strip
+                                if clean_line.include?('  ')
+                                    parts = clean_line.split(/\s{2,}/, 2)
+                                    if parts.length >= 2
+                                        title, filename = parts[0], parts[1]
+                            %>
+                                        <div class="preview-direct-item"><%= title %></div>
+                            <%      end
+                                end
+                            end %>
+                            <% end %>
+                            <% if current_parent %>
+                                </div>
+                                <button type="button" class="btn btn-secondary" style="margin-top: 10px; padding: 6px 12px; font-size: 12px;" onclick="showAddChildForm('<%= current_parent %>')">Add child</button>
+                                <div id="add-child-form-<%= current_parent.gsub(/\s+/, '-') %>" style="display: none; margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                                    <form method="post" action="/navbar_config/add_child" style="display: flex; gap: 8px; align-items: end;">
+                                        <input type="hidden" name="parent" value="<%= current_parent %>">
+                                        <div>
+                                            <label style="font-size: 12px;">Label:</label>
+                                            <input type="text" name="label" required style="width: 120px; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 12px;">Filename:</label>
+                                            <input type="text" name="filename" required style="width: 120px; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+                                        </div>
+                                        <button type="submit" class="btn btn-primary" style="padding: 4px 8px; font-size: 12px;">Add</button>
+                                        <button type="button" class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="hideAddChildForm('<%= current_parent.gsub(/\s+/, '-') %>')">Cancel</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <% end %>
+                        </div>
+                        
+
+                    <% end %>
+                </div>
+            </div>
+            
+            <div class="config-section">
+                <h3>Add Items</h3>
+                <form method="post" action="/navbar_config/add_item" style="display: flex; gap: 10px; align-items: end; margin-bottom: 20px;">
+                    <div>
+                        <label for="item_label">Label:</label>
+                        <input type="text" name="label" id="item_label" required style="width: 200px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div id="filename_field" style="display: none;">
+                        <label for="item_filename">Filename:</label>
+                        <input type="text" name="filename" id="item_filename" style="width: 150px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <button type="submit" name="action" value="link" class="btn btn-primary">Add as top-level link</button>
+                    <button type="submit" name="action" value="parent" class="btn btn-primary">Add as parent</button>
+                </form>
+            </div>
+
+
+
+            <div class="config-section">
+                <h3>Current Configuration</h3>
+                <div style="display: flex; gap: 20px; align-items: flex-start;">
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border: 1px solid #ddd; font-family: monospace; white-space: pre-wrap; font-size: 14px; max-height: 300px; overflow-y: auto; width: 300px;"><% if @navbar_config.empty? %>
+<em>No configuration yet</em><% else %><%= @navbar_config %><% end %></div>
+                    <div style="min-width: 200px;">
+                        <div style="background: #e9ecef; padding: 10px; border-radius: 4px; font-size: 12px; margin-bottom: 10px;">
+                            <strong>Format:</strong><br>
+                            <code>-Label  filename</code> (top-level link)<br>
+                            <code>=Label</code> (parent menu)<br>
+                            <code>&nbsp;Label  filename</code> (child link)
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="showDirectEdit()">Edit Directly</button>
+                    </div>
+                </div>
+                <div id="direct-edit-section" style="display: none; margin-top: 15px;">
+                    <form method="post" action="/navbar_config/save_direct">
+                        <textarea name="config" rows="10" style="width: 100%; font-family: monospace; padding: 10px; border: 1px solid #ddd; border-radius: 4px;"><%= @navbar_config %></textarea>
+                        <div style="margin-top: 10px;">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <button type="button" class="btn btn-secondary" onclick="hideDirectEdit()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <a href="/edit_pages" class="btn btn-primary">Edit Pages</a>
+                <a href="/" class="btn btn-secondary">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Show/hide filename field based on which button is clicked
+        document.querySelectorAll('button[name="action"]').forEach(button => {
+            button.addEventListener('mousedown', function(e) {
+                const filenameField = document.getElementById('filename_field');
+                const filenameInput = document.getElementById('item_filename');
+                
+                if (this.value === 'link') {
+                    filenameField.style.display = 'block';
+                    filenameInput.required = true;
+                } else {
+                    filenameField.style.display = 'none';
+                    filenameInput.required = false;
+                }
+            });
+        });
+        
+        // Show/hide add child form
+        function showAddChildForm(parent) {
+            const formId = 'add-child-form-' + parent.replace(/\s+/g, '-');
+            const form = document.getElementById(formId);
+            if (form) {
+                form.style.display = 'block';
+            }
+        }
+        
+        function hideAddChildForm(parent) {
+            const formId = 'add-child-form-' + parent.replace(/\s+/g, '-');
+            const form = document.getElementById(formId);
+            if (form) {
+                form.style.display = 'none';
+            }
+        }
+        
+        function showDirectEdit() {
+            document.getElementById('direct-edit-section').style.display = 'block';
+        }
+        
+        function hideDirectEdit() {
+            document.getElementById('direct-edit-section').style.display = 'none';
+        }
+    </script>
+</body>
+</html> 

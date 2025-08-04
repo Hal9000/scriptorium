@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Pages - Scriptorium</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #007bff;
+            color: white;
+            padding: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px;
+        }
+        .message {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .pages-list {
+            margin-bottom: 20px;
+        }
+        .page-item {
+            padding: 4px 0;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: monospace;
+        }
+        .page-item:hover {
+            color: #007bff;
+        }
+        .page-item.empty {
+            font-weight: bold;
+        }
+        .edit-form {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+        .edit-form.active {
+            display: block;
+        }
+        .edit-form textarea {
+            width: 100%;
+            min-height: 300px;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        .edit-form .buttons {
+            margin-top: 15px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .button-group {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Edit Pages</h1>
+            <p>View: <strong><%= @current_view.name %></strong></p>
+        </div>
+        
+        <div class="content">
+            <% if params[:message] %>
+                <div class="message success">
+                    <%= params[:message] %>
+                </div>
+            <% end %>
+            
+            <% if params[:error] %>
+                <div class="message error">
+                    <%= params[:error] %>
+                </div>
+            <% end %>
+            
+            <% if @pages.empty? %>
+                <p style="color: #666; font-style: italic;">No pages found in this view.</p>
+            <% else %>
+                <h3>Pages</h3>
+                <p><strong>Click to edit...</strong> <strong>boldface</strong> = empty</p>
+                <div class="pages-list">
+                    <% @pages.each do |page| %>
+                        <div class="page-item <%= 'empty' if page[:empty] %>" onclick="editPage('<%= page[:filename] %>', `<%= page[:content].gsub('`', '\\`').gsub('\\', '\\\\') %>`)">
+                            📄 <%= page[:filename] %>
+                        </div>
+                    <% end %>
+                </div>
+                
+                <div id="edit-form" class="edit-form">
+                    <h4 id="edit-filename"></h4>
+                    <form method="post" action="/edit_pages/save">
+                        <input type="hidden" name="filename" id="edit-filename-input">
+                        <textarea name="content" id="edit-content" placeholder="Enter page content..."></textarea>
+                        <div class="buttons">
+                            <button type="submit" class="btn btn-primary">Save Page</button>
+                            <button type="button" class="btn btn-secondary" onclick="hideEditForm()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            <% end %>
+            
+            <div class="button-group">
+                <a href="/navbar_config" class="btn btn-secondary">Navbar Config</a>
+                <a href="/" class="btn btn-secondary">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function editPage(filename, content) {
+            document.getElementById('edit-filename').textContent = filename;
+            document.getElementById('edit-filename-input').value = filename;
+            document.getElementById('edit-content').value = content;
+            document.getElementById('edit-form').classList.add('active');
+            
+            // Scroll to edit form
+            document.getElementById('edit-form').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function hideEditForm() {
+            document.getElementById('edit-form').classList.remove('active');
+        }
+    </script>
+</body>
+</html> 

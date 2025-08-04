@@ -1,0 +1,11 @@
+post.id       33
+post.created  2025-08-03-17-28-29
+post.title    Post 32 tilan mamas lanmac massanril mor
+post.blurb    ADD BLURB HERE
+post.views    testview
+post.tags     
+post.pubdate  2025-08-03 17:28:29
+post.pubdate.month  August
+post.pubdate.day  03
+post.pubdate.year  2025
+post.slug     0033-post-32-tilan-mamas-lanmac-massanril-mor.html

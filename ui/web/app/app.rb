@@ -467,6 +467,353 @@ class ScriptoriumWeb < Sinatra::Base
     end
   end
 
+  # Banner configuration page
+  get '/banner_config' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    # Get current SVG config
+    svg_file = @api.root/"views"/@current_view.name/"config"/"svg.txt"
+    @svg_config = File.exist?(svg_file) ? File.read(svg_file) : ""
+    
+    # Generate current banner for display
+    begin
+      banner = Scriptorium::BannerSVG.new(@current_view.title, @current_view.subtitle)
+      
+      # Use the same approach as View class
+      if @svg_config.strip.length > 0
+        # Temporarily change to the config directory
+        config_dir = @api.root/"views"/@current_view.name/"config"
+        Dir.chdir(config_dir) do
+          # Temporarily rename svg.txt to config.txt for BannerSVG compatibility
+          if File.exist?("config.txt")
+            File.rename("config.txt", "config.txt.backup")
+          end
+          File.rename("svg.txt", "config.txt")
+          
+          begin
+            banner.parse_header_svg
+          ensure
+            # Restore original files
+            File.rename("config.txt", "svg.txt")
+            if File.exist?("config.txt.backup")
+              File.rename("config.txt.backup", "config.txt")
+            end
+          end
+        end
+      else
+        # No config, use defaults
+        banner.parse_header_svg
+      end
+      
+      @banner_svg = banner.generate_svg
+    rescue => e
+      @banner_svg = "<p>Error generating banner: #{e.message}</p>"
+    end
+    
+    erb :banner_config
+  end
+
+  # Update banner configuration
+  post '/banner_config' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    begin
+      svg_config = params[:svg_config] || ""
+      
+      # Save the SVG configuration
+      svg_file = @api.root/"views"/@current_view.name/"config"/"svg.txt"
+      FileUtils.mkdir_p(File.dirname(svg_file))
+      File.write(svg_file, svg_config)
+      
+      redirect "/banner_config?message=Banner configuration updated successfully"
+    rescue => e
+      redirect "/banner_config?error=Failed to save banner configuration: #{e.message}"
+    end
+  end
+
+  # Navbar configuration page
+  get '/navbar_config' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    # Get current navbar config
+    navbar_file = @api.root/"views"/@current_view.name/"config"/"navbar.txt"
+    @navbar_config = File.exist?(navbar_file) ? File.read(navbar_file).strip : ""
+    
+    # Generate current navbar preview
+    begin
+      view = @api.lookup_view(@current_view.name)
+      @navbar_preview = view.build_nav(nil) # nil = use default navbar.txt
+    rescue => e
+      @navbar_preview = "<p>Error generating navbar: #{e.message}</p>"
+    end
+    
+    erb :navbar_config
+  end
+
+  # Add item (top-level link or parent)
+  post '/navbar_config/add_item' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    begin
+      label = params[:label]&.strip
+      filename = params[:filename]&.strip
+      action = params[:action]
+      
+      if label.nil? || label.empty?
+        redirect "/navbar_config?error=Label is required"
+        return
+      end
+      
+      # Read current navbar config
+      navbar_file = @api.root/"views"/@current_view.name/"config"/"navbar.txt"
+      current_config = File.exist?(navbar_file) ? File.read(navbar_file).strip : ""
+      
+      # Add new item based on action
+      if action == "link"
+        if filename.nil? || filename.empty?
+          redirect "/navbar_config?error=Filename is required for top-level links"
+          return
+        end
+        new_line = "-#{label}  #{filename}"
+        message = "Added #{label} as top-level link"
+      else
+        new_line = "=#{label}"
+        message = "Added #{label} as parent"
+      end
+      
+      # Append to config
+      updated_config = current_config.empty? ? new_line : "#{current_config.rstrip}\n#{new_line}"
+      
+      # Save the updated configuration
+      FileUtils.mkdir_p(File.dirname(navbar_file))
+      File.write(navbar_file, updated_config.rstrip + "\n")
+      
+      redirect "/navbar_config?message=#{message}"
+    rescue => e
+      redirect "/navbar_config?error=Failed to add item: #{e.message}"
+    end
+  end
+
+  # Add child to parent
+  post '/navbar_config/add_child' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    begin
+      parent = params[:parent]&.strip
+      label = params[:label]&.strip
+      filename = params[:filename]&.strip
+      
+      if parent.nil? || parent.empty?
+        redirect "/navbar_config?error=Parent is required"
+        return
+      end
+      
+      if label.nil? || label.empty?
+        redirect "/navbar_config?error=Label is required"
+        return
+      end
+      
+      if filename.nil? || filename.empty?
+        redirect "/navbar_config?error=Filename is required"
+        return
+      end
+      
+      # Read current navbar config
+      navbar_file = @api.root/"views"/@current_view.name/"config"/"navbar.txt"
+      current_config = File.exist?(navbar_file) ? File.read(navbar_file).strip : ""
+      
+      # Find the parent and add child after it
+      lines = current_config.lines
+      new_lines = []
+      parent_found = false
+      
+      lines.each do |line|
+        new_lines << line
+        if line.strip == "=#{parent}"
+          parent_found = true
+          # Add child on next line
+          new_lines << " #{label}  #{filename}\n"
+        end
+      end
+      
+      if !parent_found
+        redirect "/navbar_config?error=Parent '#{parent}' not found"
+        return
+      end
+      
+      # Save the updated configuration
+      FileUtils.mkdir_p(File.dirname(navbar_file))
+      File.write(navbar_file, new_lines.join.rstrip + "\n")
+      
+      redirect "/navbar_config?message=Added #{label} as child of #{parent}"
+    rescue => e
+      redirect "/navbar_config?error=Failed to add child: #{e.message}"
+    end
+  end
+
+  # Save direct edit of navbar config
+  post '/navbar_config/save_direct' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    begin
+      config = params[:config]&.strip
+      if config.nil?
+        redirect "/navbar_config?error=Configuration is required"
+        return
+      end
+      
+      # Save the configuration
+      navbar_file = @api.root/"views"/@current_view.name/"config"/"navbar.txt"
+      FileUtils.mkdir_p(File.dirname(navbar_file))
+      File.write(navbar_file, config.rstrip + "\n")
+      
+      # Check for missing pages and create them
+      pages_created = []
+      pages_dir = @api.root/"views"/@current_view.name/"pages"
+      FileUtils.mkdir_p(pages_dir) unless Dir.exist?(pages_dir)
+      
+      # Parse navbar config to find page filenames
+      config.lines.each do |line|
+        line = line.rstrip
+        next if line.empty? || line.start_with?('#')
+        
+        # Check for top-level links (start with -)
+        if line.start_with?('-')
+          if line.include?('  ')
+            parts = line.split(/\s{2,}/, 2)
+            if parts.length >= 2
+              filename = parts[1].strip
+              next if filename.empty?
+              
+              # Add .lt3 extension if no extension
+              filename += '.lt3' unless filename.include?('.')
+              
+              # Check if page exists
+              page_file = pages_dir/filename
+              unless File.exist?(page_file)
+                FileUtils.touch(page_file)
+                pages_created << filename
+              end
+            end
+          end
+        # Check for child links (start with space)
+        elsif line.start_with?(' ')
+          if line.include?('  ')
+            parts = line.split(/\s{2,}/, 2)
+            if parts.length >= 2
+              filename = parts[1].strip
+              next if filename.empty?
+              
+              # Add .lt3 extension if no extension
+              filename += '.lt3' unless filename.include?('.')
+              
+              # Check if page exists
+              page_file = pages_dir/filename
+              unless File.exist?(page_file)
+                FileUtils.touch(page_file)
+                pages_created << filename
+              end
+            end
+          end
+        end
+      end
+      
+      # Build success message
+      message = "Configuration saved successfully"
+      if pages_created.any?
+        message += ". Created missing pages: #{pages_created.join(', ')}"
+      end
+      
+      redirect "/navbar_config?message=#{message}"
+    rescue => e
+      redirect "/navbar_config?error=Failed to save configuration: #{e.message}"
+    end
+  end
+
+  # Edit pages page
+  get '/edit_pages' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    # Get all pages in the current view
+    pages_dir = @api.root/"views"/@current_view.name/"pages"
+    @pages = []
+    
+    if Dir.exist?(pages_dir)
+      Dir.glob(pages_dir/"*").each do |file|
+        next unless File.file?(file)
+        filename = File.basename(file)
+        content = File.read(file)
+        @pages << {
+          filename: filename,
+          content: content,
+          empty: content.strip.empty?
+        }
+      end
+    end
+    
+    # Sort pages alphabetically
+    @pages.sort_by! { |page| page[:filename] }
+    
+    erb :edit_pages
+  end
+
+  # Save page content
+  post '/edit_pages/save' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    begin
+      filename = params[:filename]&.strip
+      content = params[:content]&.strip || ""
+      
+      if filename.nil? || filename.empty?
+        redirect "/edit_pages?error=Filename is required"
+        return
+      end
+      
+      # Save the page
+      pages_dir = @api.root/"views"/@current_view.name/"pages"
+      FileUtils.mkdir_p(pages_dir)
+      page_file = pages_dir/filename
+      File.write(page_file, content)
+      
+      redirect "/edit_pages?message=Page '#{filename}' saved successfully"
+    rescue => e
+      redirect "/edit_pages?error=Failed to save page: #{e.message}"
+    end
+  end
+
   # Server status endpoint
   get '/status' do
     content_type :json

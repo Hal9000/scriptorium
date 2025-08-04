@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Banner Configuration - Scriptorium</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #007cba;
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        .content {
+            padding: 20px;
+        }
+        .banner-preview {
+            margin-bottom: 30px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .banner-preview h3 {
+            margin: 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+        }
+        .banner-svg {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            display: block;
+        }
+        .config-section {
+            margin-bottom: 30px;
+        }
+        .config-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .config-textarea {
+            width: 100%;
+            height: 400px;
+            font-family: monospace;
+            font-size: 14px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        .button-group {
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        .btn-primary {
+            background: #007cba;
+            color: white;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.8;
+        }
+        .message {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .help-text {
+            background: #e8f4fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            font-size: 14px;
+            border-left: 4px solid #007cba;
+        }
+        .help-text h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 16px;
+        }
+        .help-text p {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        .help-text table {
+            border-collapse: collapse;
+        }
+        .help-text td {
+            padding: 2px 0;
+            vertical-align: top;
+        }
+        .help-text td:first-child {
+            padding-right: 15px;
+            white-space: nowrap;
+            width: 1%;
+        }
+        .help-text code {
+            background: #f8f9fa;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+            border: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Banner Configuration</h1>
+            <p>Configure the SVG banner for view: <strong><%= @current_view.name %></strong></p>
+        </div>
+        
+        <div class="content">
+            <% if params[:message] %>
+                <div class="message success">
+                    <%= params[:message] %>
+                </div>
+            <% end %>
+            
+            <% if params[:error] %>
+                <div class="message error">
+                    <%= params[:error] %>
+                </div>
+            <% end %>
+            
+            <div class="banner-preview">
+                <h3>Current Banner Preview</h3>
+                <div class="banner-svg">
+                    <%= @banner_svg %>
+                </div>
+            </div>
+            
+            <div class="help-text">
+                <h4>Banner Configuration Help</h4>
+                <p>Configure your banner using these options:</p>
+                <table>
+                    <tr><td><code>aspect 7.0</code></td><td>Aspect ratio (width:height)</td></tr>
+                    <tr><td><code>text.font verdana</code></td><td>Font family</td></tr>
+                    <tr><td><code>title.color #cccccc</code></td><td>Title color</td></tr>
+                    <tr><td><code>subtitle.color #cccccc</code></td><td>Subtitle color</td></tr>
+                    <tr><td><code>title.scale 0.7</code></td><td>Title size multiplier</td></tr>
+                    <tr><td><code>subtitle.scale 0.3</code></td><td>Subtitle size multiplier</td></tr>
+                    <tr><td><code>title.style bold</code></td><td>Title style (bold, italic, etc.)</td></tr>
+                    <tr><td><code>subtitle.style bold italic</code></td><td>Subtitle style</td></tr>
+                    <tr><td><code>title.xy 15 60</code></td><td>Title position (x y)</td></tr>
+                    <tr><td><code>subtitle.xy 15 85</code></td><td>Subtitle position (x y)</td></tr>
+                    <tr><td><code>back.linear #0000cc #000077 lr</code></td><td>Linear gradient background</td></tr>
+                </table>
+            </div>
+            
+            <form method="post" action="/banner_config">
+                <div class="config-section">
+                    <h3>SVG Configuration</h3>
+                    <textarea name="svg_config" class="config-textarea" placeholder="Enter your banner configuration here..."><%= @svg_config %></textarea>
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Update Banner</button>
+                    <a href="/" class="btn btn-secondary">Back to Dashboard</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html> 

@@ -1,0 +1,11 @@
+post.id       21
+post.created  2025-08-03-17-28-28
+post.title    Post 20 mortor mor temdokon nimvelle do
+post.blurb    ADD BLURB HERE
+post.views    testview
+post.tags     
+post.pubdate  2025-08-03 17:28:28
+post.pubdate.month  August
+post.pubdate.day  03
+post.pubdate.year  2025
+post.slug     0021-post-20-mortor-mor-temdokon-nimvelle-do.html

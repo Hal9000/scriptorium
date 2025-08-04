@@ -156,6 +156,8 @@ module Scriptorium::Exceptions
   make_exception :CannotHandleColorFirstArgNil, "Cannot handle color: first argument is nil"
   make_exception :CannotHandleColorFirstArgEmpty, "Cannot handle color: first argument is empty or whitespace-only"
   
+
+  
   # Command errors
   make_exception :CommandFailed, "Command failed: %1"
   make_exception :CannotExecuteCommand, "Cannot execute command: %1"

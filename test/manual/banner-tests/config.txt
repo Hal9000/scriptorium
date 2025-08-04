@@ -1,1 +1,3 @@
-back.image ../../assets/images/odd_aspect.png
+back.linear #0000ff #000033 lr
+title.color #fff
+subtitle.color #fff

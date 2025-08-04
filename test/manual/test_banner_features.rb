@@ -154,8 +154,14 @@ tests = [
   {
     title: "Odd Aspect Image Background",
     subtitle: "Image test (~4:1 aspect)",
-          config: "back.image ../../assets/images/odd_aspect.png",
+    config: "back.image ../../assets/images/odd_aspect.png",
     description: "Non-standard aspect ratio (~4:1) cropped to fit 8:1 banner - moderate cropping applied"
+  },
+  {
+    title: "Another gradient test",
+    subtitle: "Just one more, I swear",
+    config: "back.linear #0000ff #000033 lr\ntitle.color #fff\nsubtitle.color #fff",
+    description: "Linear Gradient (Left to Right)"
   }
 ]
 

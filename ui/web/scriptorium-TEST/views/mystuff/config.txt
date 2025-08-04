@@ -1,3 +1,0 @@
-title    A place for my stuff
-subtitle with apologies to George Carlin
-theme    standard
