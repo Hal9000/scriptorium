@@ -184,7 +184,7 @@ class Scriptorium::Repo
     write_file(dir/:config/"common.js",         @predef.common_js)
     write_file(dir/:config/"social.txt",        @predef.social_config)
     write_file(dir/:config/"reddit.txt",        @predef.reddit_config)
-    write_file(dir/:config/"deploy.txt",        @predef.deploy_text % {view: name})
+    write_file(dir/:config/"deploy.txt",        @predef.deploy_text % {view: name, domain: "example.com"})
     write_file(dir/:config/"status.txt",        @predef.status_txt)
     view = open_view(name)
     @views -= [view]
@@ -215,17 +215,28 @@ class Scriptorium::Repo
 
   def create_draft(title: nil, blurb: nil, views: nil, tags: nil, body: nil)
     ts = Time.now.strftime("%Y%m%d-%H%M%S")
-    name = "#@root/drafts/#{ts}-draft.lt3"
+    content_name = "#@root/drafts/#{ts}-draft.lt3"
+    metadata_name = "#@root/drafts/#{ts}-draft.meta"
+    
     # Whoa - what if different views have different themes??? FIXME 
     # Maybe solution is as simple as: Initial post is not theme-dependent
     theme = @current_view.theme
     views ||= @current_view.name   # initial_post wants a String!
     views, tags = Array(views), Array(tags)
     id = incr_post_num
-    initial = @predef.initial_post(num: id, title: title, blurb: blurb, 
-                                   views: views, tags: tags, body: body)
-    write_file(name, initial)
-    name
+    
+    # Create content file (no ID, no created date)
+    content = @predef.initial_post_content(title: title, blurb: blurb, 
+                                          views: views, tags: tags, body: body)
+    write_file(content_name, content)
+    
+    # Create metadata file (with ID and created date)
+    metadata = @predef.initial_post_metadata(num: id, title: title, blurb: blurb, 
+                                            views: views, tags: tags)
+    write_file(metadata_name, metadata)
+    
+    # Return the content file name (for backward compatibility)
+    content_name
   end
 
   def last_post_num
@@ -244,7 +255,16 @@ class Scriptorium::Repo
     posts = @root/:posts
     make_dir(posts/id4)
     make_dir(posts/id4/:assets)
+    
+    # Move content file
     FileUtils.mv(name, posts/id4/"source.lt3")
+    
+    # Move metadata file (same timestamp, different extension)
+    metadata_name = name.sub('.lt3', '.meta')
+    if File.exist?(metadata_name)
+      FileUtils.mv(metadata_name, posts/id4/"meta.txt")
+    end
+    
     # FIXME - what about views?
     id
   end
@@ -296,17 +316,30 @@ class Scriptorium::Repo
   end
 
   def generate_post(num)
-    draft = @root/:posts/d4(num)/"source.lt3"
-    need(:file, draft)
+    content_file = @root/:posts/d4(num)/"source.lt3"
+    metadata_file = @root/:posts/d4(num)/"meta.txt"
+    
+    need(:file, content_file)
+    need(:file, metadata_file)
+    
+    # Read content file
     live = Livetext.customize(mix: "lt3scriptor", call: ".nopara") # vars??
-    text = live.xform_file(draft)
+    text = live.xform_file(content_file)
     vars, body = live.vars.vars, live.body
+    
+    # Read metadata file
+    metadata_vars = getvars(metadata_file)
+    # Merge metadata into vars, but don't override content vars
+    metadata_vars.each do |key, value|
+      vars[key] = value unless vars.key?(key)
+    end
+    
     views = vars[:"post.views"].strip.split(/\s+/)
     vars[:"post.views"] = views.join(" ")  # Ensure post.views is set in vars
     views.each do |view|  
       view = lookup_view(view)
       theme = view.theme 
-      vars[:"post.id"] = num.to_s
+      vars[:"post.id"] = num.to_s  # Always use the post number as ID
       vars[:"post.body"] = text
       template = @predef.post_template("standard")
       set_pubdate(vars)

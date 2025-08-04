@@ -495,6 +495,7 @@ class ScriptoriumTUI
           puts "  #{e.message}"
           puts
           puts "DEBUG: Exception caught in create_view (interactive): #{e.class}: #{e.message}"
+          return  # Exit the method when view creation fails
         end
       else
         # Legacy mode - still support "new view <name> <title>"

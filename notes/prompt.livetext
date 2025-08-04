@@ -12,3 +12,10 @@ Some "special" dot commands are:
  - .include <file> Include a file and process it
  - .copy <file>    Include a file without processing it
 
+Some HTML-specific commands are .h1, .h2, .list, and so on.
+
+Any line that is not part of a dot command (or its body) is processed. By default,
+it is output "as is" (assuming there is nothing special embedded in it). However,
+it may contain intra-line formatting, variable references, or function calls.
+
+

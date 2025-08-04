@@ -175,6 +175,46 @@ class Scriptorium::StandardFiles
     return str2
   end
 
+  def initial_post_content(title: nil, blurb: nil, views: nil, tags: nil, body: nil)
+    title ||= "ADD TITLE HERE"
+    blurb ||= "ADD BLURB HERE"
+    views ||= %w[sample]
+    tags  ||= %w[sample tags]
+    body  ||= "BEGIN HERE..."
+
+    mytags = tags
+    mytags = tags.join(", ") if tags.is_a?(Array)
+
+    <<~EOS
+      .title #{title}
+      .blurb #{blurb}
+      .views #{views.join(" ")}
+      .tags  #{mytags}
+      
+      . Start of post body:
+      #{body}
+    EOS
+  end
+
+  def initial_post_metadata(num: "0", title: nil, blurb: nil, views: nil, tags: nil)
+    title ||= "ADD TITLE HERE"
+    blurb ||= "ADD BLURB HERE"
+    views ||= %w[sample]
+    tags  ||= %w[sample tags]
+
+    mytags = tags
+    mytags = tags.join(", ") if tags.is_a?(Array)
+
+    <<~EOS
+      .id #{d4(num.to_i)}
+      .created #{ymdhms}
+      .title #{title}
+      .blurb #{blurb}
+      .views #{views.join(" ")}
+      .tags  #{mytags}
+    EOS
+  end
+
   def post_template(theme)
     str = <<~EOS
       <!-- theme: #{theme} -->
