@@ -1,5 +1,0 @@
-# <!-- Section: main -->
-# Contents of center pane
-# This may be empty, as it is "usually" populated
-# by Javascript (list of recent posts, content from
-# a widget, or whatever)

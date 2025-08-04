@@ -25,6 +25,15 @@ x Widget configuration (selection)
 x facebook metadata
 x x/twitter metadata
 x LinkedIn metadata
+   svg.txt handling
+   post ID bug
+   fix history
+   asset upload
+   $$asset function
+   widget management
+   Syntax coloring
+   reddit support
+   post footer?
 - Gem asset handling
 - Repo asset management
   Sample blog additions
@@ -36,8 +45,6 @@ SOONISH:
   Work on dependency tree? (user action triggers regeneration)
   Find dead code
   UI by curses (RubyText)
-  Syntax coloring
-  reddit support
   facebook button
   x/twitter button
   Docs: Project contributor level

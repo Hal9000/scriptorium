@@ -277,24 +277,7 @@ write output:      write the result to output/panes/header.html
     # Look for svg.txt file in the view's config directory
     svg_config_file = @dir/:config/"svg.txt"
     if File.exist?(svg_config_file)
-      # Temporarily change to the config directory so BannerSVG can find svg.txt
-      Dir.chdir(@dir/:config) do
-        # Temporarily rename svg.txt to config.txt for BannerSVG compatibility
-        if File.exist?("config.txt")
-          File.rename("config.txt", "config.txt.backup")
-        end
-        File.rename("svg.txt", "config.txt")
-        
-        begin
-          bsvg.parse_header_svg
-        ensure
-          # Restore original files
-          File.rename("config.txt", "svg.txt")
-          if File.exist?("config.txt.backup")
-            File.rename("config.txt.backup", "config.txt")
-          end
-        end
-      end
+      bsvg.parse_header_svg(svg_config_file)
     else
       # No svg.txt file, use defaults
       bsvg.parse_header_svg
@@ -353,10 +336,7 @@ write output:      write the result to output/panes/header.html
     # Look for config file in the view's config directory
     config_file = @dir/:config/"config.txt"
     if File.exist?(config_file)
-      # Temporarily change to the config directory so BannerSVG can find config.txt
-      Dir.chdir(@dir/:config) do
-        bsvg.parse_header_svg
-      end
+      bsvg.parse_header_svg(config_file)
     else
       # No config file, just use defaults
       bsvg.parse_header_svg

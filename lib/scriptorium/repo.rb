@@ -184,6 +184,8 @@ class Scriptorium::Repo
     write_file(dir/:config/"common.js",         @predef.common_js)
     write_file(dir/:config/"social.txt",        @predef.social_config)
     write_file(dir/:config/"reddit.txt",        @predef.reddit_config)
+    write_file(dir/:config/"deploy.txt",        @predef.deploy_text % {view: name})
+    write_file(dir/:config/"status.txt",        @predef.status_txt)
     view = open_view(name)
     @views -= [view]
     @views << view

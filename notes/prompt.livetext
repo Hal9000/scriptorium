@@ -1,0 +1,14 @@
+Livetext is a text processor in the tradition of things such as nroff and troff, 
+but with differing functionality. By default, it emits HTML, but in principle
+could output any format such as PDF, SVG, or others.
+
+A "dot command" has a dot at the start of a line; the dot is immediately followed
+by an identifier. Many are predefined; each corresponds closely to a Ruby method.
+Some may have "parameters" on the same line; these may be optional or required, 
+depending on the command. Some may take a block of text (a subsequent group of 
+lines delimited by the special .end command). 
+
+Some "special" dot commands are:
+ - .include <file> Include a file and process it
+ - .copy <file>    Include a file without processing it
+

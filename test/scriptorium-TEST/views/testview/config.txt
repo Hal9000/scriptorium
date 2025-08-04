@@ -1,3 +1,0 @@
-title    Another Test View
-subtitle testing pagination for post index
-theme    standard

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Advanced Configuration - <%= @current_view.name %> - Scriptorium</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .header p {
+            display: none;
+        }
+        .content {
+            padding: 30px;
+        }
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .config-table td {
+            padding: 8px 0;
+            vertical-align: middle;
+        }
+        .config-table td:first-child {
+            width: 20px;
+            padding-right: 15px;
+        }
+        .config-table td:nth-child(2) {
+            width: 120px;
+            padding-right: 15px;
+        }
+        .config-table td:last-child {
+            padding-left: 0;
+        }
+        .config-item p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+            line-height: 1.4;
+            flex: 1;
+            min-width: 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: background 0.2s;
+            white-space: nowrap;
+            min-width: 120px;
+            text-align: center;
+        }
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .back-link {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-active {
+            background: #28a745;
+        }
+        .status-inactive {
+            background: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Advanced Configuration</h1>
+            <p>Configure all aspects of <%= @current_view.name %></p>
+        </div>
+        
+        <div class="content">
+            <table class="config-table">
+                <tr>
+                    <td><span class="status-indicator status-active"></span></td>
+                    <td><a href="#" class="btn">Update Main Settings</a></td>
+                    <td>Configure basic view settings, title, subtitle, and other core properties.</td>
+                </tr>
+                
+                <tr>
+                    <td><span class="status-indicator status-active"></span></td>
+                    <td><a href="/layout_config" class="btn">Edit Layout</a></td>
+                    <td>Configure the overall page layout and structure.</td>
+                </tr>
+                
+                <tr>
+                    <td><span class="status-indicator <%= @configs[:header] ? 'status-active' : 'status-inactive' %>"></span></td>
+                    <td><a href="/header_config" class="btn">Update Header</a></td>
+                    <td>Set up the header structure and content for this view.</td>
+                </tr>
+                
+                <% if @configs[:header] %>
+                <tr>
+                    <td><span class="status-indicator <%= @configs[:banner] ? 'status-active' : 'status-inactive' %>"></span></td>
+                    <td><a href="/banner_config" class="btn">Update Banner</a></td>
+                    <td>Customize the SVG banner with colors, fonts, and layout options.</td>
+                </tr>
+                
+                <tr>
+                    <td><span class="status-indicator <%= @configs[:navbar] ? 'status-active' : 'status-inactive' %>"></span></td>
+                    <td><a href="/navbar_config" class="btn">Update Navbar</a></td>
+                    <td>Build the navigation menu structure with pages and sections.</td>
+                </tr>
+                <% end %>
+                
+                <% if @layout_containers.include?('left') %>
+                <tr>
+                    <td><span class="status-indicator status-active"></span></td>
+                    <td><a href="#" class="btn">Update Left</a></td>
+                    <td>Configure the left sidebar content and layout.</td>
+                </tr>
+                <% end %>
+                
+                <% if @layout_containers.include?('right') %>
+                <tr>
+                    <td><span class="status-indicator status-active"></span></td>
+                    <td><a href="#" class="btn">Update Right</a></td>
+                    <td>Configure the right sidebar content and layout.</td>
+                </tr>
+                <% end %>
+                
+                <tr>
+                    <td><span class="status-indicator status-active"></span></td>
+                    <td><a href="/edit_pages" class="btn">Edit Pages</a></td>
+                    <td>Create and edit content pages for this view.</td>
+                </tr>
+                
+                <tr>
+                    <td><span class="status-indicator status-active"></span></td>
+                    <td><a href="/deploy_config" class="btn">Configure Deployment</a></td>
+                    <td>Set up server deployment settings for this view.</td>
+                </tr>
+            </table>
+            
+            <div class="back-link">
+                <a href="/view/<%= @current_view.name %>" class="btn btn-secondary">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

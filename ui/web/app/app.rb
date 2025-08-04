@@ -485,25 +485,8 @@ class ScriptoriumWeb < Sinatra::Base
       
       # Use the same approach as View class
       if @svg_config.strip.length > 0
-        # Temporarily change to the config directory
-        config_dir = @api.root/"views"/@current_view.name/"config"
-        Dir.chdir(config_dir) do
-          # Temporarily rename svg.txt to config.txt for BannerSVG compatibility
-          if File.exist?("config.txt")
-            File.rename("config.txt", "config.txt.backup")
-          end
-          File.rename("svg.txt", "config.txt")
-          
-          begin
-            banner.parse_header_svg
-          ensure
-            # Restore original files
-            File.rename("config.txt", "svg.txt")
-            if File.exist?("config.txt.backup")
-              File.rename("config.txt.backup", "config.txt")
-            end
-          end
-        end
+        svg_file = @api.root/"views"/@current_view.name/"config"/"svg.txt"
+        banner.parse_header_svg(svg_file)
       else
         # No config, use defaults
         banner.parse_header_svg
@@ -532,6 +515,9 @@ class ScriptoriumWeb < Sinatra::Base
       svg_file = @api.root/"views"/@current_view.name/"config"/"svg.txt"
       FileUtils.mkdir_p(File.dirname(svg_file))
       File.write(svg_file, svg_config)
+      
+      # Update status
+      update_config_status(@current_view.name, "banner", true)
       
       redirect "/banner_config?message=Banner configuration updated successfully"
     rescue => e
@@ -814,6 +800,270 @@ class ScriptoriumWeb < Sinatra::Base
     end
   end
 
+  # Per-view dashboard
+  get '/view/:name' do
+    view_name = params[:name]
+    
+    begin
+      # Look up the view
+      view = @api.lookup_view(view_name)
+      if view.nil?
+        redirect "/?error=View '#{view_name}' not found"
+        return
+      end
+      
+      # Set as current view
+      @api.view(view_name)
+      @current_view = @api.current_view
+      
+      # Generate banner for display
+      begin
+        bsvg = Scriptorium::BannerSVG.new(view.title, view.subtitle)
+        svg_config_file = @api.root/"views"/view_name/"config"/"svg.txt"
+        if File.exist?(svg_config_file)
+          # Temporarily rename svg.txt to config.txt for BannerSVG compatibility
+          config_dir = @api.root/"views"/view_name/"config"
+          Dir.chdir(config_dir) do
+            if File.exist?("config.txt")
+              File.rename("config.txt", "config.txt.backup")
+            end
+            File.rename("svg.txt", "config.txt")
+            
+            begin
+              bsvg.parse_header_svg
+            ensure
+              # Restore original files
+              File.rename("config.txt", "svg.txt")
+              if File.exist?("config.txt.backup")
+                File.rename("config.txt.backup", "config.txt")
+              end
+            end
+          end
+        else
+          bsvg.parse_header_svg
+        end
+        # Generate responsive SVG for web display
+        svg_html = bsvg.generate_svg
+        # Extract the SVG element and make it responsive
+        svg_match = svg_html.match(/<svg[^>]*>(.*)<\/svg>/m)
+        if svg_match
+          svg_content = svg_match[1]
+          # Calculate height based on aspect ratio (7.0 from config)
+          width = 800
+          height = (width / 7.0).to_i
+          @banner_svg = <<~HTML
+            <svg xmlns='http://www.w3.org/2000/svg' 
+                 width='100%' height='auto' 
+                 viewBox='0 0 #{width} #{height}' 
+                 preserveAspectRatio='xMidYMid meet'>
+              #{svg_content}
+            </svg>
+          HTML
+        else
+          @banner_svg = svg_html
+        end
+      rescue => e
+        @banner_svg = "<p>Error generating banner: #{e.message}</p>"
+      end
+      
+      erb :view_dashboard
+    rescue => e
+      redirect "/?error=Failed to load view dashboard: #{e.message}"
+    end
+  end
+
+  # Advanced configuration page
+  get '/advanced_config' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    # Read status from status.txt file
+    config_dir = @api.root/"views"/@current_view.name/"config"
+    status_file = config_dir/"status.txt"
+    @configs = {}
+    
+    if File.exist?(status_file)
+      status_content = File.read(status_file)
+      status_content.lines.each do |line|
+        line = line.strip
+        next if line.empty? || line.start_with?('#')
+        if line.include?(' ')
+          key, value = line.split(/\s+/, 2)
+          @configs[key.to_sym] = value == 'y'
+        end
+      end
+    else
+      # Default to all 'n' if status file doesn't exist
+      @configs = {
+        header: false,
+        banner: false,
+        navbar: false,
+        left: false,
+        right: false,
+        pages: false,
+        deploy: false
+      }
+    end
+    
+    # Read layout to determine which containers exist
+    layout_file = config_dir/"layout.txt"
+    @layout_containers = []
+    if File.exist?(layout_file)
+      layout_content = File.read(layout_file)
+      layout_content.lines.each do |line|
+        line = line.strip
+        next if line.empty? || line.start_with?('#')
+        if line.include?(' ')
+          container = line.split(/\s+/, 2)[0]
+          @layout_containers << container
+        else
+          @layout_containers << line
+        end
+      end
+    end
+    
+    erb :advanced_config
+  end
+
+  # Header configuration page
+  get '/header_config' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    # Read current header config
+    header_file = @api.root/"views"/@current_view.name/"config"/"header.txt"
+    @current_config = ""
+    if File.exist?(header_file)
+      @current_config = File.read(header_file).strip
+    end
+    
+    # Parse current settings
+    @banner_type = @current_config.include?("banner svg") ? "svg" : "image"
+    @navbar_enabled = @current_config.include?("navbar")
+    
+    erb :header_config
+  end
+
+  # Update header configuration
+  post '/header_config' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    begin
+      banner_type = params[:banner_type] || "svg"
+      navbar_enabled = params[:navbar_enabled] == "1"
+      
+      # Build header.txt content
+      header_content = []
+      header_content << "banner #{banner_type}"
+      header_content << "navbar" if navbar_enabled
+      
+      # Save the header configuration
+      header_file = @api.root/"views"/@current_view.name/"config"/"header.txt"
+      FileUtils.mkdir_p(File.dirname(header_file))
+      File.write(header_file, header_content.join("\n") + "\n")
+      
+      # Update status
+      update_config_status(@current_view.name, "header", true)
+      
+      redirect "/advanced_config?message=Header configuration updated successfully"
+    rescue => e
+      redirect "/header_config?error=Failed to save header configuration: #{e.message}"
+    end
+  end
+
+  # Deployment configuration page
+  get '/deploy_config' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    # Read current deployment config
+    deploy_file = @api.root/"views"/@current_view.name/"config"/"deploy.txt"
+    @deploy_config = ""
+    if File.exist?(deploy_file)
+      @deploy_config = File.read(deploy_file).strip
+    end
+    
+    erb :deploy_config
+  end
+
+  # Update deployment configuration
+  post '/deploy_config' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    begin
+      deploy_config = params[:deploy_config] || ""
+      
+      # Save the deployment configuration
+      deploy_file = @api.root/"views"/@current_view.name/"config"/"deploy.txt"
+      FileUtils.mkdir_p(File.dirname(deploy_file))
+      File.write(deploy_file, deploy_config + "\n")
+      
+      # Update status
+      update_config_status(@current_view.name, "deploy", true)
+      
+      redirect "/advanced_config?message=Deployment configuration updated successfully"
+    rescue => e
+      redirect "/deploy_config?error=Failed to save deployment configuration: #{e.message}"
+    end
+  end
+
+  # Layout configuration page
+  get '/layout_config' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    # Read current layout config
+    layout_file = @api.root/"views"/@current_view.name/"config"/"layout.txt"
+    @layout_config = ""
+    if File.exist?(layout_file)
+      @layout_config = File.read(layout_file).strip
+    end
+    
+    erb :layout_config
+  end
+
+  # Update layout configuration
+  post '/layout_config' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    begin
+      layout_config = params[:layout_config] || ""
+      
+      # Save the layout configuration
+      layout_file = @api.root/"views"/@current_view.name/"config"/"layout.txt"
+      FileUtils.mkdir_p(File.dirname(layout_file))
+      File.write(layout_file, layout_config + "\n")
+      
+      redirect "/advanced_config?message=Layout configuration updated successfully"
+    rescue => e
+      redirect "/layout_config?error=Failed to save layout configuration: #{e.message}"
+    end
+  end
+
   # Server status endpoint
   get '/status' do
     content_type :json
@@ -823,6 +1073,22 @@ class ScriptoriumWeb < Sinatra::Base
       current_view: @api.current_view&.name,
       repo_loaded: !@api.instance_variable_get(:@repo).nil?
     }.to_json
+  end
+
+  # Helper method to update status
+  private def update_config_status(view_name, config_name, status)
+    status_file = @api.root/"views"/view_name/"config"/"status.txt"
+    return unless File.exist?(status_file)
+    
+    content = File.read(status_file)
+    lines = content.lines.map do |line|
+      if line.strip.start_with?("#{config_name} ")
+        "#{config_name} #{status ? 'y' : 'n'}\n"
+      else
+        line
+      end
+    end
+    File.write(status_file, lines.join)
   end
 end
 

@@ -322,8 +322,8 @@ class Scriptorium::BannerSVG
     raise CannotHandleColorFirstArgEmpty if args.first.to_s.strip.empty?
   end
   
-    def parse_header_svg
-      lines = read_commented_file("config.txt")
+    def parse_header_svg(config_file = "config.txt")
+      lines = read_commented_file(config_file)
   
       # Parse config into a hash
       cfg = {}

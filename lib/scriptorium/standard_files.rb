@@ -348,4 +348,26 @@ class Scriptorium::StandardFiles
 
     EOS
   end
+
+  def deploy_text
+    <<~EOS
+      user      root
+      server    %{domain}
+      docroot   /var/www/html
+      path      %{view}
+      proto     https
+    EOS
+  end
+
+  def status_txt
+    <<~EOS
+      header n
+      banner n
+      navbar n
+      left n
+      right n
+      pages n
+      deploy n
+    EOS
+  end
 end

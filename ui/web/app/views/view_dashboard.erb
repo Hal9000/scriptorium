@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard for <%= @current_view.name %> - Scriptorium</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+        }
+        .header {
+            padding: 0;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            line-height: 1;
+        }
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 20px;
+        }
+        .banner-section {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .banner-section h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .banner-display {
+        }
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .action-card {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .action-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.2);
+        }
+        .action-card h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .action-card p {
+            margin: 0 0 15px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 6px 12px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background 0.2s;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .view-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .view-info h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .view-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .config-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .button-group {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Dashboard for <%= @current_view.name %></h1>
+        </div>
+        
+        <div class="content">
+            <div class="banner-section">
+                <div class="banner-display">
+                    <%= @banner_svg %>
+                </div>
+            </div>
+            
+            <div class="config-buttons">
+                <a href="/banner_config" class="btn">Configure Banner</a>
+                <a href="/navbar_config" class="btn">Configure Navbar</a>
+                <a href="/edit_pages" class="btn">Edit Pages</a>
+                <a href="/" class="btn">Create Post</a>
+                <a href="/advanced_config" class="btn btn-secondary">Advanced Config</a>
+            </div>
+            
+            <div class="button-group">
+                <a href="/" class="btn btn-secondary">Back to Main Dashboard</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
