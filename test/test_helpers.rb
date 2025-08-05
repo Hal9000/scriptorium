@@ -1,6 +1,9 @@
 module TestHelpers
 
   include Scriptorium::Helpers
+  
+  # Disable Design by Contract in tests by default
+  ENV['DBC_DISABLED'] = 'true'
 
   def assert_dir_exist?(dir)
     assert Dir.exist?(dir), "Directory '#{dir}' was not found"

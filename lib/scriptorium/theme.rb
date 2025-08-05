@@ -3,11 +3,20 @@ class Scriptorium::Theme
   include Scriptorium::Helpers
   extend  Scriptorium::Helpers
   include Scriptorium::Exceptions
+  include Scriptorium::Contract
+  extend  Scriptorium::Contract
 
   attr_accessor :name
 
+  # Invariants
+  def define_invariants
+    invariant { @root.is_a?(String) && !@root.empty? }
+    invariant { @name.is_a?(String) && !@name.empty? }
+  end
 
   def self.create_standard(root)
+    assume { root.is_a?(String) && !root.empty? }
+    
     make_tree(root/:themes, <<~EOS)
       standard/
       ├── README.txt
@@ -24,8 +33,6 @@ class Scriptorium::Theme
       │   │   ├── main.txt
       │   │   └── right.txt
       │   ├── gen/
-      │   │   ├── layout.css
-      │   │   ├── layout.html
       │   │   └── text.css
       │   └── layout.txt
       └── templates/
@@ -42,23 +49,28 @@ class Scriptorium::Theme
     write_file(std/:templates/"index_entry.lt3", predef.index_entry)
     layout_text = std/:layout/"layout.txt"
     write_file(layout_text,                      predef.layout_text)
-    layout = Scriptorium::Layout.new(layout_text)
     config, gen = std/:layout/:config, std/:layout/:gen
     write_file(config/"header.txt",              predef.theme_header)
     write_file(config/"footer.txt",              predef.theme_footer)
     write_file(config/"left.txt",                predef.theme_left)
     write_file(config/"right.txt",               predef.theme_right)
     write_file(config/"main.txt",                predef.theme_main)
-    write_file(gen/"layout.html",                layout.html)        # Whaaaat?
-    write_file(gen/"layout.css",                 layout.css)
+    
+    verify { Dir.exist?(root/:themes/"standard") }
   end
 
   def file(portion)
+    check_invariants
+    assume { portion.is_a?(String) && !portion.empty? }
+    
     paths = Find.find(@root/:themes/name)
     found = paths.find_all {|x| x.include?(portion) }
     case 
     when found.size == 1
-      return found[0]
+      result = found[0]
+      verify { result.is_a?(String) && File.exist?(result) }
+      check_invariants
+      return result
     when found.size > 1
       # puts "Search for #{portion} found"
       # found.each {|x| puts "  #{x}"}
@@ -69,8 +81,16 @@ class Scriptorium::Theme
   end
 
   def initialize(root, name)
+    assume { root.is_a?(String) && !root.empty? }
+    assume { name.is_a?(String) && !name.empty? }
+    
     @root = root
     @name = name
+    
+    define_invariants
+    verify { @root == root }
+    verify { @name == name }
+    check_invariants
   end
 
 end

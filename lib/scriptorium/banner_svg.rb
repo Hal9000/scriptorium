@@ -1,30 +1,51 @@
 class Scriptorium::BannerSVG
   include Scriptorium::Helpers
   include Scriptorium::Exceptions
+  include Scriptorium::Contract
   
-    def initialize(title, subtitle)
-      @title, @subtitle = title, subtitle
-      @title_scale = 0.8
-      @subtitle_scale = 0.4
-      @title_style = "normal"
-      @subtitle_style = "normal"
-      @title_weight = "normal"
-      @subtitle_weight = "normal"
-      @text_color = "#374151"
-      @text_anchor = "start"
-      @aspect = 8.0
-      @font = "Verdana"
-      # Remove default @title_xy and @subtitle_xy
-      @background = "#fff"
-      @gradient_start_color = nil
-      @gradient_end_color = nil
-      @gradient_direction = nil
-      @radial_start_color = nil
-      @radial_end_color = nil
-      @image_background = nil
-      @title_xy_set = false
-      @subtitle_xy_set = false
-    end
+  # Invariants
+  def define_invariants
+    invariant { @title.is_a?(String) }
+    invariant { @subtitle.is_a?(String) }
+    invariant { @title_scale.is_a?(Numeric) && @title_scale > 0 }
+    invariant { @subtitle_scale.is_a?(Numeric) && @subtitle_scale > 0 }
+    invariant { @aspect.is_a?(Numeric) && @aspect > 0 }
+    invariant { @font.is_a?(String) && !@font.empty? }
+    invariant { @text_color.is_a?(String) && !@text_color.empty? }
+    invariant { @background.is_a?(String) && !@background.empty? }
+  end
+  
+  def initialize(title, subtitle)
+    assume { title.is_a?(String) }
+    assume { subtitle.is_a?(String) }
+    
+    @title, @subtitle = title, subtitle
+    @title_scale = 0.8
+    @subtitle_scale = 0.4
+    @title_style = "normal"
+    @subtitle_style = "normal"
+    @title_weight = "normal"
+    @subtitle_weight = "normal"
+    @text_color = "#374151"
+    @text_anchor = "start"
+    @aspect = 8.0
+    @font = "Verdana"
+    # Remove default @title_xy and @subtitle_xy
+    @background = "#fff"
+    @gradient_start_color = nil
+    @gradient_end_color = nil
+    @gradient_direction = nil
+    @radial_start_color = nil
+    @radial_end_color = nil
+    @image_background = nil
+    @title_xy_set = false
+    @subtitle_xy_set = false
+    
+    define_invariants
+    verify { @title == title }
+    verify { @subtitle == subtitle }
+    check_invariants
+  end
   
     # FIXME - use the one in Helpers
   
@@ -41,8 +62,14 @@ class Scriptorium::BannerSVG
     end
   
     def handle_background(*args)
+      check_invariants
+      assume { args.is_a?(Array) }
+      
       validate_background_args(args)
       @background = args.first
+      
+      verify { @background.is_a?(String) && !@background.empty? }
+      check_invariants
     end
 
     private def validate_background_args(args)
@@ -112,8 +139,14 @@ class Scriptorium::BannerSVG
     end
     
     def handle_aspect(*args)
+      check_invariants
+      assume { args.is_a?(Array) }
+      
       validate_aspect_args(args)
       @aspect = args.first.to_f
+      
+      verify { @aspect.is_a?(Numeric) && @aspect > 0 }
+      check_invariants
     end
 
     private def validate_aspect_args(args)
@@ -170,11 +203,19 @@ class Scriptorium::BannerSVG
     end
     
     def handle_scale(which, *args)
+      check_invariants
+      assume { which.is_a?(String) && !which.empty? }
+      assume { args.is_a?(Array) }
+      
       if which == "title"
         @title_scale = args.first.to_f
+        verify { @title_scale.is_a?(Numeric) && @title_scale > 0 }
       elsif which == "subtitle"
         @subtitle_scale = args.first.to_f
+        verify { @subtitle_scale.is_a?(Numeric) && @subtitle_scale > 0 }
       end
+      
+      check_invariants
     end
     
     def handle_style(which, *args)
@@ -323,6 +364,9 @@ class Scriptorium::BannerSVG
   end
   
     def parse_header_svg(config_file = "config.txt")
+      check_invariants
+      assume { config_file.is_a?(String) && !config_file.empty? }
+      
       lines = read_commented_file(config_file)
   
       # Parse config into a hash
@@ -472,6 +516,8 @@ class Scriptorium::BannerSVG
     end
     
     def generate_svg
+      check_invariants
+      
       # Set base font size
       base_font_size = 60
       title_font_size = (base_font_size * @title_scale).to_i
@@ -612,6 +658,8 @@ class Scriptorium::BannerSVG
     end
   
     def get_svg
+      check_invariants
+      
       # Generate SVG without re-parsing config (use current instance variables)
       svg_code = generate_svg
       svg_lines = svg_code.split("\n").map {|line| " "*6 + line }

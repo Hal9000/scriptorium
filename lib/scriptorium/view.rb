@@ -3,6 +3,7 @@ require 'fileutils'
 class Scriptorium::View
   include Scriptorium::Exceptions
   include Scriptorium::Helpers
+  include Scriptorium::Contract
 
   attr_reader :name, :title, :subtitle, :theme, :dir
 
@@ -11,7 +12,23 @@ class Scriptorium::View
     # repo.generate_front_page("sample")
   end
 
+  # Invariants
+  def define_invariants
+    invariant { @name.is_a?(String) && !@name.empty? }
+    invariant { @title.is_a?(String) && !@title.empty? }
+    invariant { @subtitle.is_a?(String) }
+    invariant { @theme.is_a?(String) && !@theme.empty? }
+    invariant { @root.is_a?(String) && !@root.empty? }
+    invariant { @repo.is_a?(Scriptorium::Repo) }
+    invariant { @dir.is_a?(String) && !@dir.empty? }
+  end
+
   def initialize(name, title, subtitle = "", theme = "standard")
+    assume { name.is_a?(String) }
+    assume { title.is_a?(String) }
+    assume { subtitle.is_a?(String) }
+    assume { theme.is_a?(String) }
+    
     validate_name(name)
     validate_title(title)
     
@@ -20,6 +37,11 @@ class Scriptorium::View
     @repo = Scriptorium::Repo.repo
     @dir = "#@root/views/#{name}"
     @predef = Scriptorium::StandardFiles.new
+    
+    define_invariants
+    verify { @name == name }
+    verify { @title == title }
+    check_invariants
   end
 
   def inspect
@@ -131,6 +153,9 @@ But overall, the process is robust and well thought-out. No major changes needed
   end
 
   def apply_theme(theme)
+    check_invariants
+    assume { theme.is_a?(String) && !theme.empty? }
+    
     # check to see if ever done before?
     # copy layout.txt to view
     t = Scriptorium::Theme.new(@root, theme)
@@ -145,6 +170,9 @@ But overall, the process is robust and well thought-out. No major changes needed
       FileUtils.cp(f1, f2)
     end
     generate_empty_containers
+    
+    verify { @theme == theme }
+    check_invariants
   end
 
   def content_tag(section)
@@ -510,6 +538,8 @@ write output:      write the result to output/panes/header.html
   end
   
   def build_widgets(arg)
+    check_invariants
+    assume { arg.is_a?(String) }
     validate_widget_arg(arg)
     
     widgets = arg.split
@@ -522,6 +552,8 @@ write output:      write the result to output/panes/header.html
       obj.generate
       content << obj.card
     end
+    verify { content.is_a?(String) }
+    check_invariants
     content
   end
 

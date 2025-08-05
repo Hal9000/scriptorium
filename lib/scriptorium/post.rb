@@ -1,16 +1,24 @@
 class Scriptorium::Post
     include Scriptorium::Exceptions
     include Scriptorium::Helpers
+    include Scriptorium::Contract
 
     attr_reader :repo, :num, :id
   
     def initialize(repo, num)
+      assume { repo.is_a?(Scriptorium::Repo) }
+      assume { num.is_a?(Integer) || num.is_a?(String) }
       validate_initialization(repo, num)
       
       @repo = repo
       @num = d4(num.to_i)  # num is zero-padded string
       @id = num.to_i       # id is integer
       @meta = nil  # Explicitly initialize for clarity
+      
+      # Define invariants
+      invariant { @id > 0 }
+      invariant { @repo.is_a?(Scriptorium::Repo) }
+      invariant { @num.match?(/^\d{4}$/) }
     end
 
     private def validate_initialization(repo, num)
@@ -52,6 +60,11 @@ class Scriptorium::Post
     end
 
     def set_pubdate(ymd, seconds: 0)
+      check_invariants
+      assume { Scriptorium::Repo.testing }
+      assume { ymd.is_a?(String) }
+      assume { seconds.is_a?(Integer) && seconds >= 0 }
+      
       raise TestModeOnly unless Scriptorium::Repo.testing
       
       validate_date_format(ymd)
@@ -61,6 +74,9 @@ class Scriptorium::Post
       
       update_pubdate_metadata(t)
       save_metadata
+      
+      verify { meta["post.pubdate"].is_a?(String) }
+      check_invariants
     end
 
     private def validate_date_format(date)
@@ -112,8 +128,14 @@ class Scriptorium::Post
     end
 
     def deleted=(value)
+      check_invariants
+      assume { [true, false].include?(value) }
+      
       meta["post.deleted"] = value ? "true" : "false"
       save_metadata
+      
+      verify { meta["post.deleted"] == (value ? "true" : "false") }
+      check_invariants
     end
 
     # New method to access multiple attributes at once
@@ -142,6 +164,9 @@ class Scriptorium::Post
 
     # Additional method to load metadata explicitly, so it's only called once
     def load_metadata
+      check_invariants
+      assume { File.exist?(meta_file) }
+      
       @meta = {}
       @repo.tree("/tmp/tree.txt")
       read_file(meta_file, lines: true, chomp: true).each do |line|
@@ -149,12 +174,22 @@ class Scriptorium::Post
         next if key.nil? || key.empty?
         @meta[key] = value
       end 
+      
+      verify { @meta.is_a?(Hash) }
+      check_invariants
       @meta
     end
 
     def save_metadata
+      check_invariants
+      assume { @meta.is_a?(Hash) }
+      assume { !@meta.empty? }
+      
       lines = @meta.map { |k, v| sprintf("%-18s  %s", k, v) }
       write_file(meta_file, lines.join("\n"))
+      
+      verify { File.exist?(meta_file) }
+      check_invariants
     end
   end
   

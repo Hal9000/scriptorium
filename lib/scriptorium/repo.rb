@@ -3,6 +3,8 @@ class Scriptorium::Repo
   extend  Scriptorium::Exceptions
   include Scriptorium::Helpers
   extend  Scriptorium::Helpers
+  include Scriptorium::Contract
+  extend  Scriptorium::Contract
 
   class << self
     attr_accessor :testing
@@ -20,6 +22,7 @@ class Scriptorium::Repo
   end
 
   def self.create(path = nil, testmode: false)
+    assume { path.nil? || path.is_a?(String) }
     # Handle backward compatibility: boolean true means testing mode
     if testmode == true
       Scriptorium::Repo.testing = path
@@ -58,23 +61,37 @@ class Scriptorium::Repo
     
     @repo = self.open(@root)
     Scriptorium::View.create_sample_view(repo)
+    verify { @repo.is_a?(Scriptorium::Repo) }
     return repo
   end
 
   def self.open(root)
-    Scriptorium::Repo.new(root)
+    assume { root.is_a?(String) && !root.empty? }
+    repo = Scriptorium::Repo.new(root)
+    verify { repo.is_a?(Scriptorium::Repo) }
+    repo
   end
 
   def self.destroy
+    assume { Scriptorium::Repo.testing }
     raise self.TestModeOnly unless Scriptorium::Repo.testing
     system!("rm -rf #@root", "destroying repository")
+    verify { !Dir.exist?(@root) }
   end
 
   def postnum_file
     "#@root/config/last_post_num.txt"
   end
 
+  # Invariants
+  def define_invariants
+    invariant { @root.is_a?(String) && !@root.empty? }
+    invariant { @views.is_a?(Array) }
+    invariant { @current_view.nil? || @current_view.is_a?(Scriptorium::View) }
+  end
+
   def initialize(root)    # repo
+    assume { root.is_a?(String) && !root.empty? }
     @root = root
     @predef = Scriptorium::StandardFiles.new
     # Scriptorium::Repo.class_eval { @root, @repo = root, self }
@@ -82,6 +99,9 @@ class Scriptorium::Repo
     self.class.instance_variable_set(:@repo, self)  
     load_views
     @reddit = nil  # Lazy load Reddit integration
+    define_invariants
+    verify { @root == root }
+    check_invariants
   end
 
   private def load_views
@@ -137,6 +157,8 @@ class Scriptorium::Repo
   end
 
   def create_view(name, title, subtitle = "", theme: "standard")
+    assume { name.is_a?(String) }
+    assume { title.is_a?(String) }
     validate_view_name(name)
     validate_view_title(title)
     
@@ -198,6 +220,7 @@ class Scriptorium::Repo
       FileUtils.cp(theme_config/container, cfg/container)  # from theme to view
     end
     view.apply_theme(theme)
+    verify { view.is_a?(Scriptorium::View) }
     return view
   end
 
@@ -328,10 +351,17 @@ class Scriptorium::Repo
   end
 
   def create_post(title: nil, views: nil, tags: nil, body: nil, blurb: nil)
+    assume { title.nil? || title.is_a?(String) }
+    assume { views.nil? || views.is_a?(Array) || views.is_a?(String) }
+    assume { tags.nil? || tags.is_a?(Array) || tags.is_a?(String) }
+    assume { body.nil? || body.is_a?(String) }
+    assume { blurb.nil? || blurb.is_a?(String) }
     name = create_draft(title: title, views: views, tags: tags, body: body, blurb: blurb)
     num = finish_draft(name)
     generate_post(num)
-    self.post(num)  # Return the Post object
+    post = self.post(num)  # Return the Post object
+    verify { post.is_a?(Scriptorium::Post) }
+    post
   end
 
   def publish_post(num)

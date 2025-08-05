@@ -22,6 +22,7 @@ class BannerSVGTest < Minitest::Test
   include SimpleTestHelpers
 
   def setup
+    ENV['DBC_DISABLED'] = 'true'
     @banner = Scriptorium::BannerSVG.new("Test Title", "Test Subtitle")
   end
 

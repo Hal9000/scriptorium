@@ -1,12 +1,25 @@
 class Scriptorium::API
   include Scriptorium::Exceptions
   include Scriptorium::Helpers
+  include Scriptorium::Contract
 
   attr_reader :repo, :current_view
 
+  # Invariants
+  def define_invariants
+    invariant { [true, false].include?(@testing) }
+    invariant { @repo.nil? || @repo.is_a?(Scriptorium::Repo) }
+  end
+
   def initialize(testmode: false)
+    assume { [true, false].include?(testmode) }
+    
     @testing = testmode
     @repo = nil
+    
+    define_invariants
+    verify { @testing == testmode }
+    check_invariants
   end
 
   def repo_exists?(path)
@@ -14,18 +27,40 @@ class Scriptorium::API
   end
 
   def create_repo(path)
+    check_invariants
+    assume { path.is_a?(String) && !path.empty? }
+    
     raise RepoDirAlreadyExists if repo_exists?(path)
     Scriptorium::Repo.create(path)
     @repo = Scriptorium::Repo.open(path)
+    
+    verify { @repo.is_a?(Scriptorium::Repo) }
+    check_invariants
   end
 
   def open_repo(path)
+    check_invariants
+    assume { path.is_a?(String) && !path.empty? }
+    
     @repo = Scriptorium::Repo.open(path)
+    
+    verify { @repo.is_a?(Scriptorium::Repo) }
+    check_invariants
   end
 
   # View management
   def create_view(name, title, subtitle = "", theme: "standard")
+    check_invariants
+    assume { name.is_a?(String) }
+    assume { title.is_a?(String) }
+    assume { subtitle.is_a?(String) }
+    assume { theme.is_a?(String) }
+    assume { @repo.is_a?(Scriptorium::Repo) }
+    
     @repo.create_view(name, title, subtitle, theme: theme)
+    
+    verify { @repo.is_a?(Scriptorium::Repo) }
+    check_invariants
     self
   end
 
@@ -70,16 +105,28 @@ class Scriptorium::API
 
   # Post creation with convenience defaults
   def create_post(title, body, views: nil, tags: nil, blurb: nil)
+    check_invariants
+    assume { title.is_a?(String) }
+    assume { body.is_a?(String) }
+    assume { views.nil? || views.is_a?(String) || views.is_a?(Array) }
+    assume { tags.nil? || tags.is_a?(String) || tags.is_a?(Array) }
+    assume { blurb.nil? || blurb.is_a?(String) }
+    assume { @repo.is_a?(Scriptorium::Repo) }
+    
     views ||= @repo.current_view&.name
     raise "No view specified and no current view set" if views.nil?
     
-    @repo.create_post(
+    post = @repo.create_post(
       title: title,
       body: body,
       views: views,
       tags: tags,
       blurb: blurb
     )
+    
+    verify { post.is_a?(Scriptorium::Post) }
+    check_invariants
+    post
   end
 
   # Draft management
@@ -149,7 +196,15 @@ class Scriptorium::API
 
   # Publication system
   def publish_post(num)
-    @repo.publish_post(num)
+    check_invariants
+    assume { num.is_a?(Integer) }
+    assume { @repo.is_a?(Scriptorium::Repo) }
+    
+    post = @repo.publish_post(num)
+    
+    verify { post.is_a?(Scriptorium::Post) }
+    check_invariants
+    post
   end
 
   def post_published?(num)

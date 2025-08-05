@@ -13,6 +13,8 @@ class TUIIntegrationTest < Minitest::Test
   def setup
     cleanup_test_repo
     # Don't create repo here - let the TUI create it interactively
+    # Disable DBC contracts in tests
+    ENV['DBC_DISABLED'] = 'true'
   end
 
   def teardown
