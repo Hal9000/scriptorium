@@ -206,12 +206,14 @@ class Scriptorium::StandardFiles
     mytags = tags.join(", ") if tags.is_a?(Array)
 
     <<~EOS
-      .id #{d4(num.to_i)}
-      .created #{ymdhms}
-      .title #{title}
-      .blurb #{blurb}
-      .views #{views.join(" ")}
-      .tags  #{mytags}
+      post.id #{d4(num.to_i)}
+      post.created #{ymdhms}
+      post.published no
+      post.deployed no
+      post.title #{title}
+      post.blurb #{blurb}
+      post.views #{views.join(" ")}
+      post.tags  #{mytags}
     EOS
   end
 

@@ -147,6 +147,20 @@ class Scriptorium::API
     @repo.lookup_view(view_name)
   end
 
+  # Publication system
+  def publish_post(num)
+    @repo.publish_post(num)
+  end
+
+  def post_published?(num)
+    @repo.post_published?(num)
+  end
+
+  def get_published_posts(view = nil)
+    view ||= @repo.current_view&.name
+    @repo.get_published_posts(view)
+  end
+
   # Post retrieval
   def posts(view = nil)
     view ||= @repo.current_view&.name

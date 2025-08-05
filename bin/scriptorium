@@ -310,6 +310,8 @@ class ScriptoriumTUI
       create_draft(args)
     elsif cmd == "new" && args.start_with?("post")
       create_post(args)
+    elsif cmd == "publish" && args.start_with?("post")
+      publish_post(args)
     elsif cmd == "list" && args.start_with?("themes")
       list_themes
     elsif cmd == "clone" && args.include?(" ")
@@ -378,6 +380,7 @@ class ScriptoriumTUI
         list drafts                - List all drafts
         lsd
         new post [<title>]         - Create draft, edit, and convert to post
+        publish post <id>          - Publish a post (generate and mark as public)
 
         deploy                 - Deploy current view to server
         preview                - Preview current view locally
@@ -776,7 +779,7 @@ class ScriptoriumTUI
           else
             puts "  Post created: ##{post_num}"
           end
-          puts "  Use 'deploy' to publish to server when ready."
+          puts "  Use 'publish post #{post_num}' to publish, then 'deploy' to publish to server."
         rescue => e
           puts "  Error converting to post: #{e.message}"
         end
@@ -791,6 +794,52 @@ class ScriptoriumTUI
     else
       puts
       puts "  Usage: new post [<title>]"
+      puts
+    end
+  end
+
+  private def publish_post(args)
+    # Handle "publish post <id>" format
+    if args == "post" || args.start_with?("post ")
+      # Remove "post " prefix if present, otherwise args is just "post"
+      post_args = args == "post" ? "" : args[5..-1]
+      
+      if post_args.strip.empty?
+        # Interactive mode - prompt for post ID
+        print "  Enter post ID to publish: "
+        post_id = gets&.chomp&.strip
+        return if post_id.nil? || post_id.empty?
+      else
+        # Use provided post ID
+        post_id = post_args.strip
+      end
+      
+      begin
+        # Validate post ID format
+        unless post_id.match?(/^\d+$/)
+          puts
+          puts "  Invalid post ID format. Use numeric ID (e.g., 1, 0001)"
+          puts
+          return
+        end
+        
+        # Publish the post
+        post = @api.publish_post(post_id.to_i)
+        
+        puts
+        puts "  ✅ Post ##{post_id} published: #{post.title}"
+        puts "  Use 'deploy' to publish to server when ready."
+        puts
+        
+      rescue => e
+        puts
+        puts "  ❌ Error publishing post: #{e.message}"
+        puts
+      end
+    else
+      puts
+      puts "  Usage: publish post <id>"
+      puts "  Example: publish post 1"
       puts
     end
   end
@@ -812,8 +861,12 @@ class ScriptoriumTUI
     else
       puts "  Posts in view '#{current_view.name}':"
       posts.each do |post|
-        puts "    #{post.title}"
+        published = @api.post_published?(post.id)
+        status = published ? "✅" : "📝"
+        puts "    #{status} ##{post.id}: #{post.title}"
       end
+      puts
+      puts "  📝 = Draft (unpublished)  ✅ = Published"
     end
     puts
   end
@@ -873,6 +926,34 @@ class ScriptoriumTUI
       puts "  Generate content first with 'new post' or similar."
       puts
       return
+    end
+
+    # Check for unpublished posts
+    all_posts = @api.all_posts(current_view)
+    unpublished_posts = all_posts.reject { |post| @api.post_published?(post.id) }
+    
+    if unpublished_posts.any?
+      puts
+      puts "  ⚠️  Found unpublished posts:"
+      unpublished_posts.each do |post|
+        puts "    Post ##{post.id}: #{post.title}"
+      end
+      puts
+      
+      if yesno("Publish these posts now?")
+        unpublished_posts.each do |post|
+          begin
+            @api.publish_post(post.id)
+            puts "  ✅ Published post ##{post.id}: #{post.title}"
+          rescue => e
+            puts "  ❌ Failed to publish post ##{post.id}: #{e.message}"
+          end
+        end
+        puts
+      else
+        puts "  Deployment will only include published posts."
+        puts
+      end
     end
 
     # Create deployment marker file

@@ -18,4 +18,8 @@ Any line that is not part of a dot command (or its body) is processed. By defaul
 it is output "as is" (assuming there is nothing special embedded in it). However,
 it may contain intra-line formatting, variable references, or function calls.
 
+Within a line, there may be variable references beginning with a $. These names
+may contain alphanumerics, underscore, and period (the period is for the illusion
+of namespacing). Example:  Today is $Date and $text.color is my foreground.
+
 

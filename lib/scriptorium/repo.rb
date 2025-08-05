@@ -278,11 +278,30 @@ class Scriptorium::Repo
 
   private def write_post_metadata(data, view)
     num, title = data.values_at(:"post.id", :"post.title")
-    data = data.select {|k,v| k.to_s.start_with?("post.") }
-    data.delete(:"post.body")
-    data[:"post.slug"] = slugify(num, title) + ".html"
-    lines = data.map { |k, v| sprintf("%-12s  %s", k, v) }
-    write_file(@root/:posts/d4(num)/"meta.txt", lines.join("\n"))
+    metadata_file = @root/:posts/d4(num)/"meta.txt"
+    
+    # Read existing metadata to preserve fields like post.published
+    existing_metadata = {}
+    if File.exist?(metadata_file)
+      existing_metadata = getvars(metadata_file)
+    end
+    
+    # Prepare new metadata from data
+    new_metadata = data.select {|k,v| k.to_s.start_with?("post.") }
+    new_metadata.delete(:"post.body")
+    new_metadata[:"post.slug"] = slugify(num, title) + ".html"
+    
+    # Merge existing metadata over new metadata to preserve important fields
+    # Only preserve fields that should not be overwritten by source file changes
+    fields_to_preserve = [:"post.published", :"post.deployed", :"post.created"]
+    existing_metadata.each do |key, value|
+      if fields_to_preserve.include?(key)
+        new_metadata[key] = value
+      end
+    end
+    
+    lines = new_metadata.map { |k, v| sprintf("%-18s  %s", k, v) }
+    write_file(metadata_file, lines.join("\n"))
     # FIXME - standardize key names!
   end
 
@@ -315,20 +334,79 @@ class Scriptorium::Repo
     self.post(num)  # Return the Post object
   end
 
+  def publish_post(num)
+    validate_post_id(num)
+    metadata_file = @root/:posts/d4(num)/"meta.txt"
+    
+    # Read current metadata if it exists
+    metadata = {}
+    if File.exist?(metadata_file)
+      metadata = getvars(metadata_file)
+    end
+    
+    # Check if already published
+    if metadata[:"post.published"] != "no" && metadata[:"post.published"] != nil
+      raise "Post #{num} is already published"
+    end
+    
+    # Update published timestamp
+    metadata[:"post.published"] = ymdhms
+    
+    # Write updated metadata
+    lines = metadata.map { |k, v| sprintf("%-18s  %s", k, v) }
+    write_file(metadata_file, lines.join("\n"))
+    
+    # Generate the post (this will preserve the updated metadata)
+    generate_post(num)
+    
+    self.post(num)
+  end
+
+  def post_published?(num)
+    validate_post_id(num)
+    metadata_file = @root/:posts/d4(num)/"meta.txt"
+        return false unless File.exist?(metadata_file)
+    
+    metadata = getvars(metadata_file)
+    result = metadata[:"post.published"] != "no"
+    result
+  end
+
+  def get_published_posts(view = nil)
+    all_posts = all_posts(view)
+    all_posts.select { |post| post_published?(post.id) }
+  end
+
   def generate_post(num)
+
     content_file = @root/:posts/d4(num)/"source.lt3"
     metadata_file = @root/:posts/d4(num)/"meta.txt"
     
     need(:file, content_file)
-    need(:file, metadata_file)
     
     # Read content file
     live = Livetext.customize(mix: "lt3scriptor", call: ".nopara") # vars??
     text = live.xform_file(content_file)
     vars, body = live.vars.vars, live.body
     
-    # Read metadata file
-    metadata_vars = getvars(metadata_file)
+    # Create or update metadata from post content
+    if File.exist?(metadata_file)
+      # Preserve existing metadata (like post.published timestamp)
+      existing_metadata = getvars(metadata_file)
+      metadata_vars = create_metadata_from_content(num, vars)
+      # Merge existing metadata over defaults
+      existing_metadata.each do |key, value|
+        metadata_vars[key] = value
+      end
+    else
+      # Create new metadata
+      metadata_vars = create_metadata_from_content(num, vars)
+    end
+    
+    # Write metadata file
+    lines = metadata_vars.map { |k, v| sprintf("%-18s  %s", k, v) }
+    write_file(metadata_file, lines.join("\n"))
+    
     # Merge metadata into vars, but don't override content vars
     metadata_vars.each do |key, value|
       vars[key] = value unless vars.key?(key)
@@ -348,6 +426,24 @@ class Scriptorium::Repo
       final = substitute(vars, template) 
       write_generated_post(vars, view, final)
     end
+  end
+
+  private def create_metadata_from_content(num, vars)
+    metadata = {}
+    
+    # Set required fields
+    metadata[:"post.id"] = d4(num)
+    metadata[:"post.created"] = ymdhms
+    metadata[:"post.published"] = "no"  # Default to unpublished
+    metadata[:"post.deployed"] = "no"
+    
+    # Copy fields from content vars
+    metadata[:"post.title"] = vars[:"post.title"] || "ADD TITLE HERE"
+    metadata[:"post.blurb"] = vars[:"post.blurb"] || "ADD BLURB HERE"
+    metadata[:"post.views"] = vars[:"post.views"] || "sample"
+    metadata[:"post.tags"] = vars[:"post.tags"] || ""
+    
+    metadata
   end
 
   private def set_pubdate(vars)    # Not Post#set_pubdate 
