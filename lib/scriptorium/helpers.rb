@@ -20,9 +20,8 @@ module Scriptorium::Helpers
   include Scriptorium::Exceptions
   def getvars(file)
     lines = read_file(file, lines: true)
-    lines.map! {|line| line.sub(/ #.*$/, "").strip }
+    lines.map! {|line| line.sub(/# .*$/, "").strip }
     lines.reject! {|line| line.empty? }
-    # FIXME - what if variable value has a # in it?
     vhash = Hash.new("")
     lines.each do |line|
       var, val = line.split(" ", 2)
@@ -283,20 +282,14 @@ module Scriptorium::Helpers
   
   def read_commented_file(file_path)
     return [] unless File.exist?(file_path)
-  
     lines = read_file(file_path, lines: true)  # Read file and remove newline characters
-  
-    # Process the lines to remove empty lines and comments
-    lines.reject! do |line|
+    lines.reject! do |line|    # Remove empty lines and comments
       line.strip.empty? || line.strip.start_with?("#")
     end
-  
-    # Strip trailing comments and their preceding spaces
-    lines.map! do |line|
-      line.sub(/#.*$/, "").strip  # Remove everything after '#' and strip spaces
+    lines.map! do |line|       # Strip trailing comments + preceding spaces
+      line.sub(/# .*$/, "").strip  
     end
-  
-    lines  # Return the cleaned lines
+    lines  # Return cleaned lines
   end
       
   def cf_time(t1, t2)

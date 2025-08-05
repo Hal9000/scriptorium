@@ -170,14 +170,14 @@ class Scriptorium::Repo
     raise ViewDirAlreadyExists(name) if view_exist?(name)
     make_tree(@root/:views, <<~EOS)
     #{name}/
-    ├── config/              # View-specific config files (FIXME rename?)
+    ├── config/              # View-specific config files 
     │   ├── layout.txt       # Overall layout for front page
     │   ├── footer.txt       # Content for footer.html
     │   ├── header.txt       # Content for header.html
     │   ├── left.txt         # Content for left.html
     │   ├── main.txt         # Content for main.html
     │   └── right.txt        # Content for right.html
-    ├── config.txt           # View-specific config file
+    ├── config.txt           # View-specific config file   # maybe call settings.txt?
     ├── layout/              # Unused?
     ├── pages/               # Static pages for view
     ├── assets/              # Images, etc. (view-specific)
@@ -216,9 +216,7 @@ class Scriptorium::Repo
     cfg = dir/:config  # Should these be copied from theme??
     theme_config = @root/:themes/theme/:layout/:config
     containers = %w[header.txt footer.txt left.txt right.txt main.txt]
-    containers.each do |container|
-      FileUtils.cp(theme_config/container, cfg/container)  # from theme to view
-    end
+    containers.each { |container| FileUtils.cp(theme_config/container, cfg/container) }  # from theme to view
     view.apply_theme(theme)
     verify { view.is_a?(Scriptorium::View) }
     return view
@@ -284,11 +282,7 @@ class Scriptorium::Repo
     
     # Move metadata file (same timestamp, different extension)
     metadata_name = name.sub('.lt3', '.meta')
-    if File.exist?(metadata_name)
-      FileUtils.mv(metadata_name, posts/id4/"meta.txt")
-    end
-    
-    # FIXME - what about views?
+    FileUtils.mv(metadata_name, posts/id4/"meta.txt") if File.exist?(metadata_name)
     id
   end
 
@@ -305,9 +299,7 @@ class Scriptorium::Repo
     
     # Read existing metadata to preserve fields like post.published
     existing_metadata = {}
-    if File.exist?(metadata_file)
-      existing_metadata = getvars(metadata_file)
-    end
+    existing_metadata = getvars(metadata_file) if File.exist?(metadata_file)
     
     # Prepare new metadata from data
     new_metadata = data.select {|k,v| k.to_s.start_with?("post.") }
@@ -317,15 +309,10 @@ class Scriptorium::Repo
     # Merge existing metadata over new metadata to preserve important fields
     # Only preserve fields that should not be overwritten by source file changes
     fields_to_preserve = [:"post.published", :"post.deployed", :"post.created"]
-    existing_metadata.each do |key, value|
-      if fields_to_preserve.include?(key)
-        new_metadata[key] = value
-      end
-    end
+    existing_metadata.each { |key, value| new_metadata[key] = value if fields_to_preserve.include?(key) }
     
     lines = new_metadata.map { |k, v| sprintf("%-18s  %s", k, v) }
     write_file(metadata_file, lines.join("\n"))
-    # FIXME - standardize key names!
   end
 
   private def write_generated_post(data, view, final)
@@ -370,9 +357,7 @@ class Scriptorium::Repo
     
     # Read current metadata if it exists
     metadata = {}
-    if File.exist?(metadata_file)
-      metadata = getvars(metadata_file)
-    end
+    metadata = getvars(metadata_file) if File.exist?(metadata_file)
     
     # Check if already published
     if metadata[:"post.published"] != "no" && metadata[:"post.published"] != nil
@@ -438,9 +423,7 @@ class Scriptorium::Repo
     write_file(metadata_file, lines.join("\n"))
     
     # Merge metadata into vars, but don't override content vars
-    metadata_vars.each do |key, value|
-      vars[key] = value unless vars.key?(key)
-    end
+    metadata_vars.each { |key, value| vars[key] = value unless vars.key?(key) }
     
     views = vars[:"post.views"].strip.split(/\s+/)
     vars[:"post.views"] = views.join(" ")  # Ensure post.views is set in vars

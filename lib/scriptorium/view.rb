@@ -203,7 +203,7 @@ But overall, the process is robust and well thought-out. No major changes needed
 
   def section_core(section, hash)
     cfg = @dir/:config
-    template = @dir/:layout/"#{section}.html"  # FIXME - what if no template?
+    template = @dir/:layout/"#{section}.html"
     sectxt = cfg/"#{section}.txt"
     
     # Only add placeholder if section has no real content
@@ -291,9 +291,7 @@ write output:      write the result to output/panes/header.html
 
   def build_banner(arg)
     # Check if this is an SVG banner request
-    if arg == "svg"
-      return build_banner_svg_from_file
-    end
+    return build_banner_svg_from_file if arg == "svg"
     
     # Otherwise, treat as image filename
     return build_banner_image(arg)
@@ -497,9 +495,7 @@ write output:      write the result to output/panes/header.html
       <li><a class="dropdown-item" href="javascript:void(0)" onclick="load_main('#{link_url}')">#{escape_html(child[:title])}</a></li>
     HTML
     
-    if warning
-      html << "<!-- #{warning} -->\n"
-    end
+    html << "<!-- #{warning} -->\n" if warning
     
     html
   end
@@ -513,9 +509,7 @@ write output:      write the result to output/panes/header.html
       </li>
     HTML
     
-    if warning
-      html << "<!-- #{warning} -->\n"
-    end
+    html << "<!-- #{warning} -->\n" if warning
     
     html
   end
@@ -611,7 +605,7 @@ write output:      write the result to output/panes/header.html
   end
 
   def generate_post_index
-    posts = @repo.all_posts(self)  # sort by pubdate  # FIXME - move later
+    posts = @repo.all_posts(self) 
     str = ""
     # FIXME - many decisions to make here...
     posts.each do |post|

@@ -272,9 +272,7 @@ class Scriptorium::API
     result = update_post(id, {views: new_views})
     
     # Regenerate the post to update metadata
-    if result
-      @repo.generate_post(id)
-    end
+    @repo.generate_post(id) if result
     
     result
   end
@@ -291,9 +289,7 @@ class Scriptorium::API
     new_views = current_views.include?(view) ? current_views : current_views + [view]
     result = update_post(id, {views: new_views})
     
-    if result
-      @repo.generate_post(id)
-    end
+    @repo.generate_post(id) if result
     
     result
   end
@@ -325,9 +321,7 @@ class Scriptorium::API
     result = update_post(id, {tags: new_tags})
     
     # Regenerate the post to update metadata
-    if result
-      @repo.generate_post(id)
-    end
+    @repo.generate_post(id) if result
     
     result
   end
@@ -347,9 +341,7 @@ class Scriptorium::API
     result = update_post(id, {tags: new_tags})
     
     # Regenerate the post to update metadata
-    if result
-      @repo.generate_post(id)
-    end
+    @repo.generate_post(id) if result
     
     result
   end

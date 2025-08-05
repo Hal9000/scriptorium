@@ -47,19 +47,7 @@ class Scriptorium::BannerSVG
     check_invariants
   end
   
-    # FIXME - use the one in Helpers
-  
-    def read_commented_file(file_path)
-      return [] unless File.exist?(file_path)
-      lines = read_file(file_path, lines: true)  # Read file and remove newline characters
-      lines.reject! do |line|    # Remove empty lines and comments
-        line.strip.empty? || line.strip.start_with?("#")
-      end
-      lines.map! do |line|       # Strip trailing comments + preceding spaces
-        line.sub(/# .*$/, "").strip  
-      end
-      lines  # Return cleaned lines
-    end
+
   
     def handle_background(*args)
       check_invariants

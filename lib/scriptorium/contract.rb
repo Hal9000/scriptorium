@@ -28,8 +28,6 @@ module Scriptorium::Contract
   
   def check_invariants
     return unless Scriptorium::Contract.enabled?
-    @invariants&.each do |invariant|
-      raise "Invariant violated" unless instance_eval(&invariant)
-    end
+    @invariants&.each { |invariant| raise "Invariant violated" unless instance_eval(&invariant) }
   end
 end 

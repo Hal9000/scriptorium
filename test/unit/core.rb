@@ -722,7 +722,7 @@ class TestReadWrite < Minitest::Test
     assert_equal "My Blog", result[:title]
     assert_equal "A test blog", result[:subtitle]
     assert_equal "standard", result[:theme]
-    assert_equal 4, result.size  # Including the empty line
+    assert_equal 3, result.size  # Only valid key-value pairs
   end
 
   def test_075_getvars_with_empty_values
