@@ -25,15 +25,19 @@ x Widget configuration (selection)
 x facebook metadata
 x x/twitter metadata
 x LinkedIn metadata
-   svg.txt handling
-   post ID bug
-   fix history
-   asset upload
-   $$asset function
-   widget management
-   Syntax coloring
-   reddit support
-   post footer?
+x  svg.txt handling
+x  post ID bug
+    Exception names (DBC?)
+    fix history
+    asset upload
+    $$asset function
+    main config, fonts etc.
+    widget management
+    Syntax coloring
+    reddit support
+    post footer?
+    livetext scriptorium additions
+    legacy import
 - Gem asset handling
 - Repo asset management
   Sample blog additions

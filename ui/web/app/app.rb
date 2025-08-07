@@ -3,6 +3,12 @@
 require 'sinatra'
 require 'sinatra/reloader' if development?
 require 'fileutils'
+require 'pathname'
+begin
+  require 'fastimage'
+rescue LoadError
+  # FastImage not available, will handle gracefully
+end
 require_relative '../../../lib/scriptorium'
 require_relative 'error_helpers'
 
@@ -692,6 +698,7 @@ class ScriptoriumWeb < Sinatra::Base
           if line.include?('  ')
             parts = line.split(/\s{2,}/, 2)
             if parts.length >= 2
+              title = parts[0].strip
               filename = parts[1].strip
               next if filename.empty?
               
@@ -701,7 +708,8 @@ class ScriptoriumWeb < Sinatra::Base
               # Check if page exists
               page_file = pages_dir/filename
               unless File.exist?(page_file)
-                FileUtils.touch(page_file)
+                content = ".page_title #{title}\n\n"
+                File.write(page_file, content)
                 pages_created << filename
               end
             end
@@ -711,6 +719,7 @@ class ScriptoriumWeb < Sinatra::Base
           if line.include?('  ')
             parts = line.split(/\s{2,}/, 2)
             if parts.length >= 2
+              title = parts[0].strip
               filename = parts[1].strip
               next if filename.empty?
               
@@ -720,7 +729,8 @@ class ScriptoriumWeb < Sinatra::Base
               # Check if page exists
               page_file = pages_dir/filename
               unless File.exist?(page_file)
-                FileUtils.touch(page_file)
+                content = ".page_title #{title}\n\n"
+                File.write(page_file, content)
                 pages_created << filename
               end
             end
@@ -757,8 +767,16 @@ class ScriptoriumWeb < Sinatra::Base
         next unless File.file?(file)
         filename = File.basename(file)
         content = File.read(file)
+        
+        # Extract page title from .page_title directive
+        title = nil
+        if content.lines.first&.strip&.start_with?('.page_title')
+          title = content.lines.first.strip.sub('.page_title', '').strip
+        end
+        
         @pages << {
           filename: filename,
+          title: title,
           content: content,
           empty: content.strip.empty?
         }
@@ -1064,6 +1082,33 @@ class ScriptoriumWeb < Sinatra::Base
     end
   end
 
+  # Serve global assets
+  get '/assets/*' do
+    asset_path = params[:splat].first
+    asset_file = @api.root/"assets"/asset_path
+    
+    if File.exist?(asset_file) && File.file?(asset_file)
+      send_file asset_file
+    else
+      status 404
+      "Asset not found"
+    end
+  end
+
+  # Serve view-specific assets
+  get '/views/:view_name/assets/*' do
+    view_name = params[:view_name]
+    asset_path = params[:splat].first
+    asset_file = @api.root/"views"/view_name/"assets"/asset_path
+    
+    if File.exist?(asset_file) && File.file?(asset_file)
+      send_file asset_file
+    else
+      status 404
+      "Asset not found"
+    end
+  end
+
   # Server status endpoint
   get '/status' do
     content_type :json
@@ -1073,6 +1118,213 @@ class ScriptoriumWeb < Sinatra::Base
       current_view: @api.current_view&.name,
       repo_loaded: !@api.instance_variable_get(:@repo).nil?
     }.to_json
+  end
+
+  # Asset management page
+  get '/asset_management' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    # Get global assets
+    global_assets_dir = @api.root/"assets"
+    @global_assets = []
+    @library_assets = []
+    
+    if Dir.exist?(global_assets_dir)
+      Dir.glob(global_assets_dir/"*").each do |file|
+        next unless File.file?(file)
+        filename = File.basename(file)
+        size = File.size(file)
+        dimensions = get_image_dimensions(file)
+        @global_assets << {
+          filename: filename,
+          size: size,
+          path: file,
+          dimensions: dimensions
+        }
+      end
+      
+      # Get library assets
+      library_dir = global_assets_dir/"library"
+      if Dir.exist?(library_dir)
+        Dir.glob(library_dir/"*").each do |file|
+          next unless File.file?(file)
+          filename = File.basename(file)
+          size = File.size(file)
+          dimensions = get_image_dimensions(file)
+          @library_assets << {
+            filename: filename,
+            size: size,
+            path: file,
+            dimensions: dimensions
+          }
+        end
+      end
+    end
+    
+    # Get view-specific assets
+    view_assets_dir = @api.root/"views"/@current_view.name/"assets"
+    @view_assets = []
+    
+    if Dir.exist?(view_assets_dir)
+      Dir.glob(view_assets_dir/"*").each do |file|
+        next unless File.file?(file)
+        filename = File.basename(file)
+        size = File.size(file)
+        dimensions = get_image_dimensions(file)
+        @view_assets << {
+          filename: filename,
+          size: size,
+          path: file,
+          dimensions: dimensions
+        }
+      end
+    end
+    
+    # Sort all asset lists
+    @global_assets.sort_by! { |asset| asset[:filename] }
+    @library_assets.sort_by! { |asset| asset[:filename] }
+    @view_assets.sort_by! { |asset| asset[:filename] }
+    
+    erb :asset_management
+  end
+
+  # Upload asset
+  post '/asset_management/upload' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    begin
+      target = params[:target] # 'global', 'library', or 'view'
+      file = params[:file]
+      
+      if file.nil? || file[:tempfile].nil?
+        redirect "/asset_management?error=No file selected"
+        return
+      end
+      
+      filename = file[:filename]
+      tempfile = file[:tempfile]
+      
+      # Determine target directory
+      case target
+      when 'global'
+        target_dir = @api.root/"assets"
+      when 'library'
+        target_dir = @api.root/"assets"/"library"
+      when 'view'
+        target_dir = @api.root/"views"/@current_view.name/"assets"
+      else
+        redirect "/asset_management?error=Invalid target"
+        return
+      end
+      
+      # Create directory if it doesn't exist
+      FileUtils.mkdir_p(target_dir)
+      
+      # Save the file
+      target_file = target_dir/filename
+      FileUtils.cp(tempfile.path, target_file)
+      
+      redirect "/asset_management?message=Asset '#{filename}' uploaded successfully to #{target}"
+    rescue => e
+      redirect "/asset_management?error=Failed to upload asset: #{e.message}"
+    end
+  end
+
+  # Copy asset from global to view
+  post '/asset_management/copy' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    begin
+      source = params[:source] # 'global' or 'library'
+      filename = params[:filename]
+      
+      if filename.nil? || filename.empty?
+        redirect "/asset_management?error=No filename specified"
+        return
+      end
+      
+      # Determine source file
+      case source
+      when 'global'
+        source_file = @api.root/"assets"/filename
+      when 'library'
+        source_file = @api.root/"assets"/"library"/filename
+      else
+        redirect "/asset_management?error=Invalid source"
+        return
+      end
+      
+      unless File.exist?(source_file)
+        redirect "/asset_management?error=Source file not found"
+        return
+      end
+      
+      # Copy to view assets
+      target_dir = @api.root/"views"/@current_view.name/"assets"
+      FileUtils.mkdir_p(target_dir)
+      target_file = target_dir/filename
+      FileUtils.cp(source_file, target_file)
+      
+      redirect "/asset_management?message=Asset '#{filename}' copied successfully to view"
+    rescue => e
+      redirect "/asset_management?error=Failed to copy asset: #{e.message}"
+    end
+  end
+
+  # Delete asset
+  post '/asset_management/delete' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    begin
+      target = params[:target] # 'global', 'library', or 'view'
+      filename = params[:filename]
+      
+      if filename.nil? || filename.empty?
+        redirect "/asset_management?error=No filename specified"
+        return
+      end
+      
+      # Determine target file
+      case target
+      when 'global'
+        target_file = @api.root/"assets"/filename
+      when 'library'
+        target_file = @api.root/"assets"/"library"/filename
+      when 'view'
+        target_file = @api.root/"views"/@current_view.name/"assets"/filename
+      else
+        redirect "/asset_management?error=Invalid target"
+        return
+      end
+      
+      unless File.exist?(target_file)
+        redirect "/asset_management?error=File not found"
+        return
+      end
+      
+      # Delete the file
+      File.delete(target_file)
+      
+      redirect "/asset_management?message=Asset '#{filename}' deleted successfully"
+    rescue => e
+      redirect "/asset_management?error=Failed to delete asset: #{e.message}"
+    end
   end
 
   # Helper method to update status
@@ -1089,6 +1341,34 @@ class ScriptoriumWeb < Sinatra::Base
       end
     end
     File.write(status_file, lines.join)
+  end
+
+  # Helper method for formatting file sizes
+  def number_to_human_size(bytes)
+    return '0 Bytes' if bytes == 0
+    k = 1024
+    sizes = ['Bytes', 'KB', 'MB', 'GB']
+    i = (Math.log(bytes) / Math.log(k)).floor
+    "#{(bytes / k**i.to_f).round(2)} #{sizes[i]}"
+  end
+
+  def get_image_dimensions(file_path)
+    return nil unless File.exist?(file_path)
+    
+    # Check if it's an image file
+    image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp']
+    return nil unless image_extensions.any? { |ext| file_path.downcase.end_with?(ext) }
+    
+    # Check if FastImage is available
+    return nil unless defined?(FastImage)
+    
+    begin
+      dimensions = FastImage.size(file_path)
+      return dimensions ? "#{dimensions[0]}×#{dimensions[1]}" : nil
+    rescue => e
+      # If FastImage fails, return nil
+      return nil
+    end
   end
 end
 

@@ -312,5 +312,42 @@ module Scriptorium::Helpers
       # return "#{Gem.loaded_specs['scriptorium'].full_gem_path}/lib/scriptorium/assets/#{asset_path}"
     end
   end
+
+  def generate_missing_asset_svg(filename, width: 200, height: 150)
+    # Truncate filename if too long for display
+    display_name = filename.length > 20 ? filename[0..16] + "..." : filename
+    
+    # Generate SVG with broken image icon and filename
+    svg = <<~SVG
+      <svg width="#{width}" height="#{height}" xmlns="http://www.w3.org/2000/svg">
+        <!-- Background -->
+        <rect fill="#f8f9fa" stroke="#ddd" stroke-width="1" width="#{width}" height="#{height}" rx="4"/>
+        
+        <!-- Broken image icon -->
+        <g transform="translate(#{width/2}, #{height/2 - 20})">
+          <!-- Image frame -->
+          <rect x="-15" y="-10" width="30" height="20" fill="none" stroke="#999" stroke-width="1"/>
+          <!-- Broken corner -->
+          <path d="M 15 -10 L 25 -20 M 15 -10 L 25 0" stroke="#999" stroke-width="1" fill="none"/>
+          <!-- Image icon -->
+          <rect x="-12" y="-7" width="24" height="14" fill="#e9ecef"/>
+          <circle cx="-5" cy="-2" r="2" fill="#999"/>
+          <polygon points="-8,8 -2,2 2,6 8,0" fill="#999"/>
+        </g>
+        
+        <!-- Filename -->
+        <text x="#{width/2}" y="#{height/2 + 15}" text-anchor="middle" fill="#666" font-family="Arial, sans-serif" font-size="11">
+          #{escape_html(display_name)}
+        </text>
+        
+        <!-- "Asset not found" message -->
+        <text x="#{width/2}" y="#{height/2 + 30}" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="9">
+          Asset not found
+        </text>
+      </svg>
+    SVG
+    
+    svg.strip
+  end
 end
 

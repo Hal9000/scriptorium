@@ -135,13 +135,26 @@
             <% else %>
                 <h3>Pages</h3>
                 <p><strong>Click to edit...</strong> <strong>boldface</strong> = empty</p>
-                <div class="pages-list">
-                    <% @pages.each do |page| %>
-                        <div class="page-item <%= 'empty' if page[:empty] %>" onclick="editPage('<%= page[:filename] %>', `<%= page[:content].gsub('`', '\\`').gsub('\\', '\\\\') %>`)">
-                            📄 <%= page[:filename] %>
-                        </div>
-                    <% end %>
-                </div>
+                <table class="pages-list" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">File</th>
+                            <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Title</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% @pages.each do |page| %>
+                            <tr class="page-item <%= 'empty' if page[:empty] %>" onclick="editPage('<%= page[:filename] %>', `<%= page[:content].gsub('`', '\\`').gsub('\\', '\\\\') %>`)" style="cursor: pointer; transition: all 0.2s;">
+                                <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                                    📄 <%= page[:filename].sub(/\.lt3$/, '') %>
+                                </td>
+                                <td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">
+                                    <%= page[:title] || '' %>
+                                </td>
+                            </tr>
+                        <% end %>
+                    </tbody>
+                </table>
                 
                 <div id="edit-form" class="edit-form">
                     <h4 id="edit-filename"></h4>

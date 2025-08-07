@@ -293,6 +293,28 @@ class Scriptorium::Repo
   end
 
 
+  private def copy_post_assets_to_view(num, view)
+    id4 = d4(num)
+    post_assets_dir = @root/:posts/id4/"assets"
+    view_assets_dir = view.dir/:output/"assets"
+    
+    # Only copy if post has assets
+    return unless Dir.exist?(post_assets_dir)
+    
+    # Create view assets directory if it doesn't exist
+    make_dir(view_assets_dir)
+    
+    # Copy all files from post assets to view assets
+    Dir.glob(post_assets_dir/"*").each do |file|
+      next unless File.file?(file)
+      filename = File.basename(file)
+      target_file = view_assets_dir/filename
+      
+      # Copy file, overwriting if it exists (post assets take precedence)
+      FileUtils.cp(file, target_file)
+    end
+  end
+
   private def write_post_metadata(data, view)
     num, title = data.values_at(:"post.id", :"post.title")
     metadata_file = @root/:posts/d4(num)/"meta.txt"
@@ -335,6 +357,9 @@ class Scriptorium::Repo
     # Add "Visit Blog" link only to permalink version
     permalink_content = post_html + "\n<div style=\"text-align: center; margin-top: 20px;\">\n<a href=\"../index.html\">Visit Blog</a>\n</div>"
     write_file(permalink_path, permalink_content)
+    
+    # Copy post-specific assets to view output directory for deployment
+    copy_post_assets_to_view(num, view)
   end
 
   def create_post(title: nil, views: nil, tags: nil, body: nil, blurb: nil)
@@ -393,14 +418,14 @@ class Scriptorium::Repo
   end
 
   def generate_post(num)
-
     content_file = @root/:posts/d4(num)/"source.lt3"
     metadata_file = @root/:posts/d4(num)/"meta.txt"
     
     need(:file, content_file)
     
     # Read content file
-    live = Livetext.customize(mix: "lt3scriptor", call: ".nopara") # vars??
+    vars = { View: @current_view.name, :"post.id" => num }
+    live = Livetext.customize(mix: "lt3scriptor", call: ".nopara", vars: vars)
     text = live.xform_file(content_file)
     vars, body = live.vars.vars, live.body
     

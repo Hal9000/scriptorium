@@ -14,6 +14,9 @@ Some "special" dot commands are:
 
 Some HTML-specific commands are .h1, .h2, .list, and so on.
 
+A single-line comment starts with a dot-space (". "); a block comment starts with
+.comment (and ends with .end).
+
 Any line that is not part of a dot command (or its body) is processed. By default,
 it is output "as is" (assuming there is nothing special embedded in it). However,
 it may contain intra-line formatting, variable references, or function calls.
@@ -21,5 +24,23 @@ it may contain intra-line formatting, variable references, or function calls.
 Within a line, there may be variable references beginning with a $. These names
 may contain alphanumerics, underscore, and period (the period is for the illusion
 of namespacing). Example:  Today is $Date and $text.color is my foreground.
+
+Function calls start with $$ and have names like variable names. A function may
+have no parameters; one parameter separated by a colon (no embedded spaces); or
+one parameter inside brackets. No function or parameter may span more than one
+line:  This is a $$func and so is $$func2:this and $$func3[so is this].
+
+Variables are evaluated before functions so that they may be passed into 
+functions. There is no deeper nesting permitted.
+
+Intra-line formatting may be done with "markers" such as * for bold and _ for
+italics. These are unconventional: a single marker is for a token with no
+embedded spaces; a double marker has no embedded spaces but is terminated by
+a period or comma; and brackets may be used for strings having spaces.
+Example: This is *bold and so is **this, and *[this is also bold].
+
+Besides * and _, we have ` for code and ~ for strikethrough.
+
+
 
 

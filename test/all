@@ -20,6 +20,7 @@ test_files = %w[
   unit/view.rb
   unit/widgets.rb
   unit/read_commented_file_test.rb
+  unit/asset_management.rb
   banner_svg/simple_helpers.rb
   banner_svg/unit.rb
   integration/integration_test.rb

@@ -2,6 +2,7 @@ require 'ostruct'
 require 'pp'
 require 'date'
 require 'find'
+require 'fileutils' # Added for FileUtils
 
 # require 'pathmagic'
 # require 'processing'
@@ -31,6 +32,16 @@ Some will go into meta.lt3 - I will use:  id, title, created, views
 =end
 
 # Dot commands:
+
+def page_title
+  setvar("page.title", api.data)
+end
+
+def copyright
+  author = Livetext::Vars["author"]
+  year   = Time.now.year
+  setvar("page.copyright", "&copy; #{author} #{year}")
+end
 
 def id
   setvar("post.id", api.args.first)
@@ -205,6 +216,103 @@ $Dot = self   # Clunky! for dot commands called from Functions class
               # Find a better way to do this?
 
 class Livetext::Functions
+
+  def asset(param)
+    begin
+      root = Scriptorium::Repo.root
+      vname = Livetext::Vars[:View]
+      postid = Livetext::Vars[:"post.id"]   # search post first
+      num = d4(postid)
+      
+      # Define search paths and their corresponding output paths
+      search_paths = {}
+      
+      # Add post assets if we have a post ID
+      if num
+        search_paths["#{root}/posts/#{num}/assets/#{param}"] = "assets/#{num}/#{param}"
+      end
+      
+      # Add view assets
+      search_paths["#{root}/views/#{vname}/assets/#{param}"] = "assets/#{param}"
+      
+      # Add global assets
+      search_paths["#{root}/assets/#{param}"] = "assets/#{param}"
+      
+      # Add library assets
+      search_paths["#{root}/assets/library/#{param}"] = "assets/#{param}"
+      
+      # Search for the asset
+      search_paths.each do |source_path, output_path|
+        if File.exist?(source_path)
+          # Copy to output directory
+          output_dir = "#{root}/views/#{vname}/output/assets"
+          if output_path.start_with?("assets/#{num}/")
+            # Post assets go in subdirectory
+            output_dir += "/#{num}"
+          end
+          FileUtils.mkdir_p(output_dir)
+          FileUtils.cp(source_path, "#{output_dir}/#{param}")
+          return output_path
+        end
+      end
+      
+      # Asset not found - generate placeholder SVG
+      placeholder_svg = generate_missing_asset_svg(param, width: 200, height: 150)
+      placeholder_dir = "#{root}/views/#{vname}/output/assets/missing"
+      FileUtils.mkdir_p(placeholder_dir)
+      File.write("#{placeholder_dir}/#{param}.svg", placeholder_svg)
+      return "assets/missing/#{param}.svg"
+    rescue => e
+      # Return error message for debugging
+      return "[Asset error: #{e.message}]"
+    end
+  end
+
+  def image_asset(param)
+    asset_path = asset(param)
+    "<img src=\"#{asset_path}\" alt=\"#{param}\">"
+  end
+
+  def generate_missing_asset_svg(filename, width: 200, height: 150)
+    # Truncate filename if too long for display
+    display_name = filename.length > 20 ? filename[0..16] + "..." : filename
+    
+    # Generate SVG with broken image icon and filename
+    svg = <<~SVG
+      <svg width="#{width}" height="#{height}" xmlns="http://www.w3.org/2000/svg">
+        <!-- Background -->
+        <rect fill="#f8f9fa" stroke="#ddd" stroke-width="1" width="#{width}" height="#{height}" rx="4"/>
+        
+        <!-- Broken image icon -->
+        <g transform="translate(#{width/2}, #{height/2 - 20})">
+          <!-- Image frame -->
+          <rect x="-15" y="-10" width="30" height="20" fill="none" stroke="#999" stroke-width="1"/>
+          <!-- Broken corner -->
+          <path d="M 15 -10 L 25 -20 M 15 -10 L 25 0" stroke="#999" stroke-width="1" fill="none"/>
+          <!-- Image icon -->
+          <rect x="-12" y="-7" width="24" height="14" fill="#e9ecef"/>
+          <circle cx="-5" cy="-2" r="2" fill="#999"/>
+          <polygon points="-8,8 -2,2 2,6 8,0" fill="#999"/>
+        </g>
+        
+        <!-- Filename -->
+        <text x="#{width/2}" y="#{height/2 + 15}" text-anchor="middle" fill="#666" font-family="Arial, sans-serif" font-size="11">
+          #{display_name}
+        </text>
+        
+        <!-- "Asset not found" message -->
+        <text x="#{width/2}" y="#{height/2 + 30}" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="9">
+          Asset not found
+        </text>
+      </svg>
+    SVG
+    
+    svg.strip
+  end
+
+  def d4(num)
+    "%04d" % num.to_i
+  end
 
   def br(n="1")
     # Thought: Maybe make a way for functions to "simply" call the
