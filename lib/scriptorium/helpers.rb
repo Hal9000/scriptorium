@@ -213,6 +213,16 @@ module Scriptorium::Helpers
                .gsub(/^-+|-+$/, '')        # trim leading/trailing hyphens
     "#{d4(id)}-#{slug}"
   end
+
+  def clean_slugify(title)
+    return "title-is-missing" if title.nil?
+    
+    slug = title.downcase.strip
+               .gsub(/[^a-z0-9\s_-]/, '')  # remove punctuation
+               .gsub(/[\s_-]+/, '-')       # replace spaces and underscores with hyphen
+               .gsub(/^-+|-+$/, '')        # trim leading/trailing hyphens
+    slug
+  end
   
   def ymdhms
     Time.now.strftime("%Y-%m-%d-%H-%M-%S")
@@ -302,14 +312,37 @@ module Scriptorium::Helpers
 
   def get_asset_path(name)
     if Scriptorium::Repo.testing
-      if File.exist?("lib/scriptorium/dev_assets/#{name}")
-        return "lib/scriptorium/dev_assets/#{name}"
+      # Development/testing: Check dev_assets first, then local assets
+      if File.exist?("dev_assets/#{name}")
+        return "dev_assets/#{name}"
+      elsif File.exist?("assets/#{name}")
+        return "assets/#{name}"
       else
         raise AssetNotFound(name)
       end
     else  # Production
-      raise NoGemPath
-      # return "#{Gem.loaded_specs['scriptorium'].full_gem_path}/lib/scriptorium/assets/#{asset_path}"
+      # Production: Check user assets first, then gem assets
+      
+      # Check user assets first (highest priority)
+      if File.exist?("assets/#{name}")
+        return "assets/#{name}"
+      end
+      
+      # Then check gem assets (fallback)
+      begin
+        gem_spec = Gem.loaded_specs['scriptorium']
+        if gem_spec
+          gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{name}"
+          if File.exist?(gem_asset_path)
+            return gem_asset_path
+          end
+        end
+      rescue => e
+        # If gem lookup fails, continue without gem assets
+      end
+      
+      # Asset not found
+      raise AssetNotFound(name)
     end
   end
 
@@ -348,6 +381,47 @@ module Scriptorium::Helpers
     SVG
     
     svg.strip
+  end
+
+  def list_gem_assets
+    assets = []
+    begin
+      gem_spec = Gem.loaded_specs['scriptorium']
+      if gem_spec
+        gem_assets_dir = "#{gem_spec.full_gem_path}/assets"
+        if Dir.exist?(gem_assets_dir)
+          Dir.glob("#{gem_assets_dir}/**/*").each do |file|
+            next unless File.file?(file)
+            relative_path = file.sub("#{gem_assets_dir}/", "")
+            assets << relative_path
+          end
+        end
+      end
+    rescue => e
+      # If gem lookup fails, return empty array
+    end
+    assets.sort
+  end
+
+  def copy_gem_asset_to_user(asset_name, target_dir = "assets")
+    begin
+      gem_spec = Gem.loaded_specs['scriptorium']
+      if gem_spec
+        gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{asset_name}"
+        if File.exist?(gem_asset_path)
+          # Create target directory if it doesn't exist
+          FileUtils.mkdir_p(target_dir) unless Dir.exist?(target_dir)
+          
+          # Copy the asset
+          target_path = "#{target_dir}/#{File.basename(asset_name)}"
+          FileUtils.cp(gem_asset_path, target_path)
+          return target_path
+        end
+      end
+    rescue => e
+      # If gem lookup fails, return nil
+    end
+    nil
   end
 end
 

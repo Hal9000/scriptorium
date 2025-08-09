@@ -640,7 +640,7 @@ class TestReadWrite < Minitest::Test
   def test_063_get_asset_path
     name = "back-icon.png"
     result = get_asset_path(name)
-    assert result == "lib/scriptorium/dev_assets/#{name}", "Expected #{name} to be in dev_assets (got #{result})"
+    assert result == "dev_assets/#{name}", "Expected #{name} to be in dev_assets (got #{result})"
     assert_raises(AssetNotFound) { get_asset_path("nonexistent.png") }
   end
 
@@ -671,6 +671,45 @@ class TestReadWrite < Minitest::Test
   def test_068_slugify_with_leading_trailing_hyphens
     result = slugify(99, "-Post with leading/trailing hyphens-")
     assert_equal "0099-post-with-leadingtrailing-hyphens", result
+  end
+
+  # ========================================
+  # clean_slugify tests
+  # ========================================
+
+  def test_083_clean_slugify_basic
+    result = clean_slugify("My Test Post")
+    assert_equal "my-test-post", result
+  end
+
+  def test_084_clean_slugify_with_special_characters
+    result = clean_slugify("Post with & < > \" ' characters!")
+    assert_equal "post-with-characters", result
+  end
+
+  def test_085_clean_slugify_with_underscores_and_hyphens
+    result = clean_slugify("Post with_underscores-and-hyphens")
+    assert_equal "post-with-underscores-and-hyphens", result
+  end
+
+  def test_086_clean_slugify_with_multiple_spaces
+    result = clean_slugify("Post   with   multiple   spaces")
+    assert_equal "post-with-multiple-spaces", result
+  end
+
+  def test_087_clean_slugify_with_leading_trailing_hyphens
+    result = clean_slugify("-Post with leading/trailing hyphens-")
+    assert_equal "post-with-leadingtrailing-hyphens", result
+  end
+
+  def test_088_clean_slugify_empty_string
+    result = clean_slugify("")
+    assert_equal "", result
+  end
+
+  def test_089_clean_slugify_nil_string
+    result = clean_slugify(nil)
+    assert_equal "title-is-missing", result
   end
 
   def test_069_escape_html_basic

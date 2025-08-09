@@ -163,7 +163,6 @@ class Scriptorium::StandardFiles
       .views %{views}  
       .tags  %{tags}   
       
-      . Start of post body:
       #{body}
     EOS
 
@@ -191,7 +190,6 @@ class Scriptorium::StandardFiles
       .views #{views.join(" ")}
       .tags  #{mytags}
       
-      . Start of post body:
       #{body}
     EOS
   end

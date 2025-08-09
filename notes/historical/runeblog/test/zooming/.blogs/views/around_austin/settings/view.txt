@@ -1,4 +1,0 @@
-author     Hal Fulton
-title      Around Austin
-subtitle   The view from downtown...
-domain     foo.com

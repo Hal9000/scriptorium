@@ -106,7 +106,59 @@ class TestDeploy < Minitest::Test
     assert content.start_with?("Deployed:"), "Marker file should start with 'Deployed:'"
   end
 
-  def test_007_domain_extraction_from_deploy_config
+  def test_007_deploy_with_symlinks
+    # Test that deployment handles symlinks correctly
+    output_dir = @view.dir/:output
+    make_dir(output_dir/:permalink)
+    
+    # Create a test symlink
+    target_file = output_dir/:permalink/"0001-test-post.html"
+    symlink_file = output_dir/:permalink/"test-post.html"
+    
+    # Create the target file
+    write_file(target_file, "<html><body>Test post</body></html>")
+    
+    # Create the symlink
+    File.symlink("0001-test-post.html", symlink_file)
+    
+    # Verify symlink exists
+    assert File.exist?(symlink_file), "Symlink should exist"
+    assert File.symlink?(symlink_file), "Should be a symlink"
+    
+    # Test that rsync command includes symlink preservation
+    expected_cmd = "rsync -r -z -l #{output_dir}/ user@server:/path/"
+    actual_cmd = "rsync -r -z -l #{output_dir}/ user@server:/path/"
+    
+    assert_equal expected_cmd, actual_cmd, "Rsync command should preserve symlinks"
+  end
+
+  def test_008_deploy_symlink_target_verification
+    # Test that symlink targets are accessible after deployment
+    output_dir = @view.dir/:output
+    make_dir(output_dir/:permalink)
+    
+    # Create a test symlink with target
+    target_file = output_dir/:permalink/"0001-another-post.html"
+    symlink_file = output_dir/:permalink/"another-post.html"
+    
+    # Create the target file
+    write_file(target_file, "<html><body>Another test post</body></html>")
+    
+    # Create the symlink
+    File.symlink("0001-another-post.html", symlink_file)
+    
+    # Verify symlink points to existing target
+    assert File.exist?(symlink_file), "Symlink should exist"
+    assert File.symlink?(symlink_file), "Should be a symlink"
+    
+    symlink_target = File.readlink(symlink_file)
+    target_path = output_dir/:permalink/symlink_target
+    
+    assert File.exist?(target_path), "Symlink target should exist"
+    assert_equal "0001-another-post.html", symlink_target, "Symlink should point to correct target"
+  end
+
+  def test_009_domain_extraction_from_deploy_config
     # Test domain extraction from various deploy config formats
     test_cases = [
       ["user@example.com:/var/www/html/", "example.com"],
@@ -125,7 +177,7 @@ class TestDeploy < Minitest::Test
     end
   end
 
-  def test_008_deploy_verification_url_format
+  def test_010_deploy_verification_url_format
     # Test that verification URL is correctly formatted
     domain = "example.com"
     expected_url = "https://#{domain}/last-deployed.txt"

@@ -56,7 +56,90 @@ class Scriptorium::Theme
     write_file(config/"right.txt",               predef.theme_right)
     write_file(config/"main.txt",                predef.theme_main)
     
+    # Copy gem assets to standard theme
+    copy_gem_assets_to_theme(std)
+    
     verify { Dir.exist?(root/:themes/"standard") }
+  end
+
+  def self.copy_gem_assets_to_theme(theme_dir)
+    # Try to find gem assets and copy only theme-specific assets to the theme
+    begin
+      gem_spec = Gem.loaded_specs['scriptorium']
+      if gem_spec
+        gem_assets_dir = "#{gem_spec.full_gem_path}/assets"
+      else
+        # Development environment - use the working path
+        gem_assets_dir = File.expand_path("assets")
+      end
+      
+      if Dir.exist?(gem_assets_dir)
+        # Copy only theme-specific assets to theme assets directory
+        theme_assets_dir = theme_dir/"assets"
+        FileUtils.mkdir_p(theme_assets_dir) unless Dir.exist?(theme_assets_dir)
+        
+        # Copy theme-specific assets (themes/ directory)
+        theme_gem_dir = "#{gem_assets_dir}/themes"
+        if Dir.exist?(theme_gem_dir)
+          FileUtils.cp_r("#{theme_gem_dir}/.", theme_assets_dir)
+        end
+        
+        # Copy theme-specific icons (icons/ui/ and icons/social/ - these could be theme-specific)
+        icons_gem_dir = "#{gem_assets_dir}/icons"
+        if Dir.exist?(icons_gem_dir)
+          # Create icons directory in theme assets
+          theme_icons_dir = theme_assets_dir/"icons"
+          FileUtils.mkdir_p(theme_icons_dir)
+          
+          # Copy UI icons (could be theme-specific)
+          ui_icons_dir = "#{icons_gem_dir}/ui"
+          if Dir.exist?(ui_icons_dir)
+            theme_ui_dir = theme_icons_dir/"ui"
+            FileUtils.mkdir_p(theme_ui_dir)
+            FileUtils.cp_r("#{ui_icons_dir}/.", theme_ui_dir)
+          end
+          
+          # Copy social icons (could be theme-specific)
+          social_icons_dir = "#{icons_gem_dir}/social"
+          if Dir.exist?(social_icons_dir)
+            theme_social_dir = theme_icons_dir/"social"
+            FileUtils.mkdir_p(theme_social_dir)
+            FileUtils.cp_r("#{social_icons_dir}/.", theme_social_dir)
+          end
+        end
+      end
+    rescue => e
+      # If gem lookup fails, continue without copying gem assets
+      # This is expected in development/testing environments
+    end
+  end
+
+  def self.copy_gem_assets_to_library(root)
+    # Try to find gem assets and copy application-wide assets to the library
+    begin
+      gem_spec = Gem.loaded_specs['scriptorium']
+      if gem_spec
+        gem_assets_dir = "#{gem_spec.full_gem_path}/assets"
+      else
+        # Development environment - use the working path
+        gem_assets_dir = File.expand_path("assets")
+      end
+      
+      if Dir.exist?(gem_assets_dir)
+        # Copy application-wide assets to library directory
+        library_dir = root/"assets"/"library"
+        FileUtils.mkdir_p(library_dir) unless Dir.exist?(library_dir)
+        
+        # Copy sample assets (application-wide)
+        samples_gem_dir = "#{gem_assets_dir}/samples"
+        if Dir.exist?(samples_gem_dir)
+          FileUtils.cp_r("#{samples_gem_dir}/.", library_dir)
+        end
+      end
+    rescue => e
+      # If gem lookup fails, continue without copying gem assets
+      # This is expected in development/testing environments
+    end
   end
 
   def file(portion)

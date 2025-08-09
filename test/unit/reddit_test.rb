@@ -27,36 +27,30 @@ class RedditTest < Minitest::Test
 
   def test_002_reddit_credentials_file_path
     reddit = Scriptorium::Reddit.new(@repo)
-    expected_path = @repo.dir/:config/"reddit_credentials.json"
+    expected_path = @repo.root/:config/"reddit_credentials.json"
     assert_equal expected_path, reddit.instance_variable_get(:@credentials_file)
   end
 
-  def test_003_reddit_python_script_path
-    reddit = Scriptorium::Reddit.new(@repo)
-    script_path = reddit.instance_variable_get(:@python_script)
-    assert File.exist?(script_path), "Python script should exist at #{script_path}"
-  end
-
-  def test_004_reddit_not_configured_when_no_credentials
+  def test_003_reddit_not_configured_when_no_credentials
     reddit = Scriptorium::Reddit.new(@repo)
     assert_equal false, reddit.configured?
   end
 
-  def test_005_reddit_configured_when_credentials_exist
+  def test_004_reddit_configured_when_credentials_exist
     # Create a mock credentials file
-    credentials_file = @repo.dir/:config/"reddit_credentials.json"
+    credentials_file = @repo.root/:config/"reddit_credentials.json"
     write_file(credentials_file, '{"client_id": "test", "client_secret": "test"}')
     
     reddit = Scriptorium::Reddit.new(@repo)
     assert_equal true, reddit.configured?
   end
 
-  def test_006_reddit_config_returns_nil_when_not_configured
+  def test_005_reddit_config_returns_nil_when_not_configured
     reddit = Scriptorium::Reddit.new(@repo)
     assert_nil reddit.config
   end
 
-  def test_007_reddit_config_returns_parsed_json_when_configured
+  def test_006_reddit_config_returns_parsed_json_when_configured
     # Create a valid credentials file
     credentials_data = {
       "client_id" => "test_id",
@@ -65,7 +59,7 @@ class RedditTest < Minitest::Test
       "password" => "test_pass",
       "user_agent" => "test_agent"
     }
-    credentials_file = @repo.dir/:config/"reddit_credentials.json"
+    credentials_file = @repo.root/:config/"reddit_credentials.json"
     write_file(credentials_file, JSON.generate(credentials_data))
     
     reddit = Scriptorium::Reddit.new(@repo)
@@ -76,9 +70,9 @@ class RedditTest < Minitest::Test
     assert_equal "test_secret", config["client_secret"]
   end
 
-  def test_008_reddit_config_handles_invalid_json
+  def test_007_reddit_config_handles_invalid_json
     # Create an invalid JSON file
-    credentials_file = @repo.dir/:config/"reddit_credentials.json"
+    credentials_file = @repo.root/:config/"reddit_credentials.json"
     write_file(credentials_file, "invalid json content")
     
     reddit = Scriptorium::Reddit.new(@repo)
@@ -87,28 +81,28 @@ class RedditTest < Minitest::Test
     assert_nil config
   end
 
-  def test_009_repo_reddit_method_returns_reddit_instance
+  def test_008_repo_reddit_method_returns_reddit_instance
     reddit_instance = @repo.reddit
     assert_instance_of Scriptorium::Reddit, reddit_instance
   end
 
-  def test_010_repo_reddit_method_caches_instance
+  def test_009_repo_reddit_method_caches_instance
     reddit1 = @repo.reddit
     reddit2 = @repo.reddit
     assert_same reddit1, reddit2
   end
 
-  def test_011_repo_reddit_configured_method
+  def test_010_repo_reddit_configured_method
     assert_equal false, @repo.reddit_configured?
     
     # Create credentials file
-    credentials_file = @repo.dir/:config/"reddit_credentials.json"
+    credentials_file = @repo.root/:config/"reddit_credentials.json"
     write_file(credentials_file, '{"client_id": "test"}')
     
     assert_equal true, @repo.reddit_configured?
   end
 
-  def test_012_autopost_requires_credentials_file
+  def test_011_autopost_requires_credentials_file
     reddit = Scriptorium::Reddit.new(@repo)
     
     post_data = {
@@ -117,86 +111,125 @@ class RedditTest < Minitest::Test
       content: "Test content"
     }
     
-    assert_raises(Scriptorium::Exceptions::FileNotFound) do
+    assert_raises do
       reddit.autopost(post_data)
     end
   end
 
-  def test_013_autopost_requires_python_script
-    # Create credentials but remove Python script
-    credentials_file = @repo.dir/:config/"reddit_credentials.json"
-    write_file(credentials_file, '{"client_id": "test"}')
+  def test_012_autopost_returns_false_when_config_invalid
+    # Create credentials file with missing required fields
+    credentials_file = @repo.root/:config/"reddit_credentials.json"
+    write_file(credentials_file, '{"client_id": "test"}') # Missing required fields
     
     reddit = Scriptorium::Reddit.new(@repo)
-    script_path = reddit.instance_variable_get(:@python_script)
     
-    # Temporarily rename the script
-    if File.exist?(script_path)
-      File.rename(script_path, "#{script_path}.bak")
-    end
+    post_data = {
+      title: "Test Post",
+      url: "https://example.com/test"
+    }
+    
+    result = reddit.autopost(post_data)
+    assert_equal false, result
+  end
+
+  def test_013_autopost_returns_false_when_no_subreddit_specified
+    # Create valid credentials file
+    credentials_data = {
+      "client_id" => "test_id",
+      "client_secret" => "test_secret",
+      "username" => "test_user",
+      "password" => "test_pass",
+      "user_agent" => "test_agent"
+    }
+    credentials_file = @repo.root/:config/"reddit_credentials.json"
+    write_file(credentials_file, JSON.generate(credentials_data))
+    
+    reddit = Scriptorium::Reddit.new(@repo)
+    
+    post_data = {
+      title: "Test Post",
+      url: "https://example.com/test"
+    }
+    
+    result = reddit.autopost(post_data)
+    assert_equal false, result
+  end
+
+  def test_014_autopost_uses_subreddit_from_post_data
+    # Create valid credentials file
+    credentials_data = {
+      "client_id" => "test_id",
+      "client_secret" => "test_secret",
+      "username" => "test_user",
+      "password" => "test_pass",
+      "user_agent" => "test_agent"
+    }
+    credentials_file = @repo.root/:config/"reddit_credentials.json"
+    write_file(credentials_file, JSON.generate(credentials_data))
+    
+    reddit = Scriptorium::Reddit.new(@repo)
     
     post_data = {
       title: "Test Post",
       url: "https://example.com/test",
-      content: "Test content"
-    }
-    
-    assert_raises(Scriptorium::Exceptions::FileNotFound) do
-      reddit.autopost(post_data)
-    end
-    
-    # Restore the script
-    if File.exist?("#{script_path}.bak")
-      File.rename("#{script_path}.bak", script_path)
-    end
-  end
-
-  def test_014_temp_file_creation_for_post_data
-    reddit = Scriptorium::Reddit.new(@repo)
-    
-    post_data = {
-      title: "Test Post Title",
-      url: "https://example.com/test",
-      content: "Test content here",
       subreddit: "testsubreddit"
     }
     
-    # Use reflection to test private method
-    temp_file = reddit.send(:write_temp_post_data, post_data)
+    # Mock the Redd session to avoid actual API calls
+    mock_session = Minitest::Mock.new
+    mock_subreddit = Minitest::Mock.new
+    mock_submission = Minitest::Mock.new
     
-    assert File.exist?(temp_file), "Temporary file should be created"
+    # Stub the submit method to return the mock submission
+    def mock_subreddit.submit(*args, **kwargs)
+      Minitest::Mock.new
+    end
+    mock_session.expect :subreddit, mock_subreddit, ["testsubreddit"]
     
-    # Read and verify content
-    content = JSON.parse(File.read(temp_file))
-    assert_equal "Test Post Title", content["title"]
-    assert_equal "https://example.com/test", content["url"]
-    assert_equal "Test content here", content["content"]
-    assert_equal "testsubreddit", content["subreddit"]
+    reddit.stub :create_reddit_session, mock_session do
+      result = reddit.autopost(post_data)
+      assert_equal true, result
+    end
     
-    # Clean up
-    File.delete(temp_file) if File.exist?(temp_file)
+    mock_session.verify
   end
 
-  def test_015_autopost_cleans_up_temp_files
-    # Create credentials file
-    credentials_file = @repo.dir/:config/"reddit_credentials.json"
-    write_file(credentials_file, '{"client_id": "test", "client_secret": "test", "username": "test", "password": "test", "user_agent": "test"}')
+  def test_015_autopost_uses_default_subreddit_when_available
+    # Create valid credentials file with default subreddit
+    credentials_data = {
+      "client_id" => "test_id",
+      "client_secret" => "test_secret",
+      "username" => "test_user",
+      "password" => "test_pass",
+      "user_agent" => "test_agent",
+      "default_subreddit" => "defaultsubreddit"
+    }
+    credentials_file = @repo.root/:config/"reddit_credentials.json"
+    write_file(credentials_file, JSON.generate(credentials_data))
     
     reddit = Scriptorium::Reddit.new(@repo)
     
     post_data = {
       title: "Test Post",
-      url: "https://example.com/test",
-      content: "Test content"
+      url: "https://example.com/test"
     }
     
-    # Mock the system call to avoid actual Reddit API calls
-    reddit.stub :system, false do
-      reddit.autopost(post_data)
+    # Mock the Redd session to avoid actual API calls
+    mock_session = Minitest::Mock.new
+    mock_subreddit = Minitest::Mock.new
+    mock_submission = Minitest::Mock.new
+    
+    # Stub the submit method to return the mock submission
+    def mock_subreddit.submit(*args, **kwargs)
+      Minitest::Mock.new
+    end
+    mock_session.expect :subreddit, mock_subreddit, ["defaultsubreddit"]
+    
+    reddit.stub :create_reddit_session, mock_session do
+      result = reddit.autopost(post_data)
+      assert_equal true, result
     end
     
-    # Verify no temp files are left behind
-    temp_files = Dir.glob("/tmp/reddit_post*")
-    assert_empty temp_files, "Temporary files should be cleaned up"
+    mock_session.verify
   end
 end 

@@ -1,7 +1,0 @@
-     num  6
-   title  Remember Modest Mouse?
-    date  2024-10-26
- pubdate  2024-10-26
-   views  around_austin
-    tags  
-  pinned  

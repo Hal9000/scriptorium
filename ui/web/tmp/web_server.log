@@ -1,7 +1,7 @@
 FastImage loaded successfully from app/app.rb
 Puma starting in single mode...
-* Puma version: 6.6.0 ("Return to Forever")
-* Ruby version: ruby 3.2.3 (2024-01-18 revision 52bb2ac0a6) [x86_64-darwin22]
+* Puma vsh: line 1: 68053 Killed: 9               ruby app/app.rb
+.2.3 (2024-01-18 revision 52bb2ac0a6) [x86_64-darwin22]
 *  Min threads: 0
 *  Max threads: 5
 *  Environment: development

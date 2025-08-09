@@ -1,3 +1,0 @@
-rm -rf data
-ruby test/make_blog.rb
-ruby test/general.rb

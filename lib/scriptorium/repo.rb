@@ -56,6 +56,9 @@ class Scriptorium::Repo
     write_file(@root/:config/"widgets.txt",       @predef.available_widgets)
     Scriptorium::Theme.create_standard(@root)     # Theme: templates, etc.
     
+    # Copy application-wide gem assets to library
+    Scriptorium::Theme.copy_gem_assets_to_library(@root)
+    
     # Generate OS-specific helper code
     generate_os_helpers(@root)
     
@@ -181,6 +184,7 @@ class Scriptorium::Repo
     ├── layout/              # Unused?
     ├── pages/               # Static pages for view
     ├── assets/              # Images, etc. (view-specific)
+    │   └── missing/         # Missing assets (SVG placeholder files)
     ├── output/              # Output files (generated HTML)
     │   ├── panes/           # Containers from layout.txt
     │   │   ├── footer.html  # Generated from footer.txt
@@ -358,6 +362,22 @@ class Scriptorium::Repo
     permalink_content = post_html + "\n<div style=\"text-align: center; margin-top: 20px;\">\n<a href=\"../index.html\">Visit Blog</a>\n</div>"
     write_file(permalink_path, permalink_content)
     
+    # Create symlink for clean URL (without numeric prefix)
+    clean_slug = clean_slugify(title) + ".html"
+    clean_symlink_path = view.dir/:output/:permalink/clean_slug
+    
+    # Remove existing symlink if it exists
+    File.delete(clean_symlink_path) if File.exist?(clean_symlink_path) && File.symlink?(clean_symlink_path)
+    
+    # Create symlink (relative path from clean_symlink_path to slug)
+    begin
+      File.symlink(slug, clean_symlink_path)
+    rescue Errno::EEXIST => e
+      # If symlink already exists (not a symlink), remove it and try again
+      File.delete(clean_symlink_path) if File.exist?(clean_symlink_path)
+      File.symlink(slug, clean_symlink_path)
+    end
+    
     # Copy post-specific assets to view output directory for deployment
     copy_post_assets_to_view(num, view)
   end
@@ -425,10 +445,13 @@ class Scriptorium::Repo
     
     # Read content file
     vars = { View: @current_view.name, :"post.id" => num }
-    live = Livetext.customize(mix: "lt3scriptor", call: ".nopara", vars: vars)
-    text = live.xform_file(content_file)
-    vars, body = live.vars.vars, live.body
+    # live = Livetext.customize(mix: "lt3scriptor", call: ".nopara", vars: vars)
+    # text = live.xform_file(content_file)
+    # vars, _body = live.vars.vars, live.body
     
+    live = Livetext.customize(mix: "lt3scriptor", call: ".nopara", vars: vars)
+    body, vars = live.process(file: content_file)
+
     # Create or update metadata from post content
     if File.exist?(metadata_file)
       # Preserve existing metadata (like post.published timestamp)
@@ -456,7 +479,7 @@ class Scriptorium::Repo
       view = lookup_view(view)
       theme = view.theme 
       vars[:"post.id"] = num.to_s  # Always use the post number as ID
-      vars[:"post.body"] = text
+      vars[:"post.body"] = body
       template = @predef.post_template("standard")
       set_pubdate(vars)
       # Add Reddit button if enabled

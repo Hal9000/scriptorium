@@ -1,5 +1,5 @@
 require 'json'
-require 'tempfile'
+require 'redd'
 require_relative 'exceptions'
 require_relative 'helpers'
 
@@ -10,40 +10,44 @@ module Scriptorium
 
     def initialize(repo)
       @repo = repo
-      @credentials_file = @repo.dir/:config/"reddit_credentials.json"
-      @python_script = File.join(File.dirname(__FILE__), '..', '..', 'scripts', 'reddit_autopost.py')
-      @python_env = find_python_environment
+      @credentials_file = @repo.root/:config/"reddit_credentials.json"
     end
 
     # Autopost a post to Reddit
     def autopost(post_data, subreddit = nil)
       need(:file, @credentials_file, "Reddit credentials file not found")
-      need(:file, @python_script, "Reddit autopost Python script not found")
-
-      # Prepare post data for Python script
-      temp_file = write_temp_post_data(post_data)
+      
+      config = self.config
+      return false unless config
       
       begin
-        # Call Python script with PRAW using the appropriate Python environment
-        python_cmd = @python_env ? [@python_env, @python_script] : ["python3", @python_script]
-        result = system(*python_cmd, temp_file, subreddit.to_s, @credentials_file)
+        # Initialize Reddit session using redd gem
+        session = create_reddit_session(config)
         
-        if result
-          @repo.log.info("Successfully autoposted to Reddit: #{post_data[:title]}")
-          return true
-        else
-          @repo.log.error("Failed to autopost to Reddit: #{post_data[:title]}")
-          return false
-        end
-      ensure
-        # Clean up temporary file
-        File.delete(temp_file) if File.exist?(temp_file)
+        # Determine target subreddit
+        target_subreddit = subreddit || post_data[:subreddit] || config['default_subreddit']
+        raise "No subreddit specified" unless target_subreddit
+        
+        # Get the subreddit and submit the post
+        subreddit_instance = session.subreddit(target_subreddit)
+        submission = subreddit_instance.submit(
+          post_data[:title],
+          url: post_data[:url],
+          resubmit: false
+        )
+        
+        log_message("Successfully autoposted to Reddit: #{post_data[:title]} -> r/#{target_subreddit}")
+        return true
+        
+      rescue => e
+        log_message("Failed to autopost to Reddit: #{e.message}")
+        return false
       end
     end
 
     # Check if Reddit autoposting is configured
     def configured?
-      File.exist?(@credentials_file) && File.exist?(@python_script)
+      File.exist?(@credentials_file)
     end
 
     # Get Reddit configuration
@@ -53,43 +57,27 @@ module Scriptorium
       begin
         JSON.parse(read_file(@credentials_file))
       rescue => e
-        @repo.log.error("Failed to parse Reddit credentials: #{e.message}")
+        log_message("Failed to parse Reddit credentials: #{e.message}")
         nil
       end
     end
 
     private
 
-    def find_python_environment
-      # Check for Scriptorium virtual environment first
-      venv_path = File.expand_path("~/.scriptorium-python/bin/python")
-      return venv_path if File.exist?(venv_path)
-      
-      # Check for other common virtual environment locations
-      common_venvs = [
-        File.expand_path("~/.virtualenvs/scriptorium/bin/python"),
-        File.expand_path("~/venv/scriptorium/bin/python"),
-        File.expand_path("~/env/scriptorium/bin/python")
-      ]
-      
-      common_venvs.each do |venv|
-        return venv if File.exist?(venv)
-      end
-      
-      # Fall back to system python3
-      nil
+    def create_reddit_session(config)
+      Redd.it(
+        user_agent: config['user_agent'] || "scriptorium:autopost:v1.0",
+        client_id: config['client_id'],
+        secret: config['client_secret'],
+        username: config['username'],
+        password: config['password']
+      )
     end
 
-    def write_temp_post_data(post_data)
-      temp_file = Tempfile.new(['reddit_post', '.json'])
-      temp_file.write(JSON.generate({
-        title: post_data[:title],
-        url: post_data[:url],
-        content: post_data[:content],
-        subreddit: post_data[:subreddit]
-      }))
-      temp_file.close
-      temp_file.path
+    def log_message(message)
+      # Only log if not in test mode
+      return if caller.any? { |line| line.include?('test/') }
+      puts message
     end
   end
 end 

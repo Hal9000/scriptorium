@@ -160,8 +160,8 @@ ruby scripts/check_dependencies.rb
 This will check for:
 - **Core dependencies**: Ruby (required for all features)
 - **Feature dependencies**: 
-  - Python 3 (for Reddit integration and syntax highlighting)
-  - PRAW (Python Reddit API wrapper for autoposting)
+  - Python 3 (for syntax highlighting and RSS validation)
+  - Redd gem (Ruby Reddit API wrapper for autoposting)
   - LiveText (Scriptorium's templating system)
   - ImageMagick (for image processing and thumbnails)
   - Pygments (for code syntax highlighting)
@@ -182,7 +182,7 @@ Individual Dependencies:
 ------------------------------
 Ruby                      ✅ Available
 Python 3                  ✅ Available
-PRAW (Reddit API)         ❌ Missing
+Redd gem (Reddit API)     ❌ Missing
 LiveText                  ✅ Available
 ImageMagick               ✅ Available
 
@@ -191,7 +191,7 @@ Feature Availability:
 Core Blogging        ✅ Ready
 Reddit Button        ✅ Ready
 Reddit Autopost      ❌ Missing Dependencies
-   Missing: praw
+   Missing: redd
 ```
 
 ## The "Standard" Theme

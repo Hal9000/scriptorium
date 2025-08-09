@@ -123,7 +123,7 @@ class TestScriptoriumRepo < Minitest::Test
   end
 
   def test_009_create_draft
-    repo = create_test_repo("testview")  # View should exist to create draft?
+    repo = create_test_repo
     fname = repo.create_draft
     assert_file_exist?(fname)
     assert_file_contains?(fname, ".title ADD TITLE HERE")
@@ -139,7 +139,7 @@ class TestScriptoriumRepo < Minitest::Test
 
   def test_010_finish_draft
     $debug = true
-    repo = create_test_repo("testview")  # View should exist to create draft?
+    repo = create_test_repo
     fname = repo.create_draft
 
     repo.finish_draft(fname)
@@ -155,7 +155,7 @@ class TestScriptoriumRepo < Minitest::Test
     root = repo.root
     file = "#{root}/themes/standard/initial/post.lt3" # FIXME hardcoded
     assert_file_exist?(file)
-    assert_file_lines(file, 13)
+    assert_file_lines(file, 12)
   end
 
   def test_012_check_interpolated_initial_post

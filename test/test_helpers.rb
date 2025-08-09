@@ -13,12 +13,8 @@ module TestHelpers
     assert File.exist?(file), "File '#{file}' was not found"
   end
 
-  def create_test_repo(viewname = nil)
-    repo = Scriptorium::Repo.create("test/scriptorium-TEST", testmode: true)  # testing
-    if viewname
-      repo.create_view(viewname, "My Awesome Title", "Just another subtitle")
-    end
-    repo
+  def create_test_repo
+    Scriptorium::Repo.create("test/scriptorium-TEST", testmode: true)  # testing
   end
 
   def assert_file_contains?(file, str)

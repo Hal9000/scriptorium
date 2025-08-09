@@ -874,7 +874,7 @@ class ScriptoriumTUI
     puts
     puts "  Deploying view '#{current_view.name}' to #{deploy_config}..."
     
-    cmd = "rsync -r -z #{output_dir}/ #{deploy_config}/"
+    cmd = "rsync -r -z -l #{output_dir}/ #{deploy_config}/"
     puts "  Executing: #{cmd}"
     
     result = system(cmd)

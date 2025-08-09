@@ -33,8 +33,8 @@ Some will go into meta.lt3 - I will use:  id, title, created, views
 
 # Dot commands:
 
-def page_title
-  setvar("page.title", api.data)
+def page_title(args, data)
+  setvar("page.title", data)
 end
 
 def copyright
@@ -43,12 +43,8 @@ def copyright
   setvar("page.copyright", "&copy; #{author} #{year}")
 end
 
-def id
-  setvar("post.id", api.args.first)
-end
-
-def title
-  setvar("post.title", api.data)
+def title(args, data)
+  setvar("post.title", data)
 end
 
 def created
@@ -83,20 +79,16 @@ def stats
   setvar("file.charcount", char_count.to_s)
 end
 
-def views
-  setvar("post.views", api.data.strip)
+def views(args, data)
+  setvar("post.views", data.strip)
 end
 
-def tags
-  setvar("post.tags", api.data.strip)
+def tags(args, data)
+  setvar("post.tags", data.strip)
 end
 
-def body
-  setvar("post.body", api.body)
-end
-
-def blurb
-  setvar("post.blurb", api.data.strip)
+def blurb(args, data)
+  setvar("post.blurb", data.strip)
 end
 
 
@@ -107,9 +99,9 @@ end
 # "dot" commands
 ##################
   
-def dropcap
+def dropcap(args, data)
   # Bad form: adds another HEAD
-  text = api.data
+  text = data
   api.out " "
   letter = text[0]
   remain = text[1..-1]
@@ -117,12 +109,12 @@ def dropcap
   api.out %[<div style="padding-top: 1px">#{remain}]
 end
   
-def faq
+def faq(args, data, body)
   @faq_count ||= 0
   api.out "<br>" if @faq_count == 0
   @faq_count += 1
-  ques = api.data.chomp
-  ans  = api.body.join("\n")
+  ques = data.chomp
+  ans  = body.join("\n")
   id = "faq#@faq_count"
   api.out %[&nbsp;<a data-toggle="collapse" href="##{id}" role="button" aria-expanded="false" aria-controls="collapseExample"><font size=+3>&#8964;</font></a>]
   api.out %[&nbsp;<b>#{ques}</b>]
@@ -131,41 +123,41 @@ def faq
   api.optional_blank_line
 end
 
-def quote
+def quote(args, data, body)
   # was _passthru??? via runeblog
   api.out "<blockquote>"
-  api.out api.body.join(" ")
+  api.out body.join(" ")
   api.out "</blockquote>"
   api.optional_blank_line
 end
 
 # Move elsewhere later!
 # was _passthru??? via runeblog
-def h1; api.out "<h1>#{api.data}</h1>"; end
-def h2; api.out "<h2>#{api.data}</h2>"; end
-def h3; api.out "<h3>#{api.data}</h3>"; end
-def h4; api.out "<h4>#{api.data}</h4>"; end
-def h5; api.out "<h5>#{api.data}</h5>"; end
-def h6; api.out "<h6>#{api.data}</h6>"; end
-def hr; api.out "<hr>"; end
+def h1(args, data); api.out "<h1>#{data}</h1>"; end
+def h2(args, data); api.out "<h2>#{data}</h2>"; end
+def h3(args, data); api.out "<h3>#{data}</h3>"; end
+def h4(args, data); api.out "<h4>#{data}</h4>"; end
+def h5(args, data); api.out "<h5>#{data}</h5>"; end
+def h6(args, data); api.out "<h6>#{data}</h6>"; end
+def hr(args, data); api.out "<hr>"; end
 
-def nlist
+def nlist(args, data, body)
   api.out "<ol>"
-  api.body {|line| api.out "<li>#{line}</li>" }
+  body.each {|line| api.out "<li>#{line}</li>" }
   api.out "</ol>"
   api.optional_blank_line
 end
 
-def list
+def list(args, data, body)
   api.out "<ul>"
-  api.body {|line| api.out "<li>#{line}</li>" }
-  api.out "</ul>"
+  body.each {|line| api.out "<li>#{line}</li>" }
+  api.out "</ul>" 
   api.optional_blank_line
 end
 
-def list!
+def list!(args, data, body)
   api.out "<ul>"
-  lines = api.body.each 
+  lines = body.each 
   loop do 
     line = lines.next
     line = api.format(line)
@@ -181,8 +173,8 @@ end
 
 ### inset
 
-def inset
-  lines = api.body
+def inset(args, data, body)
+  lines = body
   box = ""
   output = []
   lines.each do |line| 
@@ -200,8 +192,8 @@ def inset
       output << line 
     end
   end
-  lr = api.args.first
-  wide = api.args[1] || "25"
+  lr = args.first
+  wide = args[1] || "25"
   stuff = "<div style='float:#{lr}; width: #{wide}%; padding:8px; padding-right:12px'>"
   stuff << '<b><i>' + box + '</i></b></div>'
   api.out "</p>"   #  kludge!! nopara
@@ -212,55 +204,57 @@ def inset
   api.optional_blank_line
 end
 
-$Dot = self   # Clunky! for dot commands called from Functions class
-              # Find a better way to do this?
-
 class Livetext::Functions
 
   def asset(param)
     begin
-      root = Scriptorium::Repo.root
-      vname = Livetext::Vars[:View]
-      postid = Livetext::Vars[:"post.id"]   # search post first
+      # Get view and post information
+      vname = @live.vars.to_h[:View]
+      postid = @live.vars.to_h[:"post.id"]   # search post first
       num = d4(postid)
+      root = Scriptorium::Repo.root
       
-      # Define search paths and their corresponding output paths
-      search_paths = {}
+      # Initialize search paths
+      search_paths = []
       
-      # Add post assets if we have a post ID
-      if num
-        search_paths["#{root}/posts/#{num}/assets/#{param}"] = "assets/#{num}/#{param}"
-      end
+      # Add post-specific assets (highest priority)
+      search_paths << ["#{root}/posts/#{num}/assets/#{param}", "assets/#{num}/#{param}"]
       
-      # Add view assets
-      search_paths["#{root}/views/#{vname}/assets/#{param}"] = "assets/#{param}"
+      # Add view-specific assets
+      search_paths << ["#{root}/views/#{vname}/assets/#{param}", "assets/#{param}"]
       
       # Add global assets
-      search_paths["#{root}/assets/#{param}"] = "assets/#{param}"
+      search_paths << ["#{root}/assets/#{param}", "assets/#{param}"]
       
       # Add library assets
-      search_paths["#{root}/assets/library/#{param}"] = "assets/#{param}"
+      search_paths << ["#{root}/assets/library/#{param}", "assets/#{param}"]
+      
+      # Add gem assets (lowest priority)
+      begin
+        gem_spec = Gem.loaded_specs['scriptorium']
+        
+        if gem_spec
+          gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{param}"
+          search_paths << [gem_asset_path, "assets/#{param}"]
+        else
+          # Development environment - use the working path
+          dev_gem_path = File.expand_path("assets/#{param}")
+          if File.exist?(dev_gem_path)
+            search_paths << [dev_gem_path, "assets/#{param}"]
+          end
+        end
+      rescue => e
+        # If gem lookup fails, continue without gem assets
+      end
       
       # Search for the asset
       search_paths.each do |source_path, output_path|
         if File.exist?(source_path)
-          # Copy to output directory
-          output_dir = "#{root}/views/#{vname}/output/assets"
-          if output_path.start_with?("assets/#{num}/")
-            # Post assets go in subdirectory
-            output_dir += "/#{num}"
-          end
-          FileUtils.mkdir_p(output_dir)
-          FileUtils.cp(source_path, "#{output_dir}/#{param}")
           return output_path
         end
       end
       
-      # Asset not found - generate placeholder SVG
-      placeholder_svg = generate_missing_asset_svg(param, width: 200, height: 150)
-      placeholder_dir = "#{root}/views/#{vname}/output/assets/missing"
-      FileUtils.mkdir_p(placeholder_dir)
-      File.write("#{placeholder_dir}/#{param}.svg", placeholder_svg)
+      # Asset not found - return placeholder path
       return "assets/missing/#{param}.svg"
     rescue => e
       # Return error message for debugging
@@ -327,10 +321,6 @@ class Livetext::Functions
   def h4(param); "<h4>#{param}</h4>"; end
   def h5(param); "<h5>#{param}</h5>"; end
   def h6(param); "<h6>#{param}</h6>"; end
-
-  def hr(param=nil)
-    $Dot.hr
-  end
 
   def image(param)
     "<img src='#{param}'></img>"

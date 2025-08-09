@@ -10,7 +10,7 @@ class DependencyChecker
     @features = {
       'Core Blogging' => ['ruby', 'git'],
       'Reddit Button' => ['ruby', 'git'],
-      'Reddit Autopost' => ['ruby', 'git', 'python3', 'praw', 'reddit_creds'],
+      'Reddit Autopost' => ['ruby', 'git', 'redd', 'reddit_creds'],
       'LiveText Plugins' => ['ruby', 'git', 'livetext'],
       'File Statistics' => ['ruby', 'git', 'livetext'],
       'Web Server' => ['ruby', 'git'],
@@ -47,13 +47,13 @@ class DependencyChecker
   def check_feature_dependencies
     puts "Checking feature-specific dependencies..."
     
-    # Check Python packages
-    @results['praw'] = check_python_package('praw')
+    # Check Ruby gems
+    @results['redd'] = check_ruby_gem('redd')
+    @results['livetext'] = check_ruby_gem('livetext')
+    
+    # Check Python packages (for other features)
     @results['pygments'] = check_python_package('pygments')
     @results['feedvalidator'] = check_python_package('feedvalidator')
-    
-    # Check Ruby gems
-    @results['livetext'] = check_ruby_gem('livetext')
     
     # Check system tools
     @results['imagemagick'] = check_command('convert --version')
@@ -105,9 +105,12 @@ class DependencyChecker
   end
 
   def check_ruby_gem(gem_name)
-    command = "#{gem_name} --version"
-    stdout, stderr, status = Open3.capture3(command)
-    status.success?
+    begin
+      require gem_name
+      true
+    rescue LoadError
+      false
+    end
   end
 
   def check_editor
@@ -155,7 +158,7 @@ class DependencyChecker
       ['Ruby', 'ruby'],
       ['Git', 'git'],
       ['Python 3', 'python3'],
-      ['PRAW (Reddit API)', 'praw'],
+      ['Redd (Reddit API)', 'redd'],
       ['Pygments (Syntax Highlighting)', 'pygments'],
       ['Feed Validator', 'feedvalidator'],
       ['LiveText', 'livetext'],
@@ -213,14 +216,9 @@ class DependencyChecker
       puts
     end
 
-    if missing.include?('praw')
-      puts "🐍 Install PRAW:"
-      puts "   # Create virtual environment (recommended):"
-      puts "   python3 -m venv ~/.scriptorium-python"
-      puts "   source ~/.scriptorium-python/bin/activate"
-      puts "   pip install praw"
-      puts "   # OR use --user flag:"
-      puts "   pip3 install --user praw"
+    if missing.include?('redd')
+      puts "🔴 Install Redd gem:"
+      puts "   gem install redd"
       puts
     end
 

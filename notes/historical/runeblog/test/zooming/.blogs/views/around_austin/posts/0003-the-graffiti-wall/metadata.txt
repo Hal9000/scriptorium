@@ -1,7 +1,0 @@
-     num  3
-   title  The graffiti wall
-    date  2024-10-21
- pubdate  2024-10-21
-   views  around_austin
-    tags  
-  pinned  

@@ -27,6 +27,8 @@ spec = Gem::Specification.new do |s|
   s.add_runtime_dependency 'rubytext', '~> 0.1',  '>= 0.1.26'
   s.add_runtime_dependency 'rouge',    '~> 3.25', '>= 3.25.0'
   s.add_runtime_dependency 'sinatra',  '~> 3.0',  '>= 3.0.0'
+  s.add_runtime_dependency 'redd',     '~> 0.8.8'
+  s.add_runtime_dependency 'htmlbeautifier', '~> 1.4', '>= 1.4.0'
 
   s.add_development_dependency 'minitest', '~> 5.10', '>= 5.10.0'
 
@@ -34,7 +36,8 @@ spec = Gem::Specification.new do |s|
 
   # Core library files
   main = Find.find("lib").to_a + 
-         Find.find("doc").to_a
+         Find.find("doc").to_a +
+         Find.find("assets").to_a
   
   # UI-specific files
   ui_files = Find.find("ui").to_a

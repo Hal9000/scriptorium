@@ -14,10 +14,9 @@ This document lists the external dependencies and configuration requirements for
 **Features**: Reddit autoposting, Reddit button generation
 
 **Software Dependencies**:
-- **Python 3** (3.7+) - Runtime for Reddit API scripts
-- **PRAW** - Python Reddit API Wrapper
+- **Redd gem** - Ruby Reddit API Wrapper
   ```bash
-  pip3 install praw
+  gem install redd
   ```
 
 **Configuration Requirements**:

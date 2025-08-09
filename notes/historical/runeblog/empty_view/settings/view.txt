@@ -1,4 +1,0 @@
-author      VIEW_AUTHOR
-title       VIEW_TITLE
-subtitle    VIEW_SUBTITLE
-site        VIEW_SITE
