@@ -32,13 +32,13 @@ x $$asset function
 x standalone posts link back to blog
 x symlinks for posts
 x preliminary reddit support
+x Syntax coloring
+x fix history
   icon/logo collection
   copy link
   Exception names (DBC?)
-  fix history
   main config, fonts etc.
   widget management
-  Syntax coloring
   full reddit support
   post footer?
   livetext scriptorium additions

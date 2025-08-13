@@ -35,17 +35,28 @@ class Scriptorium::StandardFiles
         }
       };
 
-      // Initialize with the front page when navigating via the back button or similar
-      window.onload = function() {
-        // Check if the initial state exists, if not, set it
-        if (!history.state) {
-           // Don't try to load post_index.html if there are no posts
-           // The "No posts yet!" message is already in the main container
-           history.replaceState({ slug: "index.html" }, "", "index.html");
-        }
-        
+        // Initialize with the front page when navigating via the back button or similar
+  window.onload = function() {
+    // Check if the URL has a post parameter and load it automatically
+    const urlParams = new URLSearchParams(window.location.search);
+    const postParam = urlParams.get('post');
+    
+    if (postParam) {
+      // URL has a post parameter, load the post content
+      console.log('Auto-loading post from URL parameter:', postParam);
+      load_main('index.html?post=' + postParam);
+      return;
+    }
+    
+    // Check if the initial state exists, if not, set it
+    if (!history.state) {
+       // Don't try to load post_index.html if there are no posts
+       // The "No posts yet!" message is already in the main container
+       history.replaceState({ slug: "index.html" }, "", "index.html");
+    }
+    
 
-    };
+};
 
     // Load the main content and other page containers (header, footer, left, right)
     function load_main(slug) {
@@ -56,6 +67,58 @@ class Scriptorium::StandardFiles
         const leftDiv = document.querySelector(".left");
         const rightDiv = document.querySelector(".right");
         console.log('Loading main with slug:', slug); // Log the slug
+
+                      // Check if this is a post parameter request
+      if (slug.includes('?post=')) {
+          const postSlug = slug.split('?post=')[1];
+          console.log('Loading post:', postSlug);
+          
+          // Load the post content - add .html extension if it's missing
+          const postFile = postSlug.endsWith('.html') ? postSlug : postSlug + '.html';
+          fetch('posts/' + postFile)
+              .then(response => {
+                  if (response.ok) {
+                      return response.text();
+                  } else {
+                      console.error('Failed to load post:', response.status);
+                      return 'Post not found';
+                  }
+              })
+              .then(content => {
+                  contentDiv.innerHTML = content;
+                  history.pushState({slug: 'index.html?post=' + postSlug}, "", 'index.html?post=' + postSlug);
+              })
+              .catch(error => {
+                  console.log("Error loading post:", error);
+                  contentDiv.innerHTML = 'Error loading post';
+              });
+          return;
+      }
+
+      // Check if this is a static page request (pages/, assets/, etc.)
+      if (slug.startsWith('pages/') || slug.startsWith('assets/') || slug.includes('/')) {
+          console.log('Loading static page:', slug);
+          // Simple approach: always go back to index.html directory and fetch from there
+          fetch(slug)
+              .then(response => {
+                  if (response.ok) {
+                      return response.text();
+                  } else {
+                      console.error('Failed to load static page:', response.status);
+                      return 'Page not found';
+                  }
+              })
+              .then(content => {
+                  contentDiv.innerHTML = content;
+                  // Don't change the URL for static pages to avoid path resolution issues
+                  history.pushState({slug: slug}, "", window.location.pathname);
+              })
+              .catch(error => {
+                  console.log("Error loading static page:", error);
+                  contentDiv.innerHTML = 'Error loading page';
+              });
+          return;
+      }
 
       fetch(slug)
         .then(response => {
@@ -223,8 +286,8 @@ class Scriptorium::StandardFiles
     str = <<~EOS
       <!-- theme: #{theme} -->
 
-      <div align='right'><a style="text-decoration: none" href="javascript:history.go(-1)">
-        <img src="assets/back-icon.png" width=24 height=24 alt="Go back"></img></a>
+      <div align='right'><a style="text-decoration: none" href="index.html">
+        <img src="assets/back-icon.png" width=24 height=24 alt="Go to Index"></img></a>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: baseline;">
         <span style="text-align: left; font-size: 1.5em;">%{post.title}</span>
@@ -322,7 +385,7 @@ class Scriptorium::StandardFiles
         <div style="font-size: 1.2em; margin-left: 10px; flex-grow: 1; padding-top: 0;">
           <div><a href="javascript:void(0)" 
                   style="text-decoration: none;"
-                  onclick="load_main('posts/%{post.slug}')">%{post.title}</a></div>
+                  onclick="load_main('index.html?post=%{post.slug}')">%{post.title}</a></div>
           <div style="font-size: 0.9em;">%{post.blurb}</div>
         </div>
       </div>

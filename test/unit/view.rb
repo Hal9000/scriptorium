@@ -352,4 +352,80 @@ class TestScriptoriumView < Minitest::Test
     assert_equal :item, contact_item[:type]
     assert_equal "contact", contact_item[:filename]
   end
+
+  # Pages directory copying tests
+  def test_032_generate_front_page_copies_pages_directory
+    # Create pages directory with test files
+    pages_dir = @view.dir/:pages
+    make_dir(pages_dir)
+    write_file(pages_dir/"about.html", "<html><title>About</title><body><h1>About</h1></body></html>")
+    write_file(pages_dir/"contact.html", "<html><title>Contact</title><body><h1>Contact</h1></body></html>")
+    
+    # Generate front page
+    @view.generate_front_page
+    
+    # Check that pages directory was copied to output
+    output_pages_dir = @view.dir/:output/:pages
+    assert Dir.exist?(output_pages_dir), "Expected pages directory to be copied to output"
+    
+    # Check that page files were copied
+    assert File.exist?(output_pages_dir/"about.html"), "Expected about.html to be copied"
+    assert File.exist?(output_pages_dir/"contact.html"), "Expected contact.html to be copied"
+    
+    # Check that content is preserved
+    about_content = read_file(output_pages_dir/"about.html")
+    assert_includes about_content, "<h1>About</h1>"
+    
+    contact_content = read_file(output_pages_dir/"contact.html")
+    assert_includes contact_content, "<h1>Contact</h1>"
+  end
+
+  def test_033_generate_front_page_handles_missing_pages_directory
+    # Ensure pages directory doesn't exist
+    pages_dir = @view.dir/:pages
+    FileUtils.rm_rf(pages_dir) if Dir.exist?(pages_dir)
+    
+    # Generate front page (should not fail)
+    @view.generate_front_page
+    
+    # Check that output/index.html was still generated
+    index_file = @view.dir/:output/"index.html"
+    assert File.exist?(index_file), "Expected index.html to be generated even without pages directory"
+  end
+
+  def test_034_generate_front_page_copies_empty_pages_directory
+    # Create empty pages directory
+    pages_dir = @view.dir/:pages
+    make_dir(pages_dir)
+    
+    # Generate front page
+    @view.generate_front_page
+    
+    # Check that empty pages directory was created in output
+    output_pages_dir = @view.dir/:output/:pages
+    assert Dir.exist?(output_pages_dir), "Expected empty pages directory to be created in output"
+  end
+
+  def test_035_generate_front_page_preserves_page_file_permissions
+    # Create pages directory with test file
+    pages_dir = @view.dir/:pages
+    make_dir(pages_dir)
+    test_file = pages_dir/"test.html"
+    write_file(test_file, "<html><body>Test</body></html>")
+    
+    # Set specific permissions
+    File.chmod(0644, test_file)
+    original_permissions = File.stat(test_file).mode & 0777
+    
+    # Generate front page
+    @view.generate_front_page
+    
+    # Check that file was copied
+    output_file = @view.dir/:output/:pages/"test.html"
+    assert File.exist?(output_file), "Expected test.html to be copied"
+    
+    # Check that permissions are reasonable (may vary by system)
+    output_permissions = File.stat(output_file).mode & 0777
+    assert output_permissions > 0, "Expected reasonable file permissions"
+  end
 end 

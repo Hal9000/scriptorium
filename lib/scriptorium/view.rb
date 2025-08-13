@@ -947,6 +947,17 @@ write output:      write the result to output/panes/header.html
     rescue => e
       # Debug file write failed, but this is not critical
     end
+
+    # Copy pages directory to output if it exists
+    pages_source = @dir/:pages
+    pages_output = @dir/:output/:pages
+    if Dir.exist?(pages_source)
+      FileUtils.mkdir_p(pages_output)
+      Dir.glob(pages_source/"*").each do |file|
+        next unless File.file?(file)
+        FileUtils.cp(file, pages_output/File.basename(file))
+      end
+    end
   end
 
 

@@ -81,12 +81,14 @@ class TestScriptoriumWidgets < Minitest::Test
   def setup
     @test_dir = "test/widget_test_files"
     make_dir(@test_dir)
-    @repo = Scriptorium::Repo.create("test/scriptorium-TEST", testmode: true)
+    @repo = Scriptorium::Repo.create("test/scriptorium-TEST-widgets", testmode: true)
     @view = @repo.create_view("test_view", "Test View", "Test subtitle")
   end
 
   def teardown
     FileUtils.rm_rf(@test_dir) if Dir.exist?(@test_dir)
+    # Clean up the test repository directory
+    FileUtils.rm_rf("test/scriptorium-TEST") if Dir.exist?("test/scriptorium-TEST")
     Scriptorium::Repo.destroy if Scriptorium::Repo.testing
   end
 
@@ -584,5 +586,84 @@ class TestScriptoriumWidgets < Minitest::Test
     assert_includes card_content, 'onclick="load_main(\'posts/001.html\')"'
     assert_includes card_content, 'My Important Post'
     assert_includes card_content, 'Error: Post 999 not found'
+  end
+
+  # Pages widget with back links tests
+  def test_034_pages_widget_with_back_links
+    # Create test list.txt file
+    list_file = "#{@view.dir}/widgets/pages/list.txt"
+    make_dir(File.dirname(list_file))
+    write_file!(list_file, "about", "contact")
+    
+    # Create test HTML files with back links
+    pages_dir = "#{@view.dir}/pages"
+    make_dir(pages_dir)
+    write_file("#{pages_dir}/about.html", "<html><title>About Us</title><body><h1>About Us</h1><p><a href=\"index.html\">← Back to Home</a></p></body></html>")
+    write_file("#{pages_dir}/contact.html", "<html><title>Contact</title><body><h1>Contact</h1><p><a href=\"index.html\">← Back to Home</a></p></body></html>")
+    
+    widget = Scriptorium::Widget::Pages.new(@repo, @view)
+    result = widget.generate
+    
+    assert result
+    
+    # Check that card file was created
+    card_file = "#{@view.dir}/widgets/pages/pages-card.html"
+    assert File.exist?(card_file)
+    
+    # Check that card contains links to pages
+    card_content = read_file(card_file)
+    assert_includes card_content, 'onclick="load_main(\'pages/about.html\')"'
+    assert_includes card_content, 'onclick="load_main(\'pages/contact.html\')"'
+    assert_includes card_content, 'About Us'
+    assert_includes card_content, 'Contact'
+  end
+
+  def test_035_pages_widget_back_links_functionality
+    # Create test list.txt file
+    list_file = "#{@view.dir}/widgets/pages/list.txt"
+    make_dir(File.dirname(list_file))
+    write_file!(list_file, "about")
+    
+    # Create test HTML file with back link
+    pages_dir = "#{@view.dir}/pages"
+    make_dir(pages_dir)
+    about_content = "<html><title>About Us</title><body><h1>About Us</h1><p><a href=\"index.html\">← Back to Home</a></p></body></html>"
+    write_file("#{pages_dir}/about.html", about_content)
+    
+    widget = Scriptorium::Widget::Pages.new(@repo, @view)
+    
+    # Check that the page content includes the back link
+    page_content = read_file("#{pages_dir}/about.html")
+    assert_includes page_content, '<a href="index.html">← Back to Home</a>'
+    
+    # Check that the back link points to index.html
+    assert_includes page_content, 'href="index.html"'
+    assert_includes page_content, '← Back to Home'
+  end
+
+  def test_036_pages_widget_handles_pages_without_back_links
+    # Create test list.txt file
+    list_file = "#{@view.dir}/widgets/pages/list.txt"
+    make_dir(File.dirname(list_file))
+    write_file!(list_file, "simple")
+    
+    # Create test HTML file without back link
+    pages_dir = "#{@view.dir}/pages"
+    make_dir(pages_dir)
+    write_file("#{pages_dir}/simple.html", "<html><title>Simple</title><body><h1>Simple Page</h1></body></html>")
+    
+    widget = Scriptorium::Widget::Pages.new(@repo, @view)
+    result = widget.generate
+    
+    assert result
+    
+    # Check that card file was created
+    card_file = "#{@view.dir}/widgets/pages/pages-card.html"
+    assert File.exist?(card_file)
+    
+    # Check that card contains link to simple page
+    card_content = read_file(card_file)
+    assert_includes card_content, 'onclick="load_main(\'pages/simple.html\')"'
+    assert_includes card_content, 'Simple'
   end
 end 
