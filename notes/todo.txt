@@ -32,7 +32,8 @@ x $$asset function
 x standalone posts link back to blog
 x symlinks for posts
 x preliminary reddit support
-   copy link
+  icon/logo collection
+  copy link
   Exception names (DBC?)
   fix history
   main config, fonts etc.

@@ -640,7 +640,7 @@ class TestReadWrite < Minitest::Test
   def test_063_get_asset_path
     name = "back-icon.png"
     result = get_asset_path(name)
-    assert result == "dev_assets/#{name}", "Expected #{name} to be in dev_assets (got #{result})"
+    assert result == "assets/#{name}", "Expected #{name} to be in assets (got #{result})"
     assert_raises(AssetNotFound) { get_asset_path("nonexistent.png") }
   end
 

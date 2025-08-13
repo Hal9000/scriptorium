@@ -1,0 +1,8 @@
+post.id 0001
+post.created 2025-08-07-22-11-30
+post.published no
+post.deployed no
+post.title Test Post
+post.blurb ADD BLURB HERE
+post.views sample
+post.tags  

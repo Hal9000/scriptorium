@@ -1,0 +1,5 @@
+user      root
+server    example.com
+docroot   /var/www/html
+path      sample
+proto     https

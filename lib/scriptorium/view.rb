@@ -1,4 +1,5 @@
 require 'fileutils'
+require_relative 'syntax_highlighter'
 
 class Scriptorium::View
   include Scriptorium::Exceptions
@@ -666,11 +667,15 @@ write output:      write the result to output/panes/header.html
         content << generate_bootstrap_css(view)
       when "social"
         content << generate_social_meta_tags(args)
+      when "syntax"
+        content << generate_syntax_css
       end
     end
     content << "</head>\n"
     content
   end
+
+
 
   def get_common_js(view = nil)
     global_js = @root/:config/"common.js"
@@ -703,6 +708,8 @@ write output:      write the result to output/panes/header.html
     content = %[<link rel="stylesheet" href="#{href}"></link>\n]
     content
   end
+
+
 
   def generate_bootstrap_js(view = nil)
     global_boot = @root/:config/"bootstrap_js.txt"
@@ -920,12 +927,12 @@ write output:      write the result to output/panes/header.html
     HTML
 
     # Beautify HTML if HtmlBeautifier is available
-    begin
-      full_html = ::HtmlBeautifier.beautify(full_html)
-    rescue NameError, LoadError => e
-      # HtmlBeautifier not available, continue without beautification
-      # This is not critical for functionality
-    end
+    # begin
+    #   full_html = ::HtmlBeautifier.beautify(full_html)
+    # rescue NameError, LoadError => e
+    #   # HtmlBeautifier not available, continue without beautification
+    #   # This is not critical for functionality
+    # end
 
     # Write the main index file
     begin
@@ -942,96 +949,17 @@ write output:      write the result to output/panes/header.html
     end
   end
 
-  def generate_post_html(post_data)
-    # Generate HTML head with post-specific social meta tags
-    html_head = generate_html_head_with_post_data(post_data)
-    common = get_common_js
-    boot = generate_bootstrap_js
-    
-    # Create a simple post layout
-    post_content = post_data[:"post.body"] || ""
-    post_title = post_data[:"post.title"] || @title
-    post_date = post_data[:"post.pubdate"] || ""
-    post_tags = post_data[:"post.tags"] || ""
-    
-    full_html = <<~HTML
-      <!DOCTYPE html>
-      #{html_head}
-      <html>
-        <body style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
-          <div style="margin-bottom: 20px;">
-            <a href="../index.html" style="text-decoration: none; color: #666;">← Back to Blog</a>
-          </div>
-          
-          <article>
-            <header>
-              <h1>#{escape_html(post_title)}</h1>
-              <div style="color: #666; margin-bottom: 20px;">
-                <time>#{post_date}</time>
-                #{post_tags ? "<span style='margin-left: 10px;'>#{escape_html(post_tags)}</span>" : ""}
-              </div>
-            </header>
-            
-            <div style="line-height: 1.6;">
-              #{post_content}
-            </div>
-          </article>
-          
-          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
-            <a href="../index.html">← Back to Blog</a>
-          </div>
-          
-          #{boot.strip}
-          #{common.strip}
-        </body>
-      </html>
-    HTML
 
-    # Beautify HTML if HtmlBeautifier is available
-    begin
-      full_html = ::HtmlBeautifier.beautify(full_html)
-    rescue NameError, LoadError => e
-      # HtmlBeautifier not available, continue without beautification
-    end
 
-    full_html
+
+  def generate_syntax_css
+    highlighter = Scriptorium::SyntaxHighlighter.new
+    "<style>\n#{highlighter.generate_css}\n</style>\n"
   end
 
-  def generate_html_head_with_post_data(post_data)
-    # Generate HTML head with post-specific social meta tags
-    global_head = @root/:config/"global-head.txt"
-    view_head = @dir/:config/"global-head.txt"
-    head_file = view_head
-    which = "view"
-    line1 = "<!-- head info from #{which} -->"
-    lines = read_commented_file(head_file)
-    content = "<head>\n#{line1}\n<title>#{escape_html(post_data[:"post.title"] || @title)}</title>\n"
-    
-    lines.each do |line|
-      component, args = line.split(/\s+/, 2)
-      case component.downcase
-      when "charset"
-        @charset = args
-        content << %[<meta charset="#{args}">\n]
-      when "desc"
-        @desc = args
-        content << %[<meta name="description" content="#{args}">\n]
-      when "viewport"
-        @viewport = args
-        str = args.split.join(" ")
-        content << %[<meta name="viewport" content="#{str}">\n]
-      when "robots"
-        @robots = args
-        str = args.split.join(", ")  
-        content << %[<meta name="robots" content="#{str}">\n]
-      when "bootstrap"
-        content << generate_bootstrap_css(true)
-      when "social"
-        content << generate_social_meta_tags(args, post_data)
-      end
-    end
-    content << "</head>\n"
-    content
+  def highlight_code(code, language = nil)
+    highlighter = Scriptorium::SyntaxHighlighter.new
+    highlighter.highlight(code, language)
   end
 
 end

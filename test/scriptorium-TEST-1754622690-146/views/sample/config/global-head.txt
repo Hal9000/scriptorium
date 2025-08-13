@@ -1,0 +1,9 @@
+# This view-specific file supplies the default values for this view.
+# title is omitted - filled in at generation 
+charset    UTF-8
+desc       A blog powered by Scriptorium. This is default text intended to be changed by the user.
+viewport   width=device-width  initial-scale=1.0
+robots     index  follow
+javascript # See common.js 
+bootstrap  # See bootstrap.txt
+social     # See social.txt for configuration

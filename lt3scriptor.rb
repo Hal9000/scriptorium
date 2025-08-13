@@ -343,6 +343,36 @@ def _passthru_noline(line)
   api.out "<p>" if line.empty? && ! api.nopara
 end
 
+def code(args, data, body)
+  language = args.first
+  code_content = body.join("\n")
+  
+  # Use Rouge syntax highlighting if language is supported
+  if language && !language.empty?
+    begin
+      puts "DEBUG: About to create SyntaxHighlighter"
+      highlighter = Scriptorium::SyntaxHighlighter.new
+      puts "DEBUG: About to highlight #{language} code: #{code_content.length} chars"
+      highlighted_code = highlighter.highlight(code_content, language)
+      puts "DEBUG: Highlighting result: #{highlighted_code.length} chars"
+      puts "DEBUG: About to call api.out with HTML length: #{highlighted_code.length}"
+      puts "DEBUG: First 200 chars of HTML: #{highlighted_code[0..200]}"
+      puts "DEBUG: HTML contains <span>: #{highlighted_code.include?('<span')}"
+      puts "DEBUG: HTML contains \\n: #{highlighted_code.include?("\n")}"
+      api.out %q[<pre><code class="language-#{language}">#{highlighted_code}</code></pre>]
+      puts "DEBUG: After api.out call"
+    rescue => e
+      # Fallback to unhighlighted code if highlighting fails
+      api.out %[<pre><code class="language-#{language}">#{code_content}</code></pre>]
+    end
+  else
+    # No language specified, output as plain text
+    api.out %[<pre><code>#{code_content}</code></pre>]
+  end
+  
+  api.optional_blank_line
+end
+
 ##  def backlink
 ##    log!(enter: __method__)
 ##    api.out %[<br><a href="javascript:history.go(-1)">[Back]</a>]
@@ -902,3 +932,29 @@ end
 ##    %[href='#{url}' target='blank']
 ##  end
 ##  
+
+def syntax_css
+  log!(enter: __method__)
+  begin
+    highlighter = Scriptorium::SyntaxHighlighter.new
+    css = highlighter.generate_css
+    api.out %[<style>\n#{css}\n</style>]
+  rescue => e
+    # Fallback to basic CSS if highlighting fails
+    basic_css = <<~CSS
+      <style>
+      /* Basic syntax highlighting styles */
+      pre code {
+        font-family: 'Consolas', 'Monaco', 'Andale Mono', monospace;
+        font-size: 14px;
+        line-height: 1.4;
+        background: #f5f2f0;
+        padding: 1em;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+      </style>
+    CSS
+    api.out basic_css
+  end
+end

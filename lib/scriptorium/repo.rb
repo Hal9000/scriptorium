@@ -356,10 +356,8 @@ class Scriptorium::Repo
     #   view/.../output/permalink/0123-this-is-me.html (for direct access)
     permalink_path = view.dir/:output/:permalink/slug
     make_dir(File.dirname(permalink_path))
-    # Generate complete HTML document with social meta tags for permalink
-    post_html = view.generate_post_html(data)
-    # Add "Visit Blog" link only to permalink version
-    permalink_content = post_html + "\n<div style=\"text-align: center; margin-top: 20px;\">\n<a href=\"../index.html\">Visit Blog</a>\n</div>"
+    # Write the permalink version with "Visit Blog" link
+    permalink_content = final + "\n<div style=\"text-align: center; margin-top: 20px;\">\n<a href=\"../index.html\">Visit Blog</a>\n</div>"
     write_file(permalink_path, permalink_content)
     
     # Create symlink for clean URL (without numeric prefix)

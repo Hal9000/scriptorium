@@ -1,6 +1,8 @@
 # Set up environment for manual tests
 ENV['PATH'] = "#{ENV['HOME']}/.rbenv/shims:#{ENV['PATH']}"
 
+# rbenv should be enabled in the shell before running manual tests
+
 require_relative '../../lib/scriptorium'
 require_relative '../test_helpers'
 

@@ -1,3 +1,0 @@
-title    Sample View
-subtitle A sample view for testing
-theme    standard

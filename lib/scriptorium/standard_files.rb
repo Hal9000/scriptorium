@@ -43,6 +43,8 @@ class Scriptorium::StandardFiles
            // The "No posts yet!" message is already in the main container
            history.replaceState({ slug: "index.html" }, "", "index.html");
         }
+        
+
     };
 
     // Load the main content and other page containers (header, footer, left, right)
@@ -78,6 +80,8 @@ class Scriptorium::StandardFiles
             
             // You can also replace the other parts (left, right, header, footer) if needed.
             history.pushState({slug: slug}, "", slug);  // Update browser history
+            
+
         })
         .catch(error => {
             console.log("Error loading content:", error); // Log any errors during fetch

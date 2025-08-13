@@ -1,0 +1,9 @@
+<svg width="200" height="150" xmlns="http://www.w3.org/2000/svg">
+  <rect fill="#f8f9fa" stroke="#ddd" stroke-width="1" width="200" height="150" rx="4"/>
+  <text x="100" y="75" text-anchor="middle" fill="#666" font-family="Arial, sans-serif" font-size="14">
+    Placeholder Image
+  </text>
+  <text x="100" y="95" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="12">
+    200x150
+  </text>
+</svg>

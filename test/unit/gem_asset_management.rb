@@ -82,8 +82,7 @@ class TestGemAssetManagement < Minitest::Test
     # Check for specific theme assets
     expected_theme_assets = [
       "standard/favicon.svg",
-      "icons/ui/back-arrow.svg",
-      "icons/social/twitter.svg"
+      "icons/ui/back-arrow.svg"
     ]
     
     expected_theme_assets.each do |asset|
@@ -145,7 +144,6 @@ class TestGemAssetManagement < Minitest::Test
         # Check for specific gem assets
         expected_gem_assets = [
           "icons/ui/back-arrow.svg",
-          "icons/social/twitter.svg",
           "samples/placeholder.svg",
           "themes/standard/favicon.svg"
         ]

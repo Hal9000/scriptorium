@@ -1,10 +1,5 @@
-FastImage loaded successfully from app/app.rb
-Puma starting in single mode...
-* Puma vsh: line 1: 68053 Killed: 9               ruby app/app.rb
-.2.3 (2024-01-18 revision 52bb2ac0a6) [x86_64-darwin22]
-*  Min threads: 0
-*  Max threads: 5
-*  Environment: development
-*          PID: 68053
-* Listening on http://0.0.0.0:4567
-Use Ctrl-C to stop
+Ignoring http_parser.rb-0.6.0 because its extensions are not built. Try: gem pristine http_parser.rb --version 0.6.0
+Ignoring unf_ext-0.0.8.2 because its extensions are not built. Try: gem pristine unf_ext --version 0.0.8.2
+/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/rubygems/core_ext/kernel_require.rb:54:in `require': cannot load such file -- sinatra (LoadError)
+	from /System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/rubygems/core_ext/kernel_require.rb:54:in `require'
+	from app/app.rb:3:in `<main>'
