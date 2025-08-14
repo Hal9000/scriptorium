@@ -134,34 +134,32 @@ class TestGemAssetManagement < Minitest::Test
 
   def test_007_gem_asset_path_resolution
     # Test that gem asset paths are resolved correctly
-    begin
-      gem_spec = Gem.loaded_specs['scriptorium']
-      if gem_spec
-        # Production environment - gem is installed
-        gem_assets_dir = "#{gem_spec.full_gem_path}/assets"
-        assert Dir.exist?(gem_assets_dir), "Gem assets directory should exist"
-        
-        # Check for specific gem assets
-        expected_gem_assets = [
-          "icons/ui/back.png",
-          "samples/placeholder.svg",
-          "themes/standard/favicon.svg"
-        ]
-        
-        expected_gem_assets.each do |asset|
-          asset_path = "#{gem_assets_dir}/#{asset}"
-          assert File.exist?(asset_path), "Gem asset #{asset} should exist"
-        end
-      else
-        # Development environment - use working path
-        dev_assets_dir = File.expand_path("assets")
-        assert Dir.exist?(dev_assets_dir), "Development assets directory should exist"
+    gem_spec = Gem.loaded_specs['scriptorium']
+    if gem_spec
+      # Production environment - gem is installed
+      gem_assets_dir = "#{gem_spec.full_gem_path}/assets"
+      assert Dir.exist?(gem_assets_dir), "Gem assets directory should exist"
+      
+      # Check for specific gem assets
+      expected_gem_assets = [
+        "icons/ui/back.png",
+        "samples/placeholder.svg",
+        "themes/standard/favicon.svg"
+      ]
+      
+      expected_gem_assets.each do |asset|
+        asset_path = "#{gem_assets_dir}/#{asset}"
+        assert File.exist?(asset_path), "Gem asset #{asset} should exist"
       end
-    rescue => e
-      # If gem lookup fails, that's expected in development
-              dev_assets_dir = File.expand_path("assets")
+    else
+      # Development environment - use working path
+      dev_assets_dir = File.expand_path("assets")
       assert Dir.exist?(dev_assets_dir), "Development assets directory should exist"
     end
+  rescue => e
+    # If gem lookup fails, that's expected in development
+    dev_assets_dir = File.expand_path("assets")
+    assert Dir.exist?(dev_assets_dir), "Development assets directory should exist"
   end
 
   def test_008_gem_assets_not_copied_to_output

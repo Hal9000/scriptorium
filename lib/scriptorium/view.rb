@@ -263,11 +263,7 @@ write output:      write the result to output/panes/header.html
     target = content_tag(section)
     temp_txt.sub!(target, core)
     
-    begin
-      write_file(output, temp_txt)
-    rescue Errno::EACCES, Errno::ENOSPC => e
-      raise SectionOutputError(output, section, e.message)
-    end
+    write_file(output, temp_txt)
     
     html = read_file(output)
     html
@@ -920,11 +916,7 @@ write output:      write the result to output/panes/header.html
     end
 
     # Write the main index file
-    begin
-      write_file(index_file, full_html)
-    rescue Errno::ENOSPC, Errno::EACCES => e
-      raise FailedToWriteFrontPage(e.message)   # FIXME
-    end
+    write_file(index_file, full_html)
 
     # Write debug file (optional, don't fail if it doesn't work)
     begin

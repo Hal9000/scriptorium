@@ -398,42 +398,40 @@ module Scriptorium::Helpers
 
   def list_gem_assets
     assets = []
-    begin
-      gem_spec = Gem.loaded_specs['scriptorium']
-      if gem_spec
-        gem_assets_dir = "#{gem_spec.full_gem_path}/assets"
-        if Dir.exist?(gem_assets_dir)
-          Dir.glob("#{gem_assets_dir}/**/*").each do |file|
-            next unless File.file?(file)
-            relative_path = file.sub("#{gem_assets_dir}/", "")
-            assets << relative_path
-          end
+    gem_spec = Gem.loaded_specs['scriptorium']
+    if gem_spec
+      gem_assets_dir = "#{gem_spec.full_gem_path}/assets"
+      if Dir.exist?(gem_assets_dir)
+        Dir.glob("#{gem_assets_dir}/**/*").each do |file|
+          next unless File.file?(file)
+          relative_path = file.sub("#{gem_assets_dir}/", "")
+          assets << relative_path
         end
       end
-    rescue => e
-      # If gem lookup fails, return empty array
     end
     assets.sort
+  rescue => e
+    # If gem lookup fails, return empty array
+    []
   end
 
   def copy_gem_asset_to_user(asset_name, target_dir = "assets")
-    begin
-      gem_spec = Gem.loaded_specs['scriptorium']
-      if gem_spec
-        gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{asset_name}"
-        if File.exist?(gem_asset_path)
-          # Create target directory if it doesn't exist
-          FileUtils.mkdir_p(target_dir) unless Dir.exist?(target_dir)
-          
-          # Copy the asset
-          target_path = "#{target_dir}/#{File.basename(asset_name)}"
-          FileUtils.cp(gem_asset_path, target_path)
-          return target_path
-        end
+    gem_spec = Gem.loaded_specs['scriptorium']
+    if gem_spec
+      gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{asset_name}"
+      if File.exist?(gem_asset_path)
+        # Create target directory if it doesn't exist
+        FileUtils.mkdir_p(target_dir) unless Dir.exist?(target_dir)
+        
+        # Copy the asset
+        target_path = "#{target_dir}/#{File.basename(asset_name)}"
+        FileUtils.cp(gem_asset_path, target_path)
+        return target_path
       end
-    rescue => e
-      # If gem lookup fails, return nil
     end
+    nil
+  rescue => e
+    # If gem lookup fails, return nil
     nil
   end
 

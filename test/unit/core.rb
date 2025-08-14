@@ -113,13 +113,11 @@ class TestReadWrite < Minitest::Test
 
   def test_011_system_with_description
     # Test that description is included in error message
-    begin
-      system!("false", "testing failure")
-      flunk "Expected system! to raise an error"
-    rescue CommandFailedWithDesc => e
-      assert_match /testing failure/, e.message
-      assert_match /Command failed/, e.message
-    end
+    system!("false", "testing failure")
+    flunk "Expected system! to raise an error"
+  rescue CommandFailedWithDesc => e
+    assert_match /testing failure/, e.message
+    assert_match /Command failed/, e.message
   end
 
   def test_012_system_nil_command_raises_error

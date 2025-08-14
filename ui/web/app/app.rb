@@ -1350,13 +1350,11 @@ class ScriptoriumWeb < Sinatra::Base
     # Check if FastImage is available
     return nil unless defined?(FastImage)
     
-    begin
-      dimensions = FastImage.size(file_path)
-      return dimensions ? "#{dimensions[0]}×#{dimensions[1]}" : nil
-    rescue => e
-      # If FastImage fails, return nil
-      return nil
-    end
+    dimensions = FastImage.size(file_path)
+    return dimensions ? "#{dimensions[0]}×#{dimensions[1]}" : nil
+  rescue => e
+    # If FastImage fails, return nil
+    return nil
   end
 end
 

@@ -926,26 +926,24 @@ end
 
 def syntax_css
   log!(enter: __method__)
-  begin
-    highlighter = Scriptorium::SyntaxHighlighter.new
-    css = highlighter.generate_css
-    api.out %[<style>\n#{css}\n</style>]
-  rescue => e
-    # Fallback to basic CSS if highlighting fails
-    basic_css = <<~CSS
-      <style>
-      /* Basic syntax highlighting styles */
-      pre code {
-        font-family: 'Consolas', 'Monaco', 'Andale Mono', monospace;
-        font-size: 14px;
-        line-height: 1.4;
-        background: #f5f2f0;
-        padding: 1em;
-        border-radius: 4px;
-        overflow-x: auto;
-      }
-      </style>
-    CSS
-    api.out basic_css
-  end
+  highlighter = Scriptorium::SyntaxHighlighter.new
+  css = highlighter.generate_css
+  api.out %[<style>\n#{css}\n</style>]
+rescue => e
+  # Fallback to basic CSS if highlighting fails
+  basic_css = <<~CSS
+    <style>
+    /* Basic syntax highlighting styles */
+    pre code {
+      font-family: 'Consolas', 'Monaco', 'Andale Mono', monospace;
+      font-size: 14px;
+      line-height: 1.4;
+      background: #f5f2f0;
+      padding: 1em;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    </style>
+  CSS
+  api.out basic_css
 end

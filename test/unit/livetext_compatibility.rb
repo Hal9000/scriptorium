@@ -42,12 +42,10 @@ class TestLivetextCompatibility < Minitest::Test
 
   def test_003_livetext_plugin_loading
     # Test if the plugin can be loaded without processing
-    begin
-      live = Livetext.customize(mix: "lt3scriptor")
-      assert live
-    rescue => e
-      flunk "Plugin loading failed: #{e.message}"
-    end
+    live = Livetext.customize(mix: "lt3scriptor")
+    assert live
+  rescue => e
+    flunk "Plugin loading failed: #{e.message}"
   end
 
   def test_004_livetext_plugin_processing
