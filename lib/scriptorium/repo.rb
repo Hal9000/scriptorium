@@ -250,8 +250,8 @@ class Scriptorium::Repo
     id = incr_post_num
     
     # Create content file (no ID, no created date)
-    content = @predef.initial_post_content(title: title, blurb: blurb, 
-                                          views: views, tags: tags, body: body)
+    content = @predef.initial_post(:filled, title: title, blurb: blurb, 
+                                   views: views, tags: tags, body: body)
     write_file(content_name, content)
     
     # Create metadata file (with ID and created date)

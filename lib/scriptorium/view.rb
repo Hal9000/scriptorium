@@ -354,12 +354,12 @@ write output:      write the result to output/panes/header.html
   def build_banner_svg(arg)
     bsvg = Scriptorium::BannerSVG.new(@title, @subtitle)
     
-    # Look for config file in the view's config directory
-    config_file = @dir/:config/"config.txt"
-    if File.exist?(config_file)
-      bsvg.parse_header_svg(config_file)
+    # Look for svg.txt file in the view's config directory
+    svg_config_file = @dir/:config/"svg.txt"
+    if File.exist?(svg_config_file)
+      bsvg.parse_header_svg(svg_config_file)
     else
-      # No config file, just use defaults
+      # No svg.txt file, just use defaults
       bsvg.parse_header_svg
     end
     

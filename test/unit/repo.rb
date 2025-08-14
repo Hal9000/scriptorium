@@ -155,7 +155,7 @@ class TestScriptoriumRepo < Minitest::Test
     root = repo.root
     file = "#{root}/themes/standard/initial/post.lt3"
     assert_file_exist?(file)
-    assert_file_lines(file, 12)
+    assert_file_lines(file, 10)
   end
 
   def test_012_check_interpolated_initial_post
@@ -163,10 +163,9 @@ class TestScriptoriumRepo < Minitest::Test
     predef = repo.instance_eval { @predef }
     str = predef.initial_post
     lines = str.split("\n")
-    assert lines[2] == ".id 0000", "Expected '.id 0000' with unspecified num"
-    str2 = predef.initial_post(num: 237)
+    str2 = predef.initial_post(title: "My post title")
     lines = str2.split("\n")
-    assert lines[2] == ".id 0237", "Expected 'num' to be filled in (found '#{lines[2]}')"
+    assert lines[3] == ".title My post title", "Expected 'title' to be filled in (found '#{lines[3]}')"
   end
 
   def test_013_find_theme_file

@@ -253,8 +253,6 @@ class Scriptorium::StandardFiles
     str = 
     <<~EOS
       . Initial file created by StandardFiles#post_template(num)
-      
-      .id %{num}
       .created %{created}
       
       .title %{title}
@@ -272,26 +270,6 @@ class Scriptorium::StandardFiles
     str2 = str % {num: d4(num.to_i), created: ymdhms, title: title, blurb: blurb,
                   views: views.join(" "), tags: mytags}
     return str2
-  end
-
-  def initial_post_content(title: nil, blurb: nil, views: nil, tags: nil, body: nil)
-    title ||= "ADD TITLE HERE"
-    blurb ||= "ADD BLURB HERE"
-    views ||= %w[sample]
-    tags  ||= %w[sample tags]
-    body  ||= "BEGIN HERE..."
-
-    mytags = tags
-    mytags = tags.join(", ") if tags.is_a?(Array)
-
-    <<~EOS
-      .title #{title}
-      .blurb #{blurb}
-      .views #{views.join(" ")}
-      .tags  #{mytags}
-      
-      #{body}
-    EOS
   end
 
   def initial_post_metadata(num: "0", title: nil, blurb: nil, views: nil, tags: nil)
