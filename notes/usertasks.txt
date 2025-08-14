@@ -20,6 +20,10 @@ Switch theme
 Clone theme
 Edit theme
 
+Upload to global, view, post
+Copy into view, post
+Delete asset
+
 Edit container: header left main right footer
 Generate view (force)
 

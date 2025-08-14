@@ -423,5 +423,53 @@ module Scriptorium::Helpers
     end
     nil
   end
+
+  # Clipboard helper methods
+  def copy_to_clipboard(text)
+    begin
+      require 'clipboard'
+      Clipboard.copy(text)
+      true
+    rescue LoadError => e
+      # Fallback to system commands if clipboard gem not available
+      case RbConfig::CONFIG['host_os']
+      when /darwin/     # macOS
+        system("echo '#{text}' | pbcopy")
+      when /linux/      # Linux
+        system("echo '#{text}' | xclip -selection clipboard")
+      when /mswin|mingw|cygwin/  # Windows
+        system("echo '#{text}' | clip")
+      else
+        puts "Clipboard not supported on this OS"
+        false
+      end
+    rescue => e
+      puts "Failed to copy to clipboard: #{e.message}"
+      false
+    end
+  end
+
+  def get_from_clipboard
+    begin
+      require 'clipboard'
+      Clipboard.paste
+    rescue LoadError => e
+      # Fallback to system commands if clipboard gem not available
+      case RbConfig::CONFIG['host_os']
+      when /darwin/     # macOS
+        `pbpaste`
+      when /linux/      # Linux
+        `xclip -selection clipboard -o`
+      when /mswin|mingw|cygwin/  # Windows
+        `powershell -command "Get-Clipboard"`
+      else
+        puts "Clipboard not supported on this OS"
+        nil
+      end
+    rescue => e
+      puts "Failed to read from clipboard: #{e.message}"
+      nil
+    end
+  end
 end
 

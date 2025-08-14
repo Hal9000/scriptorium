@@ -1,0 +1,10 @@
+cp icons.png left.png 
+cp icons.png right.png 
+cp icons.png up.png 
+cp icons.png down.png 
+cp icons.png home.png 
+cp icons.png back.png 
+cp icons.png next.png 
+cp icons.png start.png 
+cp icons.png end.png 
+cp icons.png copy.png

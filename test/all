@@ -23,6 +23,7 @@ test_files = %w[
   unit/asset_management.rb
   unit/gem_asset_management.rb
   unit/reddit_test.rb
+  unit/clipboard_test.rb
   banner_svg/simple_helpers.rb
   banner_svg/unit.rb
   integration/integration_test.rb

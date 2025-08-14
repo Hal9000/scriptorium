@@ -356,8 +356,8 @@ class Scriptorium::Repo
     #   view/.../output/permalink/0123-this-is-me.html (for direct access)
     permalink_path = view.dir/:output/:permalink/slug
     make_dir(File.dirname(permalink_path))
-    # Write the permalink version with "Visit Blog" link
-    permalink_content = final + "\n<div style=\"text-align: center; margin-top: 20px;\">\n<a href=\"../index.html\">Visit Blog</a>\n</div>"
+    # Write the permalink version with "Visit Blog" link and "Copy link" button
+    permalink_content = final + "\n<div style=\"text-align: center; margin-top: 20px;\">\n<a href=\"../index.html\">Visit Blog</a>\n</div>\n<div style=\"text-align: center; margin-top: 10px;\">\n<button onclick=\"copyPermalinkToClipboard()\" style=\"padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;\">Copy link</button>\n</div>\n<script>\nfunction copyPermalinkToClipboard() {\n  navigator.clipboard.writeText(window.location.href).then(function() {\n    // Change button text temporarily to show success\n    const button = event.target;\n    const originalText = button.textContent;\n    button.textContent = 'Copied!';\n    button.style.background = '#28a745';\n    setTimeout(function() {\n      button.textContent = originalText;\n      button.style.background = '#007bff';\n    }, 2000);\n  }).catch(function(err) {\n    console.error('Failed to copy: ', err);\n    alert('Failed to copy link to clipboard');\n  });\n}\n</script>"
     write_file(permalink_path, permalink_content)
     
     # Create symlink for clean URL (without numeric prefix)

@@ -1,48 +1,17 @@
 VERY SOON:
 ----------
-x Fix post index and pagination
-x Improve container generation
-x Widget: Links
-x Fix history feature
-x Explicit exceptions
-x Improve livetext support
-x Header: SVG
-x Better error handling (edge cases, garbage input)
-x More tests (what's missing?)
-x Widget tests
-x Well-defined API (Scriptorium::API) - with versioning
-x Widget: Pages
-x UI by interaction (TUI)
-x Widget: Featured posts
-x Header: banner
-x Header: menu
-x Single-page post for viewing in isolation
-x Permalinks
-x Deployment
-x Preview feature
-x Live view (browse) feature
-x Widget configuration (selection)
-x facebook metadata
-x x/twitter metadata
-x LinkedIn metadata
-x svg.txt handling
-x post ID bug
-x asset upload
-x $$asset function
-x standalone posts link back to blog
-x symlinks for posts
-x preliminary reddit support
-x Syntax coloring
-x fix history
   icon/logo collection
-  copy link
   Exception names (DBC?)
   main config, fonts etc.
   widget management
   full reddit support
+  configurator? more wizards?
+  API - upload, deploy, ...
   post footer?
   livetext scriptorium additions
   legacy import
+  add to TUI: assets, etc.
+  add to web app
 - Gem asset handling
 - Repo asset management
   Sample blog additions
@@ -82,3 +51,41 @@ EVEN LATER:
   UI by web
   AI assistant
  
+
+COMPLETED:
+----------
+x Fix post index and pagination
+x Improve container generation
+x Widget: Links
+x Fix history feature
+x Explicit exceptions
+x Improve livetext support
+x Header: SVG
+x Better error handling (edge cases, garbage input)
+x More tests (what's missing?)
+x Widget tests
+x Well-defined API (Scriptorium::API) - with versioning
+x Widget: Pages
+x UI by interaction (TUI)
+x Widget: Featured posts
+x Header: banner
+x Header: menu
+x Single-page post for viewing in isolation
+x Permalinks
+x Deployment
+x Preview feature
+x Live view (browse) feature
+x Widget configuration (selection)
+x facebook metadata
+x x/twitter metadata
+x LinkedIn metadata
+x svg.txt handling
+x post ID bug
+x asset upload
+x $$asset function
+x standalone posts link back to blog
+x symlinks for posts
+x preliminary reddit support
+x Syntax coloring
+x fix history
+x copy link

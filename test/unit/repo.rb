@@ -188,7 +188,7 @@ class TestScriptoriumRepo < Minitest::Test
     root = repo.root
     file = "#{root}/themes/standard/templates/post.lt3" # FIXME hardcoded
     assert_file_exist?(file)
-    assert_file_lines(file, 13)  # Removed "Visit Blog" link from template
+    assert_file_lines(file, 16)  # Template now includes copy link button but no inline JavaScript
   end
 
   def test_015_change_view
@@ -259,7 +259,7 @@ class TestScriptoriumRepo < Minitest::Test
     File.open("/tmp/mock.html", "w") do |f|
       f.puts result
     end
-    assert_file_lines("/tmp/mock.html", 21)  # Removed "Visit Blog" link from template
+    assert_file_lines("/tmp/mock.html", 24)  # Template + expanded body content (newlines in body create extra lines)
   end
 
 
@@ -342,6 +342,9 @@ class TestScriptoriumRepo < Minitest::Test
     # Permalink post should contain the "Visit Blog" link
     assert_includes permalink_content, "Visit Blog"
     assert_includes permalink_content, 'href="../index.html"'
+    
+    # Permalink post should contain the "Copy link" button
+    assert_includes permalink_content, "Copy link"
   end
 
   # View-related tests
