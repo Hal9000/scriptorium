@@ -50,19 +50,19 @@ class Scriptorium::View
   end
 
   private def validate_name(name)
-    raise CannotCreateViewNameNil if name.nil?
+    raise ViewNameNil if name.nil?
     
-    raise CannotCreateViewNameEmpty if name.to_s.strip.empty?
+    raise ViewNameEmpty if name.to_s.strip.empty?
     
     unless name.match?(/^[a-zA-Z0-9_-]+$/)
-      raise CannotCreateViewNameInvalid(name)
+      raise ViewNameInvalid(name)
     end
   end
 
   private def validate_title(title)
-    raise CannotCreateViewTitleNil if title.nil?
+    raise ViewTitleNil if title.nil?
     
-    raise CannotCreateViewTitleEmpty if title.to_s.strip.empty?
+    raise ViewTitleEmpty if title.to_s.strip.empty?
   end
 
 =begin
@@ -543,16 +543,16 @@ write output:      write the result to output/panes/header.html
   end
 
   private def validate_widget_arg(arg)
-    raise CannotBuildWidgetsArgNil if arg.nil?
+    raise WidgetsArgNil if arg.nil?
     
-    raise CannotBuildWidgetsArgEmpty if arg.to_s.strip.empty?
+    raise WidgetsArgEmpty if arg.to_s.strip.empty?
   end
 
   private def validate_widget_name(name)
-    raise CannotBuildWidgetNameNil if name.nil? || name.strip.empty?
+    raise WidgetNameNil if name.nil? || name.strip.empty?
     
     unless name.match?(/^[a-zA-Z0-9_]+$/)
-      raise CannotBuildWidgetNameInvalid(name)
+      raise WidgetNameInvalid(name)
     end
   end
 

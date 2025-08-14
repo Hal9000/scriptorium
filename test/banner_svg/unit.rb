@@ -124,7 +124,7 @@ class BannerSVGTest < Minitest::Test
 
   def test_016_handle_xy_unknown_which
     # Should raise an error for invalid "which" value
-    assert_raises(CannotHandleXYInvalidWhich) do
+    assert_raises(XYInvalidWhich) do
       @banner.handle_xy("unknown", "30%", "40%")
     end
   end
@@ -372,7 +372,7 @@ class BannerSVGTest < Minitest::Test
 
   def test_043_handle_aspect_with_invalid_numeric_values
     # Should raise an error for invalid numeric value
-    assert_raises(CannotHandleAspectInvalidValue) do
+    assert_raises(AspectInvalidValue) do
       @banner.handle_aspect("invalid")
     end
   end
@@ -718,7 +718,7 @@ class BannerSVGTest < Minitest::Test
     assert_equal "end", @banner.instance_variable_get(:@subtitle_text_anchor)
     
     # Should raise an error for invalid direction
-    assert_raises(CannotHandleAlignInvalidDirection) do
+    assert_raises(AlignInvalidDirection) do
       @banner.handle_text_align("invalid")
     end
   end

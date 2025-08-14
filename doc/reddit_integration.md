@@ -142,8 +142,8 @@ Convenience method to check Reddit configuration.
 
 The integration includes comprehensive error handling:
 
-- **Missing credentials**: Raises `FileNotFound` exception
-- **Missing Python script**: Raises `FileNotFound` exception
+- **Missing credentials**: Raises `FileNotFoundError` exception
+- **Missing Python script**: Raises `FileNotFoundError` exception
 - **Invalid JSON**: Returns `nil` for config, logs error
 - **API failures**: Returns `false`, logs error details
 - **Temporary file cleanup**: Automatic cleanup in all cases

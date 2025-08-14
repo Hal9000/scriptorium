@@ -59,8 +59,8 @@ Successfully implemented comprehensive widget testing for the Scriptorium projec
 
 ### Error Handling
 - **File I/O:** Leverages existing `read_file` helper error handling
-- **Missing files:** Raises `CannotReadFileNotFound` exception
-- **Invalid widget names:** Raises `CannotBuildWidgetNameInvalid` exception
+- **Missing files:** Raises `ReadFileNotFound` exception
+- **Invalid widget names:** Raises `BuildWidgetNameInvalid` exception
 - **Widget class not found:** Raises `NameError` exception
 
 ### Test Architecture

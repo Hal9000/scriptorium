@@ -179,9 +179,9 @@ class TestScriptoriumWidgets < Minitest::Test
 
   def test_008_list_widget_load_data_missing_file
     # Should raise error when list.txt doesn't exist
-    assert_raises(CannotReadFileNotFound) do
-      TestListWidget2.new(@repo, @view)
-    end
+            assert_raises(ReadFileNotFound) do
+          TestListWidget2.new(@repo, @view)
+        end
   end
 
   def test_009_list_widget_load_data_empty_file
@@ -309,9 +309,9 @@ class TestScriptoriumWidgets < Minitest::Test
 
   def test_016_links_widget_missing_list_file
     # Should raise error when list.txt doesn't exist
-    assert_raises(CannotReadFileNotFound) do
-      Scriptorium::Widget::Links.new(@repo, @view)
-    end
+            assert_raises(ReadFileNotFound) do
+          Scriptorium::Widget::Links.new(@repo, @view)
+        end
   end
 
   # ========================================
@@ -361,7 +361,7 @@ class TestScriptoriumWidgets < Minitest::Test
   end
 
   def test_020_build_widgets_with_special_characters
-    assert_raises(CannotBuildWidgetNameInvalid) do
+    assert_raises(WidgetNameInvalid) do
       @view.build_widgets("invalid@widget")
     end
   end

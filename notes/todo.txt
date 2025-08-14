@@ -1,7 +1,5 @@
 VERY SOON:
 ----------
-- icon/logo collection
-  Exception names (DBC?)
   main config, fonts etc.
   widget management
   full reddit support
@@ -89,3 +87,5 @@ x fix history
 x copy link
 x Gem asset handling
 x Repo asset management
+x rudimentary icon/logo collection
+x Exception names (DBC?)

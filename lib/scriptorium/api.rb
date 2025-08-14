@@ -436,8 +436,8 @@ class Scriptorium::API
   
   def edit_file(path)
     # Input validation
-    raise CannotEditFilePathNil if path.nil?
-    raise CannotEditFilePathEmpty if path.to_s.strip.empty?
+    raise EditFilePathNil if path.nil?
+    raise EditFilePathEmpty if path.to_s.strip.empty?
     
     editor = ENV['EDITOR'] || 'vim'
     system!(editor, path)

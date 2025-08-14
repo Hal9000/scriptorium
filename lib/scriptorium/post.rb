@@ -22,10 +22,10 @@ class Scriptorium::Post
     end
 
     private def validate_initialization(repo, num)
-      raise CannotCreatePostRepoNil if repo.nil?
-      raise CannotCreatePostNumNil if num.nil?
-      raise CannotCreatePostNumEmpty if num.to_s.strip.empty?
-      raise CannotCreatePostNumInvalid(num) unless num.to_s.match?(/^\d+$/)
+      raise PostRepoNil if repo.nil?
+      raise PostNumNil if num.nil?
+      raise PostNumEmpty if num.to_s.strip.empty?
+      raise PostNumInvalid(num) unless num.to_s.match?(/^\d+$/)
     end
   
     def dir
@@ -80,9 +80,9 @@ class Scriptorium::Post
     end
 
     private def validate_date_format(date)
-      raise CannotSetPubdateYmdNil if date.nil?
-      raise CannotSetPubdateYmdEmpty if date.to_s.strip.empty?
-      raise CannotSetPubdateInvalidFormat(date) unless date.to_s.match?(/^\d{4}-\d{2}-\d{2}$/)
+      raise PubdateYmdNil if date.nil?
+      raise PubdateYmdEmpty if date.to_s.strip.empty?
+      raise PubdateInvalidFormat(date) unless date.to_s.match?(/^\d{4}-\d{2}-\d{2}$/)
     end
 
     private def update_pubdate_metadata(time)

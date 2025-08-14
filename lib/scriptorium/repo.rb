@@ -138,9 +138,9 @@ class Scriptorium::Repo
   end
 
   private def validate_view_target(target)
-    raise CannotLookupViewTargetNil if target.nil?
+    raise LookupViewTargetNil if target.nil?
     
-    raise CannotLookupViewTargetEmpty if target.to_s.strip.empty?
+    raise LookupViewTargetEmpty if target.to_s.strip.empty?
   end
 
   def view(change = nil)   # get/set current view
@@ -167,7 +167,7 @@ class Scriptorium::Repo
     
     # Validate name format (only allow alphanumeric, hyphen, underscore)
     unless name.match?(/^[a-zA-Z0-9_-]+$/)
-      raise CannotCreateViewNameInvalid(name)
+      raise ViewNameInvalid(name)
     end
     
     raise ViewDirAlreadyExists(name) if view_exist?(name)
@@ -545,12 +545,12 @@ class Scriptorium::Repo
   end
 
   private def validate_post_id(id)
-    raise CannotGetPostIdNil if id.nil?
+    raise GetPostIdNil if id.nil?
     
-    raise CannotGetPostIdEmpty if id.to_s.strip.empty?
+    raise GetPostIdEmpty if id.to_s.strip.empty?
     
     unless id.to_s.match?(/^\d+$/)
-      raise CannotGetPostIdInvalid(id)
+      raise GetPostIdInvalid(id)
     end
   end
   
@@ -573,15 +573,15 @@ class Scriptorium::Repo
   end
 
   private def validate_view_name(name)
-    raise CannotCreateViewNameNil if name.nil?
+    raise ViewNameNil if name.nil?
     
-    raise CannotCreateViewNameEmpty if name.to_s.strip.empty?
+    raise ViewNameEmpty if name.to_s.strip.empty?
   end
 
   private def validate_view_title(title)
-    raise CannotCreateViewTitleNil if title.nil?
+    raise ViewTitleNil if title.nil?
     
-    raise CannotCreateViewTitleEmpty if title.to_s.strip.empty?
+    raise ViewTitleEmpty if title.to_s.strip.empty?
   end
 
   def self.generate_os_helpers(root)

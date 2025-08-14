@@ -723,19 +723,19 @@ class TestScriptoriumAPI < Minitest::Test
 
   # edit_file tests
   def test_048_edit_file_validation_nil_path
-    assert_raises(CannotEditFilePathNil) do
+    assert_raises(EditFilePathNil) do
       @api.edit_file(nil)
     end
   end
 
   def test_049_edit_file_validation_empty_path
-    assert_raises(CannotEditFilePathEmpty) do
+    assert_raises(EditFilePathEmpty) do
       @api.edit_file("")
     end
   end
 
   def test_050_edit_file_validation_whitespace_path
-    assert_raises(CannotEditFilePathEmpty) do
+    assert_raises(EditFilePathEmpty) do
       @api.edit_file("   ")
     end
   end

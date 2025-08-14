@@ -62,19 +62,19 @@ class TestReadWrite < Minitest::Test
   end
 
   def test_004_need_nil_path_raises_error
-    assert_raises(CannotRequirePathNil) do
+    assert_raises(RequirePathNil) do
       need(:file, nil)
     end
   end
 
   def test_005_need_empty_path_raises_error
-    assert_raises(CannotRequirePathEmpty) do
+    assert_raises(RequirePathEmpty) do
       need(:file, "")
     end
   end
 
   def test_006_need_whitespace_path_raises_error
-    assert_raises(CannotRequirePathEmpty) do
+    assert_raises(RequirePathEmpty) do
       need(:file, "   ")
     end
   end
@@ -121,19 +121,19 @@ class TestReadWrite < Minitest::Test
   end
 
   def test_012_system_nil_command_raises_error
-    assert_raises(CannotExecuteCommandNil) do
+    assert_raises(CommandNil) do
       system!(nil)
     end
   end
 
   def test_013_system_empty_command_raises_error
-    assert_raises(CannotExecuteCommandEmpty) do
+    assert_raises(CommandEmpty) do
       system!("")
     end
   end
 
   def test_014_system_whitespace_command_raises_error
-    assert_raises(CannotExecuteCommandEmpty) do
+    assert_raises(CommandEmpty) do
       system!("   ")
     end
   end
@@ -183,19 +183,19 @@ class TestReadWrite < Minitest::Test
   end
 
   def test_020_make_dir_nil_path_raises_error
-    assert_raises(CannotCreateDirectoryPathNil) do
+    assert_raises(DirectoryPathNil) do
       make_dir(nil)
     end
   end
 
   def test_021_make_dir_empty_path_raises_error
-    assert_raises(CannotCreateDirectoryPathEmpty) do
+    assert_raises(DirectoryPathEmpty) do
       make_dir("")
     end
   end
 
   def test_022_make_dir_whitespace_path_raises_error
-    assert_raises(CannotCreateDirectoryPathEmpty) do
+    assert_raises(DirectoryPathEmpty) do
       make_dir("   ")
     end
   end
@@ -209,7 +209,7 @@ class TestReadWrite < Minitest::Test
     file_path = "#{read_only_dir}/test_dir"
     
     # This should raise a permission denied error
-    assert_raises(CannotCreateDirectoryPermissionDenied) do
+    assert_raises(DirectoryPermissionDenied) do
       make_dir(file_path)
     end
     
@@ -272,19 +272,19 @@ class TestReadWrite < Minitest::Test
   end
 
   def test_029_write_file_nil_path_raises_error
-    assert_raises(CannotWriteFilePathNil) do
+    assert_raises(FilePathNil) do
       write_file(nil, "content")
     end
   end
 
   def test_030_write_file_empty_path_raises_error
-    assert_raises(CannotWriteFilePathEmpty) do
+    assert_raises(FilePathEmpty) do
       write_file("", "content")
     end
   end
 
   def test_031_write_file_whitespace_path_raises_error
-    assert_raises(CannotWriteFilePathEmpty) do
+    assert_raises(FilePathEmpty) do
       write_file("   ", "content")
     end
   end
@@ -298,7 +298,7 @@ class TestReadWrite < Minitest::Test
     file_path = "#{read_only_dir}/test.txt"
     
     # This should raise a permission denied error
-    assert_raises(CannotWriteFilePermissionDenied) do
+    assert_raises(FilePermissionDenied) do
       write_file(file_path, "content")
     end
     
@@ -362,25 +362,25 @@ class TestReadWrite < Minitest::Test
   def test_038_read_file_missing_file_without_fallback_raises_error
     file_path = "#{@test_dir}/nonexistent.txt"
     
-    assert_raises(CannotReadFileNotFound) do
+    assert_raises(ReadFileNotFound) do
       read_file(file_path)
     end
   end
 
   def test_039_read_file_nil_path_raises_error
-    assert_raises(CannotReadFilePathNil) do
+    assert_raises(ReadFilePathNil) do
       read_file(nil)
     end
   end
 
   def test_040_read_file_empty_path_raises_error
-    assert_raises(CannotReadFilePathEmpty) do
+    assert_raises(ReadFilePathEmpty) do
       read_file("")
     end
   end
 
   def test_041_read_file_whitespace_path_raises_error
-    assert_raises(CannotReadFilePathEmpty) do
+    assert_raises(ReadFilePathEmpty) do
       read_file("   ")
     end
   end
@@ -391,7 +391,7 @@ class TestReadWrite < Minitest::Test
     write_file(file_path, "content")
     FileUtils.chmod(0000, file_path)
     
-    assert_raises(CannotReadFilePermissionDenied) do
+    assert_raises(ReadFilePermissionDenied) do
       read_file(file_path)
     end
     

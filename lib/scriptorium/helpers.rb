@@ -40,9 +40,9 @@ module Scriptorium::Helpers
 
   def write_file(file, content)
     # Input validation
-    raise CannotWriteFilePathNil if file.nil?
-    
-    raise CannotWriteFilePathEmpty if file.to_s.strip.empty?
+                raise FilePathNil if file.nil?
+
+        raise FilePathEmpty if file.to_s.strip.empty?
     
     # Ensure parent directory exists
     FileUtils.mkdir_p(File.dirname(file))
@@ -53,13 +53,13 @@ module Scriptorium::Helpers
         f.puts content
       end
     rescue Errno::ENOSPC => e
-      raise CannotWriteFileDiskFull(file, e.message)
+              raise FileDiskFull(file, e.message)
     rescue Errno::EACCES => e
-      raise CannotWriteFilePermissionDenied(file, e.message)
+              raise FilePermissionDenied(file, e.message)
     rescue Errno::ENOENT => e
-      raise CannotWriteFileDirectoryNotFound(file, e.message)
+              raise FileDirectoryNotFound(file, e.message)
     rescue => e
-      raise CannotWriteFileError(file, e.message)
+      raise WriteFileError(file, e.message)
     end
   end
 
@@ -74,9 +74,9 @@ module Scriptorium::Helpers
 
   def make_dir(dir, create_parents = false)
     # Input validation
-    raise CannotCreateDirectoryPathNil if dir.nil?
-    
-    raise CannotCreateDirectoryPathEmpty if dir.to_s.strip.empty?
+        raise DirectoryPathNil if dir.nil?
+
+    raise DirectoryPathEmpty if dir.to_s.strip.empty?
     
     # Create parent directories if requested
     if create_parents
@@ -86,25 +86,25 @@ module Scriptorium::Helpers
       begin
         Dir.mkdir(dir)
       rescue Errno::ENOSPC => e
-        raise CannotCreateDirectoryDiskFull(dir, e.message)
+        raise DirectoryDiskFull(dir, e.message)
       rescue Errno::EACCES => e
-        raise CannotCreateDirectoryPermissionDenied(dir, e.message)
+        raise DirectoryPermissionDenied(dir, e.message)
       rescue Errno::ENOENT => e
-        raise CannotCreateDirectoryParentNotFound(dir, e.message)
+        raise DirectoryParentNotFound(dir, e.message)
       rescue Errno::EEXIST => e
         # Directory already exists - this is usually not an error
         # But we could make this configurable if needed
       rescue => e
-        raise CannotCreateDirectoryError(dir, e.message)
+        raise CreateDirectoryError(dir, e.message)
       end
     end
   end
 
   def system!(command, description = nil)
     # Input validation
-    raise CannotExecuteCommandNil if command.nil?
-    
-    raise CannotExecuteCommandEmpty if command.to_s.strip.empty?
+        raise CommandNil if command.nil?
+
+    raise CommandEmpty if command.to_s.strip.empty?
     
     # Execute command with error handling
     success = system(command)
@@ -119,9 +119,9 @@ module Scriptorium::Helpers
 
   def need(type, path, exception_class = RuntimeError)
     # Input validation
-    raise CannotRequirePathNil(type) if path.nil?
-    
-    raise CannotRequirePathEmpty(type) if path.to_s.strip.empty?
+        raise RequirePathNil(type) if path.nil?
+
+    raise RequirePathEmpty(type) if path.to_s.strip.empty?
     
     # Check if file/directory exists
     exists = case type
@@ -146,9 +146,9 @@ module Scriptorium::Helpers
 
   def read_file(file, options = {})
     # Input validation
-    raise CannotReadFilePathNil if file.nil?
-    
-    raise CannotReadFilePathEmpty if file.to_s.strip.empty?
+        raise ReadFilePathNil if file.nil?
+
+    raise ReadFilePathEmpty if file.to_s.strip.empty?
     
     # Handle missing file with fallback
     if options[:missing_fallback]
@@ -172,12 +172,12 @@ module Scriptorium::Helpers
       if options[:missing_fallback]
         return options[:missing_fallback]
       else
-        raise CannotReadFileNotFound(file, e.message)
+        raise ReadFileNotFound(file, e.message)
       end
     rescue Errno::EACCES => e
-      raise CannotReadFilePermissionDenied(file, e.message)
+              raise ReadFilePermissionDenied(file, e.message)
     rescue => e
-      raise CannotReadFileError(file, e.message)
+              raise ReadFileError(file, e.message)
     end
   end
 

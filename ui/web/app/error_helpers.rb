@@ -1,43 +1,43 @@
 module ErrorHelpers
   # Error message mapping for common errors
   ERROR_MESSAGES = {
-    'CannotReadFileNotFound' => {
+    'ReadFileNotFound' => {
       message: 'File not found',
       suggestion: 'The file may have been moved or deleted. Try refreshing the page or recreating the content.'
     },
-    'CannotCreatePostRepoNil' => {
+    'PostRepoNil' => {
       message: 'Repository not initialized',
       suggestion: 'Please create or open a repository first.'
     },
-    'CannotCreatePostNumNil' => {
+    'PostNumNil' => {
       message: 'Invalid post ID',
       suggestion: 'Please provide a valid post number.'
     },
-    'CannotCreatePostNumEmpty' => {
+    'PostNumEmpty' => {
       message: 'Post ID is empty',
       suggestion: 'Please provide a valid post number.'
     },
-    'CannotCreatePostNumInvalid' => {
+    'PostNumInvalid' => {
       message: 'Invalid post ID format',
       suggestion: 'Post ID must be a number.'
     },
-    'CannotGetPostIdNil' => {
+    'GetPostIdNil' => {
       message: 'Post ID not provided',
       suggestion: 'Please specify a post ID.'
     },
-    'CannotGetPostIdEmpty' => {
+    'GetPostIdEmpty' => {
       message: 'Post ID is empty',
       suggestion: 'Please provide a valid post ID.'
     },
-    'CannotGetPostIdInvalid' => {
+    'GetPostIdInvalid' => {
       message: 'Invalid post ID format',
       suggestion: 'Post ID must be a number.'
     },
-    'CannotEditFilePathNil' => {
+    'EditFilePathNil' => {
       message: 'File path not specified',
       suggestion: 'Please provide a valid file path.'
     },
-    'CannotEditFilePathEmpty' => {
+    'EditFilePathEmpty' => {
       message: 'File path is empty',
       suggestion: 'Please provide a valid file path.'
     },
@@ -45,27 +45,27 @@ module ErrorHelpers
       message: 'Repository already exists',
       suggestion: 'The repository directory already exists. You can open it instead.'
     },
-    'CannotLookupViewTargetNil' => {
+    'LookupViewTargetNil' => {
       message: 'View not specified',
       suggestion: 'Please provide a valid view name.'
     },
-    'CannotCreateViewNameNil' => {
+    'ViewNameNil' => {
       message: 'View name not provided',
       suggestion: 'Please provide a view name.'
     },
-    'CannotCreateViewNameEmpty' => {
+    'ViewNameEmpty' => {
       message: 'View name is empty',
       suggestion: 'Please provide a view name.'
     },
-    'CannotCreateViewTitleNil' => {
+    'ViewTitleNil' => {
       message: 'View title not provided',
       suggestion: 'Please provide a view title.'
     },
-    'CannotCreateViewTitleEmpty' => {
+    'ViewTitleEmpty' => {
       message: 'View title is empty',
       suggestion: 'Please provide a view title.'
     },
-    'CannotCreateViewNameInvalid' => {
+    'ViewNameInvalid' => {
       message: 'Invalid view name',
       suggestion: 'View names can only contain letters, numbers, hyphens (-), and underscores (_).'
     }
