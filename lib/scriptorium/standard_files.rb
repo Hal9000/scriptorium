@@ -325,6 +325,12 @@ class Scriptorium::StandardFiles
     EOS
   end
 
+  def post_index_config
+    <<~EOS
+      posts.per.page 10
+    EOS
+  end
+
   def post_index_style   # Not really a file
     <<~EOS
       <style>

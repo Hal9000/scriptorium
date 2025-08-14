@@ -868,11 +868,12 @@ write output:      write the result to output/panes/header.html
   end
 
   def paginate_posts
+    config = read_commented_file(dir/:config/"post_index.txt")
     posts = @repo.all_posts(self)
     posts.sort! {|a,b| cf_time(b.pubdate, a.pubdate) }
-    ppp = 10  # FIXME posts per page
+    @ppp ||= config.first.split.last.to_i
     pages = []
-    posts.each_slice(ppp).with_index do |group, i|
+    posts.each_slice(@ppp).with_index do |group, i|
       pages << group.map {|post| post_index_entry(post) }
     end
     out = self.dir/:output

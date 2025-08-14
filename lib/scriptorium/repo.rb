@@ -212,6 +212,7 @@ class Scriptorium::Repo
     write_file(dir/:config/"reddit.txt",        @predef.reddit_config)
     write_file(dir/:config/"deploy.txt",        @predef.deploy_text % {view: name, domain: "example.com"})
     write_file(dir/:config/"status.txt",        @predef.status_txt)
+    write_file(dir/:config/"post_index.txt",    @predef.post_index_config)
     view = open_view(name)
     @views -= [view]
     @views << view
