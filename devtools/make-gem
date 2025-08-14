@@ -1,0 +1,13 @@
+#!/usr/bin/env ruby
+
+KBD = File.open("/dev/tty", "r")
+
+update = <<-EOF
+  gem build scriptorium.gemspec && 
+  gem push scriptorium-*.gem && 
+  gem install scriptorium
+EOF
+
+  # gem uninstall -x scriptorium && 
+system(update)
+

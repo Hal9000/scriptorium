@@ -24,6 +24,13 @@ test_files = %w[
   unit/gem_asset_management.rb
   unit/reddit_test.rb
   unit/clipboard_test.rb
+  unit/deploy_test.rb
+  unit/symlink_test.rb
+  unit/contract_test.rb
+  unit/social_test.rb
+  unit/livetext_compatibility.rb
+  unit/livetext_basic.rb
+  unit/syntax_highlighting.rb
   banner_svg/simple_helpers.rb
   banner_svg/unit.rb
   integration/integration_test.rb

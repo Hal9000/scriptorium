@@ -153,7 +153,7 @@ class TestScriptoriumRepo < Minitest::Test
   def test_011_check_initial_post
     repo = create_test_repo
     root = repo.root
-    file = "#{root}/themes/standard/initial/post.lt3" # FIXME hardcoded
+    file = "#{root}/themes/standard/initial/post.lt3"
     assert_file_exist?(file)
     assert_file_lines(file, 12)
   end
@@ -186,15 +186,13 @@ class TestScriptoriumRepo < Minitest::Test
   def test_014_check_post_template
     repo = create_test_repo
     root = repo.root
-    file = "#{root}/themes/standard/templates/post.lt3" # FIXME hardcoded
+    file = "#{root}/themes/standard/templates/post.lt3"
     assert_file_exist?(file)
     assert_file_lines(file, 16)  # Template now includes copy link button but no inline JavaScript
   end
 
   def test_015_change_view
     repo = create_test_repo
-    root = repo.root
-
     v1 = repo.view   # initially 'sample'
     assert v1.name == 'sample', "Expected view to be 'sample'"
 
@@ -278,7 +276,7 @@ class TestScriptoriumRepo < Minitest::Test
     <p>
     But here we are.
     EOS
-    text = File.read(dname)
+    text = read_file(dname)
     text.sub!(/BEGIN HERE.../, body)
     write_file(dname, text)
     num = repo.finish_draft(dname)
@@ -315,7 +313,7 @@ class TestScriptoriumRepo < Minitest::Test
     <p>
     It should be generated in both the posts/ and permalink/ directories.
     EOS
-    text = File.read(dname)
+    text = read_file(dname)
     text.sub!(/BEGIN HERE.../, body)
     write_file(dname, text)
     num = repo.finish_draft(dname)
@@ -331,8 +329,8 @@ class TestScriptoriumRepo < Minitest::Test
     assert File.exist?(permalink_post), "Permalink post should exist at #{permalink_post}"
     
     # Both files should have different content (permalink has "Visit Blog" link)
-    regular_content = File.read(regular_post)
-    permalink_content = File.read(permalink_post)
+    regular_content = read_file(regular_post)
+    permalink_content = read_file(permalink_post)
     refute_equal regular_content, permalink_content, "Post content should differ (permalink has 'Visit Blog' link)"
     
     # Regular post should NOT contain the "Visit Blog" link
@@ -370,7 +368,7 @@ class TestScriptoriumRepo < Minitest::Test
     currentview_file = File.join(test_repo_path, "config", "currentview.txt")
     assert File.exist?(currentview_file), "currentview.txt should exist"
     
-    content = File.read(currentview_file).strip
+    content = read_file(currentview_file).strip
     assert_equal "view1", content, "currentview.txt should contain 'view1'"
     
     # Cleanup
@@ -418,7 +416,7 @@ class TestScriptoriumRepo < Minitest::Test
     
     # Check that currentview.txt was updated
     currentview_file = File.join(test_repo_path, "config", "currentview.txt")
-    content = File.read(currentview_file).strip
+    content = read_file(currentview_file).strip
     assert_equal "view3", content, "currentview.txt should contain 'view3'"
     
     # Cleanup
@@ -481,7 +479,7 @@ class TestScriptoriumRepo < Minitest::Test
     
     # Write an invalid view name to currentview.txt
     currentview_file = File.join(test_repo_path, "config", "currentview.txt")
-    File.write(currentview_file, "nonexistent_view")
+    write_file(currentview_file, "nonexistent_view")
     
     # Create a new repo instance - should handle invalid view name gracefully
     # The current implementation raises an exception, so we expect that

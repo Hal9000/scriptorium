@@ -310,32 +310,45 @@ module Scriptorium::Helpers
     t1 <=> t2
   end
 
+  # Helper method to find asset recursively in a directory
+  def find_asset(base_dir, asset_name)
+    # First try exact path
+    exact_path = "#{base_dir}/#{asset_name}"
+    return exact_path if File.exist?(exact_path)
+    
+    # Then search recursively
+    Dir.glob("#{base_dir}/**/*").each do |file|
+      next unless File.file?(file)
+      next unless File.basename(file) == File.basename(asset_name)
+      return file
+    end
+    
+    nil
+  end
+
   def get_asset_path(name)
     if Scriptorium::Repo.testing
       # Development/testing: Check dev_assets first, then local assets
-      if File.exist?("dev_assets/#{name}")
-        return "dev_assets/#{name}"
-      elsif File.exist?("assets/#{name}")
-        return "assets/#{name}"
-      else
-        raise AssetNotFound(name)
-      end
+      dev_asset = find_asset("dev_assets", name)
+      return dev_asset if dev_asset
+      
+      local_asset = find_asset("assets", name)
+      return local_asset if local_asset
+      
+      raise AssetNotFound(name)
     else  # Production
       # Production: Check user assets first, then gem assets
       
-      # Check user assets first (highest priority)
-      if File.exist?("assets/#{name}")
-        return "assets/#{name}"
-      end
+      # Check user assets first (highest priority) - recursively
+      user_asset = find_asset("assets", name)
+      return user_asset if user_asset
       
-      # Then check gem assets (fallback)
+      # Then check gem assets (fallback) - recursively
       begin
         gem_spec = Gem.loaded_specs['scriptorium']
         if gem_spec
-          gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{name}"
-          if File.exist?(gem_asset_path)
-            return gem_asset_path
-          end
+          gem_asset = find_asset("#{gem_spec.full_gem_path}/assets", name)
+          return gem_asset if gem_asset
         end
       rescue => e
         # If gem lookup fails, continue without gem assets

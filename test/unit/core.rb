@@ -29,7 +29,7 @@ class TestReadWrite < Minitest::Test
 
   def test_001_need_file_basic_functionality
     file_path = "#{@test_dir}/test_file.txt"
-    File.write(file_path, "test content")
+    write_file(file_path, "test content")
     
     result = need(:file, file_path)
     assert_equal file_path, result
@@ -230,7 +230,7 @@ class TestReadWrite < Minitest::Test
     write_file(file_path, content.join("\n"))
     
     assert File.exist?(file_path)
-    assert_equal content.join("\n") + "\n", File.read(file_path)
+    assert_equal content.join("\n") + "\n", read_file(file_path)
   end
 
   def test_025_write_file_creates_parent_directories
@@ -249,7 +249,7 @@ class TestReadWrite < Minitest::Test
     write_file(file_path, "")
     
     assert File.exist?(file_path)
-    assert_equal "\n", File.read(file_path)
+    assert_equal "\n", read_file(file_path)
   end
 
   def test_027_write_file_single_line
@@ -259,7 +259,7 @@ class TestReadWrite < Minitest::Test
     write_file(file_path, content)
     
     assert File.exist?(file_path)
-    assert_equal content + "\n", File.read(file_path)
+    assert_equal content + "\n", read_file(file_path)
   end
 
   def test_028_write_file_multiple_lines
@@ -270,7 +270,7 @@ class TestReadWrite < Minitest::Test
     
     assert File.exist?(file_path)
     expected = content.join("\n") + "\n"
-    assert_equal expected, File.read(file_path)
+    assert_equal expected, read_file(file_path)
   end
 
   def test_029_write_file_nil_path_raises_error
@@ -315,27 +315,27 @@ class TestReadWrite < Minitest::Test
   def test_033_read_file_basic_functionality
     file_path = "#{@test_dir}/read_test.txt"
     content = "line1\nline2\nline3"
-    File.write(file_path, content)
+    write_file(file_path, content)
     
     result = read_file(file_path)
     
-    assert_equal content, result
+    assert_equal content + "\n", result
   end
 
   def test_034_read_file_as_lines
     file_path = "#{@test_dir}/lines_test.txt"
     content = "line1\nline2\nline3"
-    File.write(file_path, content)
+    write_file(file_path, content)
     
     result = read_file(file_path, lines: true)
     
-    assert_equal ["line1\n", "line2\n", "line3"], result
+    assert_equal ["line1\n", "line2\n", "line3\n"], result
   end
 
   def test_035_read_file_as_lines_with_chomp
     file_path = "#{@test_dir}/chomp_test.txt"
     content = "line1\nline2\nline3\n"
-    File.write(file_path, content)
+    write_file(file_path, content)
     
     result = read_file(file_path, lines: true, chomp: true)
     
@@ -345,7 +345,7 @@ class TestReadWrite < Minitest::Test
   def test_036_read_file_as_lines_without_chomp
     file_path = "#{@test_dir}/no_chomp_test.txt"
     content = "line1\nline2\nline3\n"
-    File.write(file_path, content)
+    write_file(file_path, content)
     
     result = read_file(file_path, lines: true, chomp: false)
     
@@ -390,7 +390,7 @@ class TestReadWrite < Minitest::Test
   def test_042_read_file_permission_denied_simulation
     # Create a file and make it unreadable
     file_path = "#{@test_dir}/unreadable.txt"
-    File.write(file_path, "content")
+    write_file(file_path, "content")
     FileUtils.chmod(0000, file_path)
     
     assert_raises(CannotReadFilePermissionDenied) do
@@ -403,46 +403,46 @@ class TestReadWrite < Minitest::Test
 
   def test_043_read_file_empty_file
     file_path = "#{@test_dir}/empty.txt"
-    File.write(file_path, "")
+    write_file(file_path, "")
     
     result = read_file(file_path)
     
-    assert_equal "", result
+    assert_equal "\n", result
   end
 
   def test_044_read_file_empty_file_as_lines
     file_path = "#{@test_dir}/empty_lines.txt"
-    File.write(file_path, "")
+    write_file(file_path, "")
     
     result = read_file(file_path, lines: true)
     
-    assert_equal [], result
+    assert_equal ["\n"], result
   end
 
   def test_045_read_file_single_line
     file_path = "#{@test_dir}/single_line.txt"
     content = "single line"
-    File.write(file_path, content)
+    write_file(file_path, content)
     
     result = read_file(file_path)
     
-    assert_equal content, result
+    assert_equal content + "\n", result
   end
 
   def test_046_read_file_single_line_as_lines
     file_path = "#{@test_dir}/single_line.txt"
     content = "single line"
-    File.write(file_path, content)
+    write_file(file_path, content)
     
     result = read_file(file_path, lines: true)
     
-    assert_equal [content], result
+    assert_equal [content + "\n"], result
   end
 
   def test_047_read_file_with_trailing_newline
     file_path = "#{@test_dir}/trailing_newline.txt"
     content = "line1\nline2\n"
-    File.write(file_path, content)
+    write_file(file_path, content)
     
     result = read_file(file_path)
     
@@ -452,7 +452,7 @@ class TestReadWrite < Minitest::Test
   def test_048_read_file_with_trailing_newline_as_lines
     file_path = "#{@test_dir}/trailing_newline.txt"
     content = "line1\nline2\n"
-    File.write(file_path, content)
+    write_file(file_path, content)
     
     result = read_file(file_path, lines: true)
     
@@ -462,7 +462,7 @@ class TestReadWrite < Minitest::Test
   def test_049_read_file_with_trailing_newline_as_lines_no_chomp
     file_path = "#{@test_dir}/trailing_newline.txt"
     content = "line1\nline2\n"
-    File.write(file_path, content)
+    write_file(file_path, content)
     
     result = read_file(file_path, lines: true, chomp: false)
     
@@ -507,11 +507,11 @@ class TestReadWrite < Minitest::Test
     
     # First write
     write_file(file_path, "first content")
-    assert_equal "first content\n", File.read(file_path)
+    assert_equal "first content\n", read_file(file_path)
     
     # Second write (should overwrite)
     write_file(file_path, "second content")
-    assert_equal "second content\n", File.read(file_path)
+    assert_equal "second content\n", read_file(file_path)
   end
 
   def test_053_write_file_with_special_characters
@@ -638,9 +638,9 @@ class TestReadWrite < Minitest::Test
   end
   
   def test_063_get_asset_path
-    name = "back-icon.png"
+    name = "back.png"
     result = get_asset_path(name)
-    assert result == "assets/#{name}", "Expected #{name} to be in assets (got #{result})"
+    assert result == "assets/icons/ui/#{name}", "Expected #{name} to be found recursively (got #{result})"
     assert_raises(AssetNotFound) { get_asset_path("nonexistent.png") }
   end
 
@@ -734,7 +734,7 @@ class TestReadWrite < Minitest::Test
 
   def test_073_getvars_basic
     config_file = "#{@test_dir}/config.txt"
-    File.write(config_file, <<~EOS)
+    write_file(config_file, <<~EOS)
       title My Blog
       subtitle A test blog
       theme standard
@@ -748,7 +748,7 @@ class TestReadWrite < Minitest::Test
 
   def test_074_getvars_with_comments
     config_file = "#{@test_dir}/config_with_comments.txt"
-    File.write(config_file, <<~EOS)
+    write_file(config_file, <<~EOS)
       # This is a comment
       title My Blog # Another comment
       subtitle A test blog
@@ -766,7 +766,7 @@ class TestReadWrite < Minitest::Test
 
   def test_075_getvars_with_empty_values
     config_file = "#{@test_dir}/config_empty.txt"
-    File.write(config_file, <<~EOS)
+    write_file(config_file, <<~EOS)
       title My Blog
       subtitle
       theme standard

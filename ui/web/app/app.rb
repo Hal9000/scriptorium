@@ -13,6 +13,7 @@ require_relative '../../../lib/scriptorium'
 require_relative 'error_helpers'
 
 include ErrorHelpers
+include Scriptorium::Helpers
 
 class ScriptoriumWeb < Sinatra::Base
   set :port, 4567
@@ -143,15 +144,9 @@ class ScriptoriumWeb < Sinatra::Base
       post_num = @api.finish_draft(draft_path)
       # Generate the post to create meta.txt and other files
       begin
-        STDERR.puts "DEBUG: About to call generate_post for post #{post_num}"
-        STDERR.puts "DEBUG: Current working directory: #{Dir.pwd}"
-        STDERR.puts "DEBUG: API root: #{@api.root}"
         @api.generate_post(post_num)
-        STDERR.puts "DEBUG: generate_post completed successfully"
         # Check if meta.txt was created
         meta_file = @api.root/"posts"/"#{post_num.to_s.rjust(4, '0')}"/"meta.txt"
-        STDERR.puts "DEBUG: Meta file path: #{meta_file}"
-        STDERR.puts "DEBUG: Meta file exists: #{File.exist?(meta_file)}"
         redirect "/?message=Post '#{params[:title].strip}' created successfully (##{post_num})"
               rescue => e
           # Log the actual error for debugging
@@ -209,7 +204,7 @@ class ScriptoriumWeb < Sinatra::Base
       # Read the source file content
       source_file = @api.root/"posts"/@post.num/"source.lt3"
       if File.exist?(source_file)
-        @content = File.read(source_file)
+        @content = read_file(source_file)
       else
         @content = "# #{@post.title}\n\n"
       end
@@ -244,7 +239,7 @@ class ScriptoriumWeb < Sinatra::Base
       
       # Write the content to the source file
       source_file = @api.root/"posts"/post.num/"source.lt3"
-      File.write(source_file, content)
+      write_file(source_file, content)
       
       # Generate the post after saving
       @api.generate_post(post_id)
@@ -317,7 +312,7 @@ class ScriptoriumWeb < Sinatra::Base
       if File.exist?(index_file)
         # Return the HTML content directly for preview
         content_type :html
-        File.read(index_file)
+        read_file(index_file)
       else
         redirect "/?error=Preview file not found - view may not have been generated properly"
       end
@@ -331,30 +326,23 @@ class ScriptoriumWeb < Sinatra::Base
     view_name = params[:view_name]
     filename = params[:filename]
     
-    STDERR.puts "DEBUG: Preview request - view_name: #{view_name}, filename: #{filename}"
-    
     begin
       if view_name.nil? || view_name.strip.empty? || filename.nil? || filename.strip.empty?
-        STDERR.puts "DEBUG: Missing parameters"
         status 404
         return "File not found"
       end
       
       # Construct the file path
       post_file = @api.root/"views"/view_name/"output"/"posts"/filename
-      STDERR.puts "DEBUG: Looking for file: #{post_file}"
-      STDERR.puts "DEBUG: File exists: #{File.exist?(post_file)}"
       
       if File.exist?(post_file)
         content_type :html
-        File.read(post_file)
+        read_file(post_file)
       else
-        STDERR.puts "DEBUG: File not found"
         status 404
         "File not found: #{filename}"
       end
     rescue => e
-      STDERR.puts "DEBUG: Error: #{e.message}"
       status 500
       "Error loading file: #{e.message}"
     end
@@ -411,7 +399,7 @@ class ScriptoriumWeb < Sinatra::Base
         config_content += "theme    #{params[:view_theme]}\n"
         
         config_file = @api.root/"views"/view_name/"config.txt"
-        File.write(config_file, config_content)
+        write_file(config_file, config_content)
       end
       
       # Step 2: Save layout configuration
@@ -438,7 +426,7 @@ class ScriptoriumWeb < Sinatra::Base
         
         layout_file = @api.root/"views"/view_name/"config"/"layout.txt"
         FileUtils.mkdir_p(File.dirname(layout_file))
-        File.write(layout_file, layout_content)
+        write_file(layout_file, layout_content)
       end
       
       # Step 3: Save container content files
@@ -449,7 +437,7 @@ class ScriptoriumWeb < Sinatra::Base
         if params[content_param]
           content_file = @api.root/"views"/view_name/"config"/"#{container}.txt"
           FileUtils.mkdir_p(File.dirname(content_file))
-          File.write(content_file, params[content_param])
+          write_file(content_file, params[content_param])
           
           # If this is header with "banner svg", create default svg.txt
           if container == 'header' && params[content_param].strip == 'banner svg'
@@ -461,7 +449,7 @@ class ScriptoriumWeb < Sinatra::Base
               default_svg_content += "back.linear #f8f9fa #e9ecef lr\n"
               default_svg_content += "text.color #374151\n"
               default_svg_content += "title.style bold\n"
-              File.write(svg_file, default_svg_content)
+              write_file(svg_file, default_svg_content)
             end
           end
         end
@@ -483,7 +471,7 @@ class ScriptoriumWeb < Sinatra::Base
     
     # Get current SVG config
     svg_file = @api.root/"views"/@current_view.name/"config"/"svg.txt"
-    @svg_config = File.exist?(svg_file) ? File.read(svg_file) : ""
+          @svg_config = File.exist?(svg_file) ? read_file(svg_file) : ""
     
     # Generate current banner for display
     begin
@@ -520,7 +508,7 @@ class ScriptoriumWeb < Sinatra::Base
       # Save the SVG configuration
       svg_file = @api.root/"views"/@current_view.name/"config"/"svg.txt"
       FileUtils.mkdir_p(File.dirname(svg_file))
-      File.write(svg_file, svg_config)
+              write_file(svg_file, svg_config)
       
       # Update status
       update_config_status(@current_view.name, "banner", true)
@@ -541,7 +529,7 @@ class ScriptoriumWeb < Sinatra::Base
     
     # Get current navbar config
     navbar_file = @api.root/"views"/@current_view.name/"config"/"navbar.txt"
-    @navbar_config = File.exist?(navbar_file) ? File.read(navbar_file).strip : ""
+          @navbar_config = File.exist?(navbar_file) ? read_file(navbar_file).strip : ""
     
     # Generate current navbar preview
     begin
@@ -574,7 +562,7 @@ class ScriptoriumWeb < Sinatra::Base
       
       # Read current navbar config
       navbar_file = @api.root/"views"/@current_view.name/"config"/"navbar.txt"
-      current_config = File.exist?(navbar_file) ? File.read(navbar_file).strip : ""
+      current_config = File.exist?(navbar_file) ? read_file(navbar_file).strip : ""
       
       # Add new item based on action
       if action == "link"
@@ -594,7 +582,7 @@ class ScriptoriumWeb < Sinatra::Base
       
       # Save the updated configuration
       FileUtils.mkdir_p(File.dirname(navbar_file))
-      File.write(navbar_file, updated_config.rstrip + "\n")
+      write_file(navbar_file, updated_config.rstrip + "\n")
       
       redirect "/navbar_config?message=#{message}"
     rescue => e
@@ -632,7 +620,7 @@ class ScriptoriumWeb < Sinatra::Base
       
       # Read current navbar config
       navbar_file = @api.root/"views"/@current_view.name/"config"/"navbar.txt"
-      current_config = File.exist?(navbar_file) ? File.read(navbar_file).strip : ""
+      current_config = File.exist?(navbar_file) ? read_file(navbar_file).strip : ""
       
       # Find the parent and add child after it
       lines = current_config.lines
@@ -655,7 +643,7 @@ class ScriptoriumWeb < Sinatra::Base
       
       # Save the updated configuration
       FileUtils.mkdir_p(File.dirname(navbar_file))
-      File.write(navbar_file, new_lines.join.rstrip + "\n")
+      write_file(navbar_file, new_lines.join.rstrip + "\n")
       
       redirect "/navbar_config?message=Added #{label} as child of #{parent}"
     rescue => e
@@ -681,7 +669,7 @@ class ScriptoriumWeb < Sinatra::Base
       # Save the configuration
       navbar_file = @api.root/"views"/@current_view.name/"config"/"navbar.txt"
       FileUtils.mkdir_p(File.dirname(navbar_file))
-      File.write(navbar_file, config.rstrip + "\n")
+      write_file(navbar_file, config.rstrip + "\n")
       
       # Check for missing pages and create them
       pages_created = []
@@ -709,7 +697,7 @@ class ScriptoriumWeb < Sinatra::Base
               page_file = pages_dir/filename
               unless File.exist?(page_file)
                 content = ".page_title #{title}\n\n"
-                File.write(page_file, content)
+                write_file(page_file, content)
                 pages_created << filename
               end
             end
@@ -730,7 +718,7 @@ class ScriptoriumWeb < Sinatra::Base
               page_file = pages_dir/filename
               unless File.exist?(page_file)
                 content = ".page_title #{title}\n\n"
-                File.write(page_file, content)
+                write_file(page_file, content)
                 pages_created << filename
               end
             end
@@ -766,7 +754,7 @@ class ScriptoriumWeb < Sinatra::Base
       Dir.glob(pages_dir/"*").each do |file|
         next unless File.file?(file)
         filename = File.basename(file)
-        content = File.read(file)
+        content = read_file(file)
         
         # Extract page title from .page_title directive
         title = nil
@@ -810,7 +798,7 @@ class ScriptoriumWeb < Sinatra::Base
       pages_dir = @api.root/"views"/@current_view.name/"pages"
       FileUtils.mkdir_p(pages_dir)
       page_file = pages_dir/filename
-      File.write(page_file, content)
+              write_file(page_file, content)
       
       redirect "/edit_pages?message=Page '#{filename}' saved successfully"
     rescue => e
@@ -904,7 +892,7 @@ class ScriptoriumWeb < Sinatra::Base
     @configs = {}
     
     if File.exist?(status_file)
-      status_content = File.read(status_file)
+      status_content = read_file(status_file)
       status_content.lines.each do |line|
         line = line.strip
         next if line.empty? || line.start_with?('#')
@@ -930,7 +918,7 @@ class ScriptoriumWeb < Sinatra::Base
     layout_file = config_dir/"layout.txt"
     @layout_containers = []
     if File.exist?(layout_file)
-      layout_content = File.read(layout_file)
+      layout_content = read_file(layout_file)
       layout_content.lines.each do |line|
         line = line.strip
         next if line.empty? || line.start_with?('#')
@@ -958,7 +946,7 @@ class ScriptoriumWeb < Sinatra::Base
     header_file = @api.root/"views"/@current_view.name/"config"/"header.txt"
     @current_config = ""
     if File.exist?(header_file)
-      @current_config = File.read(header_file).strip
+      @current_config = read_file(header_file).strip
     end
     
     # Parse current settings
@@ -988,7 +976,7 @@ class ScriptoriumWeb < Sinatra::Base
       # Save the header configuration
       header_file = @api.root/"views"/@current_view.name/"config"/"header.txt"
       FileUtils.mkdir_p(File.dirname(header_file))
-      File.write(header_file, header_content.join("\n") + "\n")
+              write_file(header_file, header_content.join("\n") + "\n")
       
       # Update status
       update_config_status(@current_view.name, "header", true)
@@ -1011,7 +999,7 @@ class ScriptoriumWeb < Sinatra::Base
     deploy_file = @api.root/"views"/@current_view.name/"config"/"deploy.txt"
     @deploy_config = ""
     if File.exist?(deploy_file)
-      @deploy_config = File.read(deploy_file).strip
+      @deploy_config = read_file(deploy_file).strip
     end
     
     erb :deploy_config
@@ -1031,7 +1019,7 @@ class ScriptoriumWeb < Sinatra::Base
       # Save the deployment configuration
       deploy_file = @api.root/"views"/@current_view.name/"config"/"deploy.txt"
       FileUtils.mkdir_p(File.dirname(deploy_file))
-      File.write(deploy_file, deploy_config + "\n")
+              write_file(deploy_file, deploy_config + "\n")
       
       # Update status
       update_config_status(@current_view.name, "deploy", true)
@@ -1054,7 +1042,7 @@ class ScriptoriumWeb < Sinatra::Base
     layout_file = @api.root/"views"/@current_view.name/"config"/"layout.txt"
     @layout_config = ""
     if File.exist?(layout_file)
-      @layout_config = File.read(layout_file).strip
+      @layout_config = read_file(layout_file).strip
     end
     
     erb :layout_config
@@ -1074,7 +1062,7 @@ class ScriptoriumWeb < Sinatra::Base
       # Save the layout configuration
       layout_file = @api.root/"views"/@current_view.name/"config"/"layout.txt"
       FileUtils.mkdir_p(File.dirname(layout_file))
-      File.write(layout_file, layout_config + "\n")
+              write_file(layout_file, layout_config + "\n")
       
       redirect "/advanced_config?message=Layout configuration updated successfully"
     rescue => e
@@ -1332,7 +1320,7 @@ class ScriptoriumWeb < Sinatra::Base
     status_file = @api.root/"views"/view_name/"config"/"status.txt"
     return unless File.exist?(status_file)
     
-    content = File.read(status_file)
+          content = read_file(status_file)
     lines = content.lines.map do |line|
       if line.strip.start_with?("#{config_name} ")
         "#{config_name} #{status ? 'y' : 'n'}\n"
@@ -1340,7 +1328,7 @@ class ScriptoriumWeb < Sinatra::Base
         line
       end
     end
-    File.write(status_file, lines.join)
+            write_file(status_file, lines.join)
   end
 
   # Helper method for formatting file sizes

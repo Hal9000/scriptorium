@@ -22,6 +22,7 @@ class Scriptorium::StandardFiles
       bootstrap  # See bootstrap.txt
       social     # See social.txt for configuration
     EOS
+    str
   end
 
   def common_js
@@ -333,6 +334,7 @@ class Scriptorium::StandardFiles
         <button onclick="copyPermalinkToClipboard()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Copy link</button>
       </div>
     EOS
+    str
   end
 
   def layout_text
@@ -503,13 +505,13 @@ class Scriptorium::StandardFiles
 
   def status_txt
     <<~EOS
-      header n
-      banner n
-      navbar n
-      left n
-      right n
-      pages n
-      deploy n
+      header   n
+      banner   n
+      navbar   n
+      left     n
+      right    n
+      pages    n
+      deploy   n
     EOS
   end
 end

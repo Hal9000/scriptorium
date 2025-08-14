@@ -15,7 +15,6 @@ class TestLivetextCompatibility < Minitest::Test
       vars = vars.to_h
       assert_equal "Simple text content", body.strip
       assert vars.is_a?(Hash)
-      puts "✓ Basic Livetext processing works"
     rescue => e
       flunk "Basic Livetext processing failed: #{e.message}"
     end
@@ -31,12 +30,11 @@ class TestLivetextCompatibility < Minitest::Test
     CONTENT
     
     begin
-      live = Livetext.customize(call: ".nopara")
+      live = Livetext.customize(mix: "lt3scriptor", call: ".nopara")
       body, vars = live.process(text: content)
       vars = vars.to_h
       assert_includes body, "This is the body"
       assert vars.is_a?(Hash)
-      puts "✓ Livetext with dot commands works"
     rescue => e
       flunk "Livetext with dot commands failed: #{e.message}"
     end
@@ -47,7 +45,6 @@ class TestLivetextCompatibility < Minitest::Test
     begin
       live = Livetext.customize(mix: "lt3scriptor")
       assert live
-      puts "✓ Plugin loaded successfully"
     rescue => e
       flunk "Plugin loading failed: #{e.message}"
     end
@@ -62,7 +59,6 @@ class TestLivetextCompatibility < Minitest::Test
       body, vars = live.process(text: content)
       vars = vars.to_h
       assert body.is_a?(String)
-      puts "✓ Plugin processing succeeded: #{body}"
     rescue => e
       puts "✗ Plugin processing failed: #{e.message}"
       puts e.backtrace.first(3)
@@ -76,11 +72,10 @@ class TestLivetextCompatibility < Minitest::Test
     
     begin
       live = Livetext.customize(call: ".nopara")
-      text, vars = live.process(content)
+      text, vars = live.process(text: content)
       vars = vars.to_h
       assert text.is_a?(String)
       assert vars.is_a?(Hash)
-      puts "✓ Old Livetext API works"
     rescue => e
       puts "✗ Old Livetext API failed: #{e.message}"
       skip "Old API needs to be fixed"

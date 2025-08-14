@@ -7,7 +7,9 @@ class TestHelper
   include Scriptorium::Helpers
 end
 
-class ReadCommentedFileTest < Minitest::Test
+class TestReadCommentedFile < Minitest::Test
+  include Scriptorium::Helpers
+  
   def setup
     ENV['DBC_DISABLED'] = 'true'
     @test_file = "test_comments.txt"
@@ -56,7 +58,7 @@ class ReadCommentedFileTest < Minitest::Test
       last_line
     CONTENT
     
-    File.write(@test_file, test_content)
+    write_file(@test_file, test_content)
     
     helpers_result = @helper.read_commented_file(@test_file)
     banner_result = @banner.read_commented_file(@test_file)
@@ -180,7 +182,7 @@ class ReadCommentedFileTest < Minitest::Test
     ]
 
     test_cases.each do |test_case|
-      File.write(@test_file, test_case[:content])
+      write_file(@test_file, test_case[:content])
       
       helpers_result = @helper.read_commented_file(@test_file)
       banner_result = @banner.read_commented_file(@test_file)
@@ -245,7 +247,7 @@ class ReadCommentedFileTest < Minitest::Test
     ]
 
     test_cases.each do |test_case|
-      File.write(@test_file, test_case[:content])
+      write_file(@test_file, test_case[:content])
       
       helpers_result = @helper.read_commented_file(@test_file)
       banner_result = @banner.read_commented_file(@test_file)
@@ -257,7 +259,7 @@ class ReadCommentedFileTest < Minitest::Test
 
   def test_edge_cases
     # Test with empty file
-    File.write(@test_file, "")
+    write_file(@test_file, "")
     helpers_result = @helper.read_commented_file(@test_file)
     banner_result = @banner.read_commented_file(@test_file)
     assert_equal helpers_result, banner_result, "Empty file should produce same result"
@@ -268,7 +270,7 @@ class ReadCommentedFileTest < Minitest::Test
     assert_equal helpers_result, banner_result, "Nonexistent file should produce same result"
     
     # Test with only comments
-    File.write(@test_file, "# Only comments\n# Another comment\n  # Indented comment")
+    write_file(@test_file, "# Only comments\n# Another comment\n  # Indented comment")
     helpers_result = @helper.read_commented_file(@test_file)
     banner_result = @banner.read_commented_file(@test_file)
     assert_equal helpers_result, banner_result, "File with only comments should produce same result"

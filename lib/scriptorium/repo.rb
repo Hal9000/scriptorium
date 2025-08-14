@@ -117,7 +117,7 @@ class Scriptorium::Repo
       view_name = read_file(cview_file).chomp
       begin
         @current_view = lookup_view(view_name)
-      rescue => e
+      rescue
         # If the saved view doesn't exist, just leave current_view as nil
         # It will be set when a view is created or selected
       end
@@ -245,7 +245,6 @@ class Scriptorium::Repo
     
     # Whoa - what if different views have different themes??? FIXME 
     # Maybe solution is as simple as: Initial post is not theme-dependent
-    theme = @current_view.theme
     views ||= @current_view.name   # initial_post wants a String!
     views, tags = Array(views), Array(tags)
     id = incr_post_num
@@ -370,7 +369,7 @@ class Scriptorium::Repo
     # Create symlink (relative path from clean_symlink_path to slug)
     begin
       File.symlink(slug, clean_symlink_path)
-    rescue Errno::EEXIST => e
+    rescue Errno::EEXIST
       # If symlink already exists (not a symlink), remove it and try again
       File.delete(clean_symlink_path) if File.exist?(clean_symlink_path)
       File.symlink(slug, clean_symlink_path)
@@ -475,7 +474,6 @@ class Scriptorium::Repo
     vars[:"post.views"] = views.join(" ")  # Ensure post.views is set in vars
     views.each do |view|  
       view = lookup_view(view)
-      theme = view.theme 
       vars[:"post.id"] = num.to_s  # Always use the post number as ID
       vars[:"post.body"] = body
       template = @predef.post_template("standard")

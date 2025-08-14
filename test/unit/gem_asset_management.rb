@@ -59,11 +59,11 @@ class TestGemAssetManagement < Minitest::Test
 
   def test_001_gem_asset_discovery_in_development
     # Test that gem assets are found in development environment
-    content = "$$asset[icons/ui/back-arrow.svg]"
+    content = "$$asset[icons/ui/back.png]"
     result = process_livetext(content)
     
     # Should find gem asset and return correct path
-    assert_equal "assets/icons/ui/back-arrow.svg", result[:body].strip
+    assert_equal "assets/icons/ui/back.png", result[:body].strip
   end
 
   def test_002_gem_asset_discovery_in_production
@@ -82,7 +82,7 @@ class TestGemAssetManagement < Minitest::Test
     # Check for specific theme assets
     expected_theme_assets = [
       "standard/favicon.svg",
-      "icons/ui/back-arrow.svg"
+      "icons/ui/back.png"
     ]
     
     expected_theme_assets.each do |asset|
@@ -111,25 +111,25 @@ class TestGemAssetManagement < Minitest::Test
 
   def test_005_gem_assets_in_search_hierarchy
     # Test that gem assets are found in the correct priority order
-    content = "$$asset[icons/ui/back-arrow.svg]"
+    content = "$$asset[icons/ui/back.png]"
     result = process_livetext(content)
     
     # Should find gem asset and return correct path
-    assert_equal "assets/icons/ui/back-arrow.svg", result[:body].strip
+    assert_equal "assets/icons/ui/back.png", result[:body].strip
   end
 
   def test_006_gem_assets_override_by_user_assets
     # Test that user assets override gem assets
     # Create a user asset with the same name as a gem asset
-    user_asset_path = @repo.root/"assets"/"icons"/"ui"/"back-arrow.svg"
+    user_asset_path = @repo.root/"assets"/"icons"/"ui"/"back.png"
     FileUtils.mkdir_p(File.dirname(user_asset_path))
-    File.write(user_asset_path, "User asset content")
+    write_file(user_asset_path, "User asset content")
     
-    content = "$$asset[icons/ui/back-arrow.svg]"
+    content = "$$asset[icons/ui/back.png]"
     result = process_livetext(content)
     
     # Should find user asset first (higher priority)
-    assert_equal "assets/icons/ui/back-arrow.svg", result[:body].strip
+    assert_equal "assets/icons/ui/back.png", result[:body].strip
   end
 
   def test_007_gem_asset_path_resolution
@@ -143,7 +143,7 @@ class TestGemAssetManagement < Minitest::Test
         
         # Check for specific gem assets
         expected_gem_assets = [
-          "icons/ui/back-arrow.svg",
+          "icons/ui/back.png",
           "samples/placeholder.svg",
           "themes/standard/favicon.svg"
         ]
@@ -170,20 +170,14 @@ class TestGemAssetManagement < Minitest::Test
     output_assets_dir = @repo.root/"views"/"gem_asset_test_view"/"output"/"assets"
     
     # Generate a post that references gem assets
-    draft_body = "$$asset[icons/ui/back-arrow.svg]"
+    draft_body = "$$asset[icons/ui/back.png]"
     name = @repo.create_draft(title: "Gem Asset Test", views: ["gem_asset_test_view"], body: draft_body)
     num = @repo.finish_draft(name)
     @repo.generate_post(num)
     
     # Check that gem assets are not copied to output
-    gem_asset_in_output = output_assets_dir/"icons"/"ui"/"back-arrow.svg"
+    gem_asset_in_output = output_assets_dir/"icons"/"ui"/"back.png"
     refute File.exist?(gem_asset_in_output), "Gem assets should not be copied to output"
   end
 
-  private
-
-  def write_file(path, content)
-    FileUtils.mkdir_p(File.dirname(path)) unless Dir.exist?(File.dirname(path))
-    File.write(path, content)
-  end
 end

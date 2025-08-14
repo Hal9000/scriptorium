@@ -1,7 +1,0 @@
-header n
-banner n
-navbar n
-left n
-right n
-pages n
-deploy n

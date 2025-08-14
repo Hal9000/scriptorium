@@ -204,7 +204,6 @@ But overall, the process is robust and well thought-out. No major changes needed
 
   def section_core(section, hash)
     cfg = @dir/:config
-    template = @dir/:layout/"#{section}.html"
     sectxt = cfg/"#{section}.txt"
     
     # Only add placeholder if section has no real content
@@ -246,7 +245,6 @@ write output:      write the result to output/panes/header.html
 =end
 
   def build_section(section, hash2 = {}, args = "")
-    config = @dir/:config/"#{section}.txt"
     template = @dir/:layout/"#{section}.html"
     output = @dir/:output/:panes/"#{section}.html"
     
@@ -369,7 +367,7 @@ write output:      write the result to output/panes/header.html
       bsvg.parse_header_svg
     end
     
-    code = bsvg.get_svg
+    bsvg.get_svg
   end
 
   def build_nav(arg)
@@ -467,8 +465,6 @@ write output:      write the result to output/panes/header.html
   end
 
   def generate_dropdown_item(item)
-    dropdown_id = "dropdown-#{item[:label].downcase.gsub(/\s+/, '-')}"
-    
     html = <<~HTML
       <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -477,9 +473,7 @@ write output:      write the result to output/panes/header.html
         <ul class="dropdown-menu">
     HTML
     
-    item[:children].each do |child|
-      html << generate_dropdown_child(child)
-    end
+    item[:children].each {|child| html << generate_dropdown_child(child) }
     
     html << <<~HTML
         </ul>
@@ -609,17 +603,11 @@ write output:      write the result to output/panes/header.html
     posts = @repo.all_posts(self) 
     str = ""
     # FIXME - many decisions to make here...
-    posts.each do |post|
-      str << post_index_entry(post)
-    end
+    posts.each {|post| str << post_index_entry(post) }
     write_file(@dir/:output/"post_index.html", str)    
   end
 
   def post_index_entry(post)
-      # grab index-entry template
-      # generate index-entry for each post
-      # append to str
-    num, title, pubdate, blurb = post.attrs(:id, :title, :pubdate, :blurb)
     template = @predef.index_entry
     entry = substitute(post, template)
     entry
@@ -631,7 +619,6 @@ write output:      write the result to output/panes/header.html
   end
 
   def view_posts
-    posts = []
     @repo.all_posts(self).sort_by {|post| post.pubdate}
   end
 
@@ -674,8 +661,6 @@ write output:      write the result to output/panes/header.html
     content << "</head>\n"
     content
   end
-
-
 
   def get_common_js(view = nil)
     global_js = @root/:config/"common.js"
@@ -723,7 +708,7 @@ write output:      write the result to output/panes/header.html
       when "src"
         src = args
       when "rel"
-        rel = args
+        # rel = args
       when "integrity"
         integrity = args
       when "crossorigin"
@@ -758,8 +743,9 @@ write output:      write the result to output/panes/header.html
     # Get the appropriate title, description, and URL
     if is_post
       title = post_data[:"post.title"] || @title
-      description = post_data[:"post.blurb"] || post_data[:"post.body"]&.truncate(200) || @desc || @subtitle || @title
-      url = "posts/#{post_data[:"post.slug"] || slugify(post_data[:"post.id"], title)}.html"
+      description = post_data[:"post.blurb"] || (post_data[:"post.body"] ? post_data[:"post.body"][0..200] : nil) || @desc || @subtitle || @title
+      slug = post_data[:"post.slug"] || (post_data[:"post.id"] ? slugify(post_data[:"post.id"], title) : 'post')
+      url = "posts/#{slug}#{slug.end_with?('.html') ? '' : '.html'}"
       type = "article"
     else
       title = @title
@@ -829,17 +815,20 @@ write output:      write the result to output/panes/header.html
     # Determine post URL and title
     if post_data
       title = post_data[:"post.title"] || @title
-      url = "posts/#{post_data[:"post.slug"] || slugify(post_data[:"post.id"], title)}.html"
+      slug = post_data[:"post.slug"] || slugify(post_data[:"post.id"], title)
+      url = "posts/#{slug}#{slug.end_with?('.html') ? '' : '.html'}"
     else
       title = @title
       url = "index.html"
     end
     
     # Build Reddit share URL
+    require 'uri'
+    encoded_title = URI.encode_www_form_component(title)
     if subreddit.empty?
-      reddit_url = "https://reddit.com/submit?url=#{escape_html(url)}&title=#{escape_html(title)}"
+      reddit_url = "https://reddit.com/submit?url=#{escape_html(url)}&title=#{encoded_title}"
     else
-      reddit_url = "https://reddit.com/r/#{subreddit}/submit?url=#{escape_html(url)}&title=#{escape_html(title)}"
+      reddit_url = "https://reddit.com/r/#{subreddit}/submit?url=#{escape_html(url)}&title=#{encoded_title}"
     end
     
     # Determine hover text
@@ -903,11 +892,7 @@ write output:      write the result to output/panes/header.html
   end
 
   def generate_front_page
-    layout_file = @dir/:config/"layout.txt"
     index_file  = @dir/:output/"index.html"
-    panes       = @dir/:output/:panes
-
-    # Ensure output directory exists
     FileUtils.mkdir_p(File.dirname(index_file))
 
     html_head = generate_html_head(true)
@@ -927,18 +912,18 @@ write output:      write the result to output/panes/header.html
     HTML
 
     # Beautify HTML if HtmlBeautifier is available
-    # begin
-    #   full_html = ::HtmlBeautifier.beautify(full_html)
-    # rescue NameError, LoadError => e
-    #   # HtmlBeautifier not available, continue without beautification
-    #   # This is not critical for functionality
-    # end
+    begin
+      full_html = ::HtmlBeautifier.beautify(full_html)
+    rescue NameError, LoadError => e
+      # HtmlBeautifier not available, continue without beautification
+      # This is not critical for functionality
+    end
 
     # Write the main index file
     begin
       write_file(index_file, full_html)
     rescue Errno::ENOSPC, Errno::EACCES => e
-      raise FailedToWriteFrontPage(e.message)
+      raise FailedToWriteFrontPage(e.message)   # FIXME
     end
 
     # Write debug file (optional, don't fail if it doesn't work)
@@ -959,9 +944,6 @@ write output:      write the result to output/panes/header.html
       end
     end
   end
-
-
-
 
   def generate_syntax_css
     highlighter = Scriptorium::SyntaxHighlighter.new

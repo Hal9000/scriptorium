@@ -14,7 +14,6 @@ class TestLivetextBasic < Minitest::Test
       body, vars = live.process(text: content)
       assert_equal "Simple text content", body.strip
       assert vars.is_a?(Hash)
-      puts "✓ Basic Livetext processing works"
     rescue => e
       flunk "Basic Livetext processing failed: #{e.message}"
     end
@@ -34,7 +33,6 @@ class TestLivetextBasic < Minitest::Test
       body, vars = live.process(text: content)
       assert_includes body, "This is the body"
       assert vars.is_a?(Hash)
-      puts "✓ Livetext with dot commands works"
     rescue => e
       flunk "Livetext with dot commands failed: #{e.message}"
     end
@@ -45,7 +43,6 @@ class TestLivetextBasic < Minitest::Test
     begin
       live = Livetext.customize(mix: "lt3scriptor")
       assert live
-      puts "✓ Plugin loads successfully"
     rescue => e
       flunk "Plugin loading failed: #{e.message}"
     end
@@ -59,7 +56,6 @@ class TestLivetextBasic < Minitest::Test
       live = Livetext.customize(mix: "lt3scriptor", call: ".nopara")
       body, vars = live.process(text: content)
       assert body.is_a?(String)
-      puts "✓ Plugin processes simple content: #{body}"
     rescue => e
       puts "✗ Plugin processing failed: #{e.message}"
       puts e.backtrace.first(3)

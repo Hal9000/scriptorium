@@ -37,20 +37,12 @@ module Scriptorium
       
       begin
         lexer = Rouge::Lexer.find(lexer_name)
-        puts "DEBUG: Found lexer: #{lexer.class}"
         highlighted = @formatter.format(lexer.lex(code))
-        puts "DEBUG: Rouge output length: #{highlighted.length}"
-        puts "DEBUG: Raw Rouge output (first 500 chars): #{highlighted[0..500]}"
-        puts "DEBUG: HTML contains <div>: #{highlighted.include?('<div')}"
-        puts "DEBUG: HTML contains <br>: #{highlighted.include?('<br')}"
-        puts "DEBUG: HTML contains \\n: #{highlighted.include?("\n")}"
         
         # Massage the output to use our CSS classes
         massage_output(highlighted, language)
       rescue => e
         # Fallback to escaped HTML if highlighting fails
-        puts "DEBUG: Rouge highlighting failed for #{language}: #{e.message}"
-        puts "DEBUG: Backtrace: #{e.backtrace.first(3).join(', ')}"
         escape_html(code)
       end
     end

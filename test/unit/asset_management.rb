@@ -41,18 +41,18 @@ class TestAssetManagement < Minitest::Test
 
   def create_test_assets
     # Create global asset
-    File.write(@repo.root/"assets"/"image1.jpg", "Global Asset 1")
+    write_file(@repo.root/"assets"/"image1.jpg", "Global Asset 1")
     
     # Create view asset
-    File.write(@repo.root/"views"/"asset_test_view"/"assets"/"image2.jpg", "View Asset 2")
+    write_file(@repo.root/"views"/"asset_test_view"/"assets"/"image2.jpg", "View Asset 2")
     
     # Create post asset
     FileUtils.mkdir_p(@repo.root/"posts"/"0001"/"assets")
-    File.write(@repo.root/"posts"/"0001"/"assets"/"image3.jpg", "Post Asset 3")
+    write_file(@repo.root/"posts"/"0001"/"assets"/"image3.jpg", "Post Asset 3")
     
     # Create library asset
     FileUtils.mkdir_p(@repo.root/"assets"/"library")
-    File.write(@repo.root/"assets"/"library"/"image4.jpg", "Library Asset 4")
+    write_file(@repo.root/"assets"/"library"/"image4.jpg", "Library Asset 4")
   end
 
   def process_livetext(content)
@@ -105,9 +105,9 @@ class TestAssetManagement < Minitest::Test
 
   def test_004_asset_function_search_hierarchy
     # Create same filename in multiple locations to test hierarchy
-    File.write(@repo.root/"assets"/"duplicate.jpg", "Global")
-    File.write(@repo.root/"views"/"asset_test_view"/"assets"/"duplicate.jpg", "View")
-    File.write(@repo.root/"posts"/"0001"/"assets"/"duplicate.jpg", "Post")
+    write_file(@repo.root/"assets"/"duplicate.jpg", "Global")
+    write_file(@repo.root/"views"/"asset_test_view"/"assets"/"duplicate.jpg", "View")
+    write_file(@repo.root/"posts"/"0001"/"assets"/"duplicate.jpg", "Post")
     
     content = "$$asset[duplicate.jpg]"
     result = process_livetext(content)
@@ -185,12 +185,12 @@ class TestAssetManagement < Minitest::Test
     # Create theme assets directory and add a test asset
     theme_assets_dir = @repo.root/"themes"/"standard"/"assets"
     FileUtils.mkdir_p(theme_assets_dir)
-    File.write(theme_assets_dir/"theme-test.jpg", "Theme Asset")
+    write_file(theme_assets_dir/"theme-test.jpg", "Theme Asset")
     
     # Create same filename in multiple locations to test hierarchy
-    File.write(@repo.root/"assets"/"theme-test.jpg", "Global")
-    File.write(@repo.root/"views"/"asset_test_view"/"assets"/"theme-test.jpg", "View")
-    File.write(@repo.root/"posts"/"0001"/"assets"/"theme-test.jpg", "Post")
+    write_file(@repo.root/"assets"/"theme-test.jpg", "Global")
+    write_file(@repo.root/"views"/"asset_test_view"/"assets"/"theme-test.jpg", "View")
+    write_file(@repo.root/"posts"/"0001"/"assets"/"theme-test.jpg", "Post")
     
     # Test with post context - should find post asset first (highest priority)
     content = "$$asset[theme-test.jpg]"
@@ -212,11 +212,73 @@ class TestAssetManagement < Minitest::Test
 
   def test_012_gem_assets_in_hierarchy
     # Test gem assets (lowest priority)
-    content = "$$asset[icons/ui/back-arrow.svg]"
+    content = "$$asset[icons/ui/back.png]"
     result = process_livetext(content)
     
     # Should find gem asset and return correct path
-    assert_equal "assets/icons/ui/back-arrow.svg", result[:body].strip
+    assert_equal "assets/icons/ui/back.png", result[:body].strip
+  end
+
+  # ========================================
+  # Additional Asset Logic Tests
+  # ========================================
+
+  def test_013_asset_function_with_library_assets
+    # Test library assets in hierarchy
+    content = "$$asset[image4.jpg]"
+    result = process_livetext(content)
+    
+    # Should find library asset
+    assert_equal "assets/image4.jpg", result[:body].strip
+  end
+
+  def test_014_asset_function_priority_order
+    # Test that asset priority order is correct: post > view > global > library > gem
+    # Create same filename in multiple locations
+    write_file(@repo.root/"assets"/"priority-test.jpg", "Global")
+    write_file(@repo.root/"views"/"asset_test_view"/"assets"/"priority-test.jpg", "View")
+    write_file(@repo.root/"posts"/"0001"/"assets"/"priority-test.jpg", "Post")
+    write_file(@repo.root/"assets"/"library"/"priority-test.jpg", "Library")
+    
+    # With post context - should find post asset (highest priority)
+    content = "$$asset[priority-test.jpg]"
+    result = process_livetext(content)
+    assert_equal "assets/0001/priority-test.jpg", result[:body].strip
+    
+    # Without post context - should find view asset
+    original_post_id = @vars["post.id"]
+    @vars["post.id"] = nil
+    
+    content = "$$asset[priority-test.jpg]"
+    result = process_livetext(content)
+    assert_equal "assets/priority-test.jpg", result[:body].strip
+    
+    # Restore post.id
+    @vars["post.id"] = original_post_id
+  end
+
+  def test_015_asset_function_with_special_characters
+    # Test asset filenames with special characters
+    special_filename = "test-image (1).jpg"
+    write_file(@repo.root/"assets"/special_filename, "Special Asset")
+    
+    content = "$$asset[#{special_filename}]"
+    result = process_livetext(content)
+    
+    # Should handle special characters correctly
+    assert_equal "assets/#{special_filename}", result[:body].strip
+  end
+
+  def test_016_asset_function_with_spaces_in_filename
+    # Test asset filenames with spaces
+    spaced_filename = "test image.jpg"
+    write_file(@repo.root/"assets"/spaced_filename, "Spaced Asset")
+    
+    content = "$$asset[#{spaced_filename}]"
+    result = process_livetext(content)
+    
+    # Should handle spaces correctly
+    assert_equal "assets/#{spaced_filename}", result[:body].strip
   end
 
   private

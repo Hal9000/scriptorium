@@ -350,17 +350,9 @@ def code(args, data, body)
   # Use Rouge syntax highlighting if language is supported
   if language && !language.empty?
     begin
-      puts "DEBUG: About to create SyntaxHighlighter"
       highlighter = Scriptorium::SyntaxHighlighter.new
-      puts "DEBUG: About to highlight #{language} code: #{code_content.length} chars"
       highlighted_code = highlighter.highlight(code_content, language)
-      puts "DEBUG: Highlighting result: #{highlighted_code.length} chars"
-      puts "DEBUG: About to call api.out with HTML length: #{highlighted_code.length}"
-      puts "DEBUG: First 200 chars of HTML: #{highlighted_code[0..200]}"
-      puts "DEBUG: HTML contains <span>: #{highlighted_code.include?('<span')}"
-      puts "DEBUG: HTML contains \\n: #{highlighted_code.include?("\n")}"
       api.out %q[<pre><code class="language-#{language}">#{highlighted_code}</code></pre>]
-      puts "DEBUG: After api.out call"
     rescue => e
       # Fallback to unhighlighted code if highlighting fails
       api.out %[<pre><code class="language-#{language}">#{code_content}</code></pre>]
@@ -560,7 +552,7 @@ end
 ##    text = api.body.join("\n")
 ##    @meta.teaser = text
 ##    setvar :teaser, @meta.teaser
-##    if api.args[0] == "dropcap"   # FIXME doesn't work yet!
+##    if api.args[0] == "dropcap"
 ##      letter, remain = text[0], text[1..-1]
 ##      api.out %[<div class='mydrop'>#{letter}</div>]
 ##      api.out %[<div style="padding-top: 1px">#{remain}] + "\n"
@@ -602,7 +594,6 @@ end
 ##                 "og:url"         => %[<meta property="og:url" content="#{_var(:host)}">],
 ##                 "og:site_name"   => %[<meta property="og:site_name" content="#{_var("view.title")}">],
 ##  #              "style"          => %[<link rel="stylesheet" href="etc/blog.css">],
-##  # ^ FIXME
 ##                 "feed"           => %[<link type="application/atom+xml" rel="alternate"] +
 ##                                     %[href="#{_var(:host)}/feed.xml" title="#{_var("view.title")}">],
 ##                 "favicon"        => %[<link rel="shortcut icon" type="image/x-icon" href="etc/favicon.ico">\n ] + 
@@ -617,7 +608,7 @@ end
 ##      case word
 ##        when "viewport"
 ##          result["viewport"] = %[<meta name="viewport" content="#{remain}">]
-##        when "script"  # FIXME this is broken
+##        when "script" 
 ##          file = remain
 ##          text = File.read(file)
 ##          result["script"] = Livetext.new.transform(text)
@@ -633,7 +624,7 @@ end
 ##        end
 ##      end
 ##    end
-##    hash = defaults.dup.update(result)  # FIXME collisions?
+##    hash = defaults.dup.update(result) 
 ##  
 ##    hash.each_value {|x| api.out "  " + x }
 ##  end
@@ -917,7 +908,7 @@ end
 ##    api.out text + "\n "
 ##  end
 ##  
-##  def _var(name)  # FIXME scope issue!
+##  def _var(name)
 ##    log!(enter: __method__)
 ##    ::Livetext::Vars[name] || "[:#{name} is undefined]"
 ##  end
