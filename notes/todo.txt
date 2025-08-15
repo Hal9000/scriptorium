@@ -1,10 +1,8 @@
 VERY SOON:
 ----------
-  main config, fonts etc.
   widget management
   full reddit support
   configurator? more wizards?
-  API - upload, deploy, ...
   post footer?
   livetext scriptorium additions
   legacy import
@@ -89,3 +87,5 @@ x Gem asset handling
 x Repo asset management
 x rudimentary icon/logo collection
 x Exception names (DBC?)
+x main config, fonts etc.
+x API - upload, deploy, ...

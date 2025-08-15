@@ -621,9 +621,419 @@ class Scriptorium::API
   #   # finish_draft + generate_post combined?
   # end
 
-  # Utility methods
+  # Asset management methods
+  
+  def list_assets(target: 'global', view: nil, include_gem: true)
+    view ||= @repo.current_view&.name
+    raise "No view specified and no current view set" if target == 'view' && view.nil?
+    
+    assets = []
+    
+    case target
+    when 'view'
+      assets_dir = @repo.root/"views"/view/"assets"
+      if Dir.exist?(assets_dir)
+        Dir.glob(assets_dir/"*").each do |file|
+          next unless File.file?(file)
+          assets << build_asset_info(file)
+        end
+      end
+    when 'global'
+      assets_dir = @repo.root/"assets"
+      if Dir.exist?(assets_dir)
+        Dir.glob(assets_dir/"*").each do |file|
+          next unless File.file?(file)
+          assets << build_asset_info(file)
+        end
+      end
+    when 'library'
+      assets_dir = @repo.root/"assets"/"library"
+      if Dir.exist?(assets_dir)
+        Dir.glob(assets_dir/"*").each do |file|
+          next unless File.file?(file)
+          assets << build_asset_info(file)
+        end
+      end
+    when 'gem'
+      if include_gem
+        gem_spec = Gem.loaded_specs['scriptorium']
+        if gem_spec
+          gem_assets_dir = "#{gem_spec.full_gem_path}/assets"
+          if Dir.exist?(gem_assets_dir)
+            Dir.glob("#{gem_assets_dir}/**/*").each do |file|
+              next unless File.file?(file)
+              relative_path = file.sub("#{gem_assets_dir}/", "")
+              assets << build_asset_info(file, relative_path)
+            end
+          end
+        end
+      end
+    else
+      raise "Invalid target: #{target}. Use 'view', 'global', 'library', or 'gem'"
+    end
+    
+    assets.sort_by { |asset| asset[:filename] }
+  end
+  
+  def get_asset_info(filename, target: 'global', view: nil, include_gem: true)
+    view ||= @repo.current_view&.name
+    raise "No view specified and no current view set" if target == 'view' && view.nil?
+    
+    case target
+    when 'view'
+      asset_path = @repo.root/"views"/view/"assets"/filename
+      return build_asset_info(asset_path) if File.exist?(asset_path)
+    when 'global'
+      asset_path = @repo.root/"assets"/filename
+      return build_asset_info(asset_path) if File.exist?(asset_path)
+    when 'library'
+      asset_path = @repo.root/"assets"/"library"/filename
+      return build_asset_info(asset_path) if File.exist?(asset_path)
+    when 'gem'
+      if include_gem
+        gem_spec = Gem.loaded_specs['scriptorium']
+        if gem_spec
+          gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{filename}"
+          return build_asset_info(gem_asset_path, filename) if File.exist?(gem_asset_path)
+        end
+      end
+    else
+      raise "Invalid target: #{target}. Use 'view', 'global', 'library', or 'gem'"
+    end
+    
+    nil
+  end
+  
+  def asset_exists?(filename, target: 'global', view: nil, include_gem: true)
+    !get_asset_info(filename, target: target, view: view, include_gem: include_gem).nil?
+  end
+  
+  def copy_asset(filename, from: 'global', to: 'view', view: nil)
+    view ||= @repo.current_view&.name
+    raise "No view specified and no current view set" if to == 'view' && view.nil?
+    
+    # Determine source path
+    source_path = case from
+    when 'gem'
+      gem_spec = Gem.loaded_specs['scriptorium']
+      if gem_spec
+        "#{gem_spec.full_gem_path}/assets/#{filename}"
+      else
+        # Development environment fallback
+        File.expand_path("assets/#{filename}")
+      end
+    when 'global'
+      @repo.root/"assets"/filename
+    when 'library'
+      @repo.root/"assets"/"library"/filename
+    when 'view'
+      view ||= @repo.current_view&.name
+      raise "No view specified and no current view set" if view.nil?
+      @repo.root/"views"/view/"assets"/filename
+    else
+      raise "Invalid source: #{from}. Use 'gem', 'global', 'library', or 'view'"
+    end
+    
+    # Determine target path
+    target_path = case to
+    when 'global'
+      @repo.root/"assets"/filename
+    when 'library'
+      @repo.root/"assets"/"library"/filename
+    when 'view'
+      @repo.root/"views"/view/"assets"/filename
+    else
+      raise "Invalid target: #{to}. Use 'global', 'library', or 'view'"
+    end
+    
+    # Validate source exists
+    unless File.exist?(source_path)
+      raise "Source file not found: #{source_path}"
+    end
+    
+    # Create target directory and copy
+    FileUtils.mkdir_p(File.dirname(target_path))
+    FileUtils.cp(source_path, target_path)
+    
+    target_path
+  end
+  
+  def upload_asset(file_path, target: 'global', view: nil)
+    view ||= @repo.current_view&.name
+    raise "No view specified and no current view set" if target == 'view' && view.nil?
+    
+    unless File.exist?(file_path)
+      raise "Source file not found: #{file_path}"
+    end
+    
+    filename = File.basename(file_path)
+    
+    # Determine target directory
+    target_dir = case target
+    when 'global'
+      @repo.root/"assets"
+    when 'library'
+      @repo.root/"assets"/"library"
+    when 'view'
+      @repo.root/"views"/view/"assets"
+    else
+      raise "Invalid target: #{target}. Use 'global', 'library', or 'view'"
+    end
+    
+    # Create target directory if it doesn't exist
+    FileUtils.mkdir_p(target_dir)
+    
+    # Copy the file
+    target_file = target_dir/filename
+    FileUtils.cp(file_path, target_file)
+    
+    target_file
+  end
+  
+  def delete_asset(filename, target: 'global', view: nil)
+    view ||= @repo.current_view&.name
+    raise "No view specified and no current view set" if target == 'view' && view.nil?
+    
+    # Determine target file
+    target_file = case target
+    when 'global'
+      @repo.root/"assets"/filename
+    when 'library'
+      @repo.root/"assets"/"library"/filename
+    when 'view'
+      @repo.root/"views"/view/"assets"/filename
+    else
+      raise "Invalid target: #{target}. Use 'global', 'library', or 'view'"
+    end
+    
+    unless File.exist?(target_file)
+      raise "File not found: #{target_file}"
+    end
+    
+    # Delete the file
+    File.delete(target_file)
+    true
+  end
+  
+  def get_asset_path(filename, target: 'global', view: nil, include_gem: true)
+    view ||= @repo.current_view&.name
+    raise "No view specified and no current view set" if target == 'view' && view.nil?
+    
+    case target
+    when 'view'
+      asset_path = @repo.root/"views"/view/"assets"/filename
+      return asset_path.to_s if File.exist?(asset_path)
+    when 'global'
+      asset_path = @repo.root/"assets"/filename
+      return asset_path.to_s if File.exist?(asset_path)
+    when 'library'
+      asset_path = @repo.root/"assets"/"library"/filename
+      return asset_path.to_s if File.exist?(asset_path)
+    when 'gem'
+      if include_gem
+        gem_spec = Gem.loaded_specs['scriptorium']
+        if gem_spec
+          gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{filename}"
+          return gem_asset_path if File.exist?(gem_asset_path)
+        end
+      end
+    else
+      raise "Invalid target: #{target}. Use 'view', 'global', 'library', or 'gem'"
+    end
+    
+    nil
+  end
+  
+  def get_image_dimensions(file_path)
+    return nil unless File.exist?(file_path)
+    
+    # Check if it's an image file
+    image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.svg']
+    return nil unless image_extensions.any? { |ext| file_path.downcase.end_with?(ext) }
+    
+    # Check if FastImage is available
+    return nil unless defined?(FastImage)
+    
+    dimensions = FastImage.size(file_path)
+    return dimensions ? "#{dimensions[0]}×#{dimensions[1]}" : nil
+  rescue => e
+    # If FastImage fails, return nil
+    return nil
+  end
 
-  # Convenience workflow methods
+  def get_asset_dimensions(filename, target: 'global', view: nil, include_gem: true)
+    asset_info = get_asset_info(filename, target: target, view: view, include_gem: include_gem)
+    asset_info&.dig(:dimensions)
+  end
+  
+  def get_asset_size(filename, target: 'global', view: nil, include_gem: true)
+    asset_info = get_asset_info(filename, target: target, view: view, include_gem: include_gem)
+    asset_info&.dig(:size)
+  end
+  
+  def get_asset_type(filename)
+    return nil if filename.nil?
+    
+    ext = File.extname(filename).downcase
+    case ext
+    when '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.svg'
+      'image'
+    when '.pdf', '.doc', '.docx', '.txt', '.md'
+      'document'
+    when '.mp4', '.avi', '.mov', '.wmv'
+      'video'
+    when '.mp3', '.wav', '.flac'
+      'audio'
+    else
+      'other'
+    end
+  end
+  
+  def bulk_copy_assets(filenames, from: 'global', to: 'view', view: nil)
+    view ||= @repo.current_view&.name
+    raise "No view specified and no current view set" if to == 'view' && view.nil?
+    
+    results = []
+    filenames.each do |filename|
+      begin
+        target_path = copy_asset(filename, from: from, to: to, view: view)
+        results << { filename: filename, success: true, target: target_path }
+      rescue => e
+        results << { filename: filename, success: false, error: e.message }
+      end
+    end
+    
+    results
+  end
+  
+  private def build_asset_info(file_path, relative_path = nil)
+    filename = relative_path || File.basename(file_path)
+    size = File.size(file_path)
+    dimensions = get_image_dimensions(file_path) if get_asset_type(filename) == 'image'
+    
+    {
+      filename: filename,
+      size: size,
+      path: file_path.to_s,
+      dimensions: dimensions,
+      type: get_asset_type(filename)
+    }
+  end
+
+  # Deployment methods
+  
+  def can_deploy?(view = nil)
+    view ||= @repo.current_view&.name
+    raise "No view specified and no current view set" if view.nil?
+    
+    # Check deployment status
+    status_file = @repo.root/"views"/view/"config"/"status.txt"
+    return false unless File.exist?(status_file)
+    
+    status_content = read_file(status_file)
+    deploy_status = false
+    
+    status_content.lines.each do |line|
+      line = line.strip
+      next if line.empty? || line.start_with?('#')
+      if line.start_with?('deploy ')
+        deploy_status = line.split(/\s+/, 2)[1] == 'y'
+        break
+      end
+    end
+    
+    return false unless deploy_status
+    
+    # Check if deploy.txt exists and has valid content
+    deploy_file = @repo.root/"views"/view/"config"/"deploy.txt"
+    return false unless File.exist?(deploy_file)
+    
+    # Basic validation of deploy.txt content
+    deploy_content = read_file(deploy_file)
+    required_fields = ['user', 'server', 'docroot', 'path']
+    return false unless required_fields.all? { |field| deploy_content.include?(field) }
+    
+    # Parse deploy config to get server and user for SSH test
+    deploy_config = {}
+    deploy_content.lines.each do |line|
+      line = line.strip
+      next if line.empty? || line.start_with?('#')
+      if line.include?(' ')
+        key, value = line.split(/\s+/, 2)
+        deploy_config[key.to_sym] = value
+      end
+    end
+    
+    # Check SSH connectivity
+    return false unless ssh_keys_configured?(deploy_config[:server], deploy_config[:user])
+    
+    true
+  end
+  
+  private def ssh_keys_configured?(server, user)
+    # Try to run a simple command via SSH
+    result = system("ssh -o ConnectTimeout=10 -o BatchMode=yes #{user}@#{server} 'echo ok' 2>/dev/null")
+    result && $?.exitstatus == 0
+  end
+  
+  def deploy(view = nil, dry_run: false)
+    view ||= @repo.current_view&.name
+    raise "No view specified and no current view set" if view.nil?
+    
+    # Check if deployment is ready
+    unless can_deploy?(view)
+      raise "View '#{view}' is not ready for deployment. Check status and configuration."
+    end
+    
+    # Read deployment configuration
+    deploy_file = @repo.root/"views"/view/"config"/"deploy.txt"
+    deploy_config = {}
+    
+    read_file(deploy_file).lines.each do |line|
+      line = line.strip
+      next if line.empty? || line.start_with?('#')
+      if line.include?(' ')
+        key, value = line.split(/\s+/, 2)
+        deploy_config[key.to_sym] = value
+      end
+    end
+    
+    # Validate required fields
+    required_fields = [:user, :server, :docroot, :path]
+    missing_fields = required_fields - deploy_config.keys
+    unless missing_fields.empty?
+      raise "Missing required deployment fields: #{missing_fields.join(', ')}"
+    end
+    
+    # Construct paths
+    output_dir = @repo.root/"views"/view/"output"
+    remote_path = "#{deploy_config[:user]}@#{deploy_config[:server]}:#{deploy_config[:docroot]}/#{deploy_config[:path]}"
+    
+    # Build rsync command
+    cmd = "rsync -r -z -l #{output_dir}/ #{remote_path}/"
+    
+    if dry_run
+      puts "DRY RUN: Would execute: #{cmd}"
+      puts "Output directory: #{output_dir}"
+      puts "Remote path: #{remote_path}"
+      puts "Deployment config: #{deploy_config}"
+      return true
+    end
+    
+    # Execute deployment
+    puts "Deploying view '#{view}' to #{remote_path}..."
+    result = system(cmd)
+    
+    if result
+      puts "Deployment successful!"
+      # TODO: Update deployment timestamp in status or metadata
+      true
+    else
+      raise "Deployment failed with exit code #{$?.exitstatus}"
+    end
+  end
+
+  # Utility methods
 
 #   # Delegate common repo methods
 #   def method_missing(method, *args, &block)

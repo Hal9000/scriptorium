@@ -1053,4 +1053,329 @@ class TestScriptoriumAPI < Minitest::Test
     assert_match /post\.published\s+no/, metadata_content
     refute @api.post_published?(post.id)
   end
+
+  def test_999_placeholder
+    # This test ensures the file has at least one test method
+    assert true
+  end
+
+  # Asset management tests
+  
+  def test_1000_list_assets_global
+    # @api is already set up in setup method
+    
+    # Create some test assets
+    write_file("test/scriptorium-TEST/assets/test1.jpg", "Test image 1")
+    write_file("test/scriptorium-TEST/assets/test2.png", "Test image 2")
+    
+    assets = @api.list_assets(target: 'global')
+    
+    assert_equal 2, assets.length
+    assert_equal "test1.jpg", assets[0][:filename]
+    assert_equal "test2.png", assets[1][:filename]
+    assert_equal "image", assets[0][:type]
+    assert_equal "image", assets[1][:type]
+    assert assets[0][:size] > 0
+  end
+  
+  def test_1001_list_assets_library
+    # @api is already set up in setup method
+    
+    # Create library assets
+    write_file("test/scriptorium-TEST/assets/library/sample1.jpg", "Sample 1")
+    write_file("test/scriptorium-TEST/assets/library/sample2.txt", "Sample 2")
+    
+    assets = @api.list_assets(target: 'library')
+    
+    # There might be existing assets from setup, so check that our test assets are included
+    assert assets.length >= 2, "Should have at least our 2 test assets"
+    filenames = assets.map { |a| a[:filename] }
+    assert_includes filenames, "sample1.jpg"
+    assert_includes filenames, "sample2.txt"
+    
+    # Find our specific test assets
+    sample1 = assets.find { |a| a[:filename] == "sample1.jpg" }
+    sample2 = assets.find { |a| a[:filename] == "sample2.txt" }
+    
+    assert_equal "image", sample1[:type]
+    assert_equal "document", sample2[:type]
+  end
+  
+  def test_1002_list_assets_view
+    # @api is already set up in setup method
+    @api.create_view("testview", "Test View", "Test Subtitle")
+    
+    # Create view assets
+    write_file("test/scriptorium-TEST/views/testview/assets/view1.jpg", "View asset 1")
+    write_file("test/scriptorium-TEST/views/testview/assets/view2.svg", "View asset 2")
+    
+    assets = @api.list_assets(target: 'view', view: 'testview')
+    
+    assert_equal 2, assets.length
+    assert_equal "view1.jpg", assets[0][:filename]
+    assert_equal "view2.svg", assets[1][:filename]
+    assert_equal "image", assets[0][:type]
+    assert_equal "image", assets[1][:type]
+  end
+  
+  def test_1003_list_assets_gem
+    # @api is already set up in setup method
+    
+    # Test gem assets (should work in development environment)
+    assets = @api.list_assets(target: 'gem')
+    
+    # In development environment, we should find assets from the working directory
+    # If no gem assets are found, that's also acceptable
+    if assets.length > 0
+      assert assets.all? { |asset| asset[:type] == 'image' || asset[:type] == 'other' }
+    end
+  end
+  
+  def test_1004_get_asset_info
+    # @api is already set up in setup method
+    
+    # Create test asset
+    write_file("test/scriptorium-TEST/assets/test_info.jpg", "Test info image")
+    
+    asset_info = @api.get_asset_info("test_info.jpg", target: 'global')
+    
+    assert_equal "test_info.jpg", asset_info[:filename]
+    assert_equal "image", asset_info[:type]
+    assert asset_info[:size] > 0
+    assert asset_info[:path].include?("test_info.jpg")
+  end
+  
+  def test_1005_asset_exists
+    # @api is already set up in setup method
+    
+    # Create test asset
+    write_file("test/scriptorium-TEST/assets/exists.jpg", "Exists")
+    
+    assert @api.asset_exists?("exists.jpg", target: 'global')
+    refute @api.asset_exists?("missing.jpg", target: 'global')
+  end
+  
+  def test_1006_copy_asset_global_to_view
+    # @api is already set up in setup method
+    @api.create_view("testview", "Test View", "Test Subtitle")
+    
+    # Create source asset
+    write_file("test/scriptorium-TEST/assets/source.jpg", "Source image")
+    
+    # Copy asset
+    target_path = @api.copy_asset("source.jpg", from: 'global', to: 'view', view: 'testview')
+    
+    # Verify copy
+    assert File.exist?(target_path)
+    assert File.exist?("test/scriptorium-TEST/views/testview/assets/source.jpg")
+    assert_equal "Source image", read_file("test/scriptorium-TEST/views/testview/assets/source.jpg").chomp
+  end
+  
+  def test_1007_copy_asset_gem_to_global
+    # @api is already set up in setup method
+    
+    # Find a gem asset to copy
+    gem_assets = @api.list_assets(target: 'gem')
+    skip "No gem assets available for testing" if gem_assets.empty?
+    
+    gem_filename = gem_assets.first[:filename]
+    
+    # Copy from gem to global
+    target_path = @api.copy_asset(gem_filename, from: 'gem', to: 'global')
+    
+    # Verify copy
+    assert File.exist?(target_path)
+    assert File.exist?("test/scriptorium-TEST/assets/#{gem_filename}")
+  end
+  
+  def test_1008_copy_asset_library_to_view
+    # @api is already set up in setup method
+    @api.create_view("testview", "Test View", "Test Subtitle")
+    
+    # Create library asset
+    write_file("test/scriptorium-TEST/assets/library/lib.jpg", "Library image")
+    
+    # Copy to view
+    target_path = @api.copy_asset("lib.jpg", from: 'library', to: 'view', view: 'testview')
+    
+    # Verify copy
+    assert File.exist?(target_path)
+    assert File.exist?("test/scriptorium-TEST/views/testview/assets/lib.jpg")
+  end
+  
+  def test_1009_upload_asset
+    # @api is already set up in setup method
+    
+    # Create temporary source file
+    source_file = "test/temp_source.jpg"
+    write_file(source_file, "Temporary source image")
+    
+    # Upload to global
+    target_path = @api.upload_asset(source_file, target: 'global')
+    
+    # Verify upload
+    assert File.exist?(target_path)
+    assert File.exist?("test/scriptorium-TEST/assets/temp_source.jpg")
+    assert_equal "Temporary source image", read_file("test/scriptorium-TEST/assets/temp_source.jpg").chomp
+    
+    # Cleanup
+    File.delete(source_file)
+  end
+  
+  def test_1010_upload_asset_to_view
+    # @api is already set up in setup method
+    @api.create_view("testview", "Test View", "Test Subtitle")
+    
+    # Create temporary source file
+    source_file = "test/temp_view_source.jpg"
+    write_file(source_file, "View source image")
+    
+    # Upload to view
+    target_path = @api.upload_asset(source_file, target: 'view', view: 'testview')
+    
+    # Verify upload
+    assert File.exist?(target_path)
+    assert File.exist?("test/scriptorium-TEST/views/testview/assets/temp_view_source.jpg")
+    
+    # Cleanup
+    File.delete(source_file)
+  end
+  
+  def test_1011_delete_asset
+    # @api is already set up in setup method
+    
+    # Create test asset
+    write_file("test/scriptorium-TEST/assets/to_delete.jpg", "Delete me")
+    
+    # Verify it exists
+    assert File.exist?("test/scriptorium-TEST/assets/to_delete.jpg")
+    
+    # Delete it
+    result = @api.delete_asset("to_delete.jpg", target: 'global')
+    
+    # Verify deletion
+    assert result
+    refute File.exist?("test/scriptorium-TEST/assets/to_delete.jpg")
+  end
+  
+  def test_1012_get_asset_path
+    # @api is already set up in setup method
+    
+    # Create test asset
+    write_file("test/scriptorium-TEST/assets/path_test.jpg", "Path test")
+    
+    # Get path
+    path = @api.get_asset_path("path_test.jpg", target: 'global')
+    
+    assert path.include?("path_test.jpg")
+    assert path.include?("assets")
+  end
+  
+  def test_1013_get_asset_dimensions
+    # @api is already set up in setup method
+    
+    # Create test image (we'll use a placeholder)
+    write_file("test/scriptorium-TEST/assets/dimensions.jpg", "Image data")
+    
+    # Get dimensions (may be nil if FastImage not available)
+    dimensions = @api.get_asset_dimensions("dimensions.jpg", target: 'global')
+    
+    # Just verify the method doesn't crash
+    assert true
+  end
+  
+  def test_1014_get_asset_size
+    # @api is already set up in setup method
+    
+    # Create test asset
+    content = "Test content for size measurement"
+    write_file("test/scriptorium-TEST/assets/size_test.txt", content)
+    
+    # Get size (write_file adds a newline, so size will be content.length + 1)
+    size = @api.get_asset_size("size_test.txt", target: 'global')
+    
+    assert_equal content.length + 1, size
+  end
+  
+  def test_1015_get_asset_type
+    # @api is already set up in setup method
+    
+    # Test various file types
+    assert_equal "image", @api.get_asset_type("test.jpg")
+    assert_equal "image", @api.get_asset_type("test.png")
+    assert_equal "image", @api.get_asset_type("test.svg")
+    assert_equal "document", @api.get_asset_type("test.txt")
+    assert_equal "document", @api.get_asset_type("test.md")
+    assert_equal "video", @api.get_asset_type("test.mp4")
+    assert_equal "audio", @api.get_asset_type("test.mp3")
+    assert_equal "other", @api.get_asset_type("test.xyz")
+    assert_nil @api.get_asset_type(nil)
+  end
+  
+  def test_1016_bulk_copy_assets
+    # @api is already set up in setup method
+    @api.create_view("testview", "Test View", "Test Subtitle")
+    
+    # Create multiple source assets
+    write_file("test/scriptorium-TEST/assets/bulk1.jpg", "Bulk 1")
+    write_file("test/scriptorium-TEST/assets/bulk2.png", "Bulk 2")
+    write_file("test/scriptorium-TEST/assets/bulk3.txt", "Bulk 3")
+    
+    filenames = ["bulk1.jpg", "bulk2.png", "bulk3.txt"]
+    
+    # Bulk copy
+    results = @api.bulk_copy_assets(filenames, from: 'global', to: 'view', view: 'testview')
+    
+    # Verify results
+    assert_equal 3, results.length
+    assert results.all? { |r| r[:success] }
+    
+    # Verify files were copied
+    filenames.each do |filename|
+      assert File.exist?("test/scriptorium-TEST/views/testview/assets/#{filename}")
+    end
+  end
+  
+  def test_1017_copy_asset_invalid_source
+    # @api is already set up in setup method
+    
+    # Try to copy from invalid source
+    assert_raises(RuntimeError) do
+      @api.copy_asset("test.jpg", from: 'invalid', to: 'global')
+    end
+  end
+  
+  def test_1018_copy_asset_invalid_target
+    # @api is already set up in setup method
+    
+    # Try to copy to invalid target
+    assert_raises(RuntimeError) do
+      @api.copy_asset("test.jpg", from: 'global', to: 'invalid')
+    end
+  end
+  
+  def test_1019_copy_asset_source_not_found
+    # @api is already set up in setup method
+    
+    # Try to copy non-existent asset
+    assert_raises(RuntimeError) do
+      @api.copy_asset("missing.jpg", from: 'global', to: 'global')
+    end
+  end
+  
+  def test_1020_list_assets_no_view_specified
+    # @api is already set up in setup method
+    
+    # Should work for global assets
+    assets = @api.list_assets(target: 'global')
+    assert assets.is_a?(Array)
+    
+    # Clear the current view to test the error case
+    @api.repo.instance_variable_set(:@current_view, nil)
+    
+    # Should fail for view assets without view
+    assert_raises(RuntimeError) do
+      @api.list_assets(target: 'view')
+    end
+  end
 end 
