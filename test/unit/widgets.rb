@@ -355,7 +355,7 @@ class TestScriptoriumWidgets < Minitest::Test
   end
 
   def test_019_build_widgets_invalid_widget_name
-    assert_raises(NameError) do
+    assert_raises(CannotBuildWidget) do
       @view.build_widgets("nonexistent")
     end
   end

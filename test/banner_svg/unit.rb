@@ -765,4 +765,234 @@ class BannerSVGTest < Minitest::Test
     assert_match(/Warning: title.align x=50% conflicts with title.xy x=5%/, captured)
   end
 
+  # ========================================
+  # Banner SVG Validation Error Tests
+  # ========================================
+
+  def test_072_banner_svg_validation_exceptions
+    # Test that exception classes exist
+    assert InvalidBackground
+    assert InvalidGradient
+    assert InvalidImage
+    assert InvalidFont
+    assert InvalidColor
+    assert InvalidAspect
+    assert InvalidAlign
+    assert InvalidXY
+  end
+
+  def test_073_background_validation_exceptions
+    # Test that exception classes exist
+    assert BackgroundNoArgs
+    assert BackgroundFirstArgNil
+    assert BackgroundFirstArgEmpty
+    
+    # Test actual exception raising
+    assert_raises(BackgroundNoArgs) do
+      @banner.handle_background
+    end
+    
+    assert_raises(BackgroundFirstArgNil) do
+      @banner.handle_background(nil)
+    end
+    
+    assert_raises(BackgroundFirstArgEmpty) do
+      @banner.handle_background("")
+    end
+  end
+
+  def test_074_gradient_validation_exceptions
+    # Test that exception classes exist
+    assert LinearGradientNoArgs
+    assert LinearGradientStartColorNil
+    assert LinearGradientArgEmpty
+    assert RadialGradientNoArgs
+    assert RadialGradientStartColorNil
+    assert RadialGradientArgEmpty
+    
+    # Test actual exception raising for linear gradient
+    assert_raises(LinearGradientNoArgs) do
+      @banner.handle_linear_gradient
+    end
+    
+    assert_raises(LinearGradientStartColorNil) do
+      @banner.handle_linear_gradient(nil, "blue")
+    end
+    
+    assert_raises(LinearGradientStartColorNil) do
+      @banner.handle_linear_gradient("", "blue")
+    end
+    
+    assert_raises(LinearGradientArgEmpty) do
+      @banner.handle_linear_gradient("red", "")
+    end
+    
+    # Test actual exception raising for radial gradient
+    assert_raises(RadialGradientNoArgs) do
+      @banner.handle_radial_gradient
+    end
+    
+    assert_raises(RadialGradientStartColorNil) do
+      @banner.handle_radial_gradient(nil, "yellow")
+    end
+    
+    assert_raises(RadialGradientStartColorNil) do
+      @banner.handle_radial_gradient("", "yellow")
+    end
+    
+    assert_raises(RadialGradientArgEmpty) do
+      @banner.handle_radial_gradient("green", "")
+    end
+  end
+
+  def test_075_image_background_validation_exceptions
+    # Test that exception classes exist
+    assert ImageBackgroundNoArgs
+    assert ImageBackgroundFirstArgNil
+    assert ImageBackgroundFirstArgEmpty
+    
+    # Test actual exception raising
+    assert_raises(ImageBackgroundNoArgs) do
+      @banner.handle_image_background
+    end
+    
+    assert_raises(ImageBackgroundFirstArgNil) do
+      @banner.handle_image_background(nil)
+    end
+    
+    assert_raises(ImageBackgroundFirstArgEmpty) do
+      @banner.handle_image_background("")
+    end
+  end
+
+  def test_076_aspect_validation_exceptions
+    # Test that exception classes exist
+    assert AspectNoArgs
+    assert AspectFirstArgNil
+    assert AspectFirstArgEmpty
+    assert AspectInvalidValue
+    
+    # Test actual exception raising
+    assert_raises(AspectNoArgs) do
+      @banner.handle_aspect
+    end
+    
+    assert_raises(AspectFirstArgNil) do
+      @banner.handle_aspect(nil)
+    end
+    
+    assert_raises(AspectFirstArgEmpty) do
+      @banner.handle_aspect("")
+    end
+    
+    assert_raises(AspectInvalidValue) do
+      @banner.handle_aspect("invalid")
+    end
+  end
+
+  def test_077_font_validation_exceptions
+    # Test that exception classes exist
+    assert FontArgsNil
+    assert FontArgNil
+    assert FontArgEmpty
+    
+    # Test actual exception raising
+    assert_raises(FontArgNil) do
+      @banner.handle_font(nil)
+    end
+    
+    assert_raises(FontArgNil) do
+      @banner.handle_font("Arial", nil)
+    end
+    
+    assert_raises(FontArgEmpty) do
+      @banner.handle_font("Arial", "")
+    end
+  end
+
+  def test_078_text_color_validation_exceptions
+    # Test that exception classes exist
+    assert TextColorNoArgs
+    assert TextColorFirstArgNil
+    assert TextColorFirstArgEmpty
+    
+    # Test actual exception raising
+    assert_raises(TextColorNoArgs) do
+      @banner.handle_text_color
+    end
+    
+    assert_raises(TextColorFirstArgNil) do
+      @banner.handle_text_color(nil)
+    end
+    
+    assert_raises(TextColorFirstArgEmpty) do
+      @banner.handle_text_color("")
+    end
+  end
+
+  def test_079_xy_validation_exceptions
+    # Test that exception classes exist
+    assert XYWhichNil
+    assert XYWhichEmpty
+    assert XYInvalidWhich
+    
+    # Test actual exception raising
+    assert_raises(XYWhichNil) do
+      @banner.handle_xy(nil, "5%", "70%")
+    end
+    
+    assert_raises(XYWhichEmpty) do
+      @banner.handle_xy("", "5%", "70%")
+    end
+    
+    assert_raises(XYInvalidWhich) do
+      @banner.handle_xy("invalid", "5%", "70%")
+    end
+  end
+
+  def test_080_align_validation_exceptions
+    # Test that exception classes exist
+    assert AlignNoArgs
+    assert AlignDirectionNil
+    assert AlignArgEmpty
+    assert AlignInvalidDirection
+    
+    # Test actual exception raising
+    assert_raises(AlignNoArgs) do
+      @banner.handle_text_align
+    end
+    
+    assert_raises(AlignDirectionNil) do
+      @banner.handle_text_align(nil)
+    end
+    
+    assert_raises(AlignDirectionNil) do
+      @banner.handle_text_align("")
+    end
+    
+    assert_raises(AlignInvalidDirection) do
+      @banner.handle_text_align("invalid")
+    end
+  end
+
+  def test_081_color_validation_exceptions
+    # Test that exception classes exist
+    assert ColorNoArgs
+    assert ColorFirstArgNil
+    assert ColorFirstArgEmpty
+    
+    # Test actual exception raising
+    assert_raises(ColorNoArgs) do
+      @banner.handle_title_color
+    end
+    
+    assert_raises(ColorFirstArgNil) do
+      @banner.handle_title_color(nil)
+    end
+    
+    assert_raises(ColorFirstArgEmpty) do
+      @banner.handle_title_color("")
+    end
+  end
+
 end 

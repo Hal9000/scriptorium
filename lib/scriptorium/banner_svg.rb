@@ -61,11 +61,11 @@ class Scriptorium::BannerSVG
     end
 
     private def validate_background_args(args)
-      raise HandleBackgroundNoArgs if args.nil? || args.empty?
+      raise BackgroundNoArgs if args.nil? || args.empty?
       
-      raise HandleBackgroundFirstArgNil if args.first.nil?
+      raise BackgroundFirstArgNil if args.first.nil?
       
-      raise HandleBackgroundFirstArgEmpty if args.first.to_s.strip.empty?
+      raise BackgroundFirstArgEmpty if args.first.to_s.strip.empty?
     end
 
     def handle_linear_gradient(*args)
@@ -76,14 +76,14 @@ class Scriptorium::BannerSVG
     end
 
     private def validate_linear_gradient_args(args)
-      raise HandleLinearGradientNoArgs if args.nil? || args.empty?
+      raise LinearGradientNoArgs if args.nil? || args.empty?
       
-      raise HandleLinearGradientStartColorNil if args[0].nil? || args[0].to_s.strip.empty?
+      raise LinearGradientStartColorNil if args[0].nil? || args[0].to_s.strip.empty?
       
       # Validate all provided arguments (up to 3: start_color, end_color, direction)
       args.each_with_index do |arg, index|
         next if arg.nil? # Allow nil for optional arguments
-        raise HandleLinearGradientArgEmpty(index + 1) if arg.to_s.strip.empty?
+        raise LinearGradientArgEmpty(index + 1) if arg.to_s.strip.empty?
       end
     end
   
@@ -100,14 +100,14 @@ class Scriptorium::BannerSVG
     end
 
     private def validate_radial_gradient_args(args)
-      raise HandleRadialGradientNoArgs if args.nil? || args.empty?
+      raise RadialGradientNoArgs if args.nil? || args.empty?
       
-      raise HandleRadialGradientStartColorNil if args[0].nil? || args[0].to_s.strip.empty?
+      raise RadialGradientStartColorNil if args[0].nil? || args[0].to_s.strip.empty?
       
       # Validate all provided arguments (up to 6: start_color, end_color, cx, cy, r, aspect_ratio)
       args.each_with_index do |arg, index|
         next if arg.nil? # Allow nil for optional arguments
-        raise HandleRadialGradientArgEmpty(index + 1) if arg.to_s.strip.empty?
+        raise RadialGradientArgEmpty(index + 1) if arg.to_s.strip.empty?
       end
     end
 
@@ -119,11 +119,11 @@ class Scriptorium::BannerSVG
     end
 
     private def validate_image_background_args(args)
-      raise HandleImageBackgroundNoArgs if args.nil? || args.empty?
+      raise ImageBackgroundNoArgs if args.nil? || args.empty?
       
-      raise HandleImageBackgroundFirstArgNil if args[0].nil?
+      raise ImageBackgroundFirstArgNil if args[0].nil?
       
-      raise HandleImageBackgroundFirstArgEmpty if args[0].to_s.strip.empty?
+      raise ImageBackgroundFirstArgEmpty if args[0].to_s.strip.empty?
     end
     
     def handle_aspect(*args)
@@ -138,11 +138,11 @@ class Scriptorium::BannerSVG
     end
 
     private def validate_aspect_args(args)
-      raise HandleAspectNoArgs if args.nil? || args.empty?
+      raise AspectNoArgs if args.nil? || args.empty?
       
-      raise HandleAspectFirstArgNil if args.first.nil?
+      raise AspectFirstArgNil if args.first.nil?
       
-      raise HandleAspectFirstArgEmpty if args.first.to_s.strip.empty?
+      raise AspectFirstArgEmpty if args.first.to_s.strip.empty?
       
       unless args.first.to_s.match?(/^\d+(\.\d+)?$/)
         raise AspectInvalidValue(args.first)
@@ -159,14 +159,14 @@ class Scriptorium::BannerSVG
     end
 
     private def validate_font_args(args)
-      raise HandleFontArgsNil if args.nil?
+      raise FontArgsNil if args.nil?
       
       # Font arguments are optional - empty args array is allowed
       # But if any arguments are provided, they must be valid
       args.each_with_index do |arg, index|
-        raise HandleFontArgNil(index + 1) if arg.nil?
+        raise FontArgNil(index + 1) if arg.nil?
         
-        raise HandleFontArgEmpty(index + 1) if arg.to_s.strip.empty?
+        raise FontArgEmpty(index + 1) if arg.to_s.strip.empty?
       end
     end
     
@@ -176,11 +176,11 @@ class Scriptorium::BannerSVG
     end
 
     private def validate_text_color_args(args)
-      raise HandleTextColorNoArgs if args.nil? || args.empty?
+      raise TextColorNoArgs if args.nil? || args.empty?
       
-      raise HandleTextColorFirstArgNil if args.first.nil?
+      raise TextColorFirstArgNil if args.first.nil?
       
-      raise HandleTextColorFirstArgEmpty if args.first.to_s.strip.empty?
+      raise TextColorFirstArgEmpty if args.first.to_s.strip.empty?
     end
     
     def handle_text_align(*args)
@@ -237,9 +237,9 @@ class Scriptorium::BannerSVG
     end
 
     private def validate_xy_which(which)
-      raise HandleXYWhichNil if which.nil?
+      raise XYWhichNil if which.nil?
       
-      raise HandleXYWhichEmpty if which.to_s.strip.empty?
+      raise XYWhichEmpty if which.to_s.strip.empty?
       
       unless ["title", "subtitle"].include?(which)
         raise XYInvalidWhich(which)
@@ -247,9 +247,9 @@ class Scriptorium::BannerSVG
     end
 
       private def validate_align_args(args)
-    raise HandleAlignNoArgs if args.nil? || args.empty?
+    raise AlignNoArgs if args.nil? || args.empty?
     
-    raise HandleAlignDirectionNil if args[0].nil? || args[0].to_s.strip.empty?
+    raise AlignDirectionNil if args[0].nil? || args[0].to_s.strip.empty?
       
       unless ["left", "center", "right"].include?(args[0])
         raise AlignInvalidDirection(args[0])
@@ -259,7 +259,7 @@ class Scriptorium::BannerSVG
       args.each_with_index do |arg, index|
         next if index == 0 # Skip direction (already validated)
         next if arg.nil? # Allow nil for optional arguments
-        raise HandleAlignArgEmpty(index + 1) if arg.to_s.strip.empty?
+        raise AlignArgEmpty(index + 1) if arg.to_s.strip.empty?
       end
     end
 
@@ -341,14 +341,10 @@ class Scriptorium::BannerSVG
     @subtitle_color = args.first
   end
 
-
-
   private def validate_color_args(args)
-    raise HandleColorNoArgs if args.nil? || args.empty?
-    
-    raise HandleColorFirstArgNil if args.first.nil?
-    
-    raise HandleColorFirstArgEmpty if args.first.to_s.strip.empty?
+    raise ColorNoArgs if args.nil? || args.empty?
+    raise ColorFirstArgNil if args.first.nil?
+    raise ColorFirstArgEmpty if args.first.to_s.strip.empty?
   end
   
     def parse_header_svg(config_file = "config.txt")

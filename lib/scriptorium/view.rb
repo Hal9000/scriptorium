@@ -532,10 +532,14 @@ write output:      write the result to output/panes/header.html
     widgets.each do |widget|
       validate_widget_name(widget)
       
-      widget_class = eval("Scriptorium::Widget::#{widget.capitalize}")
-      obj = widget_class.new(@repo, self)
-      obj.generate
-      content << obj.card
+      begin
+        widget_class = eval("Scriptorium::Widget::#{widget.capitalize}")
+        obj = widget_class.new(@repo, self)
+        obj.generate
+        content << obj.card
+      rescue => e
+        raise CannotBuildWidget("Failed to build widget '#{widget}': #{e.message}")
+      end
     end
     verify { content.is_a?(String) }
     check_invariants

@@ -920,7 +920,7 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_064_edit_post_nonexistent
-    assert_raises(NoMethodError) do
+    assert_raises(CannotGetPost) do
       @api.edit_post(999)
     end
   end

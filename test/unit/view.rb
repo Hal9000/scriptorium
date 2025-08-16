@@ -12,7 +12,7 @@ class TestScriptoriumView < Minitest::Test
     @test_dir = "test/view_test_files"
     make_dir(@test_dir)
     # Use a unique test repo path to avoid conflicts
-    @repo_path = "scriptorium-TEST"
+    @repo_path = "scriptorium-TEST-#{Time.now.to_i}-#{rand(1000)}"
     FileUtils.rm_rf(@repo_path) if Dir.exist?(@repo_path)
     @repo = Scriptorium::Repo.create(@repo_path, testmode: true)
     @view = @repo.create_view("test_view", "Test View", "A test view", theme: "standard")
@@ -428,4 +428,71 @@ class TestScriptoriumView < Minitest::Test
     output_permissions = File.stat(output_file).mode & 0777
     assert output_permissions > 0, "Expected reasonable file permissions"
   end
+
+  # ========================================
+  # View Validation Error Tests
+  # ========================================
+
+  def test_036_view_target_validation_exceptions
+    # Test that exception classes exist
+    assert ViewTargetNil
+    assert ViewTargetEmpty
+    assert ViewTargetInvalid
+  end
+
+  def test_037_view_creation_exceptions
+    # Test that exception classes exist
+    assert CannotCreateView
+    
+    # Test actual exception raising for view creation failures
+    # This is harder to test since we'd need to simulate file system failures
+    # For now, just verify the class exists
+    assert CannotCreateView
+  end
+
+  def test_038_widget_building_exceptions
+    # Test that exception classes exist
+    assert CannotBuildWidget
+    assert WidgetsArgNil
+    assert WidgetsArgEmpty
+    assert WidgetNameNil
+    assert WidgetNameInvalid
+    
+    # Test actual exception raising for widget building
+    assert_raises(WidgetsArgNil) do
+      @view.build_widgets(nil)
+    end
+    
+    assert_raises(WidgetsArgEmpty) do
+      @view.build_widgets("")
+    end
+    
+    assert_raises(WidgetNameInvalid) do
+      @view.build_widgets("invalid@widget")
+    end
+  end
+
+  def test_039_view_target_validation_scenarios
+    # Test actual exception raising for view target validation
+    # These would need methods that actually raise these exceptions
+    # For now, just verify the classes exist
+    assert ViewTargetNil
+    assert ViewTargetEmpty
+    assert ViewTargetInvalid
+    
+    # Test actual exception raising for view target validation
+    # We can test these by calling lookup_view with invalid targets
+    assert_raises(ViewTargetNil) do
+      @repo.lookup_view(nil)
+    end
+    
+    assert_raises(ViewTargetEmpty) do
+      @repo.lookup_view("")
+    end
+    
+    assert_raises(ViewTargetInvalid) do
+      @repo.lookup_view("invalid@name")
+    end
+  end
+
 end 

@@ -52,7 +52,7 @@ def created
 end
 
 def last_updated
-  pub_date = Livetext::Vars["post.created"] || "unknown date"
+  pub_date = api.vars("post.created")
   api.out "<p><em>Published: #{pub_date}</em></p>"
 end
 
@@ -63,7 +63,7 @@ def wordcount
 end
 
 def stats
-  text = File.read(Livetext::Vars[:File])
+  text = File.read(api.vars[:File])
   words = text.split
   word_count = words.size
   
@@ -100,13 +100,13 @@ end
 ##################
   
 def dropcap(args, data)
-  # Bad form: adds another HEAD
+  # Ask Cursor about dropcap and ::first-letter
   text = data
   api.out " "
   letter = text[0]
   remain = text[1..-1]
   api.out %[<div class='mydrop'>#{letter}</div>]
-  api.out %[<div style="padding-top: 1px">#{remain}]
+  api.out %[<div style="padding-top: 1px">#{remain}</div>]
 end
   
 def faq(args, data, body)
@@ -205,9 +205,9 @@ def inset(args, data, body)
 end
 
 def image(args, data)   # primitive so far
-  fname = args.first
+  fname, alt = data.split(" ", 2)
   path = "assets/#{fname}"
-  api.out "<img src=#{path}></img>"
+  api.out "<img src=#{path} alt='#{alt}'></img>"
   api.optional_blank_line
 end
 

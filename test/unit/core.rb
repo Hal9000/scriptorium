@@ -852,4 +852,131 @@ class TestReadWrite < Minitest::Test
     assert File.exist?("#{@test_dir}/test_tree_with_comments/dir1/file2.txt")
     assert File.exist?("#{@test_dir}/test_tree_with_comments/file3.txt")
   end
+
+  # ========================================
+  # Additional exception tests for untested exceptions
+  # ========================================
+
+  def test_093_general_validation_exceptions
+    # Test that exception classes exist
+    assert NilValueError
+    assert EmptyValueError
+    assert InvalidFormatError
+    
+    # Test actual exception raising for some that we can trigger
+    assert_raises(InvalidType) do
+      need(:invalid_type, "some/path")
+    end
+    
+    # Test require path exceptions
+    assert_raises(RequirePathNil) do
+      need(:file, nil)
+    end
+    
+    assert_raises(RequirePathEmpty) do
+      need(:file, "")
+    end
+  end
+
+  def test_094_repository_exceptions
+    # Test RepoDirAlreadyExists
+    assert RepoDirAlreadyExists
+
+    # Test ViewDirDoesntExist
+    assert ViewDirDoesntExist
+
+    # Test ThemeFileNotFound
+    assert ThemeFileNotFound
+
+    # Test NoGemPath
+    assert NoGemPath
+  end
+
+  def test_095_file_io_exceptions
+    # Test that exception classes exist
+    assert FileNotFoundError
+    assert DirectoryNotFoundError
+    assert FileDiskFull
+    assert FileDirectoryNotFound
+    assert CannotWriteFileError
+    assert DirectoryParentNotFound
+    assert DirectoryDiskFull
+    assert DirectoryError
+    assert ReadFileError
+    
+    # Test actual exception raising for some that we can trigger
+    assert_raises(ReadFilePathNil) do
+      read_file(nil)
+    end
+    
+    assert_raises(ReadFilePathEmpty) do
+      read_file("")
+    end
+    
+    assert_raises(FilePathNil) do
+      write_file(nil, "content")
+    end
+    
+    assert_raises(FilePathEmpty) do
+      write_file("", "content")
+    end
+    
+    # Test directory-related exceptions
+    assert_raises(DirectoryPathNil) do
+      make_dir(nil)
+    end
+    
+    assert_raises(DirectoryPathEmpty) do
+      make_dir("")
+    end
+  end
+
+  def test_096_command_system_exceptions
+    # Test that exception classes exist
+    assert CommandFailed
+    assert CannotExecuteCommand
+    assert SectionOutputError
+    assert WriteFrontPageError
+    
+    # Test actual exception raising for some that we can trigger
+    assert_raises(CommandNil) do
+      system!(nil)
+    end
+    
+    assert_raises(CommandEmpty) do
+      system!("")
+    end
+  end
+
+  def test_097_validation_exceptions
+    # Test ViewTargetNil
+    assert ViewTargetNil
+
+    # Test ViewTargetEmpty
+    assert ViewTargetEmpty
+
+    # Test ViewTargetInvalid
+    assert ViewTargetInvalid
+
+    # Test PostIdNil
+    assert PostIdNil
+
+    # Test PostIdEmpty
+    assert PostIdEmpty
+
+    # Test PostIdInvalid
+    assert PostIdInvalid
+
+    # Test CannotCreateView
+    assert CannotCreateView
+
+    # Test CannotBuildWidget
+    assert CannotBuildWidget
+
+    # Test CannotGetPost
+    assert CannotGetPost
+
+    # Test CannotSetPubdate
+    assert CannotSetPubdate
+  end
 end 

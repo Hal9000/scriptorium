@@ -138,9 +138,14 @@ class Scriptorium::Repo
   end
 
   private def validate_view_target(target)
-    raise LookupViewTargetNil if target.nil?
+    raise ViewTargetNil if target.nil?
     
-    raise LookupViewTargetEmpty if target.to_s.strip.empty?
+    raise ViewTargetEmpty if target.to_s.strip.empty?
+    
+    # Validate that target is a valid view name (alphanumeric, hyphen, underscore)
+    unless target.match?(/^[a-zA-Z0-9_-]+$/)
+      raise ViewTargetInvalid(target)
+    end
   end
 
   def view(change = nil)   # get/set current view
@@ -200,20 +205,27 @@ class Scriptorium::Repo
     ### 
 
     dir = "#@root/views/#{name}"
-    write_file!(dir/"config.txt", 
-               "title    #{title}",
-               "subtitle #{subtitle}",
-               "theme    #{theme}")
-    write_file(dir/:config/"global-head.txt",   @predef.html_head_content(true))  # true = view-specific
-    write_file(dir/:config/"bootstrap_js.txt",  @predef.bootstrap_js)
-    write_file(dir/:config/"bootstrap_css.txt", @predef.bootstrap_css)
-    write_file(dir/:config/"common.js",         @predef.common_js)
-    write_file(dir/:config/"social.txt",        @predef.social_config)
-    write_file(dir/:config/"reddit.txt",        @predef.reddit_config)
-    write_file(dir/:config/"deploy.txt",        @predef.deploy_text % {view: name, domain: "example.com"})
-    write_file(dir/:config/"status.txt",        @predef.status_txt)
-    write_file(dir/:config/"post_index.txt",    @predef.post_index_config)
-    view = open_view(name)
+    
+    begin
+      write_file!(dir/"config.txt", 
+                 "title    #{title}",
+                 "subtitle #{subtitle}",
+                 "theme    #{theme}")
+      write_file(dir/:config/"global-head.txt",   @predef.html_head_content(true))  # true = view-specific
+      write_file(dir/:config/"bootstrap_js.txt",  @predef.bootstrap_js)
+      write_file(dir/:config/"bootstrap_css.txt", @predef.bootstrap_css)
+      write_file(dir/:config/"common.js",         @predef.common_js)
+      write_file(dir/:config/"social.txt",        @predef.social_config)
+      write_file(dir/:config/"reddit.txt",        @predef.reddit_config)
+      write_file(dir/:config/"deploy.txt",        @predef.deploy_text % {view: name, domain: "example.com"})
+      write_file(dir/:config/"status.txt",        @predef.status_txt)
+      write_file(dir/:config/"post_index.txt",    @predef.post_index_config)
+      view = open_view(name)
+    rescue => e
+      # Clean up partial view directory if creation fails
+      FileUtils.rm_rf(dir) if Dir.exist?(dir)
+      raise CannotCreateView("Failed to create view '#{name}': #{e.message}")
+    end
     @views -= [view]
     @views << view
     @current_view = view
@@ -542,16 +554,16 @@ class Scriptorium::Repo
     return Scriptorium::Post.new(self, id) if File.exist?(deleted_meta)
     
     # Post not found in either location
-    nil
+    raise CannotGetPost("Post with ID #{id} not found")
   end
 
   private def validate_post_id(id)
-    raise GetPostIdNil if id.nil?
+    raise PostIdNil if id.nil?
     
-    raise GetPostIdEmpty if id.to_s.strip.empty?
+    raise PostIdEmpty if id.to_s.strip.empty?
     
     unless id.to_s.match?(/^\d+$/)
-      raise GetPostIdInvalid(id)
+      raise PostIdInvalid(id)
     end
   end
   
