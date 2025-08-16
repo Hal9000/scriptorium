@@ -439,7 +439,14 @@ class Scriptorium::API
     raise EditFilePathNil if path.nil?
     raise EditFilePathEmpty if path.to_s.strip.empty?
     
-    editor = ENV['EDITOR'] || 'vim'
+    # Try to use the TUI's editor configuration first
+    editor_file = @repo.root/"config/editor.txt"
+    editor = if File.exist?(editor_file)
+      read_file(editor_file).strip
+    else
+      ENV['EDITOR'] || 'vim'
+    end
+    
     system!(editor, path)
   end
 
@@ -972,7 +979,7 @@ class Scriptorium::API
   
   private def ssh_keys_configured?(server, user)
     # Try to run a simple command via SSH
-    result = system("ssh -o ConnectTimeout=10 -o BatchMode=yes #{user}@#{server} 'echo ok' 2>/dev/null")
+    result = system("ssh -o ConnectTimeout=5 -o BatchMode=yes #{user}@#{server} 'echo ok' 2>/dev/null")
     result && $?.exitstatus == 0
   end
   

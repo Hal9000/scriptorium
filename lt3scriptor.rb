@@ -204,7 +204,37 @@ def inset(args, data, body)
   api.optional_blank_line
 end
 
+def image(args, data)   # primitive so far
+  fname = args.first
+  path = "assets/#{fname}"
+  api.out "<img src=#{path}></img>"
+  api.optional_blank_line
+end
+
+def image!(args, data)
+  fname, w, h, factor, alt = data.split(" ", 5)
+  path = "assets/#{fname}"
+  alt.gsub!("'", "&apos;")
+  alt.gsub!("\"", "&quot;")
+  api.out <<-HTML
+    <a href=#{path} target=_blank
+       title='#{alt} (click to open)'>
+      <img src=#{path} width=#{w.to_i/factor.to_i}
+        height=#{h.to_i/factor.to_i}
+        alt='#{alt}'>
+      </img>
+    </a>
+  HTML
+  api.optional_blank_line
+end
+
+### Functions
+
 class Livetext::Functions
+
+  def nbsp(param)
+    "&nbsp;" * param.to_i
+  end
 
   def asset(param)
     begin
@@ -213,51 +243,34 @@ class Livetext::Functions
       postid = @live.vars.to_h[:"post.id"]   # search post first
       num = d4(postid)
       root = Scriptorium::Repo.root
-      
-      # Initialize search paths
       search_paths = []
-      
-      # Add post-specific assets (highest priority)
       search_paths << ["#{root}/posts/#{num}/assets/#{param}", "assets/#{num}/#{param}"]
-      
-      # Add view-specific assets
       search_paths << ["#{root}/views/#{vname}/assets/#{param}", "assets/#{param}"]
-      
-      # Add global assets
       search_paths << ["#{root}/assets/#{param}", "assets/#{param}"]
-      
-      # Add library assets
       search_paths << ["#{root}/assets/library/#{param}", "assets/#{param}"]
       
-      # Add gem assets (lowest priority)
       begin
         gem_spec = Gem.loaded_specs['scriptorium']
-        
         if gem_spec
           gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{param}"
           search_paths << [gem_asset_path, "assets/#{param}"]
         else
-          # Development environment - use the working path
           dev_gem_path = File.expand_path("assets/#{param}")
           if File.exist?(dev_gem_path)
             search_paths << [dev_gem_path, "assets/#{param}"]
           end
         end
       rescue => e
-        # If gem lookup fails, continue without gem assets
       end
       
-      # Search for the asset
       search_paths.each do |source_path, output_path|
         if File.exist?(source_path)
           return output_path
         end
       end
       
-      # Asset not found - return placeholder path
       return "assets/missing/#{param}.svg"
     rescue => e
-      # Return error message for debugging
       return "[Asset error: #{e.message}]"
     end
   end
@@ -304,7 +317,7 @@ class Livetext::Functions
     svg.strip
   end
 
-  def d4(num)
+  private def d4(num)
     "%04d" % num.to_i
   end
 

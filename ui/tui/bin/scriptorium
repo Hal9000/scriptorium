@@ -226,7 +226,6 @@ class ScriptoriumTUI
       rescue => e
         puts "Error: #{e.message}"
         puts e.backtrace.first if @testing
-        puts "DEBUG: Exception caught in mainloop: #{e.class}: #{e.message}"
       end
     end
 
@@ -252,7 +251,7 @@ class ScriptoriumTUI
       
       if args.empty?
         # Complete command names
-        commands = %w[view change list new version help quit cv lsv v h q]
+        commands = %w[view change list new version help quit cv lsv v h q upload copy delete asset configure]
         completions = commands.select { |cmd| cmd.start_with?(command || "") }
       elsif command == "change" || command == "cv"
         # Complete view names
@@ -263,10 +262,31 @@ class ScriptoriumTUI
       elsif command == "list" && args.length == 1 && args[0] == "views"
         # Complete "list views" command
         completions = []
+      elsif command == "list" && args.length == 1 && args[0] == "assets"
+        # Complete asset targets
+        completions = %w[global library view gem]
       elsif command == "new" && args.length == 1 && args[0] == "view"
         # Suggest common view names for new view
         suggestions = %w[blog personal work tech travel]
         completions = suggestions
+      elsif command == "upload" && args.length == 1 && args[0] == "asset"
+        # Complete asset targets
+        completions = %w[global library view]
+      elsif command == "copy" && args.length == 1 && args[0] == "asset"
+        # Complete asset targets
+        completions = %w[global library view gem]
+      elsif command == "delete" && args.length == 1 && args[0] == "asset"
+        # Complete asset targets
+        completions = %w[global library view]
+      elsif command == "asset" && args.length == 1 && args[0] == "info"
+        # Complete asset targets
+        completions = %w[global library view gem]
+      elsif command == "configure" && args.length == 1 && args[0] == "deployment"
+        # Complete view names for deployment config
+        if @api
+          view_names = @api.views.map(&:name)
+          completions = view_names
+        end
       end
       
       completions
@@ -282,27 +302,52 @@ class ScriptoriumTUI
   end
 
   private def execute_command(input)
-    parts = input.split(/\s+/, 2)
+    parts = input.strip.split(/\s+/, 2)
     cmd = parts[0].downcase
     args = parts[1] || ""
 
+
+
     # Handle multi-word commands first
-    if cmd == "list" && args.start_with?("views")
+    if cmd == "list" && (args == "views" || args.start_with?("views "))
       list_views
-    elsif cmd == "list" && args.start_with?("posts")
+    elsif cmd == "list" && (args == "posts" || args.start_with?("posts "))
       list_posts
-    elsif cmd == "list" && args.start_with?("drafts")
+    elsif cmd == "list" && (args == "drafts" || args.start_with?("drafts "))
       list_drafts
-    elsif cmd == "change" && args.start_with?("view")
-      change_view(args)
-    elsif cmd == "new" && args.start_with?("view")
-      create_view(args)
-    elsif cmd == "new" && args.start_with?("draft")
-      create_draft(args)
-    elsif cmd == "new" && args.start_with?("post")
-      create_post(args)
-    elsif cmd == "list" && args.start_with?("themes")
+    elsif cmd == "list" && (args == "assets" || args.start_with?("assets "))
+      list_assets(args)
+    elsif cmd == "list" && (args == "widgets" || args.start_with?("widgets "))
+      list_widgets
+    elsif cmd == "list" && (args == "themes" || args.start_with?("themes "))
       list_themes
+    elsif cmd == "change" && (args == "view" || args.start_with?("view "))
+      change_view(args)
+    elsif cmd == "new" && (args == "view" || args.start_with?("view "))
+      create_view(args)
+    elsif cmd == "new" && (args == "draft" || args.start_with?("draft "))
+      create_draft(args)
+    elsif cmd == "new" && (args == "post" || args.start_with?("post "))
+      create_post(args)
+    elsif cmd == "upload" && (args == "asset" || args.start_with?("asset "))
+      upload_asset(args)
+    elsif cmd == "copy" && (args == "asset" || args.start_with?("asset "))
+      copy_asset(args)
+    elsif cmd == "delete" && (args == "asset" || args.start_with?("asset "))
+      delete_asset(args)
+    elsif cmd == "asset" && (args == "info" || args.start_with?("info "))
+      asset_info(args)
+    elsif cmd == "configure" && (args == "deployment" || args.start_with?("deployment "))
+      puts "DEBUG: Routing to configure_deployment with args='#{args}'"
+      configure_deployment(args)
+    elsif cmd == "add" && (args == "widget" || args.start_with?("widget "))
+      add_widget(args)
+    elsif cmd == "config" && (args == "widget" || args.start_with?("widget "))
+      config_widget(args)
+    elsif cmd == "config" && (args == "social" || args.start_with?("social "))
+      config_social
+    elsif cmd == "config" && (args == "reddit" || args.start_with?("reddit "))
+      config_reddit
     elsif cmd == "clone" && args.include?(" ")
       clone_theme(args)
 
@@ -329,18 +374,9 @@ class ScriptoriumTUI
         deploy_current_view
       when "preview"
         preview_current_view
+        preview_current_view
       when "browse"
         browse_deployed_view
-      when "list" && args.start_with?("widgets")
-        list_widgets
-      when "add" && args.start_with?("widget")
-        add_widget(args)
-      when "config" && args.start_with?("widget")
-        config_widget(args)
-      when "config" && args.start_with?("social")
-        config_social
-      when "config" && args.start_with?("reddit")
-        config_reddit
       when "generate"
         generate_current_view
       when "quit", "q"
@@ -370,6 +406,12 @@ class ScriptoriumTUI
         lsd
         new post [<title>]         - Create draft, edit, and convert to post
 
+        list assets [target]       - List assets (global, library, view, gem)
+        upload asset [file] [target] - Upload file to asset location
+        copy asset [file] [from] [to] - Copy asset between locations
+        delete asset [file] [target] - Delete asset from location
+        asset info [file] [target]  - Show asset information
+        configure deployment [view] - Edit deployment configuration
         deploy                 - Deploy current view to server
         preview                - Preview current view locally
         browse                 - Browse deployed view on server
@@ -434,15 +476,17 @@ class ScriptoriumTUI
       return if view_name.nil? || view_name.empty?
     end
 
-    view = @api.lookup_view(view_name)
-    @api.view(view_name)
-    puts
-    puts "  Switched to view '#{view_name}'"
-    puts
-  rescue => e
-    puts
-    puts "  View '#{view_name}' not found"
-    puts
+    begin
+      view = @api.lookup_view(view_name)
+      @api.view(view_name)
+      puts
+      puts "  Switched to view '#{view_name}'"
+      puts
+    rescue Exception => e
+      puts
+      puts "  View '#{view_name}' not found"
+      puts
+    end
   end
 
   private def create_view(args)
@@ -485,7 +529,6 @@ class ScriptoriumTUI
           puts
           puts "  #{e.message}"
           puts
-          puts "DEBUG: Exception caught in create_view (interactive): #{e.class}: #{e.message}"
         end
       else
         # Legacy mode - still support "new view <name> <title>"
@@ -499,12 +542,7 @@ class ScriptoriumTUI
 
         name, title = parts
         
-        # Prompt for subtitle
-        print "  Enter subtitle (optional): "
-        subtitle = get_string
-        subtitle = nil if subtitle.empty?
-        
-        # Check if view already exists
+        # Check if view already exists BEFORE prompting for subtitle
         existing_views = @api.views
         if existing_views.any? { |view| view.name == name }
           puts
@@ -512,6 +550,11 @@ class ScriptoriumTUI
           puts
           return
         end
+        
+        # Prompt for subtitle only if view doesn't exist
+        print "  Enter subtitle (optional): "
+        subtitle = get_string
+        subtitle = nil if subtitle.empty?
         
         # Create view with all parameters
         begin
@@ -524,7 +567,6 @@ class ScriptoriumTUI
           puts
           puts "  #{e.message}"
           puts
-          puts "DEBUG: Exception caught in create_view (legacy): #{e.class}: #{e.message}"
         end
       end
     else
@@ -1373,15 +1415,6 @@ class ScriptoriumTUI
         return
       end
 
-      # Check if new theme already exists
-      new_theme_path = @api.root/:themes/new_theme
-      if Dir.exist?(new_theme_path)
-        puts
-        puts "  Theme '#{new_theme}' already exists"
-        puts
-        return
-      end
-
       # Clone the theme
       require 'fileutils'
       FileUtils.cp_r(old_theme_path, new_theme_path)
@@ -1393,6 +1426,244 @@ class ScriptoriumTUI
     rescue => e
       puts
       puts "  ❌ Failed to clone theme: #{e.message}"
+      puts
+    end
+  end
+
+  # Asset Management Commands
+
+  private def list_assets(args)
+    parts = args.split(/\s+/)
+    target = parts[1] || 'global'
+    
+    unless %w[global library view gem].include?(target)
+      puts
+      puts "  Usage: list assets [target]"
+      puts "  Targets: global, library, view, gem"
+      puts "  Example: list assets view"
+      puts
+      return
+    end
+
+    begin
+      assets = @api.list_assets(target: target, view: @api.current_view&.name)
+      if assets.empty?
+        puts
+        puts "  No assets found in #{target}"
+        puts
+      else
+        puts
+        puts "  Assets in #{target}:"
+        assets.each do |asset|
+          puts "    #{asset[:filename]} (#{asset[:size]} bytes, #{asset[:type]})"
+          puts "      Path: #{asset[:path]}"
+          puts "      Dimensions: #{asset[:dimensions] || 'N/A'}"
+        end
+        puts
+      end
+    rescue => e
+      puts
+      puts "  ❌ Failed to list assets: #{e.message}"
+      puts
+    end
+  end
+
+  private def upload_asset(args)
+    parts = args.split(/\s+/)
+    if parts.length < 2
+      puts
+      puts "  Usage: upload asset <filepath> [target]"
+      puts "  Targets: global, library, view"
+      puts "  Example: upload asset /path/to/image.jpg global"
+      puts
+      return
+    end
+
+    filepath = parts[1]
+    target = parts[2] || 'global'
+    
+    unless %w[global library view].include?(target)
+      puts
+      puts "  Invalid target: #{target}"
+      puts "  Valid targets: global, library, view"
+      puts
+      return
+    end
+
+    unless File.exist?(filepath)
+      puts
+      puts "  ❌ File not found: #{filepath}"
+      puts
+      return
+    end
+
+    begin
+      result = @api.upload_asset(filepath, target: target, view: @api.current_view&.name)
+      puts
+      puts "  ✅ Asset uploaded successfully to #{target}"
+      puts "  Filename: #{result[:filename]}"
+      puts "  Size: #{result[:size]} bytes"
+      puts
+    rescue => e
+      puts
+      puts "  ❌ Failed to upload asset: #{e.message}"
+      puts
+    end
+  end
+
+  private def copy_asset(args)
+    parts = args.split(/\s+/)
+    if parts.length < 3
+      puts
+      puts "  Usage: copy asset <filename> <from> <to>"
+      puts "  From/To: global, library, view, gem"
+      puts "  Example: copy asset logo.png gem global"
+      puts
+      return
+    end
+
+    filename = parts[1]
+    from = parts[2]
+    to = parts[3]
+    
+    unless %w[global library view gem].include?(from) && %w[global library view].include?(to)
+      puts
+      puts "  Invalid source or target"
+      puts "  Valid sources: global, library, view, gem"
+      puts "  Valid targets: global, library, view"
+      puts
+      return
+    end
+
+    begin
+      result = @api.copy_asset(filename, from: from, to: to, view: @api.current_view&.name)
+      puts
+      puts "  ✅ Asset copied successfully"
+      puts "  From: #{from} (#{result[:from_path]})"
+      puts "  To: #{to} (#{result[:to_path]})"
+      puts
+    rescue => e
+      puts
+      puts "  ❌ Failed to copy asset: #{e.message}"
+      puts
+    end
+  end
+
+  private def delete_asset(args)
+    parts = args.split(/\s+/)
+    if parts.length < 2
+      puts
+      puts "  Usage: delete asset <filename> [target]"
+      puts "  Targets: global, library, view"
+      puts "  Example: delete asset old-image.jpg global"
+      puts
+      return
+    end
+
+    filename = parts[1]
+    target = parts[2] || 'global'
+    
+    unless %w[global library view].include?(target)
+      puts
+      puts "  Invalid target: #{target}"
+      puts "  Valid targets: global, library, view"
+      puts
+      return
+    end
+
+    begin
+      @api.delete_asset(filename, target: target, view: @api.current_view&.name)
+      puts
+      puts "  ✅ Asset deleted successfully from #{target}"
+      puts
+    rescue => e
+      puts
+      puts "  ❌ Failed to delete asset: #{e.message}"
+      puts
+    end
+  end
+
+  private def asset_info(args)
+    parts = args.split(/\s+/)
+    if parts.length < 2
+      puts
+      puts "  Usage: asset info <filename> [target]"
+      puts "  Targets: global, library, view, gem"
+      puts "  Example: asset info logo.png global"
+      puts
+      return
+    end
+
+    filename = parts[1]
+    target = parts[2] || 'global'
+    
+    unless %w[global library view gem].include?(target)
+      puts
+      puts "  Invalid target: #{target}"
+      puts "  Valid targets: global, library, view, gem"
+      puts
+      return
+    end
+
+    begin
+      info = @api.get_asset_info(filename, target: target, view: @api.current_view&.name)
+      if info.nil?
+        puts
+        puts "  ❌ Asset not found: #{filename}"
+        puts
+        return
+      end
+      
+      puts
+      puts "  Asset Information:"
+      puts "  Filename: #{info[:filename]}"
+      puts "  Size: #{info[:size]} bytes"
+      puts "  Type: #{info[:type]}"
+      puts "  Path: #{info[:path]}"
+      puts "  Dimensions: #{info[:dimensions] || 'N/A'}"
+      puts
+    rescue => e
+      puts
+      puts "  ❌ Failed to get asset info: #{e.message}"
+      puts
+    end
+  end
+
+  private def configure_deployment(args)
+    parts = args.split(/\s+/)
+    view_name = parts[1] || @api.current_view&.name
+    
+    unless view_name
+      puts
+      puts "  ❌ No view specified and no current view"
+      puts
+      return
+    end
+
+    begin
+      deploy_file = @api.root/"views"/view_name/"config"/"deploy.txt"
+      puts "DEBUG: About to edit file: #{deploy_file}"
+      puts "DEBUG: File exists: #{File.exist?(deploy_file)}"
+      
+      # Use TUI's editor configuration instead of API's edit_file
+      editor_file = @api.root/"config/editor.txt"
+      if File.exist?(editor_file)
+        editor = read_file(editor_file).strip
+        puts "DEBUG: Using TUI editor: #{editor}"
+        system("#{editor} #{deploy_file}")
+      else
+        puts "DEBUG: No TUI editor config, using API edit_file"
+        @api.edit_file(deploy_file)
+      end
+      
+      puts "DEBUG: edit_file returned"
+      puts
+      puts "  ✅ Deployment configuration edited for view: #{view_name}"
+      puts
+    rescue => e
+      puts "DEBUG: Exception in configure_deployment: #{e.class} - #{e.message}"
+      puts
+      puts "  ❌ Failed to edit deployment configuration: #{e.message}"
       puts
     end
   end
