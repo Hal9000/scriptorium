@@ -1,12 +1,14 @@
 VERY SOON:
 ----------
-  widget management
+  new exceptions replacing RuntimeError
+  themes into web app
+x widget management
   full reddit support
   configurator? more wizards?
   post footer?
   livetext scriptorium additions
   legacy import
-  add to TUI: assets, etc.
+x add to TUI: assets, etc.
   add to web app
   Sample blog additions
 

@@ -54,6 +54,9 @@ class Scriptorium::Repo
     write_file(@root/:config/"bootstrap_css.txt", @predef.bootstrap_css)
     write_file(@root/:config/"common.js",         @predef.common_js)
     write_file(@root/:config/"widgets.txt",       @predef.available_widgets)
+    
+
+    
     Scriptorium::Theme.create_standard(@root)     # Theme: templates, etc.
     
     # Copy application-wide gem assets to library

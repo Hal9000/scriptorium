@@ -152,10 +152,54 @@ class TestScriptoriumAPI < Minitest::Test
   def test_014_themes_available
     themes = @api.themes_available
     assert_instance_of Array, themes
-    assert_includes themes, "standard"  # Should have the standard theme
+    
+    # Should have the standard theme
+    assert_includes themes, "standard"
+    
+    # Check system vs user themes
+    system_themes = @api.system_themes
+    user_themes = @api.user_themes
+    
+    assert_includes system_themes, "standard"
+    assert_empty user_themes  # No user themes yet
   end
 
-  def test_015_widgets_available
+  def test_015_clone_theme
+    # Clone the standard theme
+    result = @api.clone_theme("standard", "my-custom")
+    assert_equal "my-custom", result
+    
+    # Check that the new theme exists
+    themes = @api.themes_available
+    assert_includes themes, "my-custom"
+    
+    # Check that it's now a user theme
+    user_themes = @api.user_themes
+    assert_includes user_themes, "my-custom"
+    
+    # Check that standard is still a system theme
+    system_themes = @api.system_themes
+    assert_includes system_themes, "standard"
+  end
+
+  def test_016_clone_theme_validation
+    # Try to clone to existing theme name
+    assert_raises(RuntimeError) do
+      @api.clone_theme("standard", "standard")
+    end
+    
+    # Try to clone from non-existent theme
+    assert_raises(RuntimeError) do
+      @api.clone_theme("nonexistent", "new-theme")
+    end
+    
+    # Try to clone with invalid name
+    assert_raises(RuntimeError) do
+      @api.clone_theme("standard", "invalid name with spaces")
+    end
+  end
+
+  def test_017_widgets_available
     widgets = @api.widgets_available
     assert_instance_of Array, widgets
     # Should return available widgets from widgets.txt

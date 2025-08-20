@@ -348,8 +348,10 @@ class ScriptoriumTUI
       config_social
     elsif cmd == "config" && (args == "reddit" || args.start_with?("reddit "))
       config_reddit
-    elsif cmd == "clone" && args.include?(" ")
-      clone_theme(args)
+    elsif cmd == "clone" && (args == "theme" || args.start_with?("theme "))
+      clone_theme(args[6..-1])  # Remove "theme " prefix
+    elsif cmd == "delete" && (args == "theme" || args.start_with?("theme "))
+      delete_theme(args)
 
     else
       # Handle single-word commands
@@ -425,7 +427,8 @@ class ScriptoriumTUI
         generate               - Regenerate current view
       
         list themes            - List available themes
-        clone <old> <new>      - Clone a theme
+        clone theme <source> <name>  - Clone a theme
+        delete theme <path>    - Delete a user theme
       
         version, v                - Show version
         help, h                   - Show this help
@@ -1382,12 +1385,34 @@ class ScriptoriumTUI
   private def list_themes
     puts
     themes = @api.themes_available
+    
     if themes.empty?
       puts "  No themes found"
     else
-      puts "  Available themes:"
-      themes.each do |theme|
-        puts "    #{theme}"
+      # Group by type
+      system_themes = themes.select { |t| t[:type] == 'system' }
+      user_themes = themes.select { |t| t[:type] == 'user' }
+      shared_themes = themes.select { |t| t[:type] == 'shared' }
+      
+      puts "  System Themes (Read-only):"
+      if system_themes.empty?
+        puts "    none"
+      else
+        system_themes.each { |t| puts "    #{t[:name]} (#{t[:path]})" }
+      end
+      
+      puts "  User Themes (Editable):"
+      if user_themes.empty?
+        puts "    none"
+      else
+        user_themes.each { |t| puts "    #{t[:name]} (#{t[:path]})" }
+      end
+      
+      puts "  Shared Themes (Community):"
+      if shared_themes.empty?
+        puts "    none"
+      else
+        shared_themes.each { |t| puts "    #{t[:name]} (#{t[:path]})" }
       end
     end
     puts
@@ -1397,35 +1422,66 @@ class ScriptoriumTUI
     parts = args.split(/\s+/)
     if parts.length != 2
       puts
-      puts "  Usage: clone <oldtheme> <newtheme>"
-      puts "  Example: clone standard mytheme"
+      puts "  Usage: clone theme <source> <newname>"
+      puts "  Example: clone theme standard my-custom"
+      puts "  Note: Cloned themes become user themes"
       puts
       return
     end
 
-    old_theme, new_theme = parts[0], parts[1]
+    source, newname = parts[0], parts[1]
     
     begin
-      # Check if old theme exists
-      old_theme_path = @api.root/:themes/old_theme
-      unless Dir.exist?(old_theme_path)
-        puts
-        puts "  Theme '#{old_theme}' not found"
-        puts
-        return
-      end
-
-      # Clone the theme
-      require 'fileutils'
-      FileUtils.cp_r(old_theme_path, new_theme_path)
+      # Use the new API method for cloning
+      result = @api.clone_theme(source, newname)
       
-      puts
-      puts "  ✅ Theme '#{old_theme}' cloned to '#{new_theme}'"
-      puts "  Edit #{new_theme_path} to customize your theme"
-      puts
+      if result
+        puts
+        puts "  ✅ Theme cloned successfully: #{source} → #{result}"
+        puts "  Use 'config theme #{result}' to customize your theme"
+        puts
+      else
+        puts
+        puts "  ❌ Failed to clone theme"
+        puts
+      end
     rescue => e
       puts
       puts "  ❌ Failed to clone theme: #{e.message}"
+      puts
+      puts
+    end
+  end
+
+  private def delete_theme(args)
+    parts = args.split(/\s+/)
+    if parts.length != 2
+      puts
+      puts "  Usage: delete theme <theme_path>"
+      puts "  Example: delete theme user/my-custom"
+      puts "  Note: Can only delete user themes"
+      puts
+      return
+    end
+
+    theme_path = parts[1]
+    
+    begin
+      # Use the new API method for deleting
+      result = @api.delete_theme(theme_path)
+      
+      if result
+        puts
+        puts "  ✅ Theme deleted successfully: #{theme_path}"
+        puts
+      else
+        puts
+        puts "  ❌ Failed to delete theme"
+        puts
+      end
+    rescue => e
+      puts
+      puts "  ❌ Failed to delete theme: #{e.message}"
       puts
     end
   end

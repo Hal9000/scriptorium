@@ -348,12 +348,83 @@ class Scriptorium::API
 
   # Theme management
   def themes_available
+    themes = []
     themes_dir = @repo.root/:themes
-    return [] unless Dir.exist?(themes_dir)
-    Dir.children(themes_dir).select { |d| Dir.exist?(themes_dir/d) }
+    
+    if Dir.exist?(themes_dir)
+      Dir.children(themes_dir).each do |item|
+        next if item == "system.txt" || item.start_with?(".")
+        next unless Dir.exist?(themes_dir/item)
+        themes << item
+      end
+    end
+    
+    themes
+  end
+  
+  def system_themes
+    themes = []
+    system_file = @repo.root/:themes/"system.txt"
+    
+    if File.exist?(system_file)
+      themes = read_file(system_file, lines: true, chomp: true)
+    end
+    
+    themes
+  end
+  
+  def user_themes
+    themes = []
+    themes_dir = @repo.root/:themes
+    system_themes_list = system_themes
+    
+    if Dir.exist?(themes_dir)
+      Dir.children(themes_dir).each do |item|
+        next if item == "system.txt" || item.start_with?(".")
+        next unless Dir.exist?(themes_dir/item)
+        next if system_themes_list.include?(item)
+        themes << item
+      end
+    end
+    
+    themes
+  end
+  
+  def theme_exists?(theme_name)
+    # Check if theme name exists in themes directory
+    themes = themes_available
+    themes.include?(theme_name)
   end
 
-  # Widget management
+  def clone_theme(source_theme, new_name)
+    # Validate source theme exists
+    unless theme_exists?(source_theme)
+      raise "Source theme '#{source_theme}' not found"
+    end
+    
+    # Validate new name doesn't exist
+    if theme_exists?(new_name)
+      raise "Theme '#{new_name}' already exists"
+    end
+    
+    # Validate new name format (alphanumeric, hyphen, underscore)
+    unless new_name.match?(/^[a-zA-Z0-9_-]+$/)
+      raise "Theme name must contain only letters, numbers, hyphens, and underscores"
+    end
+    
+    source_dir = @repo.root/:themes/source_theme
+    target_dir = @repo.root/:themes/new_name
+    
+    # Copy theme directory
+    require 'fileutils'
+    FileUtils.cp_r(source_dir, target_dir)
+    
+    # Cloned themes become user themes (not system themes)
+    # No need to modify system.txt
+    
+    new_name
+  end
+
   def widgets_available
     widgets_file = @repo.root/:config/"widgets.txt"
     return [] unless File.exist?(widgets_file)

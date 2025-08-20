@@ -59,6 +59,9 @@ class Scriptorium::Theme
     # Copy gem assets to standard theme
     copy_gem_assets_to_theme(std)
     
+    # Create system.txt to identify system themes
+    write_file(root/:themes/"system.txt", "standard\n")
+    
     verify { Dir.exist?(root/:themes/"standard") }
   end
 
