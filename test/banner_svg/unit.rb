@@ -28,7 +28,7 @@ class BannerSVGTest < Minitest::Test
 
   def teardown
     # Clean up any test files if needed
-    File.delete("config.txt") if File.exist?("config.txt")
+    File.delete("svg.txt") if File.exist?("svg.txt")
   end
 
   # Test handle_style method
@@ -183,7 +183,7 @@ class BannerSVGTest < Minitest::Test
 
   def test_025_parse_header_svg_with_gradient
     # Create a temporary config file with gradient
-    File.write("config.txt", "back.linear red blue lr")
+    File.write("svg.txt", "back.linear red blue lr")
     
     @banner.parse_header_svg
     
@@ -192,12 +192,12 @@ class BannerSVGTest < Minitest::Test
     assert_equal "lr", @banner.instance_variable_get(:@gradient_direction)
     
     # Clean up
-    File.delete("config.txt") if File.exist?("config.txt")
+    File.delete("svg.txt") if File.exist?("svg.txt")
   end
 
   def test_026_parse_header_svg_without_gradient
     # Create a temporary config file without gradient
-    File.write("config.txt", "back.color #fff")
+    File.write("svg.txt", "back.color #fff")
     
     @banner.parse_header_svg
     
@@ -207,7 +207,7 @@ class BannerSVGTest < Minitest::Test
     assert_equal "#fff", @banner.instance_variable_get(:@background)
     
     # Clean up
-    File.delete("config.txt") if File.exist?("config.txt")
+    File.delete("svg.txt") if File.exist?("svg.txt")
   end
 
   # Test radial gradient functionality
@@ -225,7 +225,7 @@ class BannerSVGTest < Minitest::Test
 
   def test_029_parse_header_svg_with_radial_gradient
     # Create a temporary config file with radial gradient
-    File.write("config.txt", "back.radial red blue")
+    File.write("svg.txt", "back.radial red blue")
     
     @banner.parse_header_svg
     
@@ -233,12 +233,12 @@ class BannerSVGTest < Minitest::Test
     assert_equal "blue", @banner.instance_variable_get(:@radial_end_color)
     
     # Clean up
-    File.delete("config.txt") if File.exist?("config.txt")
+    File.delete("svg.txt") if File.exist?("svg.txt")
   end
 
   def test_030_radial_gradient_priority_over_linear
     # Create a temporary config file with both gradients
-    File.write("config.txt", "back.linear green yellow lr\nback.radial red blue")
+    File.write("svg.txt", "back.linear green yellow lr\nback.radial red blue")
     
     @banner.parse_header_svg
     
@@ -251,7 +251,7 @@ class BannerSVGTest < Minitest::Test
     assert_equal "yellow", @banner.instance_variable_get(:@gradient_end_color)
     
     # Clean up
-    File.delete("config.txt") if File.exist?("config.txt")
+    File.delete("svg.txt") if File.exist?("svg.txt")
   end
 
   # Test image background functionality
@@ -267,19 +267,19 @@ class BannerSVGTest < Minitest::Test
 
   def test_033_parse_header_svg_with_image_background
     # Create a temporary config file with image background
-    File.write("config.txt", "back.image background.jpg")
+    File.write("svg.txt", "back.image background.jpg")
     
     @banner.parse_header_svg
     
     assert_equal "background.jpg", @banner.instance_variable_get(:@image_background)
     
     # Clean up
-    File.delete("config.txt") if File.exist?("config.txt")
+    File.delete("svg.txt") if File.exist?("svg.txt")
   end
 
   def test_034_image_background_priority_over_all
     # Create a temporary config file with all background types
-    File.write("config.txt", "back.color #fff\nback.linear green yellow lr\nback.radial red blue\nback.image background.jpg")
+    File.write("svg.txt", "back.color #fff\nback.linear green yellow lr\nback.radial red blue\nback.image background.jpg")
     
     @banner.parse_header_svg
     
@@ -294,7 +294,7 @@ class BannerSVGTest < Minitest::Test
     assert_equal "blue", @banner.instance_variable_get(:@radial_end_color)
     
     # Clean up
-    File.delete("config.txt") if File.exist?("config.txt")
+    File.delete("svg.txt") if File.exist?("svg.txt")
   end
 
   # Test initialization
@@ -332,31 +332,31 @@ class BannerSVGTest < Minitest::Test
   end
 
   def test_037_read_commented_file_with_empty_file
-    File.write("config.txt", "")
-    result = @banner.read_commented_file("config.txt")
+    File.write("svg.txt", "")
+    result = @banner.read_commented_file("svg.txt")
     assert_equal [], result
   end
 
   def test_038_read_commented_file_with_comments_only
-    File.write("config.txt", "# This is a comment\n# Another comment\n  # Indented comment")
-    result = @banner.read_commented_file("config.txt")
+    File.write("svg.txt", "# This is a comment\n# Another comment\n  # Indented comment")
+    result = @banner.read_commented_file("svg.txt")
     assert_equal [], result
   end
 
   def test_039_read_commented_file_with_mixed_content
-    File.write("config.txt", "# Comment\nback.color #fff\n# Another comment\nback.linear red blue\n# End comment")
-    result = @banner.read_commented_file("config.txt")
+    File.write("svg.txt", "# Comment\nback.color #fff\n# Another comment\nback.linear red blue\n# End comment")
+    result = @banner.read_commented_file("svg.txt")
     assert_equal ["back.color #fff", "back.linear red blue"], result
   end
 
   def test_040_read_commented_file_with_trailing_comments
-    File.write("config.txt", "back.color #fff # This is a color\nback.linear red blue # Gradient")
-    result = @banner.read_commented_file("config.txt")
+    File.write("svg.txt", "back.color #fff # This is a color\nback.linear red blue # Gradient")
+    result = @banner.read_commented_file("svg.txt")
     assert_equal ["back.color #fff", "back.linear red blue"], result
   end
 
   def test_041_parse_header_svg_with_malformed_config_line
-    File.write("config.txt", "back.color\nback.linear\nback.radial")
+    File.write("svg.txt", "back.color\nback.linear\nback.radial")
     @banner.parse_header_svg
     # Should handle gracefully without raising exceptions
     # Malformed lines should be ignored, leaving default values
@@ -576,7 +576,7 @@ class BannerSVGTest < Minitest::Test
       subtitle.xy 50% 70%
     CONFIG
     
-    File.write("config.txt", config_content)
+    File.write("svg.txt", config_content)
     @banner.parse_header_svg
     
     # Verify all settings were applied
@@ -605,7 +605,7 @@ class BannerSVGTest < Minitest::Test
   def test_061_end_to_end_workflow
     # Test complete workflow from config to final output
     config_content = "back.color #e0e0e0\ntext.color #000\ntitle.style bold\nsubtitle.xy 10% 80%"
-    File.write("config.txt", config_content)
+    File.write("svg.txt", config_content)
     
     # Parse config
     @banner.parse_header_svg
@@ -667,7 +667,7 @@ class BannerSVGTest < Minitest::Test
   def test_064_background_priority_integration
     # Test that background priority works correctly in full workflow
     config_content = "back.color #fff\nback.linear red blue\nback.radial green yellow\nback.image bg.jpg"
-    File.write("config.txt", config_content)
+    File.write("svg.txt", config_content)
     
     @banner.parse_header_svg
     svg_output = @banner.parse_header_svg

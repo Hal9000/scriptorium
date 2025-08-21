@@ -347,7 +347,7 @@ class Scriptorium::BannerSVG
     raise ColorFirstArgEmpty if args.first.to_s.strip.empty?
   end
   
-    def parse_header_svg(config_file = "config.txt")
+    def parse_header_svg(config_file = "svg.txt")
       check_invariants
       assume { config_file.is_a?(String) && !config_file.empty? }
       

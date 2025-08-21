@@ -413,12 +413,12 @@ class Scriptorium::StandardFiles
     EOS
   end
 
-  def theme_header     # Add theme name to these files??
+  def theme_header 
     <<~EOS
       # <!-- Section: header -->
       # Contents of header
       # (may include banner, title, navbar, ...)
-      title
+      banner svg
     EOS
   end
 

@@ -67,7 +67,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert repo.current_view.name == "sample", "Expected current view to be 'sample'"
   end
 
-  def test_005_check_widgets_txt_created
+  def test_006_check_widgets_txt_created
     repo = create_test_repo
     widgets_file = "#{repo.root}/config/widgets.txt"
     assert File.exist?(widgets_file), "widgets.txt should exist in config directory"
@@ -77,7 +77,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert_includes content, "pages"
   end
 
-  def test_006_create_view
+  def test_007_create_view
     repo = create_test_repo
     vname = "testview"
     t0 = repo.view_exist?(vname)
@@ -97,7 +97,52 @@ class TestScriptoriumRepo < Minitest::Test
     end
   end
 
-  def test_007_new_view_becomes_current
+  def test_008_create_view_creates_all_config_files
+    repo = create_test_repo
+    vname = "testview"
+    
+    repo.create_view(vname, "My Title", "Just a subtitle here")
+    
+          # Check that all expected config files are created
+      view_dir = "#{repo.root}/views/#{vname}"
+      config_dir = "#{view_dir}/config"
+      
+      # Main view config file (in view root, not config subdirectory)
+      assert_file_exist?("#{view_dir}/config.txt")
+      
+      # Core config files
+      assert_file_exist?("#{config_dir}/global-head.txt")
+      assert_file_exist?("#{config_dir}/bootstrap_js.txt")
+      assert_file_exist?("#{config_dir}/bootstrap_css.txt")
+      assert_file_exist?("#{config_dir}/common.js")
+      assert_file_exist?("#{config_dir}/social.txt")
+      assert_file_exist?("#{config_dir}/reddit.txt")
+      assert_file_exist?("#{config_dir}/deploy.txt")
+      assert_file_exist?("#{config_dir}/status.txt")
+      assert_file_exist?("#{config_dir}/post_index.txt")
+      
+      # Theme config files
+      assert_file_exist?("#{config_dir}/header.txt")
+      assert_file_exist?("#{config_dir}/footer.txt")
+      assert_file_exist?("#{config_dir}/left.txt")
+      assert_file_exist?("#{config_dir}/right.txt")
+      assert_file_exist?("#{config_dir}/main.txt")
+      
+      # Banner config files
+      assert_file_exist?("#{config_dir}/svg.txt")
+      
+      # Check that header.txt includes banner svg
+      header_content = read_file("#{config_dir}/header.txt")
+      assert_includes header_content, "banner svg"
+      
+      # Check that svg.txt has proper content
+      svg_content = read_file("#{config_dir}/svg.txt")
+      assert_includes svg_content, "aspect"
+      assert_includes svg_content, "back.linear"
+      assert_includes svg_content, "title.color"
+  end
+
+  def test_009_new_view_becomes_current
     repo = create_test_repo
     tv2 = "testview2"
     view = repo.create_view(tv2, "My 2nd Title", "Just another subtitle here")
@@ -107,7 +152,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert repo.current_view.name == view.name, "Expected '#{tv2}' as current view"
   end
 
-  def test_008_open_view
+  def test_010_open_view
     repo = create_test_repo
     vname = "testview"
     title, sub = "My Awesome Title", "Just another subtitle"
@@ -122,7 +167,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert repo.current_view.name == vname, "Expected '#{vname}' in views"
   end
 
-  def test_009_create_draft
+  def test_011_create_draft
     repo = create_test_repo
     fname = repo.create_draft
     assert_file_exist?(fname)
@@ -137,7 +182,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert_file_contains?(f2, ".tags  things, stuff")
   end
 
-  def test_010_finish_draft
+  def test_012_finish_draft
     $debug = true
     repo = create_test_repo
     fname = repo.create_draft
@@ -150,7 +195,7 @@ class TestScriptoriumRepo < Minitest::Test
     $debug = false
   end
 
-  def test_011_check_initial_post
+  def test_013_check_initial_post
     repo = create_test_repo
     root = repo.root
     file = "#{root}/themes/standard/initial/post.lt3"
@@ -158,7 +203,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert_file_lines(file, 10)
   end
 
-  def test_012_check_interpolated_initial_post
+  def test_014_check_interpolated_initial_post
     repo = create_test_repo
     predef = repo.instance_eval { @predef }
     str = predef.initial_post
@@ -168,7 +213,7 @@ class TestScriptoriumRepo < Minitest::Test
     assert lines[3] == ".title My post title", "Expected 'title' to be filled in (found '#{lines[3]}')"
   end
 
-  def test_013_find_theme_file
+  def test_015_find_theme_file
     repo = create_test_repo
     t = Scriptorium::Theme.new(repo.root, "standard")
 

@@ -827,24 +827,7 @@ class ScriptoriumWeb < Sinatra::Base
         bsvg = Scriptorium::BannerSVG.new(view.title, view.subtitle)
         svg_config_file = @api.root/"views"/view_name/"config"/"svg.txt"
         if File.exist?(svg_config_file)
-          # Temporarily rename svg.txt to config.txt for BannerSVG compatibility
-          config_dir = @api.root/"views"/view_name/"config"
-          Dir.chdir(config_dir) do
-            if File.exist?("config.txt")
-              File.rename("config.txt", "config.txt.backup")
-            end
-            File.rename("svg.txt", "config.txt")
-            
-            begin
-              bsvg.parse_header_svg
-            ensure
-              # Restore original files
-              File.rename("config.txt", "svg.txt")
-              if File.exist?("config.txt.backup")
-                File.rename("config.txt.backup", "config.txt")
-              end
-            end
-          end
+          bsvg.parse_header_svg(svg_config_file)
         else
           bsvg.parse_header_svg
         end
@@ -1315,6 +1298,145 @@ class ScriptoriumWeb < Sinatra::Base
     end
   end
 
+  # Widget Management Routes
+  
+  # List widgets for current view
+  get '/widgets' do
+    if @api&.instance_variable_get(:@repo) && @current_view
+      @available_widgets = @api.widgets_available
+      @configured_widgets = []
+      @widget_containers = {}
+      
+      @available_widgets.each do |widget|
+        widget_dir = @api.root/"views"/@current_view.name/"widgets"/widget
+        if Dir.exist?(widget_dir)
+          @configured_widgets << widget
+          # Determine which container this widget is in
+          @widget_containers[widget] = determine_widget_container(@current_view)
+        end
+      end
+      
+      erb :widgets
+    else
+      redirect "/?error=No repository or view selected"
+    end
+  end
+
+  # Add widget to current view
+  post '/add_widget' do
+    if @api&.instance_variable_get(:@repo) && @current_view
+      widget_name = params[:widget_name]&.strip
+      
+      if widget_name.nil? || widget_name.empty?
+        redirect "/widgets?error=Widget name required"
+        return
+      end
+      
+      # Check if widget is available
+      available_widgets = @api.widgets_available
+      unless available_widgets.include?(widget_name)
+        redirect "/widgets?error=Widget '#{widget_name}' not available"
+        return
+      end
+      
+      # Check if widget is already configured
+      widget_dir = @api.root/"views"/@current_view.name/"widgets"/widget_name
+      if Dir.exist?(widget_dir)
+        redirect "/widgets?error=Widget '#{widget_name}' already configured"
+        return
+      end
+      
+      # Determine container (left/right) for widget placement
+      container = determine_widget_container(@current_view)
+      unless container
+        redirect "/widgets?error=No left or right container found in layout. Add a left or right container to your layout first."
+        return
+      end
+      
+      # Create widget directory and list.txt
+      FileUtils.mkdir_p(widget_dir)
+      list_file = widget_dir/"list.txt"
+      File.write(list_file, "# Add #{widget_name} items here\n")
+      
+      # Generate the widget after creation
+      begin
+        @api.generate_widget(widget_name)
+        redirect "/widgets?message=Widget '#{widget_name}' added successfully to #{container} container and generated"
+      rescue => e
+        # Widget created but generation failed
+        redirect "/widgets?message=Widget '#{widget_name}' added successfully to #{container} container, but generation failed: #{e.message}"
+      end
+    else
+      redirect "/?error=No repository or view selected"
+    end
+  end
+
+  # Configure widget data
+  get '/config_widget/:widget_name' do
+    if @api&.instance_variable_get(:@repo) && @current_view
+      @widget_name = params[:widget_name]
+      widget_dir = @api.root/"views"/@current_view.name/"widgets"/@widget_name
+      
+      unless Dir.exist?(widget_dir)
+        redirect "/widgets?error=Widget '#{@widget_name}' not configured"
+        return
+      end
+      
+      list_file = widget_dir/"list.txt"
+      @widget_data = File.exist?(list_file) ? File.read(list_file) : ""
+      
+      erb :config_widget
+    else
+      redirect "/?error=No repository or view selected"
+    end
+  end
+
+  # Update widget data
+  post '/update_widget/:widget_name' do
+    if @api&.instance_variable_get(:@repo) && @current_view
+      widget_name = params[:widget_name]
+      widget_data = params[:widget_data]
+      
+      widget_dir = @api.root/"views"/@current_view.name/"widgets"/widget_name
+      list_file = widget_dir/"list.txt"
+      
+      File.write(list_file, widget_data)
+      
+      # Generate the widget after updating
+      begin
+        @api.generate_widget(widget_name)
+        redirect "/widgets?message=Widget '#{widget_name}' updated and generated successfully"
+      rescue => e
+        # Widget updated but generation failed
+        redirect "/widgets?error=Widget '#{widget_name}' updated successfully, but generation failed: #{e.message}"
+      end
+    else
+      redirect "/?error=No repository or view selected"
+    end
+  end
+
+  # Remove widget from current view
+  post '/remove_widget' do
+    if @api&.instance_variable_get(:@repo) && @current_view
+      widget_name = params[:widget_name]&.strip
+      
+      if widget_name.nil? || widget_name.empty?
+        redirect "/widgets?error=Widget name required"
+        return
+      end
+      
+      widget_dir = @api.root/"views"/@current_view.name/"widgets"/widget_name
+      if Dir.exist?(widget_dir)
+        FileUtils.rm_rf(widget_dir)
+        redirect "/widgets?message=Widget '#{widget_name}' removed successfully"
+      else
+        redirect "/widgets?error=Widget '#{widget_name}' not found"
+      end
+    else
+      redirect "/?error=No repository or view selected"
+    end
+  end
+
   # Helper method to update status
   private def update_config_status(view_name, config_name, status)
     status_file = @api.root/"views"/view_name/"config"/"status.txt"
@@ -1338,6 +1460,30 @@ class ScriptoriumWeb < Sinatra::Base
     sizes = ['Bytes', 'KB', 'MB', 'GB']
     i = (Math.log(bytes) / Math.log(k)).floor
     "#{(bytes / k**i.to_f).round(2)} #{sizes[i]}"
+  end
+
+  # Helper method to determine which container (left/right) widgets should be placed in
+  private def determine_widget_container(view)
+    layout_file = @api.root/"views"/view.name/"config"/"layout.txt"
+    return nil unless File.exist?(layout_file)
+    
+    layout_content = read_file(layout_file)
+    containers = []
+    
+    layout_content.lines.each do |line|
+      line = line.strip
+      next if line.empty? || line.start_with?('#')
+      
+      if line.include?(' ')
+        container = line.split(/\s+/, 2)[0]
+        containers << container
+      else
+        containers << line
+      end
+    end
+    
+    # Prefer left container, fall back to right
+    containers.find { |c| c == 'left' } || containers.find { |c| c == 'right' }
   end
 
   def get_image_dimensions(file_path)

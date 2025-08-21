@@ -237,6 +237,10 @@ class Scriptorium::Repo
     theme_config = @root/:themes/theme/:layout/:config
     containers = %w[header.txt footer.txt left.txt right.txt main.txt]
     containers.each { |container| FileUtils.cp(theme_config/container, cfg/container) }  # from theme to view
+    
+    # Create default SVG configuration using standard files
+    write_file(cfg/"svg.txt", @predef.svg_txt)
+    
     view.apply_theme(theme)
     verify { view.is_a?(Scriptorium::View) }
     return view

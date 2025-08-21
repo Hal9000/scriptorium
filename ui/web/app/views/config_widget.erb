@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Configure <%= @widget_name.capitalize %> Widget - Scriptorium</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    .header {
+      background: #007bff;
+      color: white;
+      padding: 20px;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .content {
+      padding: 20px;
+    }
+    .message {
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .section {
+      margin-bottom: 30px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .section-header {
+      background: #f8f9fa;
+      padding: 15px 20px;
+      border-bottom: 1px solid #ddd;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    .section-content {
+      padding: 20px;
+    }
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 10px;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-primary {
+      background: #007bff;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #0056b3;
+    }
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+    .btn-secondary:hover {
+      background: #545b62;
+    }
+    .btn-success {
+      background: #28a745;
+      color: white;
+    }
+    .btn-success:hover {
+      background: #218838;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #333;
+    }
+    .form-group textarea {
+      width: 100%;
+      min-height: 300px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+    }
+    .instructions {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .instructions h4 {
+      margin: 0 0 10px 0;
+      color: #495057;
+    }
+    .instructions ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .instructions li {
+      margin-bottom: 5px;
+    }
+    .back-link {
+      margin-bottom: 20px;
+    }
+    .actions {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #dee2e6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Configure <%= @widget_name.capitalize %> Widget</h1>
+    </div>
+    
+    <div class="content">
+      <div class="back-link">
+        <a href="/widgets" class="btn btn-secondary">← Back to Widget Management</a>
+      </div>
+
+      <% if @error %>
+        <div class="message error">
+          <strong>Error:</strong> <%= @error %>
+        </div>
+      <% end %>
+      
+      <% if @message %>
+        <div class="message success">
+          <strong>Success:</strong> <%= @message %>
+        </div>
+      <% end %>
+
+      <div class="section">
+        <div class="section-header">
+          Widget Instructions
+        </div>
+        <div class="section-content">
+          <div class="instructions">
+            <% case @widget_name %>
+            <% when 'links' %>
+              <h4>Links Widget Configuration</h4>
+              <p>Add links in the format: <code>URL, Title</code></p>
+              <ul>
+                <li>One link per line</li>
+                <li>Separate URL and title with a comma</li>
+                <li>Example: <code>https://example.com, Example Site</code></li>
+                <li>Spaces around the comma are optional</li>
+              </ul>
+            <% when 'pages' %>
+              <h4>Pages Widget Configuration</h4>
+              <p>Add page filenames (without extensions):</p>
+              <ul>
+                <li>One filename per line</li>
+                <li>Don't include file extensions</li>
+                <li>Example: <code>about</code> (for about.html)</li>
+                <li>Pages will be loaded from the <code>pages/</code> directory</li>
+              </ul>
+            <% when 'featured_posts' %>
+              <h4>Featured Posts Widget Configuration</h4>
+              <p>Add post IDs to feature:</p>
+              <ul>
+                <li>One post ID per line</li>
+                <li>Use numeric post IDs (e.g., <code>1</code>, <code>5</code>)</li>
+                <li>Posts will be displayed in the order listed</li>
+                <li>Invalid post IDs will be ignored</li>
+              </ul>
+            <% else %>
+              <h4>Widget Configuration</h4>
+              <p>Edit the widget data below. The format depends on the widget type.</p>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          Edit Widget Data
+        </div>
+        <div class="section-content">
+          <form method="post" action="/update_widget/<%= @widget_name %>">
+            <div class="form-group">
+              <label for="widget_data">Widget Data:</label>
+              <textarea name="widget_data" id="widget_data" placeholder="Enter widget data here..."><%= @widget_data %></textarea>
+            </div>
+            
+            <div class="actions">
+              <button type="submit" class="btn btn-success">Save and Generate Widget</button>
+              <a href="/widgets" class="btn btn-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
