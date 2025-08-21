@@ -584,6 +584,8 @@ class Scriptorium::Repo
     reddit.configured?
   end
 
+
+
   private def validate_view_name(name)
     raise ViewNameNil if name.nil?
     

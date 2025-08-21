@@ -1111,6 +1111,60 @@ class Scriptorium::API
     end
   end
 
+  # Parse deployment configuration file
+  def parse_deploy_config(config_content)
+    lines = config_content.strip.split("\n")
+    config = {}
+    
+    # Parse space-separated key-value format
+    lines.each do |line|
+      line = line.strip
+      next if line.empty? || line.start_with?('#')
+      
+      if line.match(/^(\w+)\s+(.+)$/)
+        key = $1.strip
+        value = $2.strip
+        config[key] = value
+      end
+    end
+    
+    # Return the config hash (or empty hash if no valid entries)
+    config
+  end
+
+  # Build rsync destination from deployment config
+  def build_rsync_destination(config)
+    if config['user'] && config['server'] && config['path']
+      return "#{config['user']}@#{config['server']}:#{config['path']}"
+    end
+    nil
+  end
+
+  # Validate rsync destination format
+  def validate_rsync_destination(destination)
+    destination =~ /^[^@]+@[^:]+:.+/
+  end
+
+  # Execute deployment rsync with validation
+  def execute_deploy_rsync(source_dir, destination)
+    # Validate destination format
+    unless validate_rsync_destination(destination)
+      puts "  ❌ Invalid destination format: #{destination}"
+      puts "  Expected format: user@server:path"
+      return false
+    end
+    
+    # Log the rsync command
+    cmd = "rsync -r -z -l #{source_dir}/ #{destination}/"
+    puts "  Executing: #{cmd}"
+    
+    # Execute rsync
+    result = system(cmd)
+    puts "  rsync completed with result: #{result}"
+    
+    result
+  end
+
   # Utility methods
 
 #   # Delegate common repo methods

@@ -1,11 +1,85 @@
 #!/usr/bin/env ruby
 
-require 'scriptorium'
-require 'rubytext'
+require 'optparse'
+require 'fileutils'
 
-puts "sblog: Attempting .new"
+class ScriptoriumLauncher
+  def initialize
+    @script_dir = File.dirname(__FILE__)
+    @project_root = File.join(@script_dir, '..')
+    @tui_path = File.join(@project_root, 'ui', 'tui', 'bin', 'scriptorium')
+    @web_path = File.join(@project_root, 'ui', 'web', 'bin', 'scriptorium-web')
+  end
 
-$blog = Scriptorium.new
+  def run
+    command = ARGV.first
 
-puts
+    case command
+    when nil, 'tui'
+      launch_tui
+    when 'web'
+      launch_web(ARGV[1..-1])
+    when 'help', '--help', '-h'
+      show_help
+    else
+      puts "Unknown command: #{command}"
+      puts "Run 'sblog help' for usage information"
+      exit 1
+    end
+  end
+
+  private
+
+  def launch_tui
+    puts "Launching Scriptorium TUI..."
+    exec(@tui_path, *ARGV)
+  end
+
+  def launch_web(args)
+    if args.empty?
+      puts "Launching Scriptorium Web UI..."
+      exec(@web_path, 'start')
+    else
+      puts "Running Scriptorium Web command: #{args.join(' ')}"
+      exec(@web_path, *args)
+    end
+  end
+
+  def show_help
+    puts <<~HELP
+      Scriptorium - A command-line blogging system
+
+      USAGE:
+        sblog                   # Launch TUI (default)
+        sblog tui               # Launch TUI explicitly
+        sblog web               # Launch web app
+        sblog web start         # Start web server
+        sblog web stop          # Stop web server
+        sblog web status        # Check web server status
+        sblog help              # Show this help
+
+      INTERFACES:
+        TUI (Text User Interface):
+          - Command-line interface
+          - Full-featured management
+          - Preferred for daily use
+          - Runs in terminal
+
+        Web:
+          - Browser-based interface
+          - Visual management tools
+          - Good for occasional use
+          - Runs in web browser
+
+      EXAMPLES:
+        sblog                   # Start TUI
+        sblog new post "Title"  # Create new post via TUI
+        sblog web start         # Start web server
+        sblog web               # Open web interface
+    HELP
+  end
+end
+
+# Run the launcher
+ScriptoriumLauncher.new.run
 

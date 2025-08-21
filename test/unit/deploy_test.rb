@@ -106,7 +106,6 @@ class TestDeploy < Minitest::Test
   def test_006_deploy_marker_file_creation
     # Test that deployment creates a marker file
     output_dir = @view.dir/:output
-    puts "output_dir: #{output_dir}"
     
     # Simulate deployment marker creation
     marker_content = "Deployed: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
@@ -374,6 +373,117 @@ class TestDeploy < Minitest::Test
     rescue => e
       # SSH test might fail, which is expected in test environment
       skip "SSH test failed (expected in test environment): #{e.message}"
+    end
+  end
+
+  def test_020_deploy_config_parsing
+    # Test various deployment config formats
+    test_cases = [
+      # Valid space-separated format
+      {
+        input: "user      root\nserver    example.com\npath      sample",
+        expected: {"user" => "root", "server" => "example.com", "path" => "sample"},
+        description: "valid space-separated format"
+      },
+      # Config with comments
+      {
+        input: "# This is a comment\nuser      root\nserver    example.com\npath      sample",
+        expected: {"user" => "root", "server" => "example.com", "path" => "sample"},
+        description: "config with comments"
+      },
+      # Missing required fields
+      {
+        input: "user      root\nserver    example.com",
+        expected: {"user" => "root", "server" => "example.com"},
+        description: "missing path field"
+      },
+      # Empty config
+      {
+        input: "",
+        expected: {},
+        description: "empty config"
+      },
+      # Config with junk lines
+      {
+        input: "user      root\njunk line here\nserver    example.com\npath      sample",
+        expected: {"user" => "root", "junk" => "line here", "server" => "example.com", "path" => "sample"},
+        description: "config with junk lines"
+      },
+      # Config with extra whitespace
+      {
+        input: "  user      root  \n  server    example.com  \n  path      sample  ",
+        expected: {"user" => "root", "server" => "example.com", "path" => "sample"},
+        description: "config with extra whitespace"
+      }
+    ]
+
+    test_cases.each do |test_case|
+      result = @api.parse_deploy_config(test_case[:input])
+      assert_equal test_case[:expected], result, 
+                   "Failed for #{test_case[:description]}: expected '#{test_case[:expected]}', got '#{result}'"
+    end
+  end
+
+  def test_020b_build_rsync_destination
+    # Test building rsync destinations from config hashes
+    test_cases = [
+      {
+        config: {"user" => "root", "server" => "example.com", "path" => "sample"},
+        expected: "root@example.com:sample",
+        description: "complete config"
+      },
+      {
+        config: {"user" => "root", "server" => "example.com"},
+        expected: nil,
+        description: "missing path"
+      },
+      {
+        config: {},
+        expected: nil,
+        description: "empty config"
+      }
+    ]
+
+    test_cases.each do |test_case|
+      result = @api.build_rsync_destination(test_case[:config])
+      if test_case[:expected].nil?
+        assert_nil result, "Failed for #{test_case[:description]}: expected nil, got '#{result}'"
+      else
+        assert_equal test_case[:expected], result, 
+                     "Failed for #{test_case[:description]}: expected '#{test_case[:expected]}', got '#{result}'"
+      end
+    end
+  end
+
+
+
+  def test_022_deploy_config_edge_cases
+    # Test edge cases that could cause issues
+    edge_cases = [
+      # Config with only junk
+      {
+        input: "this is not a config\nneither is this\nor this",
+        expected: {"this" => "is not a config", "neither" => "is this", "or" => "this"},
+        description: "only junk lines"
+      },
+      # Config with empty lines
+      {
+        input: "user      root\n\nserver    example.com\n\npath      sample\n",
+        expected: {"user" => "root", "server" => "example.com", "path" => "sample"},
+        description: "config with empty lines"
+      },
+      # Config with special characters
+      {
+        input: "user      root\nserver    example.com\npath      /var/www/html",
+        expected: {"user" => "root", "server" => "example.com", "path" => "/var/www/html"},
+        description: "path with special characters"
+      }
+    ]
+
+    edge_cases.each do |test_case|
+      result = @api.parse_deploy_config(test_case[:input])
+      assert_equal test_case[:expected], result, 
+                   "Failed for #{test_case[:description]}: expected '#{test_case[:expected]}', got '#{result}'"
     end
   end
 end 
