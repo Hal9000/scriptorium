@@ -72,12 +72,20 @@
             <% @views.each do |view| %>
               <tr style="<%= 'background-color: #e3f2fd;' if @current_view && view.name == @current_view.name %>">
                 <td>
-                  <form method="post" action="/change_view" style="display: inline;">
-                    <input type="hidden" name="view_name" value="<%= view.name %>">
-                    <button type="submit" style="background: none; border: none; color: #007cba; cursor: pointer; font-family: monospace; font-size: inherit;" title="Change to <%= view.name %>">
+                  <% if @current_view && view.name == @current_view.name %>
+                    <!-- Current view - looks clickable but does nothing -->
+                    <span style="background: none; border: none; color: #007cba; cursor: pointer; font-family: monospace; font-size: inherit;" title="Current view (clicking does nothing)">
                       <%= view.name %>
-                    </button>
-                  </form>
+                    </span>
+                  <% else %>
+                    <!-- Other views - actually clickable -->
+                    <form method="post" action="/change_view" style="display: inline;">
+                      <input type="hidden" name="view_name" value="<%= view.name %>">
+                      <button type="submit" style="background: none; border: none; color: #007cba; cursor: pointer; font-family: monospace; font-size: inherit;" title="Change to <%= view.name %>">
+                        <%= view.name %>
+                      </button>
+                    </form>
+                  <% end %>
                 </td>
                 <td>
                   <a href="/configure_view/<%= view.name %>" style="color: #007cba; text-decoration: none; cursor: pointer;" title="Configure <%= view.name %>">
@@ -91,7 +99,8 @@
           <% if @current_view %>
             <div style="margin-top: 15px; padding: 10px; background-color: #f0f8ff; border: 1px solid #b0d4f1; border-radius: 3px;">
               <strong>Current view:</strong> <%= @current_view.name %>
-              <form method="post" action="/generate_view" style="display: inline; margin-left: 10px;">
+              <a href="/view/<%= @current_view.name %>" class="button" style="margin-left: 10px; text-decoration: none;">View Dashboard</a>
+              <form method="post" action="/generate_view" style="display: inline; margin-left: 5px;">
                 <input type="hidden" name="view_name" value="<%= @current_view.name %>">
                 <button type="submit" class="button">Generate</button>
               </form>
@@ -99,7 +108,6 @@
               <a href="/banner_config" class="button" style="margin-left: 5px; text-decoration: none;">Banner Config</a>
               <a href="/navbar_config" class="button" style="margin-left: 5px; text-decoration: none;">Navbar Config</a>
               <a href="/asset_management" class="button" style="margin-left: 5px; text-decoration: none;">Asset Management</a>
-              <a href="/view/<%= @current_view.name %>" class="button" style="margin-left: 5px; text-decoration: none;">View Dashboard</a>
             </div>
           <% end %>
         <% else %>
@@ -114,40 +122,7 @@
         </form>
       </div>
 
-      <% if @current_view %>
-        <div class="section">
-          <h3>Create new post in <%= @current_view.name %></h3>
-          <form method="post" action="/create_post">
-            <input type="text" name="title" placeholder="Post title" required>
-            <button type="submit" class="button">Create new post</button>
-          </form>
-        </div>
 
-        <% if @posts && !@posts.empty? %>
-          <div class="section">
-            <table class="posts-table">
-              <tr>
-                <th>ID</th>
-                <th>Date</th>
-                <th>Title <em style="font-size: 0.8em; font-weight: normal;">(Click to edit)</em></th>
-                <th>Views</th>
-              </tr>
-              <% @posts.each do |post| %>
-                <tr>
-                  <td class="post-id"><%= post.id %></td>
-                  <td><%= post.pubdate&.split(' ')&.first %></td>
-                  <td>
-                    <a href="/edit_post/<%= post.id %>" style="color: #007cba; text-decoration: none; cursor: pointer;" title="Edit <%= post.title %>">
-                      <%= post.title %>
-                    </a>
-                  </td>
-                  <td><%= post.views_array.join(', ') %></td>
-                </tr>
-              <% end %>
-            </table>
-          </div>
-        <% end %>
-      <% end %>
     </div>
   <% else %>
     <div class="section">

@@ -302,7 +302,7 @@ class Scriptorium::StandardFiles
       </div>
       <div style="display: flex; justify-content: space-between; align-items: baseline;">
         <span style="text-align: left; font-size: 1.5em;">%{post.title}</span>
-        <span style="text-align: right; font-size: 0.9em;">%{reddit_button}%{post.pubdate}</span>
+        <span style="text-align: right; font-size: 0.9em;">%{reddit_button}%{post.date}</span>
       </div>
       <hr>
       %{post.body}

@@ -496,8 +496,8 @@ class Scriptorium::Repo
       view = lookup_view(view)
       vars[:"post.id"] = num.to_s  # Always use the post number as ID
       vars[:"post.body"] = body
+      vars[:"post.date"] = self.post(num).date  # Set post.date for templates
       template = @predef.post_template("standard")
-      set_pubdate(vars)
       # Add Reddit button if enabled
       vars[:"reddit_button"] = view.generate_reddit_button(vars)
       final = substitute(vars, template) 
@@ -521,14 +521,6 @@ class Scriptorium::Repo
     metadata[:"post.tags"] = vars[:"post.tags"] || ""
     
     metadata
-  end
-
-  private def set_pubdate(vars)    # Not Post#set_pubdate 
-    t = Time.now
-    vars[:"post.pubdate"] = t.strftime("%Y-%m-%d %H:%M:%S") 
-    vars[:"post.pubdate.month"] = t.strftime("%B") 
-    vars[:"post.pubdate.day"] = t.strftime("%d") 
-    vars[:"post.pubdate.year"] = t.strftime("%Y") 
   end
 
   def all_posts(view = nil)

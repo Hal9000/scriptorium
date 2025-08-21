@@ -58,6 +58,14 @@ class Scriptorium::Post
     def pubdate
       meta["post.pubdate"]
     end
+    
+    def created
+      meta["post.created"]
+    end
+    
+    def date
+      pubdate || created
+    end
 
     def set_pubdate(ymd, seconds: 0)
       check_invariants

@@ -105,6 +105,71 @@
             margin-top: 20px;
             text-align: center;
         }
+        
+        /* Hover actions styles */
+        .actions-container {
+            position: relative;
+            text-align: center;
+            height: 24px;
+            line-height: 24px;
+            vertical-align: middle;
+        }
+        
+        .gear-icon {
+            font-size: 16px;
+            cursor: pointer;
+            color: #666;
+            display: inline-block;
+            height: 24px;
+            line-height: 24px;
+            vertical-align: middle;
+        }
+        
+        .action-icons {
+            display: none;
+            gap: 5px;
+            justify-content: center;
+            align-items: center;
+            height: 24px;
+            line-height: 24px;
+            vertical-align: middle;
+        }
+        
+        .action-icon {
+            font-size: 16px;
+            text-decoration: none;
+            margin: 0 2px;
+            transition: transform 0.2s;
+            display: inline-block;
+            height: 24px;
+            line-height: 24px;
+            vertical-align: middle;
+        }
+        
+        .action-icon:hover {
+            transform: scale(1.2);
+        }
+        
+        /* Show action icons on hover, hide gear */
+        .actions-container:hover .gear-icon {
+            display: none;
+        }
+        
+        .actions-container:hover .action-icons {
+            display: flex;
+        }
+        
+        /* Fixed table column widths to prevent jittering */
+        .posts-table {
+            table-layout: fixed;
+        }
+        
+        .posts-table th:nth-child(1), .posts-table td:nth-child(1) { width: 8%; }  /* ID */
+        .posts-table th:nth-child(2), .posts-table td:nth-child(2) { width: 15%; } /* Published */
+        .posts-table th:nth-child(3), .posts-table td:nth-child(3) { width: 40%; } /* Title */
+        .posts-table th:nth-child(4), .posts-table td:nth-child(4) { width: 12%; } /* Status */
+        .posts-table th:nth-child(5), .posts-table td:nth-child(5) { width: 15%; } /* Other Views */
+        .posts-table th:nth-child(6), .posts-table td:nth-child(6) { width: 10%; } /* Actions */
     </style>
 </head>
 <body>
@@ -129,6 +194,103 @@
                 <a href="/" class="btn">Create Post</a>
                 <a href="/advanced_config" class="btn btn-secondary">Advanced Config</a>
             </div>
+            
+            <% if @posts && !@posts.empty? %>
+                <div class="posts-section">
+                    <h3>Posts (<%= @total_posts %> total)</h3>
+                    <div class="posts-table">
+                        <table class="posts-table" style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                            <thead>
+                                <tr style="background-color: #f2f2f2;">
+                                    <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">ID</th>
+                                    <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Published</th>
+                                    <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Title</th>
+                                    <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Status</th>
+                                    <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Other Views</th>
+                                    <th style="padding: 8px; text-align: center; border: 1px solid #ddd;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% @posts.each do |post| %>
+                                    <tr style="<%= 'opacity: 0.6;' if post.deleted %>">
+                                        <td style="padding: 8px; border: 1px solid #ddd; font-family: monospace; text-align: right;"><%= post.id %></td>
+                                        <td style="padding: 8px; border: 1px solid #ddd;"><%= post.pubdate ? post.pubdate.split(' ').first : '—' %></td>
+                                        <td style="padding: 8px; border: 1px solid #ddd;">
+                                            <a href="/edit_post/<%= post.id %>" style="color: #007bff; text-decoration: none; cursor: pointer; <%= 'text-decoration: line-through;' if post.deleted %>" title="Edit <%= post.title %>">
+                                                <%= post.title %>
+                                            </a>
+                                        </td>
+                                        <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                                            <% if post.deleted %>
+                                                <span style="color: #dc3545; font-weight: bold;" title="Deleted">🗑️ Deleted</span>
+                                            <% elsif post.pubdate.nil? %>
+                                                <span style="color: #666;" title="Unpublished">unpublished</span>
+                                            <% end %>
+                                        </td>
+                                        <td style="padding: 8px; border: 1px solid #ddd;">
+                                            <% other_views = post.views_array.reject { |v| v == @current_view.name } %>
+                                            <%= other_views.join(', ') %>
+                                        </td>
+                                        <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                                            <div class="actions-container">
+                                                <span class="gear-icon">⚙️</span>
+                                                <div class="action-icons">
+                                                    <a href="/edit_post/<%= post.id %>" class="action-icon" title="Edit">✏️</a>
+                                                    <% if post.deleted %>
+                                                        <a href="/restore_post/<%= post.id %>" class="action-icon" title="Restore">🔄</a>
+                                                    <% else %>
+                                                        <a href="/delete_post/<%= post.id %>" class="action-icon" title="Delete">🗑️</a>
+                                                        <form method="post" action="/toggle_post_status/<%= post.id %>" style="display: inline;">
+                                                                                                                    <button type="submit" class="action-icon" title="<%= post.pubdate.nil? ? 'Publish' : 'Unpublish' %>" style="background: none; border: none; cursor: pointer; font-size: 16px;">
+                                                            <% if post.pubdate.nil? %>
+                                                                📤
+                                                            <% else %>
+                                                                📥
+                                                            <% end %>
+                                                        </button>
+                                                        </form>
+                                                    <% end %>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% end %>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <% if @total_pages > 1 %>
+                        <div class="pagination" style="text-align: center; margin: 20px 0;">
+                            <div style="margin-bottom: 10px;">
+                                Page <%= @current_page %> of <%= @total_pages %> 
+                                (<%= @total_posts %> posts, <%= @posts_per_page %> per page)
+                            </div>
+                            <div style="display: flex; justify-content: center; gap: 5px; flex-wrap: wrap;">
+                                <% if @current_page > 1 %>
+                                    <a href="/view/<%= @current_view.name %>?page=<%= @current_page - 1 %>" class="btn btn-secondary">&laquo; Previous</a>
+                                <% end %>
+                                
+                                <% 1.upto(@total_pages) do |page_num| %>
+                                    <% if page_num == @current_page %>
+                                        <span class="btn" style="background: #007bff; cursor: default;"><%= page_num %></span>
+                                    <% else %>
+                                        <a href="/view/<%= @current_view.name %>?page=<%= page_num %>" class="btn"><%= page_num %></a>
+                                    <% end %>
+                                <% end %>
+                                
+                                <% if @current_page < @total_pages %>
+                                    <a href="/view/<%= @current_view.name %>?page=<%= @current_page + 1 %>" class="btn btn-secondary">Next &raquo;</a>
+                                <% end %>
+                            </div>
+                        </div>
+                    <% end %>
+                </div>
+            <% else %>
+                <div class="posts-section">
+                    <h3>Posts</h3>
+                    <p>No posts found in this view.</p>
+                </div>
+            <% end %>
             
             <div class="button-group">
                 <a href="/" class="btn btn-secondary">Back to Main Dashboard</a>

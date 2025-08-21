@@ -18,6 +18,12 @@ Symbol.include(PathSep)
 
 module Scriptorium::Helpers
   include Scriptorium::Exceptions
+  
+  # Post comparison for sorting (uses post.date which handles fallback)
+  def post_compare(a, b)
+    b.date <=> a.date  # newest first
+  end
+  
   def getvars(file)
     lines = read_file(file, lines: true)
     lines.map! {|line| line.sub(/# .*$/, "").strip }

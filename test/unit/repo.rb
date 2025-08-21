@@ -292,7 +292,7 @@ class TestScriptoriumRepo < Minitest::Test
       <p>
       That's all.
       EOS
-    vars = {:"post.title" => title, :"post.pubdate" => pubdate, 
+    vars = {:"post.title" => title, :"post.pubdate" => pubdate, :"post.date" => pubdate,
             :"post.tags" => tags,   :"post.body" => body, :"reddit_button" => ""}
     predef = Scriptorium::StandardFiles.new
     template = predef.post_template("standard")

@@ -38,7 +38,7 @@ class ScriptoriumWeb < Sinatra::Base
   before do
     begin
       @api = Scriptorium::API.new
-      # Use absolute path to the test repository
+      # Use the test repository in the ui/web/ directory
       test_repo_path = File.join(__dir__, "..", "scriptorium-TEST")
       @api.open_repo(test_repo_path) if Dir.exist?(test_repo_path)
     rescue => e
@@ -855,6 +855,43 @@ class ScriptoriumWeb < Sinatra::Base
         @banner_svg = "<p>Error generating banner: #{e.message}</p>"
       end
       
+      # Get posts for pagination
+      begin
+        posts = @api.posts(view_name) || []
+        posts.sort! { |a, b| post_compare(a, b) } # Sort by date, newest first
+        
+        # Get posts per page from config, default to 10
+        config_file = @api.root/"views"/view_name/"config"/"post_index.txt"
+        posts_per_page = 10
+        if File.exist?(config_file)
+          config_content = read_file(config_file)
+          if config_content.strip.length > 0
+            posts_per_page = config_content.lines.first.strip.split.last.to_i
+          end
+        end
+        
+        # Pagination logic
+        page = (params[:page] || 1).to_i
+        total_posts = posts.length
+        total_pages = (total_posts.to_f / posts_per_page).ceil
+        page = [1, [page, total_pages].min].max # Ensure page is between 1 and total_pages
+        
+        start_index = (page - 1) * posts_per_page
+        end_index = [start_index + posts_per_page - 1, total_posts - 1].min
+        
+        @posts = posts[start_index..end_index] || []
+        @current_page = page
+        @total_pages = total_pages
+        @total_posts = total_posts
+        @posts_per_page = posts_per_page
+      rescue => e
+        @posts = []
+        @current_page = 1
+        @total_pages = 1
+        @total_posts = 0
+        @posts_per_page = 10
+      end
+      
       erb :view_dashboard
     rescue => e
       redirect "/?error=Failed to load view dashboard: #{e.message}"
@@ -1501,6 +1538,99 @@ class ScriptoriumWeb < Sinatra::Base
   rescue => e
     # If FastImage fails, return nil
     return nil
+  end
+
+  # Delete a post (move to _postnum directory)
+  post '/delete_post/:id' do
+    post_id = params[:id]
+    
+    begin
+      post = @api.post(post_id.to_i)
+      if post.nil?
+        redirect "/?error=Post #{post_id} not found"
+        return
+      end
+      
+      # Mark as deleted in metadata
+      post.deleted = true
+      
+      # Move post directory to _postnum
+      post_dir = @api.root/"posts"/post.num
+      deleted_dir = @api.root/"posts"/"_#{post.num}"
+      
+      if Dir.exist?(post_dir)
+        FileUtils.mv(post_dir, deleted_dir)
+      end
+      
+      redirect "/view/#{@current_view.name}?message=Post #{post_id} deleted successfully"
+    rescue => e
+      redirect "/?error=Failed to delete post: #{e.message}"
+    end
+  end
+
+  # Restore a deleted post
+  post '/restore_post/:id' do
+    post_id = params[:id]
+    
+    begin
+      # Find the deleted post directory
+      deleted_dir = @api.root/"posts"/"_#{post_id}"
+      post_dir = @api.root/"posts"/post_id
+      
+      if Dir.exist?(deleted_dir)
+        # Move back to normal posts directory
+        FileUtils.mv(deleted_dir, post_dir)
+        
+        # Update metadata to mark as not deleted
+        post = @api.post(post_id.to_i)
+        if post
+          post.deleted = false
+        end
+        
+        redirect "/view/#{@current_view.name}?message=Post #{post_id} restored successfully"
+      else
+        redirect "/?error=Deleted post #{post_id} not found"
+      end
+    rescue => e
+      redirect "/?error=Failed to restore post: #{e.message}"
+    end
+  end
+
+  # Toggle post published status
+  post '/toggle_post_status/:id' do
+    post_id = params[:id]
+    
+    begin
+      post = @api.post(post_id.to_i)
+      if post.nil?
+        redirect "/?error=Post #{post_id} not found"
+        return
+      end
+      
+      # Toggle between published and unpublished
+      if post.meta["post.published"] == "no" || post.meta["post.published"].nil?
+        # Publish the post - set pubdate to current time
+        current_time = Time.now
+        post.meta["post.pubdate"] = current_time.strftime("%Y-%m-%d %H:%M:%S")
+        post.meta["post.pubdate.month"] = current_time.strftime("%B")
+        post.meta["post.pubdate.day"] = current_time.strftime("%d")
+        post.meta["post.pubdate.year"] = current_time.strftime("%Y")
+        post.meta["post.published"] = "yes"
+        post.save_metadata
+        redirect "/view/#{@current_view.name}?message=Post #{post_id} published successfully"
+      else
+        # Unpublish the post - clear pubdate
+        post.meta["post.pubdate"] = nil
+        post.meta["post.pubdate.month"] = nil
+        post.meta["post.pubdate.day"] = nil
+        post.meta["post.pubdate.year"] = nil
+        post.meta["post.published"] = "no"
+        post.save_metadata
+        redirect "/view/#{@current_view.name}?message=Post #{post_id} unpublished successfully"
+      end
+    rescue => e
+      redirect "/?error=Failed to toggle post status: #{e.message}"
+    end
   end
 end
 

@@ -614,7 +614,7 @@ write output:      write the result to output/panes/header.html
   end
 
   def post_index_array
-    posts = view_posts.sort {|a,b| cf_time(b.pubdate, a.pubdate) }
+    posts = view_posts.sort {|a,b| post_compare(a, b) }
     posts.map {|post| post_index_entry(post)}
   end
 
@@ -874,7 +874,7 @@ write output:      write the result to output/panes/header.html
   def paginate_posts
     config = read_commented_file(dir/:config/"post_index.txt")
     posts = @repo.all_posts(self)
-    posts.sort! {|a,b| cf_time(b.pubdate, a.pubdate) }
+    posts.sort! {|a,b| post_compare(a, b) }
     @ppp ||= config.first.split.last.to_i
     pages = []
     posts.each_slice(@ppp).with_index do |group, i|

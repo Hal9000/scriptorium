@@ -26,6 +26,8 @@ class TestDeploy < Minitest::Test
     Dir.glob("test/scriptorium-TEST*").each do |dir|
       system("rm -rf #{dir}")
     end
+    # Clean up any root directory created during deployment testing
+    # FileUtils.rm_rf("root") if Dir.exist?("root")
   end
 
   def test_001_deploy_config_file_creation
@@ -104,6 +106,7 @@ class TestDeploy < Minitest::Test
   def test_006_deploy_marker_file_creation
     # Test that deployment creates a marker file
     output_dir = @view.dir/:output
+    puts "output_dir: #{output_dir}"
     
     # Simulate deployment marker creation
     marker_content = "Deployed: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"

@@ -189,4 +189,17 @@ def generate_front_page(view_name)
   
   FileUtils.mkdir_p("scriptorium-TEST/views/#{view_name}/output")
   File.write("scriptorium-TEST/views/#{view_name}/output/index.html", index_html)
-end 
+end
+
+# Cleanup method to remove standalone directories
+def cleanup_standalone_directories
+  if Dir.exist?("posts")
+    FileUtils.rm_rf("posts")
+  end
+  if Dir.exist?("banner-tests")
+    FileUtils.rm_rf("banner-tests")
+  end
+end
+
+# Ensure cleanup happens when script exits
+at_exit { cleanup_standalone_directories } 
