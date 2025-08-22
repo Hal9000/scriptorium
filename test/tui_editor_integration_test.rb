@@ -84,10 +84,10 @@ class TUIEditorIntegrationTest < Minitest::Test
     if output
       puts "Found: #{output[0].strip}" if ENV['VERBOSE']
     else
-      puts "Failed to find pattern: #{pattern}"
+      # Pattern not found
       # Read what we actually got
       available = read.read_nonblock(1000) rescue ""
-      puts "Available output: #{available.inspect}"
+      # Available output logged above
     end
     assert output, message
     output[0]  # Return the matched string

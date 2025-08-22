@@ -66,9 +66,9 @@ class Scriptorium::Repo
     generate_os_helpers(@root)
     
     @repo = self.open(@root)
-    Scriptorium::View.create_sample_view(repo)
+    Scriptorium::View.create_sample_view(@repo)
     verify { @repo.is_a?(Scriptorium::Repo) }
-    return repo
+    return @repo
   end
 
   def self.open(root)
@@ -417,7 +417,7 @@ class Scriptorium::Repo
     
     # Check if already published
     if metadata[:"post.published"] != "no" && metadata[:"post.published"] != nil
-      raise "Post #{num} is already published"
+      raise PostAlreadyPublished(num)
     end
     
     # Update published timestamp

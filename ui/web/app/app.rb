@@ -912,14 +912,9 @@ class ScriptoriumWeb < Sinatra::Base
     @configs = {}
     
     if File.exist?(status_file)
-      status_content = read_file(status_file)
-      status_content.lines.each do |line|
-        line = line.strip
-        next if line.empty? || line.start_with?('#')
-        if line.include?(' ')
-          key, value = line.split(/\s+/, 2)
-          @configs[key.to_sym] = value == 'y'
-        end
+      status_config = @api.parse_commented_file(status_file)
+      status_config.each do |key, value|
+        @configs[key.to_sym] = value == 'y'
       end
     else
       # Default to all 'n' if status file doesn't exist
@@ -938,16 +933,9 @@ class ScriptoriumWeb < Sinatra::Base
     layout_file = config_dir/"layout.txt"
     @layout_containers = []
     if File.exist?(layout_file)
-      layout_content = read_file(layout_file)
-      layout_content.lines.each do |line|
-        line = line.strip
-        next if line.empty? || line.start_with?('#')
-        if line.include?(' ')
-          container = line.split(/\s+/, 2)[0]
-          @layout_containers << container
-        else
-          @layout_containers << line
-        end
+      layout_config = @api.parse_commented_file(layout_file)
+      layout_config.each do |container, _|
+        @layout_containers << container
       end
     end
     
@@ -1504,20 +1492,8 @@ class ScriptoriumWeb < Sinatra::Base
     layout_file = @api.root/"views"/view.name/"config"/"layout.txt"
     return nil unless File.exist?(layout_file)
     
-    layout_content = read_file(layout_file)
-    containers = []
-    
-    layout_content.lines.each do |line|
-      line = line.strip
-      next if line.empty? || line.start_with?('#')
-      
-      if line.include?(' ')
-        container = line.split(/\s+/, 2)[0]
-        containers << container
-      else
-        containers << line
-      end
-    end
+    layout_config = @api.parse_commented_file(layout_file)
+    containers = layout_config.keys
     
     # Prefer left container, fall back to right
     containers.find { |c| c == 'left' } || containers.find { |c| c == 'right' }

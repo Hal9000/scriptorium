@@ -224,7 +224,7 @@ class ScriptoriumTUI
       rescue Interrupt
         puts "\nUse 'quit' to exit"
       rescue => e
-        puts "Error: #{e.message}"
+        puts e.message
         puts e.backtrace.first if @testing
       end
     end
@@ -338,7 +338,6 @@ class ScriptoriumTUI
     elsif cmd == "asset" && (args == "info" || args.start_with?("info "))
       asset_info(args)
     elsif cmd == "configure" && (args == "deployment" || args.start_with?("deployment "))
-      puts "DEBUG: Routing to configure_deployment with args='#{args}'"
       configure_deployment(args)
     elsif cmd == "add" && (args == "widget" || args.start_with?("widget "))
       add_widget(args)
@@ -373,12 +372,7 @@ class ScriptoriumTUI
       when "version", "v"
         show_version
       when "deploy"
-        puts "DEBUG: TUI: deploy command received"
-        puts "DEBUG: TUI: Current directory: #{Dir.pwd}"
-        puts "DEBUG: TUI: Root exists? #{Dir.exist?('root')}"
         deploy_current_view
-        puts "DEBUG: TUI: deploy_current_view completed"
-        puts "DEBUG: TUI: Root exists? #{Dir.exist?('root')}"
       when "preview"
         preview_current_view
         preview_current_view
@@ -876,26 +870,15 @@ class ScriptoriumTUI
     puts
   end
 
+  private def log_tty(str)
+    log_entry = "DEBUG: #{s}"
+    File.open('debug.log', 'a') { |f| f.puts log_entry }
+    tty = File.open('/dev/tty', 'w')
+    tty.puts log_entry
+    tty.close
+  end
+
   private def deploy_current_view
-    # Write to both TTY and log file
-    log_entry = "DEBUG: deploy_current_view: Starting"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-    
-    log_entry = "DEBUG: deploy_current_view: Current directory: #{Dir.pwd}"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-    
-    log_entry = "DEBUG: deploy_current_view: Root exists? #{Dir.exist?('root')}"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-    
     current_view = @api.current_view
     if current_view.nil?
       puts
@@ -904,187 +887,17 @@ class ScriptoriumTUI
       return
     end
 
-    log_entry = "DEBUG: deploy_current_view: Current view: #{current_view.name}"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-    
-    log_entry = "DEBUG: deploy_current_view: Root exists? #{Dir.exist?('root')}"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-
-    # Check if deploy config exists
-    deploy_config_file = current_view.dir/:config/"deploy.txt"
-    log_entry = "DEBUG: deploy_current_view: Deploy config file: #{deploy_config_file}"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-    
-    log_entry = "DEBUG: deploy_current_view: Root exists? #{Dir.exist?('root')}"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-    
-    unless File.exist?(deploy_config_file)
-      puts
-      puts "  No deployment configuration found."
-      puts "  Create #{deploy_config_file} with format:"
-      puts "    user     username"
-      puts "    server   example.com" 
-      puts "    path     /var/www/html"
-      puts
-      return
-    end
-
-    log_entry = "DEBUG: deploy_current_view: Deploy config exists"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-    
-    log_entry = "DEBUG: deploy_current_view: Root exists? #{Dir.exist?('root')}"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-
-    # Read and parse deployment configuration
-    deploy_config_raw = read_file(deploy_config_file)
-    log_entry = "DEBUG: deploy_current_view: Raw deploy config: '#{deploy_config_raw}'"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-    
-    deploy_config_hash = @api.parse_deploy_config(deploy_config_raw)
-    deploy_config = @api.build_rsync_destination(deploy_config_hash)
-    if deploy_config.nil?
-      puts
-      puts "  ❌ Invalid deployment configuration format"
-      puts "  Expected format: user server path (space-separated)"
-      puts "  Got: #{deploy_config_raw.strip}"
+    # Check deployment readiness first
+    unless @api.can_deploy?(current_view.name)
+      puts "  Deployment error: View '#{current_view.name}' is not ready for deployment. Check status and configuration."
       puts
       return
     end
     
-    log_entry = "DEBUG: deploy_current_view: Parsed deploy config: '#{deploy_config}'"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-    
-    log_entry = "DEBUG: deploy_current_view: Root exists? #{Dir.exist?('root')}"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-
-    log_entry = "DEBUG: deploy_current_view: Deploy config not empty"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-    
-    log_entry = "DEBUG: deploy_current_view: Root exists? #{Dir.exist?('root')}"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-
-    # Check if output directory exists
-    output_dir = current_view.dir/:output
-    log_entry = "DEBUG: deploy_current_view: Output dir: #{output_dir}"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-    
-    log_entry = "DEBUG: deploy_current_view: Root exists? #{Dir.exist?('root')}"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-    
-    unless Dir.exist?(output_dir)
-      puts
-      puts "  Output directory does not exist: #{output_dir}"
-      puts "  Generate content first with 'new post' or similar."
-      puts
-      return
-    end
-
-    log_entry = "DEBUG: deploy_current_view: Output dir exists"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-    
-    log_entry = "DEBUG: deploy_current_view: Root exists? #{Dir.exist?('root')}"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-
-    # Create deployment marker file
-    marker_content = "Deployed: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
-    marker_file = output_dir/"last-deployed.txt"
-    log_entry = "DEBUG: deploy_current_view: About to create marker file: #{marker_file}"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-    
-    log_entry = "DEBUG: deploy_current_view: Root exists? #{Dir.exist?('root')}"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-    
-    write_file(marker_file, marker_content)
-    
-    log_entry = "DEBUG: deploy_current_view: Marker file created"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-    
-    log_entry = "DEBUG: deploy_current_view: Root exists? #{Dir.exist?('root')}"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-
-    # Execute rsync command
-    puts
-    puts "  Deploying view '#{current_view.name}' to #{deploy_config}..."
-    
-    result = @api.execute_deploy_rsync(output_dir, deploy_config)
-    
-    log_entry = "DEBUG: deploy_current_view: rsync completed with result: #{result}"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-    
-    log_entry = "DEBUG: deploy_current_view: Root exists? #{Dir.exist?('root')}"
-    File.open('debug.log', 'a') { |f| f.puts log_entry }
-    tty = File.open('/dev/tty', 'w')
-    tty.puts log_entry
-    tty.close
-    
+    # Use the API's deploy method
+    result = @api.deploy(current_view.name)
     if result
-      puts "  Deployment successful!"
-      
-      # Extract domain and verify deployment
-      domain = extract_domain_from_deploy_config(deploy_config)
-      if domain
-        verify_deployment(domain)
-      end
+      puts "  Deployment completed!"
     else
       puts "  Deployment failed!"
     end

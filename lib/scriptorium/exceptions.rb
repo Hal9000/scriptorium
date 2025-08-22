@@ -2,7 +2,7 @@ module Scriptorium::Exceptions
 
   def make_exception(sym, str, target_class = Object)
     return if target_class.constants.include?(sym)
-    klass = sym   # :"#{sym}_Class"
+    klass = sym 
     target_class.const_set(klass, StandardError)
     define_method(sym) do |*args|
       args = [] unless args.first
@@ -101,6 +101,7 @@ module Scriptorium::Exceptions
   # Post errors
   make_exception :CannotCreatePost, "Cannot create post: %1"
   make_exception :CannotGetPost, "Cannot get post: %1"
+  make_exception :PostAlreadyPublished, "Post %1 is already published"
   make_exception :CannotSetPubdate, "Cannot set pubdate: %1"
   
   # Banner SVG errors
@@ -168,5 +169,24 @@ module Scriptorium::Exceptions
   # Section/Output errors
   make_exception :SectionOutputError, "Section output error: %1 (section: %2) - %3"
   make_exception :WriteFrontPageError, "Failed to write front page: %1"
+
+  # Theme management errors
+  make_exception :ThemeNotFound, "Theme not found: %1"
+  make_exception :ThemeAlreadyExists, "Theme already exists: %1"
+  make_exception :ThemeNameInvalid, "Theme name must contain only letters, numbers, hyphens, and underscores: %1"
+
+  # Draft management errors
+  make_exception :DraftPathNil, "Draft path cannot be nil"
+  make_exception :DraftPathEmpty, "Draft path cannot be empty"
+  make_exception :DraftFileInvalid, "Not a valid draft file: %1"
+  make_exception :DraftFileNotFound, "Draft file not found: %1"
+
+  # Search/Query errors
+  make_exception :UnknownSearchField, "Unknown search field: %1"
+
+  # Deployment errors
+  make_exception :DeploymentNotReady, "View '%1' is not ready for deployment. Check status and configuration."
+  make_exception :DeploymentFieldsMissing, "Missing required deployment fields: %1"
+  make_exception :DeploymentFailed, "Deployment failed with exit code %1"
 
 end

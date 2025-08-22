@@ -118,7 +118,7 @@ class Scriptorium::API
     assume { @repo.is_a?(Scriptorium::Repo) }
     
     views ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if views.nil?
+    raise ViewTargetNil if views.nil?
     
     post = @repo.create_post(
       title: title,
@@ -136,7 +136,7 @@ class Scriptorium::API
   # Draft management
   def draft(title: nil, body: nil, views: nil, tags: nil, blurb: nil)
     views ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if views.nil?
+    raise ViewTargetNil if views.nil?
     
     @repo.create_draft(
       title: title,
@@ -149,7 +149,7 @@ class Scriptorium::API
 
   def create_draft(title: nil, body: nil, views: nil, tags: nil, blurb: nil)
     views ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if views.nil?
+    raise ViewTargetNil if views.nil?
     
     @repo.create_draft(
       title: title,
@@ -167,14 +167,14 @@ class Scriptorium::API
   # Generation
   def generate_front_page(view = nil)
     view ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if view.nil?
+    raise ViewTargetNil if view.nil?
     
     @repo.generate_front_page(view)
   end
 
   def generate_post_index(view = nil)
     view ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if view.nil?
+    raise ViewTargetNil if view.nil?
     
     @repo.generate_post_index(view)
   end
@@ -188,7 +188,7 @@ class Scriptorium::API
     else
       # Try to find the post through normal means
       post = @repo.post(post_id)
-      raise "Post not found" if post.nil?
+      raise CannotGetPost("Post with ID #{post_id} not found") if post.nil?
       
       @repo.generate_post(post_id)
     end
@@ -261,10 +261,10 @@ class Scriptorium::API
   def unlink_post(id, view = nil)
     # Remove post from a specific view (or current view if none specified)
     view ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if view.nil?
+    raise ViewTargetNil if view.nil?
     
     post = @repo.post(id)
-    raise "Post not found" if post.nil?
+    raise CannotGetPost("Post with ID #{id} not found") if post.nil?
     
     # Get current views from metadata (split string into array)
     current_views = post.views.strip.split(/\s+/)
@@ -284,10 +284,10 @@ class Scriptorium::API
   def link_post(id, view = nil)
     # Add post to a specific view (or current view if none specified)
     view ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if view.nil?
+    raise ViewTargetNil if view.nil?
     
     post = @repo.post(id)
-    raise "Post not found" if post.nil?
+    raise CannotGetPost("Post with ID #{id} not found") if post.nil?
     
     current_views = post.views.strip.split(/\s+/)
     new_views = current_views.include?(view) ? current_views : current_views + [view]
@@ -313,7 +313,7 @@ class Scriptorium::API
   def post_add_tag(id, tag)
     # Add a tag to a post
     post = @repo.post(id)
-    raise "Post not found" if post.nil?
+    raise CannotGetPost("Post with ID #{id} not found") if post.nil?
     
     # Get current tags from metadata (split comma-separated string into array)
     current_tags = post.tags.strip.split(/,\s*/)
@@ -333,7 +333,7 @@ class Scriptorium::API
   def post_remove_tag(id, tag)
     # Remove a tag from a post
     post = @repo.post(id)
-    raise "Post not found" if post.nil?
+    raise CannotGetPost("Post with ID #{id} not found") if post.nil?
     
     # Get current tags from metadata (split comma-separated string into array)
     current_tags = post.tags.strip.split(/,\s*/)
@@ -403,17 +403,17 @@ class Scriptorium::API
   def clone_theme(source_theme, new_name)
     # Validate source theme exists
     unless theme_exists?(source_theme)
-      raise "Source theme '#{source_theme}' not found"
+      raise ThemeNotFound(source_theme)
     end
     
     # Validate new name doesn't exist
     if theme_exists?(new_name)
-      raise "Theme '#{new_name}' already exists"
+      raise ThemeAlreadyExists(new_name)
     end
     
     # Validate new name format (alphanumeric, hyphen, underscore)
     unless new_name.match?(/^[a-zA-Z0-9_-]+$/)
-      raise "Theme name must contain only letters, numbers, hyphens, and underscores"
+      raise ThemeNameInvalid(new_name)
     end
     
     source_dir = @repo.root/:themes/source_theme
@@ -440,13 +440,13 @@ class Scriptorium::API
     # widget_name: string name of the widget (e.g., "links", "news")
     # Returns true on success, raises error on failure
     
-    raise "No current view set" if @repo.current_view.nil?
-    raise "Widget name cannot be nil" if widget_name.nil?
-    raise "Widget name cannot be empty" if widget_name.to_s.strip.empty?
+    raise ViewTargetNil if @repo.current_view.nil?
+    raise WidgetNameNil if widget_name.nil?
+    raise WidgetsArgEmpty if widget_name.to_s.strip.empty?
     
     # Validate widget name format
     unless widget_name.to_s.match?(/^[a-zA-Z0-9_]+$/)
-      raise "Invalid widget name: #{widget_name} (must be alphanumeric and underscore only)"
+      raise WidgetNameInvalid(widget_name)
     end
     
     # Convert to class name (capitalize first letter)
@@ -456,7 +456,7 @@ class Scriptorium::API
     begin
       widget_class = eval("Scriptorium::Widget::#{widget_class_name}")
     rescue NameError
-      raise "Widget class not found: Scriptorium::Widget::#{widget_class_name}"
+      raise CannotBuildWidget("Widget class not found: Scriptorium::Widget::#{widget_class_name}")
     end
     
     # Create widget instance and generate
@@ -470,20 +470,20 @@ class Scriptorium::API
   
   def edit_layout(view = nil)
     view ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if view.nil?
+    raise ViewTargetNil if view.nil?
     edit_file("views/#{view}/layout.txt")
   end
 
   def edit_config(view = nil)
     view ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if view.nil?
+    raise ViewTargetNil if view.nil?
     edit_file("views/#{view}/config.txt")
   end
 
   def edit_widget_data(view = nil, widget)
     view ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if view.nil?
-    raise "Widget name cannot be nil" if widget.nil?
+    raise ViewTargetNil if view.nil?
+    raise WidgetNameNil if widget.nil?
     edit_file("views/#{view}/widgets/#{widget}/list.txt")
   end
 
@@ -561,7 +561,7 @@ class Scriptorium::API
               when :blurb
         post.blurb
         else
-          raise "Unknown search field: #{field}"
+          raise UnknownSearchField(field)
         end
         
         # Check if the pattern matches
@@ -583,7 +583,7 @@ class Scriptorium::API
   # Generation
   def generate_view(view = nil)
     view ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if view.nil?
+    raise ViewTargetNil if view.nil?
     
     @repo.generate_front_page(view)
     true
@@ -609,17 +609,17 @@ class Scriptorium::API
     # Delete a draft file
     # draft_path: path to the draft file (e.g., from drafts() method)
     
-    raise "Draft path cannot be nil" if draft_path.nil?
-    raise "Draft path cannot be empty" if draft_path.to_s.strip.empty?
+    raise DraftPathNil if draft_path.nil?
+    raise DraftPathEmpty if draft_path.to_s.strip.empty?
     
     # Ensure it's actually a draft file
     unless draft_path.to_s.end_with?('-draft.lt3')
-      raise "Not a valid draft file: #{draft_path}"
+      raise DraftFileInvalid(draft_path)
     end
     
     # Ensure it exists
     unless File.exist?(draft_path)
-      raise "Draft file not found: #{draft_path}"
+      raise DraftFileNotFound(draft_path)
     end
     
     # Delete the file
@@ -707,7 +707,7 @@ class Scriptorium::API
   
   def list_assets(target: 'global', view: nil, include_gem: true)
     view ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if target == 'view' && view.nil?
+    raise ViewTargetNil if target == 'view' && view.nil?
     
     assets = []
     
@@ -751,7 +751,7 @@ class Scriptorium::API
         end
       end
     else
-      raise "Invalid target: #{target}. Use 'view', 'global', 'library', or 'gem'"
+      raise InvalidFormatError("target", target)
     end
     
     assets.sort_by { |asset| asset[:filename] }
@@ -759,7 +759,7 @@ class Scriptorium::API
   
   def get_asset_info(filename, target: 'global', view: nil, include_gem: true)
     view ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if target == 'view' && view.nil?
+    raise ViewTargetNil if target == 'view' && view.nil?
     
     case target
     when 'view'
@@ -771,16 +771,16 @@ class Scriptorium::API
     when 'library'
       asset_path = @repo.root/"assets"/"library"/filename
       return build_asset_info(asset_path) if File.exist?(asset_path)
-    when 'gem'
-      if include_gem
-        gem_spec = Gem.loaded_specs['scriptorium']
-        if gem_spec
-          gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{filename}"
-          return build_asset_info(gem_asset_path, filename) if File.exist?(gem_asset_path)
+          when 'gem'
+        if include_gem
+          gem_spec = Gem.loaded_specs['scriptorium']
+          if gem_spec
+            gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{filename}"
+            return build_asset_info(gem_asset_path, filename) if File.exist?(gem_asset_path)
+          end
         end
-      end
-    else
-      raise "Invalid target: #{target}. Use 'view', 'global', 'library', or 'gem'"
+      else
+        raise InvalidFormatError("target", target)
     end
     
     nil
@@ -792,7 +792,7 @@ class Scriptorium::API
   
   def copy_asset(filename, from: 'global', to: 'view', view: nil)
     view ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if to == 'view' && view.nil?
+    raise ViewTargetNil if to == 'view' && view.nil?
     
     # Determine source path
     source_path = case from
@@ -808,12 +808,12 @@ class Scriptorium::API
       @repo.root/"assets"/filename
     when 'library'
       @repo.root/"assets"/"library"/filename
-    when 'view'
-      view ||= @repo.current_view&.name
-      raise "No view specified and no current view set" if view.nil?
-      @repo.root/"views"/view/"assets"/filename
-    else
-      raise "Invalid source: #{from}. Use 'gem', 'global', 'library', or 'view'"
+          when 'view'
+        view ||= @repo.current_view&.name
+        raise ViewTargetNil if view.nil?
+        @repo.root/"views"/view/"assets"/filename
+      else
+        raise InvalidFormatError("source", from)
     end
     
     # Determine target path
@@ -825,12 +825,12 @@ class Scriptorium::API
     when 'view'
       @repo.root/"views"/view/"assets"/filename
     else
-      raise "Invalid target: #{to}. Use 'global', 'library', or 'view'"
+      raise InvalidFormatError("target", to)
     end
     
     # Validate source exists
     unless File.exist?(source_path)
-      raise "Source file not found: #{source_path}"
+      raise FileNotFoundError(source_path)
     end
     
     # Create target directory and copy
@@ -842,10 +842,10 @@ class Scriptorium::API
   
   def upload_asset(file_path, target: 'global', view: nil)
     view ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if target == 'view' && view.nil?
+    raise ViewTargetNil if target == 'view' && view.nil?
     
     unless File.exist?(file_path)
-      raise "Source file not found: #{file_path}"
+      raise FileNotFoundError(file_path)
     end
     
     filename = File.basename(file_path)
@@ -859,7 +859,7 @@ class Scriptorium::API
     when 'view'
       @repo.root/"views"/view/"assets"
     else
-      raise "Invalid target: #{target}. Use 'global', 'library', or 'view'"
+      raise InvalidFormatError("target", target)
     end
     
     # Create target directory if it doesn't exist
@@ -874,7 +874,7 @@ class Scriptorium::API
   
   def delete_asset(filename, target: 'global', view: nil)
     view ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if target == 'view' && view.nil?
+    raise ViewTargetNil if target == 'view' && view.nil?
     
     # Determine target file
     target_file = case target
@@ -885,11 +885,11 @@ class Scriptorium::API
     when 'view'
       @repo.root/"views"/view/"assets"/filename
     else
-      raise "Invalid target: #{target}. Use 'global', 'library', or 'view'"
+      raise InvalidFormatError("target", target)
     end
     
     unless File.exist?(target_file)
-      raise "File not found: #{target_file}"
+      raise FileNotFoundError(target_file)
     end
     
     # Delete the file
@@ -899,7 +899,7 @@ class Scriptorium::API
   
   def get_asset_path(filename, target: 'global', view: nil, include_gem: true)
     view ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if target == 'view' && view.nil?
+    raise ViewTargetNil if target == 'view' && view.nil?
     
     case target
     when 'view'
@@ -911,16 +911,16 @@ class Scriptorium::API
     when 'library'
       asset_path = @repo.root/"assets"/"library"/filename
       return asset_path.to_s if File.exist?(asset_path)
-    when 'gem'
-      if include_gem
-        gem_spec = Gem.loaded_specs['scriptorium']
-        if gem_spec
-          gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{filename}"
-          return gem_asset_path if File.exist?(gem_asset_path)
+          when 'gem'
+        if include_gem
+          gem_spec = Gem.loaded_specs['scriptorium']
+          if gem_spec
+            gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{filename}"
+            return gem_asset_path if File.exist?(gem_asset_path)
+          end
         end
-      end
-    else
-      raise "Invalid target: #{target}. Use 'view', 'global', 'library', or 'gem'"
+      else
+        raise InvalidFormatError("target", target)
     end
     
     nil
@@ -973,7 +973,7 @@ class Scriptorium::API
   
   def bulk_copy_assets(filenames, from: 'global', to: 'view', view: nil)
     view ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if to == 'view' && view.nil?
+    raise ViewTargetNil if to == 'view' && view.nil?
     
     results = []
     filenames.each do |filename|
@@ -1006,87 +1006,48 @@ class Scriptorium::API
   
   def can_deploy?(view = nil)
     view ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if view.nil?
-    
+    raise ViewTargetNil if view.nil?
     # Check deployment status
     status_file = @repo.root/"views"/view/"config"/"status.txt"
     return false unless File.exist?(status_file)
-    
-    status_content = read_file(status_file)
-    deploy_status = false
-    
-    status_content.lines.each do |line|
-      line = line.strip
-      next if line.empty? || line.start_with?('#')
-      if line.start_with?('deploy ')
-        deploy_status = line.split(/\s+/, 2)[1] == 'y'
-        break
-      end
-    end
-    
+    status_content = read_commented_file(status_file)
+    deploy_status = status_content.any? { |line| line.start_with?('deploy ') && line.split(/\s+/, 2)[1] == 'y' }
     return false unless deploy_status
-    
     # Check if deploy.txt exists and has valid content
     deploy_file = @repo.root/"views"/view/"config"/"deploy.txt"
     return false unless File.exist?(deploy_file)
-    
     # Basic validation of deploy.txt content
     deploy_content = read_file(deploy_file)
     required_fields = ['user', 'server', 'docroot', 'path']
     return false unless required_fields.all? { |field| deploy_content.include?(field) }
-    
     # Parse deploy config to get server and user for SSH test
-    deploy_config = {}
-    deploy_content.lines.each do |line|
-      line = line.strip
-      next if line.empty? || line.start_with?('#')
-      if line.include?(' ')
-        key, value = line.split(/\s+/, 2)
-        deploy_config[key.to_sym] = value
-      end
-    end
-    
+    deploy_config = parse_commented_file(deploy_file)
     # Check SSH connectivity
-    return false unless ssh_keys_configured?(deploy_config[:server], deploy_config[:user])
-    
+    server, user = deploy_config[:server], deploy_config[:user]
+    ok = ssh_keys_configured?(server, user)
+    return false if !ok
     true
   end
   
   private def ssh_keys_configured?(server, user)
     # Try to run a simple command via SSH
-    result = system("ssh -o ConnectTimeout=5 -o BatchMode=yes #{user}@#{server} 'echo ok' 2>/dev/null")
+    cmd = "ssh -o ConnectTimeout=5 -o BatchMode=yes #{user}@#{server} 'echo' >/dev/null 2>&1"
+    result = system(cmd)
     result && $?.exitstatus == 0
   end
   
   def deploy(view = nil, dry_run: false)
     view ||= @repo.current_view&.name
-    raise "No view specified and no current view set" if view.nil?
-    
-    # Check if deployment is ready
-    unless can_deploy?(view)
-      raise "View '#{view}' is not ready for deployment. Check status and configuration."
-    end
-    
+    raise ViewTargetNil if view.nil?
+    raise DeploymentNotReady(view) unless can_deploy?(view)
     # Read deployment configuration
     deploy_file = @repo.root/"views"/view/"config"/"deploy.txt"
-    deploy_config = {}
-    
-    read_file(deploy_file).lines.each do |line|
-      line = line.strip
-      next if line.empty? || line.start_with?('#')
-      if line.include?(' ')
-        key, value = line.split(/\s+/, 2)
-        deploy_config[key.to_sym] = value
-      end
-    end
-    
+    deploy_config = parse_commented_file(deploy_file)
     # Validate required fields
     required_fields = [:user, :server, :docroot, :path]
     missing_fields = required_fields - deploy_config.keys
-    unless missing_fields.empty?
-      raise "Missing required deployment fields: #{missing_fields.join(', ')}"
-    end
-    
+    missing = missing_fields.join(', ')
+    raise DeploymentFieldsMissing(missing) unless missing.empty?
     # Construct paths
     output_dir = @repo.root/"views"/view/"output"
     remote_path = "#{deploy_config[:user]}@#{deploy_config[:server]}:#{deploy_config[:docroot]}/#{deploy_config[:path]}"
@@ -1103,15 +1064,13 @@ class Scriptorium::API
     end
     
     # Execute deployment
-    puts "Deploying view '#{view}' to #{remote_path}..."
     result = system(cmd)
     
     if result
-      puts "Deployment successful!"
       # TODO: Update deployment timestamp in status or metadata
       true
     else
-      raise "Deployment failed with exit code #{$?.exitstatus}"
+      raise DeploymentFailed($?.exitstatus)
     end
   end
 
@@ -1169,18 +1128,4 @@ class Scriptorium::API
     result
   end
 
-  # Utility methods
-
-#   # Delegate common repo methods
-#   def method_missing(method, *args, &block)
-#     if @repo.respond_to?(method)
-#       @repo.send(method, *args, &block)
-#     else
-#       super
-#     end
-#   end
-# 
-#   def respond_to_missing?(method, include_private = false)
-#     @repo.respond_to?(method, include_private) || super
-#   end
 end 

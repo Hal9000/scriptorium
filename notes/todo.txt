@@ -1,14 +1,13 @@
 VERY SOON:
 ----------
-  new exceptions replacing RuntimeError
+  add post state management
+  add draft management
+  legacy import
   themes into web app
   full reddit support
   configurator? more wizards?
   post footer?
   livetext scriptorium additions
-  legacy import
-x add to TUI: assets, etc.
-  add to web app
   Sample blog additions
 
 
@@ -93,3 +92,5 @@ x API - upload, deploy, ...
 x real deployment tests
 x fix symlink issue
 x widget management
+x new exceptions replacing RuntimeError
+x add to TUI: assets, etc.

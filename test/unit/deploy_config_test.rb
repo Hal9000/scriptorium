@@ -31,7 +31,16 @@ class TestDeployConfig < Minitest::Test
     end
   end
 
+  def set_deploy_status(status = "y")
+    status_file = @view.dir/:config/"status.txt"
+    status_content = read_file(status_file)
+    status_content = status_content.gsub(/deploy\s+n/, "deploy #{status}")
+    write_file(status_file, status_content)
+  end
+
   def test_001_deploy_config_availability
+    @view = @api.current_view
+    set_deploy_status
     # Test that deployment tests can check for configuration availability
     unless @api.testing
       skip "Deployment tests require test mode"
@@ -67,6 +76,8 @@ class TestDeployConfig < Minitest::Test
   end
 
   def test_002_deploy_config_format_validation
+    @view = @api.current_view
+    set_deploy_status
     # Test that deployment config follows expected format
     unless @api.testing
       skip "Deployment tests require test mode"
@@ -104,6 +115,8 @@ class TestDeployConfig < Minitest::Test
   end
 
   def test_003_real_deployment_workflow
+    @view = @api.current_view
+    set_deploy_status
     # Skip if not in test mode or no deployment config
     unless @api.testing
       skip "Deployment tests require test mode"
@@ -119,30 +132,27 @@ class TestDeployConfig < Minitest::Test
     # Create some test content
     @api.create_post("Test Post 1", "Test content here", blurb: "This is a test post for deployment")
     @api.create_post("Test Post 2", "More test content", blurb: "Another test post")
-    
     # Generate the view
     @api.generate_view(@view.name)
-    
     # Verify output was created
     output_dir = @view.dir/:output
     assert Dir.exist?(output_dir), "Output directory should exist"
     assert File.exist?(output_dir/"index.html"), "Index should be generated"
     assert Dir.exist?(output_dir/:posts), "Posts directory should exist"
-    
     # Test deployment (this will actually try to deploy)
     deploy_config = @api.parse_deploy_config(read_file(config_file))
     assert deploy_config, "Should be able to parse deployment config"
-    
     # Verify we can build deployment destination
     destination = @api.build_rsync_destination(deploy_config)
     assert destination, "Should be able to build rsync destination"
-    
     # Test actual deployment
     result = @api.deploy(@view.name)
     assert result, "Deployment should succeed"
   end
 
   def test_004_deployment_with_assets
+    @view = @api.current_view
+    set_deploy_status
     # Skip if not configured
     unless @api.testing && File.exist?("test/config/deployment.txt")
       skip "Deployment not configured"
@@ -166,6 +176,8 @@ class TestDeployConfig < Minitest::Test
   end
 
   def test_005_deployment_verification
+    @view = @api.current_view
+    set_deploy_status
     # Skip if not configured
     unless @api.testing && File.exist?("test/config/deployment.txt")
       skip "Deployment not configured"
@@ -195,14 +207,13 @@ class TestDeployConfig < Minitest::Test
     
     # Test post page - posts are numbered, so try 0001
     post_url = "#{base_url}/posts/0001-verification-post.html"
-    post_page = `curl -s #{post_url}`
+    post_page = `curl -s #{post_url} 2>/dev/null`
     assert post_page.include?("Verification Post"), "Post page should contain post title"
     assert post_page.include?("Content to verify"), "Post page should contain post body"
-    # assert post_page.include?("Testing deployment verification"), "Post page should contain post blurb"  # Blurb may not be on post page
     
     # Test clean permalink URL (should work now with copying instead of symlinking)
     clean_post_url = "#{base_url}/permalink/verification-post.html"
-    clean_post_page = `curl -s #{clean_post_url}`
+    clean_post_page = `curl -s #{clean_post_url} 2>/dev/null`
     assert clean_post_page.include?("Verification Post"), "Clean permalink should contain post title"
     assert clean_post_page.include?("Content to verify"), "Clean permalink should contain post body"
     
@@ -229,10 +240,8 @@ class TestDeployConfig < Minitest::Test
     if File.exist?(config_source)
       deploy_file = @view.dir/:config/"deploy.txt"
       write_file(deploy_file, read_file(config_source))
-      
-      # Create status.txt with deployment enabled
-      status_file = @view.dir/:config/"status.txt"
-      write_file(status_file, "deploy y\n")
+    else
+      raise "Deployment config source not found: #{config_source}"
     end
   end
 

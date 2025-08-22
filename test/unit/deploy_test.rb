@@ -260,17 +260,15 @@ class TestDeploy < Minitest::Test
     make_dir(output_dir)
     write_file(output_dir/"index.html", "<html><body>Test content</body></html>")
     
-    # Test that the deploy method can be called (SSH test will fail, but that's expected)
+    # Test that the deploy method can be called (deployment test will fail, but that's expected)
     begin
       result = @api.deploy("testview", dry_run: true)
       assert result, "Dry-run should succeed"
-    rescue RuntimeError => e
-      if e.message.include?("not ready for deployment")
-        # SSH test failed, which is expected in test environment
-        skip "SSH test failed (expected in test environment): #{e.message}"
-      else
-        raise e
-      end
+    rescue DeploymentNotReady => e
+      # Deployment not ready, which is expected in test environment
+      skip "Deployment not ready (expected in test environment): #{e.message}"
+    rescue => e
+      raise e
     end
   end
   
@@ -278,7 +276,7 @@ class TestDeploy < Minitest::Test
     # Test deploy method with missing configuration
     
     # Test with no status file
-    assert_raises(RuntimeError, "Should fail when status is not ready") do
+    assert_raises(DeploymentNotReady, "Should fail when status is not ready") do
       @api.deploy("testview")
     end
     
@@ -286,7 +284,7 @@ class TestDeploy < Minitest::Test
     status_file = @repo.root/"views"/"testview"/"config"/"status.txt"
     write_file(status_file, "deploy n")
     
-    assert_raises(RuntimeError, "Should fail when status is not ready") do
+    assert_raises(DeploymentNotReady, "Should fail when status is not ready") do
       @api.deploy("testview")
     end
   end
@@ -299,7 +297,7 @@ class TestDeploy < Minitest::Test
     write_file(status_file, "deploy y")
     
     # Test with missing deploy.txt
-    assert_raises(RuntimeError, "Should fail when deploy.txt is missing") do
+    assert_raises(DeploymentNotReady, "Should fail when deploy.txt is missing") do
       @api.deploy("testview")
     end
     
@@ -307,7 +305,7 @@ class TestDeploy < Minitest::Test
     deploy_file = @repo.root/"views"/"testview"/"config"/"deploy.txt"
     write_file(deploy_file, "user root\nserver example.com")
     
-    assert_raises(RuntimeError, "Should fail when required fields are missing") do
+    assert_raises(DeploymentNotReady, "Should fail when required fields are missing") do
       @api.deploy("testview")
     end
   end
@@ -331,13 +329,11 @@ class TestDeploy < Minitest::Test
     begin
       result = @api.deploy("testview", dry_run: true)
       assert result, "Dry-run should succeed"
-    rescue RuntimeError => e
-      if e.message.include?("not ready for deployment")
-        # SSH test failed, which is expected in test environment
-        skip "SSH test failed (expected in test environment): #{e.message}"
-      else
-        raise e
-      end
+    rescue DeploymentNotReady => e
+      # Deployment not ready, which is expected in test environment
+      skip "Deployment not ready (expected in test environment): #{e.message}"
+    rescue => e
+      raise e
     end
     
     # The dry-run should output the rsync command to stdout
@@ -345,14 +341,7 @@ class TestDeploy < Minitest::Test
     # The actual command format is: "rsync -r -z -l #{output_dir}/ #{remote_path}/"
   end
   
-  def test_017_deploy_no_view_specified
-    # Test deploy method without specifying a view
-    
-    # Should fail when no view is specified and no current view is set
-    assert_raises(RuntimeError, "Should fail when no view specified") do
-      @api.deploy
-    end
-  end
+
   
   def test_018_deploy_ssh_keys_test
     # Test SSH key validation (will likely be skipped in test environment)

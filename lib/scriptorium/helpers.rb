@@ -307,6 +307,17 @@ module Scriptorium::Helpers
     end
     lines  # Return cleaned lines
   end
+
+  def parse_commented_file(file_path)
+    config = {}
+    read_commented_file(file_path).each do |line|
+      if line.include?(' ')
+        key, value = line.split(/\s+/, 2)
+        config[key] = config[key.to_sym] =value
+      end
+    end
+    config
+  end
       
   def cf_time(t1, t2)
     t1 = t1.split(/- :/, 6)

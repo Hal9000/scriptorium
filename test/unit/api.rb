@@ -184,17 +184,17 @@ class TestScriptoriumAPI < Minitest::Test
 
   def test_016_clone_theme_validation
     # Try to clone to existing theme name
-    assert_raises(RuntimeError) do
+    assert_raises(ThemeAlreadyExists) do
       @api.clone_theme("standard", "standard")
     end
     
     # Try to clone from non-existent theme
-    assert_raises(RuntimeError) do
+    assert_raises(ThemeNotFound) do
       @api.clone_theme("nonexistent", "new-theme")
     end
     
     # Try to clone with invalid name
-    assert_raises(RuntimeError) do
+    assert_raises(ThemeNameInvalid) do
       @api.clone_theme("standard", "invalid name with spaces")
     end
   end
@@ -229,7 +229,7 @@ class TestScriptoriumAPI < Minitest::Test
     # Clear the current view directly
     @api.repo.instance_variable_set(:@current_view, nil)
     
-    assert_raises(RuntimeError) do
+    assert_raises(ViewTargetNil) do
       @api.create_post("Test Post", "Test body")
     end
   end
@@ -533,12 +533,12 @@ class TestScriptoriumAPI < Minitest::Test
     @api.create_view("test_view", "Test View")
     
     # Test with non-draft file
-    assert_raises(RuntimeError) do
+    assert_raises(DraftFileInvalid) do
       @api.delete_draft("not-a-draft.txt")
     end
     
     # Test with non-existent file
-    assert_raises(RuntimeError) do
+    assert_raises(DraftFileNotFound) do
       @api.delete_draft("nonexistent-draft.lt3")
     end
   end
@@ -576,17 +576,17 @@ class TestScriptoriumAPI < Minitest::Test
     @api.create_view("test_view", "Test View")
     
     # Test with invalid widget name
-    assert_raises(RuntimeError) do
+    assert_raises(WidgetNameInvalid) do
       @api.generate_widget("invalid-widget")
     end
     
     # Test with nil
-    assert_raises(RuntimeError) do
+    assert_raises(WidgetNameNil) do
       @api.generate_widget(nil)
     end
     
     # Test with empty string
-    assert_raises(RuntimeError) do
+    assert_raises(WidgetsArgEmpty) do
       @api.generate_widget("")
     end
   end
@@ -595,7 +595,7 @@ class TestScriptoriumAPI < Minitest::Test
     @api.create_view("test_view", "Test View")
     
     # Test with non-existent widget class
-    assert_raises(RuntimeError) do
+    assert_raises(CannotBuildWidget) do
       @api.generate_widget("nonexistent")
     end
   end
@@ -672,7 +672,7 @@ class TestScriptoriumAPI < Minitest::Test
     # Create a post so the search actually processes something
     @api.create_post("Test Post", "Test body")
     
-    assert_raises(RuntimeError) do
+    assert_raises(UnknownSearchField) do
       @api.search_posts(unknown_field: "value")
     end
   end
@@ -845,7 +845,7 @@ class TestScriptoriumAPI < Minitest::Test
     # Clear the current view
     @api.repo.instance_variable_set(:@current_view, nil)
     
-    assert_raises(RuntimeError, "No view specified and no current view set") do
+    assert_raises(ViewTargetNil, "No view specified and no current view set") do
       @api.edit_layout
     end
   end
@@ -877,7 +877,7 @@ class TestScriptoriumAPI < Minitest::Test
     # Clear the current view
     @api.repo.instance_variable_set(:@current_view, nil)
     
-    assert_raises(RuntimeError, "No view specified and no current view set") do
+    assert_raises(ViewTargetNil, "No view specified and no current view set") do
       @api.edit_config
     end
   end
@@ -908,7 +908,7 @@ class TestScriptoriumAPI < Minitest::Test
   def test_058_edit_widget_data_nil_widget
     @api.create_view("test_view", "Test View")
     
-    assert_raises(RuntimeError, "Widget name cannot be nil") do
+    assert_raises(WidgetNameNil, "Widget name cannot be nil") do
       @api.edit_widget_data(nil, nil)
     end
   end
@@ -998,7 +998,7 @@ class TestScriptoriumAPI < Minitest::Test
     @api.publish_post(post.id)
     
     # Try to publish again
-    assert_raises(RuntimeError, "Post #{post.id} is already published") do
+    assert_raises(PostAlreadyPublished, "Post #{post.id} is already published") do
       @api.publish_post(post.id)
     end
   end
@@ -1384,7 +1384,7 @@ class TestScriptoriumAPI < Minitest::Test
     # @api is already set up in setup method
     
     # Try to copy from invalid source
-    assert_raises(RuntimeError) do
+    assert_raises(InvalidFormatError) do
       @api.copy_asset("test.jpg", from: 'invalid', to: 'global')
     end
   end
@@ -1393,7 +1393,7 @@ class TestScriptoriumAPI < Minitest::Test
     # @api is already set up in setup method
     
     # Try to copy to invalid target
-    assert_raises(RuntimeError) do
+    assert_raises(InvalidFormatError) do
       @api.copy_asset("test.jpg", from: 'global', to: 'invalid')
     end
   end
@@ -1402,7 +1402,7 @@ class TestScriptoriumAPI < Minitest::Test
     # @api is already set up in setup method
     
     # Try to copy non-existent asset
-    assert_raises(RuntimeError) do
+    assert_raises(FileNotFoundError) do
       @api.copy_asset("missing.jpg", from: 'global', to: 'global')
     end
   end
@@ -1418,7 +1418,7 @@ class TestScriptoriumAPI < Minitest::Test
     @api.repo.instance_variable_set(:@current_view, nil)
     
     # Should fail for view assets without view
-    assert_raises(RuntimeError) do
+    assert_raises(ViewTargetNil) do
       @api.list_assets(target: 'view')
     end
   end
