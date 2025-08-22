@@ -1,5 +1,6 @@
 VERY SOON:
 ----------
+  real deployment tests
   new exceptions replacing RuntimeError
   themes into web app
 x widget management

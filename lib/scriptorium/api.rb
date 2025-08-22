@@ -76,6 +76,10 @@ class Scriptorium::API
     Scriptorium::VERSION
   end
 
+  def testing
+    @testing
+  end
+
   def apply_theme(theme)
     @repo.view.apply_theme(theme)
   end

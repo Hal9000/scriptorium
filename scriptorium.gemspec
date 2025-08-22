@@ -52,7 +52,7 @@ spec = Gem::Specification.new do |s|
   s.homepage    = 'https://github.com/Hal9000/scriptorium'
   s.license     = "Ruby"
   s.post_install_message = 
-                  "\n  Success! Run 'sblog' command and type h for help.\n "
+                  "\n  Success! Run command 'sblog help' to get started.\n "
 end
 
 spec
