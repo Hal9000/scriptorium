@@ -129,18 +129,18 @@ class TestDeploy < Minitest::Test
     # Create the target file
     write_file(target_file, "<html><body>Test post</body></html>")
     
-    # Create the symlink
-    File.symlink("0001-test-post.html", symlink_file)
+    # Create the copy
+    FileUtils.cp(target_file, symlink_file)
     
-    # Verify symlink exists
-    assert File.exist?(symlink_file), "Symlink should exist"
-    assert File.symlink?(symlink_file), "Should be a symlink"
+    # Verify copy exists
+    assert File.exist?(symlink_file), "Copy should exist"
+    assert !File.symlink?(symlink_file), "Should not be a symlink"
     
-    # Test that rsync command includes symlink preservation
-    expected_cmd = "rsync -r -z -l #{output_dir}/ user@server:/path/"
-    actual_cmd = "rsync -r -z -l #{output_dir}/ user@server:/path/"
+    # Test that rsync command works with regular files (no symlink preservation needed)
+    expected_cmd = "rsync -r -z #{output_dir}/ user@server:/path/"
+    actual_cmd = "rsync -r -z #{output_dir}/ user@server:/path/"
     
-    assert_equal expected_cmd, actual_cmd, "Rsync command should preserve symlinks"
+    assert_equal expected_cmd, actual_cmd, "Rsync command should work with regular files"
   end
 
   def test_008_deploy_symlink_target_verification
@@ -155,18 +155,17 @@ class TestDeploy < Minitest::Test
     # Create the target file
     write_file(target_file, "<html><body>Another test post</body></html>")
     
-    # Create the symlink
-    File.symlink("0001-another-post.html", symlink_file)
+    # Create the copy
+    FileUtils.cp(target_file, symlink_file)
     
-    # Verify symlink points to existing target
-    assert File.exist?(symlink_file), "Symlink should exist"
-    assert File.symlink?(symlink_file), "Should be a symlink"
+    # Verify copy exists and has same content
+    assert File.exist?(symlink_file), "Copy should exist"
+    assert !File.symlink?(symlink_file), "Should not be a symlink"
     
-    symlink_target = File.readlink(symlink_file)
-    target_path = output_dir/:permalink/symlink_target
-    
-    assert File.exist?(target_path), "Symlink target should exist"
-    assert_equal "0001-another-post.html", symlink_target, "Symlink should point to correct target"
+    # Verify copy has same content as target
+    copy_content = File.read(symlink_file)
+    target_content = File.read(target_file)
+    assert_equal target_content, copy_content, "Copy should have same content as target"
   end
 
   def test_009_domain_extraction_from_deploy_config

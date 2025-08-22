@@ -1,12 +1,12 @@
-# Test file for symlink functionality
-# Tests the clean URL symlink generation for posts
+# Test file for permalink copy functionality
+# Tests the clean URL copy generation for posts
 
 require 'minitest/autorun'
 require_relative '../../lib/scriptorium'
 require_relative '../test_helpers'
 require 'fileutils'
 
-class TestSymlinkFunctionality < Minitest::Test
+class TestPermalinkCopy < Minitest::Test
   include Scriptorium::Helpers
   include TestHelpers
 
@@ -55,10 +55,10 @@ class TestSymlinkFunctionality < Minitest::Test
   end
 
   # ========================================
-  # Symlink generation tests
+  # Permalink copy generation tests
   # ========================================
 
-  def test_006_symlink_creation_for_post
+  def test_006_permalink_copy_creation_for_post
     # Create a test post
     post_title = "My First Test Post"
     post_body = "This is the body of my test post."
@@ -81,16 +81,16 @@ class TestSymlinkFunctionality < Minitest::Test
     assert File.exist?(numbered_path), "Numbered post file should exist: #{numbered_path}"
     assert File.exist?(clean_symlink_path), "Clean symlink should exist: #{clean_symlink_path}"
     
-    # Clean symlink should be a symlink
-    assert File.symlink?(clean_symlink_path), "Clean symlink should be a symlink"
+    # Clean copy should exist
+    assert File.exist?(clean_symlink_path), "Clean copy should exist"
     
-    # Symlink should point to the numbered file
-    symlink_target = File.readlink(clean_symlink_path)
-    expected_target = numbered_slug
-    assert_equal expected_target, symlink_target, "Symlink should point to numbered file"
+    # Copy should have same content as numbered file
+    copy_content = File.read(clean_symlink_path)
+    numbered_content = File.read(numbered_path)
+    assert_equal numbered_content, copy_content, "Copy should have same content as numbered file"
   end
 
-  def test_007_symlink_points_to_correct_file
+  def test_007_permalink_copy_has_correct_content
     # Create a test post with a specific title
     post_title = "Another Test Post"
     post_body = "This is another test post."
@@ -106,17 +106,17 @@ class TestSymlinkFunctionality < Minitest::Test
     clean_slug = clean_slugify(post_title) + ".html"
     clean_symlink_path = @view.dir/:output/:permalink/clean_slug
     
-    assert File.symlink?(clean_symlink_path), "Should be a symlink"
+    assert File.exist?(clean_symlink_path), "Should be a copy"
     
-    # Get the actual target
-    symlink_target = File.readlink(clean_symlink_path)
+    # Get the actual content to verify it's a copy
+    copy_content = File.read(clean_symlink_path)
+    target_content = File.read(@view.dir/:output/:permalink/slugify(post_num, post_title) + ".html")
     
-    # Expected target should be the numbered slug
-    expected_slug = slugify(post_num, post_title) + ".html"
-    assert_equal expected_slug, symlink_target, "Symlink should point to correct numbered file"
+    # Expected content should match the numbered file
+    assert_equal target_content, copy_content, "Copy should have same content as numbered file"
   end
 
-  def test_008_symlink_overwrites_existing
+  def test_008_permalink_copy_overwrites_existing
     # Create a test post
     post_title = "Duplicate Test Post"
     post_body = "This is a test post."
@@ -125,17 +125,17 @@ class TestSymlinkFunctionality < Minitest::Test
     draft_name = @repo.create_draft(title: post_title, body: post_body)
     post_num = @repo.finish_draft(draft_name)
     
-    # Generate the post (should create symlink)
+    # Generate the post (should create copy)
     @repo.generate_post(post_num)
     
-    # Check that symlink exists
+    # Check that copy exists
     clean_slug = clean_slugify(post_title) + ".html"
     clean_symlink_path = @view.dir/:output/:permalink/clean_slug
     
-    assert File.symlink?(clean_symlink_path), "Symlink should exist"
+    assert File.exist?(clean_symlink_path), "Copy should exist"
     
-    # Get the target
-    original_target = File.readlink(clean_symlink_path)
+    # Get the original content
+    original_content = File.read(clean_symlink_path)
     
     # Now create another post with the same clean slug (different numbered slug)
     post_title2 = "Duplicate Test Post"  # Same title, different post
@@ -144,20 +144,20 @@ class TestSymlinkFunctionality < Minitest::Test
     draft_name2 = @repo.create_draft(title: post_title2, body: post_body2)
     post_num2 = @repo.finish_draft(draft_name2)
     
-    # Generate the second post (should overwrite symlink)
+    # Generate the second post (should overwrite copy)
     @repo.generate_post(post_num2)
     
-    # Check that symlink still exists and points to the new target
-    assert File.symlink?(clean_symlink_path), "Symlink should still exist"
+    # Check that copy still exists and has new content
+    assert File.exist?(clean_symlink_path), "Copy should still exist"
     
-    new_target = File.readlink(clean_symlink_path)
-    expected_target = slugify(post_num2, post_title2) + ".html"
+    new_content = File.read(clean_symlink_path)
+    expected_content = File.read(@view.dir/:output/:permalink/slugify(post_num2, post_title2) + ".html")
     
-    assert_equal expected_target, new_target, "Symlink should point to new target"
-    refute_equal original_target, new_target, "Symlink should have been updated"
+    assert_equal expected_content, new_content, "Copy should have new content"
+    refute_equal original_content, new_content, "Copy should have been updated"
   end
 
-  def test_009_symlink_with_special_characters_in_title
+  def test_009_permalink_copy_with_special_characters_in_title
     # Test with a title that has special characters
     post_title = "Post with Special Characters: & < > \" ' !"
     post_body = "This post has special characters in the title."
@@ -169,21 +169,20 @@ class TestSymlinkFunctionality < Minitest::Test
     # Generate the post
     @repo.generate_post(post_num)
     
-    # Check that symlink exists with cleaned slug
+    # Check that copy exists with cleaned slug
     clean_slug = clean_slugify(post_title) + ".html"
     clean_symlink_path = @view.dir/:output/:permalink/clean_slug
     
-    assert File.exist?(clean_symlink_path), "Symlink should exist for cleaned title"
-    assert File.symlink?(clean_symlink_path), "Should be a symlink"
+    assert File.exist?(clean_symlink_path), "Copy should exist for cleaned title"
     
-    # Check that the symlink points to the correct numbered file
-    symlink_target = File.readlink(clean_symlink_path)
-    expected_target = slugify(post_num, post_title) + ".html"
-    assert_equal expected_target, symlink_target, "Symlink should point to correct numbered file"
+    # Check that the copy has the same content as the numbered file
+    copy_content = File.read(clean_symlink_path)
+    expected_content = File.read(@view.dir/:output/:permalink/slugify(post_num, post_title) + ".html")
+    assert_equal expected_content, copy_content, "Copy should have same content as numbered file"
   end
 
-  def test_010_symlink_deployment_ready
-    # Test that symlinks are created in the correct location for deployment
+  def test_010_permalink_copy_deployment_ready
+    # Test that permalink copies are created in the correct location for deployment
     post_title = "Deployment Test Post"
     post_body = "This post tests deployment readiness."
     
@@ -194,20 +193,19 @@ class TestSymlinkFunctionality < Minitest::Test
     # Generate the post
     @repo.generate_post(post_num)
     
-    # Check that symlink is in the correct deployment location
+    # Check that copy is in the correct deployment location
     clean_slug = clean_slugify(post_title) + ".html"
     clean_symlink_path = @view.dir/:output/:permalink/clean_slug
     
     # Verify the path structure
     assert_equal @view.dir/:output/:permalink/clean_slug, clean_symlink_path
-    assert File.exist?(clean_symlink_path), "Symlink should exist in deployment location"
+    assert File.exist?(clean_symlink_path), "Copy should exist in deployment location"
     
-    # Verify it's a symlink
-    assert File.symlink?(clean_symlink_path), "Should be a symlink"
+    # Verify it's a copy (not a symlink)
+    assert !File.symlink?(clean_symlink_path), "Should not be a symlink"
     
-    # Verify the target exists and is accessible
-    symlink_target = File.readlink(clean_symlink_path)
-    target_path = @view.dir/:output/:permalink/symlink_target
-    assert File.exist?(target_path), "Symlink target should exist"
+    # Verify the copy has content
+    copy_content = File.read(clean_symlink_path)
+    assert copy_content.length > 0, "Copy should have content"
   end
 end

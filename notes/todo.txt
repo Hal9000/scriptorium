@@ -1,9 +1,7 @@
 VERY SOON:
 ----------
-  real deployment tests
   new exceptions replacing RuntimeError
   themes into web app
-x widget management
   full reddit support
   configurator? more wizards?
   post footer?
@@ -92,3 +90,6 @@ x rudimentary icon/logo collection
 x Exception names (DBC?)
 x main config, fonts etc.
 x API - upload, deploy, ...
+x real deployment tests
+x fix symlink issue
+x widget management

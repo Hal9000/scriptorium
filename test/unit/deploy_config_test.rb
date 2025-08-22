@@ -200,6 +200,12 @@ class TestDeployConfig < Minitest::Test
     assert post_page.include?("Content to verify"), "Post page should contain post body"
     # assert post_page.include?("Testing deployment verification"), "Post page should contain post blurb"  # Blurb may not be on post page
     
+    # Test clean permalink URL (should work now with copying instead of symlinking)
+    clean_post_url = "#{base_url}/permalink/verification-post.html"
+    clean_post_page = `curl -s #{clean_post_url}`
+    assert clean_post_page.include?("Verification Post"), "Clean permalink should contain post title"
+    assert clean_post_page.include?("Content to verify"), "Clean permalink should contain post body"
+    
     # Test basic structure elements that are likely to be present
     # assert post_page.include?("<html"), "Post page should have HTML structure"  # May be fragment
     # assert post_page.include?("<head"), "Post page should have head section"    # May be fragment

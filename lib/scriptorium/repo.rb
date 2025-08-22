@@ -379,21 +379,15 @@ class Scriptorium::Repo
     permalink_content = final + "\n<div style=\"text-align: center; margin-top: 20px;\">\n<a href=\"../index.html\">Visit Blog</a>\n</div>\n<div style=\"text-align: center; margin-top: 10px;\">\n<button onclick=\"copyPermalinkToClipboard()\" style=\"padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;\">Copy link</button>\n</div>\n<script>\nfunction copyPermalinkToClipboard() {\n  navigator.clipboard.writeText(window.location.href).then(function() {\n    // Change button text temporarily to show success\n    const button = event.target;\n    const originalText = button.textContent;\n    button.textContent = 'Copied!';\n    button.style.background = '#28a745';\n    setTimeout(function() {\n      button.textContent = originalText;\n      button.style.background = '#007bff';\n    }, 2000);\n  }).catch(function(err) {\n    console.error('Failed to copy: ', err);\n    alert('Failed to copy link to clipboard');\n  });\n}\n</script>"
     write_file(permalink_path, permalink_content)
     
-    # Create symlink for clean URL (without numeric prefix)
+    # Create copy for clean URL (without numeric prefix)
     clean_slug = clean_slugify(title) + ".html"
-    clean_symlink_path = view.dir/:output/:permalink/clean_slug
+    clean_copy_path = view.dir/:output/:permalink/clean_slug
     
-    # Remove existing symlink if it exists
-    File.delete(clean_symlink_path) if File.exist?(clean_symlink_path) && File.symlink?(clean_symlink_path)
+    # Remove existing file if it exists
+    File.delete(clean_copy_path) if File.exist?(clean_copy_path)
     
-    # Create symlink (relative path from clean_symlink_path to slug)
-    begin
-      File.symlink(slug, clean_symlink_path)
-    rescue Errno::EEXIST
-      # If symlink already exists (not a symlink), remove it and try again
-      File.delete(clean_symlink_path) if File.exist?(clean_symlink_path)
-      File.symlink(slug, clean_symlink_path)
-    end
+    # Copy the permalink file to create clean URL
+    FileUtils.cp(permalink_path, clean_copy_path)
     
     # Copy post-specific assets to view output directory for deployment
     copy_post_assets_to_view(num, view)
