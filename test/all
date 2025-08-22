@@ -27,6 +27,8 @@ test_files = %w[
   unit/deploy_test.rb
   unit/deploy_config_test.rb
   unit/permalink_copy_test.rb
+  unit/post_state_helpers_test.rb
+  unit/edit_post_test.rb
   unit/contract_test.rb
   unit/social_test.rb
   unit/livetext_compatibility.rb

@@ -1,3 +1,5 @@
+
+
 class Scriptorium::Repo
   include Scriptorium::Exceptions
   extend  Scriptorium::Exceptions
@@ -201,6 +203,9 @@ class Scriptorium::Repo
     │   │   ├── main.html    # Generated from main.txt
     │   │   └── right.html   # Generated from right.txt
     │   └── posts/           # Generated posts for view (slug.html)
+    ├── posts/               # Post state tracking
+    │   ├── unpublished.txt  # Posts NOT published in this view (empty = all published)
+    │   └── undeployed.txt   # Posts NOT published in this view (empty = all deployed)
     ├── widgets/             # Widgets for view
     └── staging/             # Staging area prior to deployment
     EOS
@@ -223,6 +228,11 @@ class Scriptorium::Repo
       write_file(dir/:config/"deploy.txt",        @predef.deploy_text % {view: name, domain: "example.com"})
       write_file(dir/:config/"status.txt",        @predef.status_txt)
       write_file(dir/:config/"post_index.txt",    @predef.post_index_config)
+      
+      # Create post state tracking files
+      write_file(dir/:posts/"unpublished.txt",   "")  # Empty = all posts published
+      write_file(dir/:posts/"undeployed.txt",    "")  # Empty = all posts deployed
+      
       view = open_view(name)
     rescue => e
       # Clean up partial view directory if creation fails
@@ -401,51 +411,256 @@ class Scriptorium::Repo
     assume { blurb.nil? || blurb.is_a?(String) }
     name = create_draft(title: title, views: views, tags: tags, body: body, blurb: blurb)
     num = finish_draft(name)
+    
+    # Add post to unpublished and undeployed lists for all views it belongs to
+    metadata_file = @root/:posts/d4(num)/"meta.txt"
+    if File.exist?(metadata_file)
+      metadata = getvars(metadata_file)
+      views = metadata[:"post.views"]&.strip&.split(/\s+/) || ["sample"]
+      views.each do |view_name|
+        view_obj = lookup_view(view_name)
+        unpublished_file = view_obj.dir/:posts/"unpublished.txt"
+        undeployed_file = view_obj.dir/:posts/"undeployed.txt"
+        add_post_to_state_file(unpublished_file, num)
+        add_post_to_state_file(undeployed_file, num)
+      end
+    end
+    
     generate_post(num)
     post = self.post(num)  # Return the Post object
     verify { post.is_a?(Scriptorium::Post) }
     post
   end
 
-  def publish_post(num)
+  def publish_post(num, view = nil)
     validate_post_id(num)
+    
+    # Check if post exists in normal location first
     metadata_file = @root/:posts/d4(num)/"meta.txt"
+    unless File.exist?(metadata_file)
+      # Check if post is deleted
+      if post_deleted?(num)
+        raise PostDeleted(num)
+      else
+        raise CannotGetPost("Post #{num} not found")
+      end
+    end
     
-    # Read current metadata if it exists
-    metadata = {}
-    metadata = getvars(metadata_file) if File.exist?(metadata_file)
+    # Read current metadata
+    metadata = getvars(metadata_file)
     
-    # Check if already published
-    if metadata[:"post.published"] != "no" && metadata[:"post.published"] != nil
+    if view.nil?
+      # Use current view if no view specified
+      view = @current_view&.name || "sample"
+    end
+    
+    # Check if already published in this view
+    view_obj = lookup_view(view)
+    unpublished_file = view_obj.dir/:posts/"unpublished.txt"
+    if !post_in_state_file?(unpublished_file, num)
       raise PostAlreadyPublished(num)
     end
     
-    # Update published timestamp
-    metadata[:"post.published"] = ymdhms
+    # View-specific publish - only update the specified view's state
+    remove_post_from_state_file(unpublished_file, num)
     
-    # Write updated metadata
-    lines = metadata.map { |k, v| sprintf("%-18s  %s", k, v) }
-    write_file(metadata_file, lines.join("\n"))
+    # If this is the first time publishing this post, update global metadata
+    if metadata[:"post.published"] == "no" || metadata[:"post.published"].nil?
+      metadata[:"post.published"] = ymdhms
+      
+      # Write updated metadata
+      lines = metadata.map { |k, v| sprintf("%-18s  %s", k, v) }
+      write_file(metadata_file, lines.join("\n"))
+    end
     
     # Generate the post (this will preserve the updated metadata)
     generate_post(num)
     
     self.post(num)
   end
-
-  def post_published?(num)
+  
+  def mark_post_deployed(num, view = nil)
     validate_post_id(num)
-    metadata_file = @root/:posts/d4(num)/"meta.txt"
-        return false unless File.exist?(metadata_file)
     
-    metadata = getvars(metadata_file)
-    result = metadata[:"post.published"] != "no"
-    result
+    # Check if post exists in normal location first
+    metadata_file = @root/:posts/d4(num)/"meta.txt"
+    unless File.exist?(metadata_file)
+      # Check if post is deleted
+      if post_deleted?(num)
+        raise PostDeleted(num)
+      else
+        raise CannotGetPost("Post #{num} not found")
+      end
+    end
+    
+    if view.nil?
+      # Use current view if no view specified
+      view = @current_view&.name || "sample"
+    end
+    
+    # Check if already deployed in this view
+    view_obj = lookup_view(view)
+    undeployed_file = view_obj.dir/:posts/"undeployed.txt"
+    if !post_in_state_file?(undeployed_file, num)
+      raise PostAlreadyDeployed(num)
+    end
+    
+    # Validate that only published posts can be deployed
+    unless post_published?(num, view)
+      raise PostNotPublished(num)
+    end
+    
+    # Remove from undeployed list for this view
+    remove_post_from_state_file(undeployed_file, num)
+    
+    # Update global metadata if this is the first deployment
+    metadata_file = @root/:posts/d4(num)/"meta.txt"
+    if File.exist?(metadata_file)
+      metadata = getvars(metadata_file)
+      if metadata[:"post.deployed"] == "no" || metadata[:"post.deployed"].nil?
+        metadata[:"post.deployed"] = ymdhms
+        lines = metadata.map { |k, v| sprintf("%-18s  %s", k, v) }
+        write_file(metadata_file, lines.join("\n"))
+      end
+    else
+      raise CannotGetPost("Post #{num} metadata not found")
+    end
+  end
+  
+  def mark_post_undeployed(num, view = nil)
+    validate_post_id(num)
+    
+    if view.nil?
+      # Use current view if no view specified
+      view = @current_view&.name || "sample"
+    end
+    
+    # Add to undeployed list for this view
+    view_obj = lookup_view(view)
+    undeployed_file = view_obj.dir/:posts/"undeployed.txt"
+    add_post_to_state_file(undeployed_file, num)
+    
+    # Update global metadata
+    metadata_file = @root/:posts/d4(num)/"meta.txt"
+    if File.exist?(metadata_file)
+      metadata = getvars(metadata_file)
+      metadata[:"post.deployed"] = "no"
+      lines = metadata.map { |k, v| sprintf("%-18s  %s", k, v) }
+      write_file(metadata_file, lines.join("\n"))
+    end
+  end
+  
+  def post_deployed?(num, view = nil)
+    validate_post_id(num)
+    
+    # If no specific view, check global metadata (for backward compatibility)
+    if view.nil?
+      metadata_file = @root/:posts/d4(num)/"meta.txt"
+      return false unless File.exist?(metadata_file)
+      
+      metadata = getvars(metadata_file)
+      return metadata[:"post.deployed"] != "no"
+    end
+    
+    # Check view-specific deployed status
+    view = lookup_view(view)
+    undeployed_file = view.dir/:posts/"undeployed.txt"
+    !post_in_state_file?(undeployed_file, num)
+  end
+  
+  def get_deployed_posts(view = nil)
+    all_posts = all_posts(view)
+    
+    if view.nil?
+      # If no specific view, use global metadata (for backward compatibility)
+      all_posts.select { |post| post_deployed?(post.id) }
+    else
+      # Use view-specific deployed status
+      view = lookup_view(view)
+      undeployed_file = view.dir/:posts/"undeployed.txt"
+      all_posts.reject { |post| post_in_state_file?(undeployed_file, post.id) }
+    end
+  end
+  
+  def unpublish_post(num, view = nil)
+    validate_post_id(num)
+    
+    # Check if post is deployed in any view (including current view if none specified)
+    if view.nil?
+      view = @current_view&.name || "sample"
+    end
+    
+    # Check if post is deployed in this view
+    view_obj = lookup_view(view)
+    if post_deployed?(num, view)
+      raise PostAlreadyDeployed(num)
+    end
+    
+    # Always use view-specific logic when a specific view is provided
+    # Add to view-specific unpublished list
+    unpublished_file = view_obj.dir/:posts/"unpublished.txt"
+    add_post_to_state_file(unpublished_file, num)
+    
+    # Also update global metadata to "no" if this was the first published view
+    metadata_file = @root/:posts/d4(num)/"meta.txt"
+    if File.exist?(metadata_file)
+      metadata = getvars(metadata_file)
+      metadata[:"post.published"] = "no"
+      lines = metadata.map { |k, v| sprintf("%-18s  %s", k, v) }
+      write_file(metadata_file, lines.join("\n"))
+    end
+    
+    # Regenerate the post
+    generate_post(num)
+  end
+
+  def post_published?(num, view = nil)
+    validate_post_id(num)
+    
+    # If no specific view, check global metadata (for backward compatibility)
+    if view.nil?
+      metadata_file = @root/:posts/d4(num)/"meta.txt"
+      return false unless File.exist?(metadata_file)
+      
+      metadata = getvars(metadata_file)
+      return metadata[:"post.published"] != "no"
+    end
+    
+    # Check view-specific published status
+    view = lookup_view(view)
+    unpublished_file = view.dir/:posts/"unpublished.txt"
+    !post_in_state_file?(unpublished_file, num)
   end
 
   def get_published_posts(view = nil)
     all_posts = all_posts(view)
-    all_posts.select { |post| post_published?(post.id) }
+    
+    if view.nil?
+      # If no specific view, use global metadata (for backward compatibility)
+      all_posts.select { |post| post_published?(post.id) }
+    else
+      # Use view-specific published status
+      view = lookup_view(view)
+      unpublished_file = view.dir/:posts/"unpublished.txt"
+      all_posts.reject { |post| post_in_state_file?(unpublished_file, post.id) }
+    end
+  end
+  
+  def post_deleted?(num)
+    validate_post_id(num)
+    
+    # Check deleted location first (with underscore prefix)
+    deleted_metadata_file = @root/:posts/"_#{d4(num)}"/"meta.txt"
+    if File.exist?(deleted_metadata_file)
+      return true
+    end
+    
+    # Check normal location
+    metadata_file = @root/:posts/d4(num)/"meta.txt"
+    return false unless File.exist?(metadata_file)
+    
+    metadata = getvars(metadata_file)
+    metadata[:"post.deleted"] == "yes"
   end
 
   def generate_post(num)
@@ -529,6 +744,24 @@ class Scriptorium::Repo
     view = lookup_view(view)
     posts.select {|x| x.views.include?(view.name) }
   end
+  
+  def all_posts_including_deleted(view = nil)
+    posts = []
+    dirs = Dir.children(@root/:posts)
+    dirs.each do |id4|
+      # Include both normal and deleted posts
+      if id4.start_with?('_')
+        # Deleted post - remove underscore prefix to get original ID
+        original_id = id4[1..-1]
+        posts << Scriptorium::Post.read(self, original_id)
+      else
+        posts << Scriptorium::Post.read(self, id4)
+      end
+    end
+    return posts if view.nil?
+    view = lookup_view(view)
+    posts.select {|x| x.views.include?(view.name) }
+  end
 
   def generate_post_index(view)
     view = lookup_view(view)
@@ -549,6 +782,71 @@ class Scriptorium::Repo
     # Post not found in either location
     raise CannotGetPost("Post with ID #{id} not found")
   end
+  
+  def delete_post(num)
+    validate_post_id(num)
+    
+    # Check if post exists
+    metadata_file = @root/:posts/d4(num)/"meta.txt"
+    unless File.exist?(metadata_file)
+      raise CannotGetPost("Post #{num} not found")
+    end
+    
+    # Check if already deleted
+    if post_deleted?(num)
+      raise PostAlreadyDeleted(num)
+    end
+    
+    # Mark as deleted in metadata
+    metadata = getvars(metadata_file)
+    metadata[:"post.deleted"] = "yes"
+    metadata[:"post.deleted_at"] = ymdhms
+    
+    # Write updated metadata
+    lines = metadata.map { |k, v| sprintf("%-18s  %s", k, v) }
+    write_file(metadata_file, lines.join("\n"))
+    
+    # Move post directory to deleted location (with underscore prefix)
+    post_dir = @root/:posts/d4(num)
+    deleted_dir = @root/:posts/"_#{d4(num)}"
+    
+    if Dir.exist?(post_dir)
+      FileUtils.mv(post_dir, deleted_dir)
+    end
+  end
+  
+  def undelete_post(num)
+    validate_post_id(num)
+    
+    # Check if post exists in deleted location
+    deleted_dir = @root/:posts/"_#{d4(num)}"
+    unless Dir.exist?(deleted_dir)
+      raise CannotGetPost("Deleted post #{num} not found")
+    end
+    
+    # Check if already undeleted
+    unless post_deleted?(num)
+      raise PostNotDeleted(num)
+    end
+    
+    # Move post directory back to normal location
+    post_dir = @root/:posts/d4(num)
+    FileUtils.mv(deleted_dir, post_dir)
+    
+    # Remove deleted flag from metadata
+    metadata_file = @root/:posts/d4(num)/"meta.txt"
+    if File.exist?(metadata_file)
+      metadata = getvars(metadata_file)
+      metadata.delete(:"post.deleted")
+      metadata.delete(:"post.deleted_at")
+      
+      # Write updated metadata
+      lines = metadata.map { |k, v| sprintf("%-18s  %s", k, v) }
+      write_file(metadata_file, lines.join("\n"))
+    end
+  end
+  
+
 
   private def validate_post_id(id)
     raise PostIdNil if id.nil?
@@ -591,6 +889,8 @@ class Scriptorium::Repo
     
     raise ViewTitleEmpty if title.to_s.strip.empty?
   end
+  
+
 
   def self.generate_os_helpers(root)
     os_code = case RbConfig::CONFIG['host_os']

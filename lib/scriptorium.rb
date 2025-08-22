@@ -2,6 +2,7 @@ require 'livetext'
 require 'find'
 require 'htmlbeautifier'
 require 'pp'
+require 'digest'
 
 require_relative "skeleton"
 require_relative "scriptorium/version"

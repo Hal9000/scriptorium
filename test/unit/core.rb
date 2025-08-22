@@ -306,6 +306,115 @@ class TestReadWrite < Minitest::Test
     FileUtils.chmod(0755, read_only_dir)
   end
 
+  def test_033_write_file_empty_true_creates_file
+    file_path = "#{@test_dir}/empty_true.txt"
+    
+    # Should create file with empty: true even for empty content
+    write_file(file_path, "", empty: true)
+    
+    assert File.exist?(file_path)
+    assert_equal "", read_file(file_path)  # No newline added
+  end
+
+  def test_034_write_file_empty_true_nil_content
+    file_path = "#{@test_dir}/empty_true_nil.txt"
+    
+    # Should create file with empty: true even for nil content
+    write_file(file_path, nil, empty: true)
+    
+    assert File.exist?(file_path)
+    assert_equal "", read_file(file_path)  # No newline added
+  end
+
+  def test_035_write_file_empty_true_whitespace_content
+    file_path = "#{@test_dir}/empty_true_whitespace.txt"
+    
+    # Should create file with empty: true for whitespace-only content
+    write_file(file_path, "   ", empty: true)
+    
+    assert File.exist?(file_path)
+    assert_equal "", read_file(file_path)  # No newline added
+  end
+
+  def test_036_write_file_empty_true_existing_file
+    file_path = "#{@test_dir}/empty_true_existing.txt"
+    
+    # Create file with content first
+    write_file(file_path, "original content")
+    original_size = File.size(file_path)
+    
+    # Now write empty content with empty: true
+    write_file(file_path, "", empty: true)
+    
+    assert File.exist?(file_path)
+    assert_equal "original content\n", read_file(file_path)  # File should preserve original content
+    assert_equal original_size, File.size(file_path)  # File size should be unchanged
+  end
+
+  def test_037_write_file_empty_true_with_content
+    file_path = "#{@test_dir}/empty_true_with_content.txt"
+    content = "some content"
+    
+    # empty: true should be ignored when there's actual content
+    write_file(file_path, content, empty: true)
+    
+    assert File.exist?(file_path)
+    assert_equal content + "\n", read_file(file_path)  # Normal behavior
+  end
+
+  # ========================================
+  # write_file! tests
+  # ========================================
+
+  def test_038_write_file_bang_basic_functionality
+    file_path = "#{@test_dir}/bang_basic.txt"
+    
+    write_file!(file_path, "line1", "line2", "line3")
+    
+    assert File.exist?(file_path)
+    assert_equal "line1\nline2\nline3\n", read_file(file_path)
+  end
+
+  def test_039_write_file_bang_empty_true_no_lines
+    file_path = "#{@test_dir}/bang_empty_true.txt"
+    
+    # Should create file with empty: true when no lines provided
+    write_file!(file_path, empty: true)
+    
+    assert File.exist?(file_path)
+    assert_equal "", read_file(file_path)  # No newline added
+  end
+
+  def test_040_write_file_bang_empty_true_nil_lines
+    file_path = "#{@test_dir}/bang_empty_true_nil.txt"
+    
+    # Should create file with empty: true when all lines are nil
+    write_file!(file_path, nil, nil, nil, empty: true)
+    
+    assert File.exist?(file_path)
+    assert_equal "", read_file(file_path)  # No newline added
+  end
+
+  def test_041_write_file_bang_empty_true_whitespace_lines
+    file_path = "#{@test_dir}/bang_empty_true_whitespace.txt"
+    
+    # Should create file with empty: true when all lines are whitespace
+    write_file!(file_path, "", "   ", "", empty: true)
+    
+    assert File.exist?(file_path)
+    assert_equal "", read_file(file_path)  # No newline added
+  end
+
+  def test_042_write_file_bang_empty_true_with_content
+    file_path = "#{@test_dir}/bang_empty_true_with_content.txt"
+    
+    # empty: true should be ignored when there's actual content
+    write_file!(file_path, "line1", "", "line3", empty: true)
+    
+    assert File.exist?(file_path)
+    assert_equal "line1\n\nline3\n", read_file(file_path)  # Normal behavior
+  end
+
   # ========================================
   # read_file tests
   # ========================================

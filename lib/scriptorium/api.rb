@@ -1,3 +1,5 @@
+
+
 class Scriptorium::API
   include Scriptorium::Exceptions
   include Scriptorium::Helpers
@@ -199,25 +201,151 @@ class Scriptorium::API
   end
 
   # Publication system
-  def publish_post(num)
+  def publish_post(num, view = nil)
     check_invariants
     assume { num.is_a?(Integer) }
     assume { @repo.is_a?(Scriptorium::Repo) }
     
-    post = @repo.publish_post(num)
+    post = @repo.publish_post(num, view)
     
     verify { post.is_a?(Scriptorium::Post) }
     check_invariants
     post
   end
+  
+  def unpublish_post(num, view = nil)
+    check_invariants
+    assume { num.is_a?(Integer) }
+    assume { @repo.is_a?(Scriptorium::Repo) }
+    
+    @repo.unpublish_post(num, view)
+    
+    check_invariants
+  end
 
-  def post_published?(num)
-    @repo.post_published?(num)
+  def post_published?(num, view = nil)
+    @repo.post_published?(num, view)
   end
 
   def get_published_posts(view = nil)
     view ||= @repo.current_view&.name
     @repo.get_published_posts(view)
+  end
+  
+  # Deployment state management
+  def mark_post_deployed(num, view = nil)
+    check_invariants
+    assume { num.is_a?(Integer) }
+    assume { @repo.is_a?(Scriptorium::Repo) }
+    
+    @repo.mark_post_deployed(num, view)
+    
+    check_invariants
+  end
+  
+  def mark_post_undeployed(num, view = nil)
+    check_invariants
+    assume { num.is_a?(Integer) }
+    assume { @repo.is_a?(Scriptorium::Repo) }
+    
+    @repo.mark_post_undeployed(num, view)
+    
+    check_invariants
+  end
+  
+  def post_deployed?(num, view = nil)
+    @repo.post_deployed?(num, view)
+  end
+  
+  def get_deployed_posts(view = nil)
+    view ||= @repo.current_view&.name
+    @repo.get_deployed_posts(view)
+  end
+  
+  def get_post_states(view = nil)
+    view ||= @repo.current_view&.name
+    raise ViewTargetNil if view.nil?
+    
+    # Get normal posts
+    posts = @repo.all_posts(view)
+    states = {}
+    
+    # Add normal posts to states
+    posts.each do |post|
+      published = post_published?(post.id, view)
+      deployed = post_deployed?(post.id, view)
+      deleted = @repo.post_deleted?(post.id)
+      
+      # Create concise state representation
+      state = ""
+      state += "P" if published
+      state += "D" if deployed
+      state += "X" if deleted
+      state = "-" if state.empty?
+      
+      states[post.id] = {
+        id: post.id,
+        title: post.title,
+        state: state,
+        published: published,
+        deployed: deployed,
+        deleted: deleted
+      }
+    end
+    
+    # Add deleted posts that were in this view
+    deleted_posts = @repo.all_posts_including_deleted(view)
+    deleted_posts.each do |post|
+      if @repo.post_deleted?(post.id)
+        states[post.id] = {
+          id: post.id,
+          title: post.title,
+          state: "X",
+          published: false,
+          deployed: false,
+          deleted: true
+        }
+      end
+    end
+    
+    states
+  end
+  
+  def delete_post(num)
+    @repo.delete_post(num)
+  end
+  
+  def undelete_post(num)
+    @repo.undelete_post(num)
+  end
+  
+  def post_deleted?(num)
+    @repo.post_deleted?(num)
+  end
+  
+
+  
+  def undeploy_post(num, view = nil)
+    view ||= @repo.current_view&.name
+    raise ViewTargetNil if view.nil?
+    
+    # Check if post is actually deployed
+    unless post_deployed?(num, view)
+      puts "Post #{num} is not deployed in view '#{view}'"
+      return false
+    end
+    
+    # Mark as undeployed
+    mark_post_undeployed(num, view)
+    
+    # Regenerate the post
+    @repo.generate_post(num)
+    
+    # Redeploy to update the server
+    deploy(view)
+    
+    puts "Post #{num} undeployed and redeployed in view '#{view}'"
+    true
   end
 
   # Post retrieval
@@ -495,15 +623,49 @@ class Scriptorium::API
     edit_file("config/deploy.txt")
   end
 
-  def edit_post(post_id)
-    post = @repo.post(post_id)
-    source_path = "posts/#{post.num}/source.lt3"
-    body_path = "posts/#{post.num}/body.html"
+    def edit_post(post_id, mock: false)
+    # Check if post is deleted first
+    if post_deleted?(post_id)
+      raise PostDeleted, "Post #{post_id} is deleted"
+    end
     
+    post = @repo.post(post_id)
+    source_path = @repo.root/"posts/#{post.num}/source.lt3"
+    body_path = @repo.root/"posts/#{post.num}/body.html"
+    
+    # Save checksum before edit
     if File.exist?(source_path)
-      edit_file(source_path)
+      before_checksum = Digest::MD5.file(source_path).hexdigest
+      
+      if mock.is_a?(Array) && mock.include?(:checksum)
+        # Use mock checksum for testing
+        after_checksum = mock[mock.index(:checksum) + 1]
+      else
+        edit_file(source_path) unless mock
+        after_checksum = Digest::MD5.file(source_path).hexdigest
+      end
     else
-      edit_file(body_path)
+      raise "Cannot edit post #{post_id}: source.lt3 file not found"
+    end
+    
+    # Check if file was actually modified
+    if before_checksum != after_checksum
+      # Mark as unpublished and undeployed in all views
+      @repo.views.each do |view|
+        if post_deployed?(post_id, view.name)
+          mark_post_undeployed(post_id, view.name)
+        end
+        if post_published?(post_id, view.name)
+          unpublish_post(post_id, view.name)
+        end
+      end
+      
+      # Regenerate the post
+      @repo.generate_post(post_id)
+      
+      true  # Changes were made
+    else
+      false # No changes
     end
   end
 
@@ -1040,14 +1202,25 @@ class Scriptorium::API
     view ||= @repo.current_view&.name
     raise ViewTargetNil if view.nil?
     raise DeploymentNotReady(view) unless can_deploy?(view)
+    
+    # Get published posts that are not yet deployed
+    published_posts = get_published_posts(view)
+    undeployed_posts = published_posts.select { |post| !post_deployed?(post.id, view) }
+    
+    if undeployed_posts.empty?
+      return true
+    end
+    
     # Read deployment configuration
     deploy_file = @repo.root/"views"/view/"config"/"deploy.txt"
     deploy_config = parse_commented_file(deploy_file)
+    
     # Validate required fields
     required_fields = [:user, :server, :docroot, :path]
     missing_fields = required_fields - deploy_config.keys
     missing = missing_fields.join(', ')
     raise DeploymentFieldsMissing(missing) unless missing.empty?
+    
     # Construct paths
     output_dir = @repo.root/"views"/view/"output"
     remote_path = "#{deploy_config[:user]}@#{deploy_config[:server]}:#{deploy_config[:docroot]}/#{deploy_config[:path]}"
@@ -1060,6 +1233,7 @@ class Scriptorium::API
       puts "Output directory: #{output_dir}"
       puts "Remote path: #{remote_path}"
       puts "Deployment config: #{deploy_config}"
+      puts "Posts to deploy: #{undeployed_posts.map(&:id).join(', ')}"
       return true
     end
     
@@ -1067,7 +1241,12 @@ class Scriptorium::API
     result = system(cmd)
     
     if result
-      # TODO: Update deployment timestamp in status or metadata
+      # Mark successfully deployed posts as deployed
+      undeployed_posts.each do |post|
+        mark_post_deployed(post.id, view)
+      end
+      
+      puts "Successfully deployed #{undeployed_posts.length} posts: #{undeployed_posts.map(&:id).join(', ')}"
       true
     else
       raise DeploymentFailed($?.exitstatus)

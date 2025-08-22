@@ -102,6 +102,13 @@ module Scriptorium::Exceptions
   make_exception :CannotCreatePost, "Cannot create post: %1"
   make_exception :CannotGetPost, "Cannot get post: %1"
   make_exception :PostAlreadyPublished, "Post %1 is already published"
+  make_exception :PostNotPublished, "Post %1 is not published"
+  make_exception :PostAlreadyDeployed, "Post %1 is already deployed"
+  make_exception :PostDeleted, "Post %1 is deleted"
+  make_exception :PostAlreadyDeleted, "Post %1 is already deleted"
+  make_exception :PostNotDeleted, "Post %1 is not deleted"
+  make_exception :PostNotDeployed, "Post %1 is not deployed"
+  make_exception :InvalidStateTransition, "Invalid state transition: %1"
   make_exception :CannotSetPubdate, "Cannot set pubdate: %1"
   
   # Banner SVG errors

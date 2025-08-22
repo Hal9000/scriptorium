@@ -936,7 +936,7 @@ class TestScriptoriumAPI < Minitest::Test
     post = @api.create_post("Test Post", "Test body")
     
     # Create source.lt3 file to test smart selection
-    source_path = "posts/#{post.num}/source.lt3"
+    source_path = "#{@test_dir}/posts/#{post.num}/source.lt3"
     write_file(source_path, "Test source content")
     
     # Mock edit_file to track calls
@@ -951,15 +951,13 @@ class TestScriptoriumAPI < Minitest::Test
     @api.create_view("test_view", "Test View")
     post = @api.create_post("Test Post", "Test body")
     
-    # Ensure source.lt3 doesn't exist, only body.html
-    source_path = "posts/#{post.num}/source.lt3"
+    # Ensure source.lt3 doesn't exist
+    source_path = "#{@test_dir}/posts/#{post.num}/source.lt3"
     File.delete(source_path) if File.exist?(source_path)
     
-    # Mock edit_file to track calls
-    called_path = nil
-    @api.stub :edit_file, ->(path) { called_path = path } do
+    # Should raise error since source.lt3 is required
+    assert_raises(RuntimeError) do
       @api.edit_post(post.id)
-      assert_equal "posts/#{post.num}/body.html", called_path
     end
   end
 
@@ -992,6 +990,10 @@ class TestScriptoriumAPI < Minitest::Test
 
   def test_069_publish_post_already_published
     @api.create_view("test_view", "Test View")
+    
+    # Set test_view as current view
+    @api.repo.instance_variable_set(:@current_view, @api.repo.lookup_view("test_view"))
+    
     post = @api.create_post("Test Post", "Test body")
     
     # Publish once
@@ -1004,9 +1006,22 @@ class TestScriptoriumAPI < Minitest::Test
   end
 
   def test_070_publish_post_nonexistent
-    assert_raises(RequiredFileNotFound) do
+    assert_raises(CannotGetPost) do
       @api.publish_post(999)
     end
+  end
+  
+  def test_070_5_unpublish_post
+    @api.create_view("test_view", "Test View")
+    post = @api.create_post("Test Post", "Test body")
+    
+    # Publish the post
+    @api.publish_post(post.id)
+    assert @api.post_published?(post.id)
+    
+    # Unpublish the post
+    @api.unpublish_post(post.id)
+    refute @api.post_published?(post.id)
   end
 
   def test_071_post_published_status
@@ -1051,13 +1066,15 @@ class TestScriptoriumAPI < Minitest::Test
     @api.create_view("test_view", "Test View")
     @api.create_view("other_view", "Other View")
     
+    # Set test_view as current view
+    @api.repo.instance_variable_set(:@current_view, @api.repo.lookup_view("test_view"))
+    
     # Create posts in different views
     post1 = @api.create_post("Post 1", "Body 1", views: "test_view")
     post2 = @api.create_post("Post 2", "Body 2", views: "other_view")
     
-    # Publish both
+    # Publish post1 in test_view (current view)
     @api.publish_post(post1.id)
-    @api.publish_post(post2.id)
     
     # Get published posts for specific view
     test_view_posts = @api.get_published_posts("test_view")
@@ -1065,8 +1082,269 @@ class TestScriptoriumAPI < Minitest::Test
     assert_equal post1.id, test_view_posts.first.id
     
     other_view_posts = @api.get_published_posts("other_view")
-    assert_equal 1, other_view_posts.length
-    assert_equal post2.id, other_view_posts.first.id
+    assert_equal 0, other_view_posts.length  # post2 not published
+  end
+  
+  def test_073_5_view_specific_publishing
+    @api.create_view("test_view", "Test View")
+    @api.create_view("other_view", "Other View")
+    
+    # Set test_view as current view
+    @api.repo.instance_variable_set(:@current_view, @api.repo.lookup_view("test_view"))
+    
+    # Create a post that belongs to both views
+    post = @api.create_post("Test Post", "Test body", views: "test_view other_view")
+    
+    # Initially unpublished in both views
+    refute @api.post_published?(post.id, "test_view")
+    refute @api.post_published?(post.id, "other_view")
+    
+    # Publish in test_view only (current view)
+    @api.publish_post(post.id)
+    
+    # Should be published in test_view, unpublished in other_view
+    assert @api.post_published?(post.id, "test_view")
+    refute @api.post_published?(post.id, "other_view")
+    
+    # Publish in other_view
+    @api.publish_post(post.id, "other_view")
+    
+    # Should be published in both views
+    assert @api.post_published?(post.id, "test_view")
+    assert @api.post_published?(post.id, "other_view")
+  end
+  
+  def test_073_6_deployment_state_management
+    @api.create_view("test_view", "Test View")
+    @api.create_view("other_view", "Other View")
+    
+    # Set test_view as current view
+    @api.repo.instance_variable_set(:@current_view, @api.repo.lookup_view("test_view"))
+    
+    # Create a post that belongs to both views
+    post = @api.create_post("Test Post", "Test body", views: "test_view other_view")
+    
+    # Initially unpublished and undeployed in both views
+    refute @api.post_published?(post.id, "test_view")
+    refute @api.post_deployed?(post.id, "test_view")
+    refute @api.post_published?(post.id, "other_view")
+    refute @api.post_deployed?(post.id, "other_view")
+    
+    # Publish in test_view only
+    @api.publish_post(post.id)
+    
+    # Should be published but still undeployed in test_view
+    assert @api.post_published?(post.id, "test_view")
+    refute @api.post_deployed?(post.id, "test_view")
+    
+    # Deploy in test_view
+    @api.mark_post_deployed(post.id)
+    
+    # Should be published and deployed in test_view
+    assert @api.post_published?(post.id, "test_view")
+    assert @api.post_deployed?(post.id, "test_view")
+    
+    # Should still be unpublished and undeployed in other_view
+    refute @api.post_published?(post.id, "other_view")
+    refute @api.post_deployed?(post.id, "other_view")
+  end
+  
+  def test_073_7_deployment_state_workflow
+    @api.create_view("test_view", "Test View")
+    
+    # Set test_view as current view
+    @api.repo.instance_variable_set(:@current_view, @api.repo.lookup_view("test_view"))
+    
+    # Create multiple posts
+    post1 = @api.create_post("Post 1", "Body 1")
+    post2 = @api.create_post("Post 2", "Body 2")
+    post3 = @api.create_post("Post 3", "Body 3")
+    
+    # Initially all posts are unpublished and undeployed
+    [post1, post2, post3].each do |post|
+      refute @api.post_published?(post.id)
+      refute @api.post_deployed?(post.id)
+    end
+    
+    # Publish post1 and post3
+    @api.publish_post(post1.id)
+    @api.publish_post(post3.id)
+    
+    # Deploy post1
+    @api.mark_post_deployed(post1.id)
+    
+    # Check states
+    assert @api.post_published?(post1.id)
+    assert @api.post_deployed?(post1.id)
+    refute @api.post_published?(post2.id)
+    refute @api.post_deployed?(post2.id)
+    assert @api.post_published?(post3.id)
+    refute @api.post_deployed?(post3.id)
+    
+    # Get deployed posts
+    deployed_posts = @api.get_deployed_posts
+    assert_equal 1, deployed_posts.length
+    assert_equal post1.id, deployed_posts.first.id
+    
+    # Mark post1 as undeployed
+    @api.mark_post_undeployed(post1.id)
+    refute @api.post_deployed?(post1.id)
+    
+    # Get deployed posts again
+    deployed_posts = @api.get_deployed_posts
+    assert_equal 0, deployed_posts.length
+  end
+  
+  def test_073_8_deployment_workflow_integration
+    @api.create_view("test_view", "Test View")
+    
+    # Set test_view as current view
+    @api.repo.instance_variable_set(:@current_view, @api.repo.lookup_view("test_view"))
+    
+    # Create a post (don't publish it yet)
+    post = @api.create_post("Test Post", "Test body")
+    
+    # Post should be unpublished and undeployed
+    refute @api.post_published?(post.id)
+    refute @api.post_deployed?(post.id)
+    
+    # Try to deploy unpublished post (should fail)
+    assert_raises(PostNotPublished) do
+      @api.mark_post_deployed(post.id)
+    end
+    
+    # Now publish the post
+    @api.publish_post(post.id)
+    
+    # Post should be published but not deployed
+    assert @api.post_published?(post.id)
+    refute @api.post_deployed?(post.id)
+    
+    # Now deploy the published post
+    @api.mark_post_deployed(post.id)
+    
+    # Post should be both published and deployed
+    assert @api.post_published?(post.id)
+    assert @api.post_deployed?(post.id)
+  end
+  
+  def test_073_9_post_states_display
+    @api.create_view("test_view", "Test View")
+    
+    # Set test_view as current view
+    @api.repo.instance_variable_set(:@current_view, @api.repo.lookup_view("test_view"))
+    
+    # Create multiple posts
+    post1 = @api.create_post("Post 1", "Body 1")
+    post2 = @api.create_post("Post 2", "Body 2")
+    post3 = @api.create_post("Post 3", "Body 3")
+    
+    # Get initial states
+    states = @api.get_post_states
+    assert_equal 3, states.length
+    
+    # Check initial state (should be "-" for unpublished/undeployed)
+    assert_equal "-", states[post1.id][:state]
+    assert_equal "-", states[post2.id][:state]
+    assert_equal "-", states[post3.id][:state]
+    
+    # Publish post1
+    @api.publish_post(post1.id)
+    states = @api.get_post_states
+    assert_equal "P", states[post1.id][:state]  # Published only
+    
+    # Deploy post1
+    @api.mark_post_deployed(post1.id)
+    states = @api.get_post_states
+    assert_equal "PD", states[post1.id][:state]  # Published and deployed
+    
+    # Publish post3
+    @api.publish_post(post3.id)
+    states = @api.get_post_states
+    assert_equal "PD", states[post1.id][:state]  # Published and deployed
+    assert_equal "P", states[post3.id][:state]   # Published only
+    assert_equal "-", states[post2.id][:state]   # Neither
+  end
+  
+  def test_073_10_state_validation_rules
+    @api.create_view("test_view", "Test View")
+    
+    # Set test_view as current view
+    @api.repo.instance_variable_set(:@current_view, @api.repo.lookup_view("test_view"))
+    
+    # Create a post
+    post = @api.create_post("Test Post", "Test body")
+    
+    # Test: Cannot publish deleted post
+    @api.delete_post(post.id)
+    assert_raises(PostDeleted) do
+      @api.publish_post(post.id)
+    end
+    
+    # Test: Cannot deploy deleted post
+    assert_raises(PostDeleted) do
+      @api.mark_post_deployed(post.id)
+    end
+    
+    # Test: Cannot unpublish deployed post
+    @api.undelete_post(post.id)
+    @api.publish_post(post.id)
+    @api.mark_post_deployed(post.id)
+    assert_raises(PostAlreadyDeployed) do
+      @api.unpublish_post(post.id)
+    end
+  end
+  
+  def test_073_11_delete_undelete_workflow
+    @api.create_view("test_view", "Test View")
+    
+    # Set test_view as current view
+    @api.repo.instance_variable_set(:@current_view, @api.repo.lookup_view("test_view"))
+    
+    # Create a post
+    post = @api.create_post("Test Post", "Test body")
+    
+    # Post should not be deleted initially
+    refute @api.post_deleted?(post.id)
+    
+    # Delete the post
+    @api.delete_post(post.id)
+    assert @api.post_deleted?(post.id)
+    
+    # Post should be in deleted state (X)
+    states = @api.get_post_states
+    assert_equal "X", states[post.id][:state]
+    
+    # Undelete the post
+    @api.undelete_post(post.id)
+    refute @api.post_deleted?(post.id)
+    
+    # Post should be back to normal state (-)
+    states = @api.get_post_states
+    assert_equal "-", states[post.id][:state]
+  end
+  
+  def test_073_12_edit_state_transition
+    @api.create_view("test_view", "Test View")
+    
+    # Set test_view as current view
+    @api.repo.instance_variable_set(:@current_view, @api.repo.lookup_view("test_view"))
+    
+    # Create and publish a post
+    post = @api.create_post("Test Post", "Test body")
+    @api.publish_post(post.id)
+    @api.mark_post_deployed(post.id)
+    
+    # Post should be published and deployed
+    assert @api.post_published?(post.id)
+    assert @api.post_deployed?(post.id)
+    
+    # Regenerate the post - should NOT change state
+    @api.repo.generate_post(post.id)
+    
+    # Post should still be published and deployed (no state change)
+    assert @api.post_published?(post.id)
+    assert @api.post_deployed?(post.id)
   end
 
   def test_074_create_post_with_generation

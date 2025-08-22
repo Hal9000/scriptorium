@@ -1,6 +1,7 @@
 VERY SOON:
 ----------
-  add post state management
+  dependency management
+  common refactorings for AI
   add draft management
   legacy import
   themes into web app
@@ -94,3 +95,4 @@ x fix symlink issue
 x widget management
 x new exceptions replacing RuntimeError
 x add to TUI: assets, etc.
+x add post state management

@@ -44,11 +44,21 @@ module Scriptorium::Helpers
     @root/:views/name
   end
 
-  def write_file(file, content)
+  def write_file(file, content, empty: false)
     # Input validation
                 raise FilePathNil if file.nil?
 
         raise FilePathEmpty if file.to_s.strip.empty?
+    
+    # Handle empty content if empty: true is specified
+    if empty && (content.nil? || content.to_s.strip.empty?)
+      # If file exists, do nothing; if it doesn't exist, touch it
+      unless File.exist?(file)
+        FileUtils.mkdir_p(File.dirname(file))
+        FileUtils.touch(file)
+      end
+      return
+    end
     
     # Ensure parent directory exists
     FileUtils.mkdir_p(File.dirname(file))
@@ -69,13 +79,13 @@ module Scriptorium::Helpers
     end
   end
 
-  def write_file!(file, *lines)
+  def write_file!(file, *lines, empty: false)
     # Convert nil values to empty strings for proper joining
     processed_lines = lines.map { |line| line.nil? ? "" : line.to_s }
     content = processed_lines.join("\n")
     # Always add a newline at the end to ensure there's an empty line
     content += "\n"
-    write_file(file, content)
+    write_file(file, content, empty: empty)
   end
 
   def make_dir(dir, create_parents = false)
@@ -313,7 +323,7 @@ module Scriptorium::Helpers
     read_commented_file(file_path).each do |line|
       if line.include?(' ')
         key, value = line.split(/\s+/, 2)
-        config[key] = config[key.to_sym] =value
+        config[key] = config[key.to_sym] = value
       end
     end
     config
@@ -325,6 +335,43 @@ module Scriptorium::Helpers
     t1 = Time.new(*t1)
     t2 = Time.new(*t2)
     t1 <=> t2
+  end
+
+  # Post state management helpers
+  
+  def read_post_state_file(file_path)
+    return [] unless File.exist?(file_path)
+    content = read_file(file_path)
+    return [] if content.strip.empty?
+    content.lines.map { |line| line.strip.to_i }.reject { |id| id == 0 }
+  end
+  
+  def write_post_state_file(file_path, post_ids)
+    if post_ids.empty?
+      # Write empty file (empty = all posts are in that state)
+      # For state files, empty means "all posts are in this state", so we need to clear the file
+      write_file(file_path, "")
+    else
+      content = post_ids.sort.uniq.join("\n") + "\n"
+      write_file(file_path, content)
+    end
+  end
+  
+  def add_post_to_state_file(file_path, post_id)
+    post_ids = read_post_state_file(file_path)
+    post_ids << post_id unless post_ids.include?(post_id)
+    write_post_state_file(file_path, post_ids)
+  end
+  
+  def remove_post_from_state_file(file_path, post_id)
+    post_ids = read_post_state_file(file_path)
+    post_ids.delete(post_id)
+    write_post_state_file(file_path, post_ids)
+  end
+  
+  def post_in_state_file?(file_path, post_id)
+    post_ids = read_post_state_file(file_path)
+    post_ids.include?(post_id)
   end
 
   # Helper method to find asset recursively in a directory
