@@ -205,10 +205,11 @@
                                 <tr style="background-color: #f2f2f2;">
                                     <th style="padding: 6px; text-align: left; border: 1px solid #ddd;">ID</th>
                                     <th style="padding: 6px; text-align: left; border: 1px solid #ddd;">Published</th>
-                                    <th style="padding: 6px; text-align: left; border: 1px solid #ddd;">Title</th>
-                                    <th style="padding: 6px; text-align: left; border: 1px solid #ddd;">Status</th>
-                                    <th style="padding: 6px; text-align: left; border: 1px solid #ddd;">Other Views</th>
-                                    <th style="padding: 6px; text-align: center; border: 1px solid #ddd;">Actions</th>
+                                    <th style="padding: 6px; text-align: left; border: 1px solid #ddd; width: 36%;">Title</th>
+                                    <th style="padding: 6px; text-align: center; border: 1px solid #ddd; width: 30px; max-width: 30px;" title="Deployed? * = no"><svg width="28" height="28" viewBox="0 0 16 16" style="display: inline-block;"><polygon points="8,2 2,10 6,10 6,14 10,14 10,10 14,10" fill="#00aa00" stroke="#008800" stroke-width="0.5"/></svg></th>
+                                    <th style="padding: 6px; text-align: left; border: 1px solid #ddd; width: 10%;">Status</th>
+                                    <th style="padding: 6px; text-align: left; border: 1px solid #ddd; width: 20%;">Other Views</th>
+                                    <th style="padding: 6px; text-align: center; border: 1px solid #ddd; width: 5%;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -221,9 +222,19 @@
                                                 <%= post.title %>
                                             </a>
                                         </td>
+                                        <td style="padding: 6px; border: 1px solid #ddd; text-align: center; width: 30px; max-width: 30px;">
+                                            <% if post.deleted %>
+                                                <!-- Deleted posts don't show deployment status -->
+                                            <% elsif post.meta["post.deployed"] == "yes" %>
+                                                <!-- Deployed - show nothing -->
+                                            <% else %>
+                                                <!-- Not deployed - show red asterisk -->
+                                                <span style="color: #dc3545; font-weight: bold; font-size: 18px;">*</span>
+                                            <% end %>
+                                        </td>
                                         <td style="padding: 6px; border: 1px solid #ddd; text-align: left;">
                                             <% if post.deleted %>
-                                                <span style="color: #dc3545; font-weight: bold;" title="Deleted">🗑️ Deleted</span>
+                                                <span style="color: #dc3545; font-weight: bold;" title="Deleted">deleted</span>
                                             <% elsif post.meta["post.published"] == "no" %>
                                                 <span style="color: #666;" title="Unpublished">unpublished</span>
                                             <% elsif post.meta["post.published"] == "yes" %>
