@@ -1,6 +1,6 @@
 require 'rouge'
 
-module Scriptorium
+class Scriptorium
   class SyntaxHighlighter
     # Default theme - can be customized
     DEFAULT_THEME = {

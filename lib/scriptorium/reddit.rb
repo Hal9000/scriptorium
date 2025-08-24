@@ -3,7 +3,7 @@ require 'redd'
 require_relative 'exceptions'
 require_relative 'helpers'
 
-module Scriptorium
+class Scriptorium
   class Reddit
     include Scriptorium::Exceptions
     include Scriptorium::Helpers

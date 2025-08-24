@@ -1,4 +1,4 @@
-module Scriptorium
+class Scriptorium
 
   module Exceptions
   end
@@ -13,6 +13,9 @@ module Scriptorium
   end
 
   class UI
+  end
+
+  class API
   end
 
 end
