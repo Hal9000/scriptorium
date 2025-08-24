@@ -349,9 +349,13 @@ class Scriptorium::API
   end
 
   # Post retrieval
-  def posts(view = nil)
+  def posts(view = nil, include_deleted: false)
     view ||= @repo.current_view&.name
-    @repo.all_posts(view)
+    if include_deleted
+      @repo.all_posts_including_deleted(view)
+    else
+      @repo.all_posts(view)
+    end
   end
 
   def post_attrs(post_id, *keys)

@@ -21,7 +21,12 @@ module Scriptorium::Helpers
   
   # Post comparison for sorting (uses post.date which handles fallback)
   def post_compare(a, b)
-    b.date <=> a.date  # newest first
+    # Primary sort: date (newest first)
+    date_compare = b.date <=> a.date
+    return date_compare unless date_compare == 0
+    
+    # Secondary sort: post number (ascending) for stable ordering when dates are identical
+    a.num <=> b.num
   end
   
   def getvars(file)

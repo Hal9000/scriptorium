@@ -1,18 +1,22 @@
 #!/usr/bin/env ruby
 
+# rbenv hack to ensure correct Ruby version
+ENV['PATH'] = "#{ENV['HOME']}/.rbenv/shims:#{ENV['PATH']}"
+ENV['RBENV_VERSION'] = '3.2.3'
+
 require 'optparse'
 require 'json'
 require 'net/http'
 require 'uri'
 require 'fileutils'
+require_relative '../../../lib/scriptorium'
+
 
 class ScriptoriumWebServer
   def initialize
     @port = 4567
-    @repo_path = Dir.pwd  # Use current working directory as repo location
-    @tmp_dir = File.join(@repo_path, 'tmp')
-    @pid_file = File.join(@tmp_dir, 'web_server.pid')
-    @log_file = File.join(@tmp_dir, 'web_server.log')
+    @pid_file = __dir__/"../tmp/web_server.pid"
+    @log_file = __dir__/"../tmp/web_server.log"
   end
 
   def start
@@ -22,14 +26,11 @@ class ScriptoriumWebServer
       return
     end
 
-    # First: ensure repo exists (create if needed)
-    ensure_repo_exists
-    
-    # Second: create tmp directory inside the repo
-    FileUtils.mkdir_p(@tmp_dir)
+    # Create tmp directory if it doesn't exist
+    FileUtils.mkdir_p(File.dirname(@pid_file))
 
     # Start the server in background
-    cmd = "cd #{@repo_path} && ruby #{File.join(__dir__, '..', 'app', 'app.rb')}"
+    cmd = "cd #{__dir__}/.. && ruby app/app.rb"
     pid = Process.spawn(cmd, 
                        out: @log_file, 
                        err: @log_file,
@@ -39,7 +40,6 @@ class ScriptoriumWebServer
     File.write(@pid_file, pid.to_s)
     
     puts "Starting Scriptorium Web UI on port #{@port}..."
-    puts "Repository: #{@repo_path}"
     puts "PID: #{pid}"
     puts "Log: #{@log_file}"
     
@@ -111,16 +111,6 @@ class ScriptoriumWebServer
   end
 
   private
-
-  def ensure_repo_exists
-    unless Dir.exist?(File.join(@repo_path, '.scriptorium'))
-      puts "Creating new Scriptorium repository at: #{@repo_path}"
-      # Use the scriptorium CLI to create the repo
-      system("cd #{@repo_path} && #{File.join(__dir__, '..', '..', '..', 'bin', 'scriptorium')} create repo")
-    else
-      puts "Using existing Scriptorium repository at: #{@repo_path}"
-    end
-  end
 
   def running?
     return false unless File.exist?(@pid_file)

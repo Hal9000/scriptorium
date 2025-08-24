@@ -751,16 +751,23 @@ class Scriptorium::Repo
     dirs.each do |id4|
       # Include both normal and deleted posts
       if id4.start_with?('_')
-        # Deleted post - remove underscore prefix to get original ID
+        # Deleted post - remove underscore prefix and pass deleted: true
         original_id = id4[1..-1]
-        posts << Scriptorium::Post.read(self, original_id)
+        posts << Scriptorium::Post.read(self, original_id, deleted: true)
       else
         posts << Scriptorium::Post.read(self, id4)
       end
     end
     return posts if view.nil?
     view = lookup_view(view)
-    posts.select {|x| x.views.include?(view.name) }
+    posts.select {|x| 
+      views_str = x.views
+      if views_str.nil? || views_str.strip.empty?
+        false
+      else
+        views_str.strip.split(/\s+/).include?(view.name)
+      end
+    }
   end
 
   def generate_post_index(view)

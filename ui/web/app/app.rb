@@ -55,10 +55,13 @@ class ScriptoriumWeb < Sinatra::Base
         
         # Only try to load posts if we have a current view
         if @current_view
-          @posts = @api.posts(@current_view.name) || []
+          File.write("/tmp/debug.log", "DEBUG: Route reached, current_view: #{@current_view.name}\n", mode: 'a')
+          @posts = @api.posts(@current_view.name, include_deleted: true) || []
+          File.write("/tmp/debug.log", "DEBUG: Posts loaded: #{@posts.length}\n", mode: 'a')
           if @posts.length > 0
           end
         else
+          File.write("/tmp/debug.log", "DEBUG: No current view\n", mode: 'a')
           @posts = []
         end
       else
@@ -810,21 +813,24 @@ class ScriptoriumWeb < Sinatra::Base
   get '/view/:name' do
     view_name = params[:name]
     
+    # Debug logging
+    File.write('/tmp/dashboard_debug.log', "Dashboard accessed for view: #{view_name} at #{Time.now}\n", mode: 'a')
+    
     begin
       # Look up the view
-      view = @api.lookup_view(view_name)
-      if view.nil?
+      @current_view = @api.lookup_view(view_name)
+      if @current_view.nil?
         redirect "/?error=View '#{view_name}' not found"
         return
       end
       
       # Set as current view
       @api.view(view_name)
-      @current_view = @api.current_view
+      # @current_view = @api.current_view # This line is now redundant as @current_view is set above
       
       # Generate banner for display
       begin
-        bsvg = Scriptorium::BannerSVG.new(view.title, view.subtitle)
+        bsvg = Scriptorium::BannerSVG.new(@current_view.title, @current_view.subtitle)
         svg_config_file = @api.root/"views"/view_name/"config"/"svg.txt"
         if File.exist?(svg_config_file)
           bsvg.parse_header_svg(svg_config_file)
@@ -857,7 +863,18 @@ class ScriptoriumWeb < Sinatra::Base
       
       # Get posts for pagination
       begin
-        posts = @api.posts(view_name) || []
+        posts = @api.posts(view_name, include_deleted: true) || []
+        
+        # Debug: check if include_deleted is working
+        File.write('/tmp/dashboard_debug.log', "Found #{posts.length} posts (including deleted)\n", mode: 'a')
+        deleted_count = posts.count(&:deleted)
+        File.write('/tmp/dashboard_debug.log', "Deleted posts: #{deleted_count}\n", mode: 'a')
+        
+        # Debug: log first few posts and their dates for ordering analysis
+        posts.first(5).each_with_index do |post, i|
+          File.write('/tmp/dashboard_debug.log', "Post #{i}: #{post.num} - #{post.title} - date: #{post.date}\n", mode: 'a')
+        end
+        
         posts.sort! { |a, b| post_compare(a, b) } # Sort by date, newest first
         
         # Get posts per page from config, default to 10
@@ -874,7 +891,18 @@ class ScriptoriumWeb < Sinatra::Base
         page = (params[:page] || 1).to_i
         total_posts = posts.length
         total_pages = (total_posts.to_f / posts_per_page).ceil
-        page = [1, [page, total_pages].min].max # Ensure page is between 1 and total_pages
+        
+        # Debug pagination
+        File.write('/tmp/dashboard_debug.log', "Page requested: #{params[:page]}, calculated: #{page}, total_pages: #{total_pages}\n", mode: 'a')
+        
+        # Preserve current page if possible, otherwise reset to 1
+        if page > total_pages && total_pages > 0
+          page = total_pages
+          File.write('/tmp/dashboard_debug.log', "Page adjusted to total_pages: #{page}\n", mode: 'a')
+        elsif page < 1 || total_pages == 0
+          page = 1
+          File.write('/tmp/dashboard_debug.log', "Page reset to 1\n", mode: 'a')
+        end
         
         start_index = (page - 1) * posts_per_page
         end_index = [start_index + posts_per_page - 1, total_posts - 1].min
@@ -1516,11 +1544,20 @@ class ScriptoriumWeb < Sinatra::Base
     return nil
   end
 
+
+
   # Delete a post (move to _postnum directory)
   post '/delete_post/:id' do
     post_id = params[:id]
     
     begin
+      # Set current view before proceeding
+      @current_view = @api&.current_view
+      if @current_view.nil?
+        redirect "/?error=No view selected"
+        return
+      end
+      
       post = @api.post(post_id.to_i)
       if post.nil?
         redirect "/?error=Post #{post_id} not found"
@@ -1535,10 +1572,16 @@ class ScriptoriumWeb < Sinatra::Base
       deleted_dir = @api.root/"posts"/"_#{post.num}"
       
       if Dir.exist?(post_dir)
+        FileUtils.mkdir_p(File.dirname(deleted_dir))
         FileUtils.mv(post_dir, deleted_dir)
+      else
+        redirect "/?error=Post directory #{post_dir} not found"
+        return
       end
       
-      redirect "/view/#{@current_view.name}?message=Post #{post_id} deleted successfully"
+      # Preserve current page if available
+      current_page = params[:page] || request.env['HTTP_REFERER']&.match(/[?&]page=(\d+)/)&.[](1) || 1
+      redirect "/view/#{@current_view.name}?page=#{current_page}&message=Post #{post_id} deleted successfully"
     rescue => e
       redirect "/?error=Failed to delete post: #{e.message}"
     end
@@ -1549,9 +1592,17 @@ class ScriptoriumWeb < Sinatra::Base
     post_id = params[:id]
     
     begin
+      # Set current view before proceeding
+      @current_view = @api&.current_view
+      if @current_view.nil?
+        redirect "/?error=No view selected"
+        return
+      end
+      
       # Find the deleted post directory
-      deleted_dir = @api.root/"posts"/"_#{post_id}"
-      post_dir = @api.root/"posts"/post_id
+      formatted_id = post_id.to_s.rjust(4, '0')  # Ensure 4-digit format (e.g., "28" -> "0028")
+      deleted_dir = @api.root/"posts"/"_#{formatted_id}"
+      post_dir = @api.root/"posts"/formatted_id
       
       if Dir.exist?(deleted_dir)
         # Move back to normal posts directory
@@ -1560,10 +1611,15 @@ class ScriptoriumWeb < Sinatra::Base
         # Update metadata to mark as not deleted
         post = @api.post(post_id.to_i)
         if post
+          # Debug: log both date fields before and after
+          File.write('/tmp/restore_debug.log', "Restoring post #{post_id}: pubdate before = #{post.pubdate}, created before = #{post.created}\n", mode: 'a')
           post.deleted = false
+          File.write('/tmp/restore_debug.log', "Restoring post #{post_id}: pubdate after = #{post.pubdate}, created after = #{post.created}\n", mode: 'a')
         end
         
-        redirect "/view/#{@current_view.name}?message=Post #{post_id} restored successfully"
+        # Preserve current page if available
+        current_page = params[:page] || request.env['HTTP_REFERER']&.match(/[?&]page=(\d+)/)&.[](1) || 1
+        redirect "/view/#{@current_view.name}?page=#{current_page}&message=Post #{post_id} restored successfully"
       else
         redirect "/?error=Deleted post #{post_id} not found"
       end
@@ -1577,6 +1633,13 @@ class ScriptoriumWeb < Sinatra::Base
     post_id = params[:id]
     
     begin
+      # Set current view before proceeding
+      @current_view = @api&.current_view
+      if @current_view.nil?
+        redirect "/?error=No view selected"
+        return
+      end
+      
       post = @api.post(post_id.to_i)
       if post.nil?
         redirect "/?error=Post #{post_id} not found"
@@ -1585,28 +1648,26 @@ class ScriptoriumWeb < Sinatra::Base
       
       # Toggle between published and unpublished
       if post.meta["post.published"] == "no" || post.meta["post.published"].nil?
-        # Publish the post - set pubdate to current time
-        current_time = Time.now
-        post.meta["post.pubdate"] = current_time.strftime("%Y-%m-%d %H:%M:%S")
-        post.meta["post.pubdate.month"] = current_time.strftime("%B")
-        post.meta["post.pubdate.day"] = current_time.strftime("%d")
-        post.meta["post.pubdate.year"] = current_time.strftime("%Y")
+        # Publish the post - only change published status, don't touch pubdate
         post.meta["post.published"] = "yes"
         post.save_metadata
-        redirect "/view/#{@current_view.name}?message=Post #{post_id} published successfully"
+        content_type :json
+        { success: true, message: "Post #{post_id} published successfully", published: true }.to_json
       else
-        # Unpublish the post - clear pubdate
-        post.meta["post.pubdate"] = nil
-        post.meta["post.pubdate.month"] = nil
-        post.meta["post.pubdate.day"] = nil
-        post.meta["post.pubdate.year"] = nil
+        # Unpublish the post - only change published status, don't touch pubdate
         post.meta["post.published"] = "no"
         post.save_metadata
-        redirect "/view/#{@current_view.name}?message=Post #{post_id} unpublished successfully"
+        content_type :json
+        { success: true, message: "Post #{post_id} unpublished successfully", published: false }.to_json
       end
     rescue => e
       redirect "/?error=Failed to toggle post status: #{e.message}"
     end
+  end
+
+  # Debug route to verify code is updated
+  get '/debug' do
+    "Server is running updated code at #{Time.now}"
   end
 end
 

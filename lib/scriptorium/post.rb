@@ -33,12 +33,34 @@ class Scriptorium::Post
     end
   
     def meta_file
-      # Check if post is in deleted directory (with underscore prefix)
-      deleted_meta = @repo.root/:posts/"_#{@num}"/"meta.txt"
-      return deleted_meta if File.exist?(deleted_meta)
+      # Check what directory actually exists
+      normal_dir = @repo.root/:posts/@num
+      deleted_dir = @repo.root/:posts/"_#{@num}"
       
-      # Otherwise use normal directory
-      @repo.root/:posts/@num/"meta.txt"
+      if Dir.exist?(normal_dir)
+        # Normal post directory exists
+        normal_dir/"meta.txt"
+      elsif Dir.exist?(deleted_dir)
+        # Deleted post directory exists
+        deleted_dir/"meta.txt"
+      else
+        # Neither exists - post never existed
+        raise "Post directory for #{@num} not found"
+      end
+    end
+
+    def validate_metadata_consistency
+      return unless File.exist?(meta_file)
+      
+      normal_dir = @repo.root/:posts/@num
+      deleted_dir = @repo.root/:posts/"_#{@num}"
+      metadata_deleted = meta["post.deleted"] == "true"
+      
+      if Dir.exist?(normal_dir) && metadata_deleted
+        raise "Inconsistency: Post #{@num} has normal directory but metadata shows deleted=true"
+      elsif Dir.exist?(deleted_dir) && !metadata_deleted
+        raise "Inconsistency: Post #{@num} has deleted directory but metadata shows deleted=false"
+      end
     end
   
 
@@ -132,7 +154,18 @@ class Scriptorium::Post
     end
 
     def deleted
-      meta["post.deleted"] == "true"
+      # Check what directory actually exists
+      normal_dir = @repo.root/:posts/@num
+      deleted_dir = @repo.root/:posts/"_#{@num}"
+      
+      if Dir.exist?(deleted_dir)
+        true
+      elsif Dir.exist?(normal_dir)
+        false
+      else
+        # Neither exists - post never existed
+        raise "Post directory for #{@num} not found"
+      end
     end
 
     def deleted=(value)
@@ -152,9 +185,10 @@ class Scriptorium::Post
     end
 
     # New class method to read metadata and initialize the Post
-    def self.read(repo, num)
+    def self.read(repo, num, deleted: false)
       post = new(repo, num)
       post.load_metadata
+      post.validate_metadata_consistency
       post
     end
   
