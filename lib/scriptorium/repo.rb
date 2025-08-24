@@ -631,20 +631,6 @@ class Scriptorium::Repo
     unpublished_file = view.dir/:posts/"unpublished.txt"
     !post_in_state_file?(unpublished_file, num)
   end
-
-  def get_published_posts(view = nil)
-    all_posts = all_posts(view)
-    
-    if view.nil?
-      # If no specific view, use global metadata (for backward compatibility)
-      all_posts.select { |post| post_published?(post.id) }
-    else
-      # Use view-specific published status
-      view = lookup_view(view)
-      unpublished_file = view.dir/:posts/"unpublished.txt"
-      all_posts.reject { |post| post_in_state_file?(unpublished_file, post.id) }
-    end
-  end
   
   def post_deleted?(num)
     validate_post_id(num)

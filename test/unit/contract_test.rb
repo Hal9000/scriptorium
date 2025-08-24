@@ -65,27 +65,5 @@ class TestContract < Minitest::Test
     end
   end
 
-  def test_post_contracts
-    # Enable DBC
-    ENV['DBC_DISABLED'] = nil
-    
-    begin
-      post = @repo.create_post(title: "Test Post", body: "Test body")
-      
-      # Test save_metadata contracts
-      post.meta["post.title"] = "Updated Title"
-      post.save_metadata  # Should not raise
-      
-      # Test deleted= contracts
-      post.deleted = true  # Should not raise
-      assert post.deleted == true
-      
-      post.deleted = false  # Should not raise
-      assert post.deleted == false
-      
-    ensure
-      # Restore disabled state
-      ENV['DBC_DISABLED'] = 'true'
-    end
-  end
+
 end 

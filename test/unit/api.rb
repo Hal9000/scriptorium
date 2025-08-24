@@ -1038,7 +1038,7 @@ class TestScriptoriumAPI < Minitest::Test
     assert @api.post_published?(post.id)
   end
 
-  def test_072_get_published_posts
+  def test_072_posts_with_published_parameter
     @api.create_view("test_view", "Test View")
     
     # Create multiple posts
@@ -1047,7 +1047,7 @@ class TestScriptoriumAPI < Minitest::Test
     post3 = @api.create_post("Post 3", "Body 3")
     
     # Initially no published posts
-    published_posts = @api.get_published_posts
+    published_posts = @api.posts(published: true)
     assert_equal 0, published_posts.length
     
     # Publish two posts
@@ -1055,14 +1055,14 @@ class TestScriptoriumAPI < Minitest::Test
     @api.publish_post(post3.id)
     
     # Should have 2 published posts
-    published_posts = @api.get_published_posts
+    published_posts = @api.posts(published: true)
     assert_equal 2, published_posts.length
     assert_includes published_posts.map(&:id), post1.id
     assert_includes published_posts.map(&:id), post3.id
     refute_includes published_posts.map(&:id), post2.id
   end
 
-  def test_073_get_published_posts_with_view
+  def test_073_posts_with_published_parameter_and_view
     @api.create_view("test_view", "Test View")
     @api.create_view("other_view", "Other View")
     
@@ -1077,11 +1077,11 @@ class TestScriptoriumAPI < Minitest::Test
     @api.publish_post(post1.id)
     
     # Get published posts for specific view
-    test_view_posts = @api.get_published_posts("test_view")
+    test_view_posts = @api.posts("test_view", published: true)
     assert_equal 1, test_view_posts.length
     assert_equal post1.id, test_view_posts.first.id
     
-    other_view_posts = @api.get_published_posts("other_view")
+    other_view_posts = @api.posts("other_view", published: true)
     assert_equal 0, other_view_posts.length  # post2 not published
   end
   

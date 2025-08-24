@@ -178,7 +178,31 @@ class Scriptorium::API
     view ||= @repo.current_view&.name
     raise ViewTargetNil if view.nil?
     
-    @repo.generate_post_index(view)
+    # Get only published posts using the published parameter
+    posts = posts(view, published: true)
+    
+    # Generate the index content
+    str = ""
+    posts.each { |post| str << post_index_entry(post, view) }
+    
+    # Write the file
+    output_file = @repo.root/"views"/view/"output"/"post_index.html"
+    File.write(output_file, str)
+  end
+  
+  private def post_index_entry(post, view)
+    # Get the view object to access its predef
+    view_obj = @repo.lookup_view(view)
+    template = view_obj.predef.index_entry
+    substitute(post, template)
+  end
+  
+  private def substitute(post, template)
+    # Simple substitution - replace %{post.field} with post.field
+    template.gsub(/%\{([^}]+)\}/) { |match| 
+      field = $1.strip
+      post.respond_to?(field) ? post.send(field) : match
+    }
   end
 
   def generate_post(post_id)
@@ -225,11 +249,6 @@ class Scriptorium::API
 
   def post_published?(num, view = nil)
     @repo.post_published?(num, view)
-  end
-
-  def get_published_posts(view = nil)
-    view ||= @repo.current_view&.name
-    @repo.get_published_posts(view)
   end
   
   # Deployment state management
@@ -349,13 +368,20 @@ class Scriptorium::API
   end
 
   # Post retrieval
-  def posts(view = nil, include_deleted: false)
+  def posts(view = nil, include_deleted: false, published: false)
     view ||= @repo.current_view&.name
     if include_deleted
-      @repo.all_posts_including_deleted(view)
+      posts = @repo.all_posts_including_deleted(view)
     else
-      @repo.all_posts(view)
+      posts = @repo.all_posts(view)
     end
+    
+    # Filter by published status if requested
+    if published
+      posts = posts.select { |post| post_published?(post.id, view) }
+    end
+    
+    posts
   end
 
   def post_attrs(post_id, *keys)
@@ -1208,7 +1234,7 @@ class Scriptorium::API
     raise DeploymentNotReady(view) unless can_deploy?(view)
     
     # Get published posts that are not yet deployed
-    published_posts = get_published_posts(view)
+    published_posts = posts(view, published: true)
     undeployed_posts = published_posts.select { |post| !post_deployed?(post.id, view) }
     
     if undeployed_posts.empty?
