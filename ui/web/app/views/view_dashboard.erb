@@ -194,13 +194,7 @@
                 <a href="/widgets" class="btn">Widget Management</a>
                 <a href="/" class="btn">Create Post</a>
                 <a href="/advanced_config" class="btn btn-secondary">Advanced Config</a>
-                <% if @api.can_deploy?(@current_view.name) %>
-                    <form method="post" action="/deploy" style="display: inline;">
-                        <button type="submit" class="btn" style="background: #28a745; border: none; cursor: pointer;" title="Deploy to server">🚀 Deploy</button>
-                    </form>
-                <% else %>
-                    <a href="/deploy_config" class="btn" style="background: #6c757d;" title="Configure deployment first">⚙️ Configure Deployment</a>
-                <% end %>
+                <a href="/deploy" class="btn" style="background: #28a745;" title="Deploy to server">🚀 Deploy</a>
             </div>
             
             <% if params[:message] %>
