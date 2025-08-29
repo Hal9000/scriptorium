@@ -396,7 +396,7 @@ class Scriptorium::StandardFiles
   def index_entry
     # Note the use of %% to escape the % in the flex-basis attribute!
     <<~EOS
-      <div class="index-entry" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+      <div class="index-entry" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px;">
         <!-- Left Side: Date (right aligned) -->
         <div style="text-align: right; font-size: 0.7em; flex-basis: 10%%; padding-top: 3px;">
           <div>%{post.pubdate.month} %{post.pubdate.day}</div>
@@ -463,13 +463,13 @@ class Scriptorium::StandardFiles
       subtitle.color  #cccccc
       text.justify    left   
 
-      title.scale     0.7   
-      subtitle.scale  0.3  
+      title.scale     0.8   
+      subtitle.scale  0.4  
 
       title.style     bold  
       subtitle.style  bold italic 
-      title.xy        5 60
-      subtitle.xy     5 85
+      title.xy        5 50
+      subtitle.xy     5 75
 
       back.linear #0000cc #000077 lr
 

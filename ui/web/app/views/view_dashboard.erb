@@ -181,29 +181,21 @@
         
         <div class="content">
             <div class="banner-section">
-                <div class="banner-display">
+                <div class="banner-display" id="header">
                     <%= @banner_svg %>
                 </div>
             </div>
             
             <div class="config-buttons">
-                <a href="/banner_config" class="btn">Configure Banner</a>
-                <a href="/navbar_config" class="btn">Configure Navbar</a>
-                <a href="/edit_pages" class="btn">Edit Pages</a>
-                <a href="/asset_management" class="btn">Asset Management</a>
-                <a href="/widgets" class="btn">Widget Management</a>
                 <a href="/" class="btn">Create Post</a>
+                <a href="/asset_management" class="btn">Asset Management</a>
+                <a href="/deploy" class="btn" style="background: #28a745;" title="Deploy to server" onclick="showUploadingPopup()">Deploy</a>
+                <a href="/preview_view" class="btn" style="background: #17a2b8;" title="Preview locally">Preview</a>
+                <a href="/browse" class="btn" style="background: #6f42c1;" title="Browse deployed site">Browse</a>
                 <a href="/advanced_config" class="btn btn-secondary">Advanced Config</a>
-                <a href="/deploy" class="btn" style="background: #28a745;" title="Deploy to server">🚀 Deploy</a>
-                <a href="/preview_view" class="btn" style="background: #17a2b8;" title="Preview locally">👁️ Preview</a>
-                <a href="/browse" class="btn" style="background: #6f42c1;" title="Browse deployed site">🌐 Browse</a>
             </div>
             
-            <% if params[:message] %>
-                <div class="alert alert-success" style="background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin: 10px 0; border: 1px solid #c3e6cb;">
-                    <%= params[:message] %>
-                </div>
-            <% end %>
+
             
             <% if params[:error] %>
                 <div class="alert alert-danger" style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin: 10px 0; border: 1px solid #f5c6cb;">
@@ -334,6 +326,33 @@
     </div>
     
     <script>
+        // Global functions accessible from HTML onclick attributes
+        function showUploadingPopup() {
+            console.log('showUploadingPopup called');
+            let popup = document.getElementById('uploading-popup');
+            if (!popup) {
+                popup = document.createElement('div');
+                popup.id = 'uploading-popup';
+                popup.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px 30px; border-radius: 8px; z-index: 1000; font-size: 16px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3); background: #17a2b8; color: white;';
+                popup.textContent = 'Uploading...';
+                document.body.appendChild(popup);
+                console.log('Created uploading popup');
+            }
+            popup.style.display = 'block';
+            console.log('Uploading popup should be visible');
+        }
+        
+        function hideUploadingPopup() {
+            console.log('hideUploadingPopup called');
+            let popup = document.getElementById('uploading-popup');
+            if (popup) {
+                popup.style.display = 'none';
+                console.log('Uploading popup hidden');
+            } else {
+                console.log('No uploading popup found to hide');
+            }
+        }
+        
         document.addEventListener('DOMContentLoaded', function() {
             // Handle status toggle buttons
             document.querySelectorAll('.toggle-status-btn').forEach(function(btn) {
@@ -404,7 +423,7 @@
                 if (!messageEl) {
                     messageEl = document.createElement('div');
                     messageEl.id = 'status-message';
-                    messageEl.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 10px; border-radius: 4px; z-index: 1000;';
+                    messageEl.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 15px 25px; border-radius: 8px; z-index: 1000; font-size: 16px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
                     document.body.appendChild(messageEl);
                 }
                 
@@ -416,6 +435,25 @@
                 setTimeout(() => {
                     messageEl.style.display = 'none';
                 }, 3000);
+            }
+            
+
+            
+            // Check for deployment success message in URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const deployMessage = urlParams.get('deploy_success');
+            const hideUploading = urlParams.get('hide_uploading');
+            
+            if (deployMessage) {
+                showMessage(deployMessage, 'success');
+                // Clean up URL
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+            }
+            
+            // Hide uploading popup if deployment completed
+            if (hideUploading) {
+                hideUploadingPopup();
             }
         });
     </script>

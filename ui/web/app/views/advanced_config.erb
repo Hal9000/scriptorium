@@ -141,13 +141,13 @@
                 <% if @configs[:header] %>
                 <tr>
                     <td><span class="status-indicator <%= @configs[:banner] ? 'status-active' : 'status-inactive' %>"></span></td>
-                    <td><a href="/banner_config" class="btn">Update Banner</a></td>
+                    <td><a href="/banner_config" class="btn">Configure Banner</a></td>
                     <td>Customize the SVG banner with colors, fonts, and layout options.</td>
                 </tr>
                 
                 <tr>
                     <td><span class="status-indicator <%= @configs[:navbar] ? 'status-active' : 'status-inactive' %>"></span></td>
-                    <td><a href="/navbar_config" class="btn">Update Navbar</a></td>
+                    <td><a href="/navbar_config" class="btn">Configure Navbar</a></td>
                     <td>Build the navigation menu structure with pages and sections.</td>
                 </tr>
                 <% end %>
@@ -172,6 +172,12 @@
                     <td><span class="status-indicator status-active"></span></td>
                     <td><a href="/edit_pages" class="btn">Edit Pages</a></td>
                     <td>Create and edit content pages for this view.</td>
+                </tr>
+                
+                <tr>
+                    <td><span class="status-indicator status-active"></span></td>
+                    <td><a href="/widgets" class="btn">Widget Management</a></td>
+                    <td>Manage social media widgets and integrations for this view.</td>
                 </tr>
                 
                 <tr>

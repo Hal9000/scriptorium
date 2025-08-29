@@ -860,7 +860,7 @@ write output:      write the result to output/panes/header.html
   end
 
   def pagination_bar(group, count, nth)  # nth group of total 'count'
-    str = %[<div style="align-self: flex-end;">Pages: ]
+    str = %[<div style="text-align: center;">Pages: ]
     1.upto(count) do |i|
       if i == nth  # 0-based
         str << "<b>[#{i}]</b>&nbsp;&nbsp;"

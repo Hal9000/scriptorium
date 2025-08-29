@@ -677,8 +677,8 @@ class Scriptorium::BannerSVG
             svg.setAttribute('width', svgWidth);
             svg.setAttribute('height', svgHeight);
         
-                        const titleFontSize = #{@title_font_size};
-            const subtitleFontSize = #{@subtitle_font_size};
+                        const titleFontSize = #{@title_scale} * #{@base_font_size};
+            const subtitleFontSize = #{@subtitle_scale} * #{@base_font_size};
         
             const te1 = svg.querySelector('text:nth-of-type(1)')
             const te2 = svg.querySelector('text:nth-of-type(2)')

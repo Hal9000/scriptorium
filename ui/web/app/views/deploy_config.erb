@@ -126,6 +126,9 @@
             </div>
             
             <form method="post" action="/deploy_config">
+                <% if params[:from_deploy] == "1" %>
+                    <input type="hidden" name="from_deploy" value="1">
+                <% end %>
                 <div class="form-group">
                     <label for="deploy_config">Deployment Configuration:</label>
                     <textarea id="deploy_config" name="deploy_config" placeholder="user      root

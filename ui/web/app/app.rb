@@ -488,7 +488,7 @@ class ScriptoriumWeb < Sinatra::Base
         banner.parse_header_svg
       end
       
-      @banner_svg = banner.generate_svg
+      @banner_svg = banner.get_svg
     rescue => e
       @banner_svg = "<p>Error generating banner: #{e.message}</p>"
     end
@@ -837,25 +837,9 @@ class ScriptoriumWeb < Sinatra::Base
           bsvg.parse_header_svg
         end
         # Generate responsive SVG for web display
-        svg_html = bsvg.generate_svg
-        # Extract the SVG element and make it responsive
-        svg_match = svg_html.match(/<svg[^>]*>(.*)<\/svg>/m)
-        if svg_match
-          svg_content = svg_match[1]
-          # Calculate height based on aspect ratio (7.0 from config)
-          width = 800
-          height = (width / 7.0).to_i
-          @banner_svg = <<~HTML
-            <svg xmlns='http://www.w3.org/2000/svg' 
-                 width='100%' height='auto' 
-                 viewBox='0 0 #{width} #{height}' 
-                 preserveAspectRatio='xMidYMid meet'>
-              #{svg_content}
-            </svg>
-          HTML
-        else
-          @banner_svg = svg_html
-        end
+        svg_html = bsvg.get_svg
+        File.write('/tmp/dashboard_debug.log', "get_svg returned: #{svg_html[0..200]}...\n", mode: 'a')
+        @banner_svg = svg_html
       rescue => e
         @banner_svg = "<p>Error generating banner: #{e.message}</p>"
       end
@@ -1059,7 +1043,44 @@ class ScriptoriumWeb < Sinatra::Base
       # Update status
       update_config_status(@current_view.name, "deploy", true)
       
-      redirect "/advanced_config?message=Deployment configuration updated successfully"
+      # Check if user came from deploy button - if so, auto-deploy
+      if params[:from_deploy] == "1"
+        # User came from deploy button, perform deployment automatically
+        begin
+          # Log deployment attempt
+          File.open("/tmp/web_deploy.log", "a") do |f|
+            f.puts "=== AUTO-DEPLOYMENT AFTER CONFIG #{Time.now} ==="
+            f.puts "  View name: #{@current_view.name}"
+            f.puts "  API object: #{@api.class}"
+            f.puts "  Repo root: #{@api.root}"
+          end
+          
+          # Perform deployment
+          result = @api.deploy(@current_view.name)
+          
+          # Log deployment result
+          File.open("/tmp/web_deploy.log", "a") do |f|
+            f.puts "  Auto-deployment result: #{result}"
+            f.puts "  Auto-deployment completed successfully"
+          end
+          
+          if result
+            redirect "/view/#{@current_view.name}?deploy_success=Deployment completed successfully&hide_uploading=1"
+          else
+            redirect "/view/#{@current_view.name}?error=Deployment failed&hide_uploading=1"
+          end
+        rescue => e
+          # Log deployment error
+          File.open("/tmp/web_deploy.log", "a") do |f|
+            f.puts "  Auto-deployment error: #{e.message}"
+            f.puts "  Backtrace: #{e.backtrace.first(5).join("\n    ")}"
+          end
+          redirect "/view/#{@current_view.name}?error=Deployment configuration updated but deployment failed: #{e.message}&hide_uploading=1"
+        end
+      else
+        # Normal case - user went to deploy config directly, just return to advanced config
+        redirect "/advanced_config?message=Deployment configuration updated successfully"
+      end
     rescue => e
       redirect "/deploy_config?error=Failed to save deployment configuration: #{e.message}"
     end
@@ -1075,22 +1096,11 @@ class ScriptoriumWeb < Sinatra::Base
     
     # Check if deployment is ready
     unless @api.can_deploy?(@current_view.name)
-      redirect "/deploy_config?error=View is not ready for deployment. Please configure deployment first."
+      redirect "/deploy_config?error=View is not ready for deployment. Please configure deployment first.&from_deploy=1"
       return
     end
     
-    # If ready, show deployment confirmation page
-    erb :deploy_confirm
-  end
-
-  # Perform actual deployment
-  post '/deploy' do
-    @current_view = @api&.current_view
-    if @current_view.nil?
-      redirect "/?error=No view selected. Please select a view first."
-      return
-    end
-    
+    # Perform deployment directly
     begin
       # Log deployment attempt
       File.open("/tmp/web_deploy.log", "a") do |f|
@@ -1110,9 +1120,9 @@ class ScriptoriumWeb < Sinatra::Base
       end
       
       if result
-        redirect "/view/#{@current_view.name}?message=Deployment completed successfully"
+        redirect "/view/#{@current_view.name}?deploy_success=Deployment completed successfully&hide_uploading=1"
       else
-        redirect "/view/#{@current_view.name}?error=Deployment failed"
+        redirect "/view/#{@current_view.name}?error=Deployment failed&hide_uploading=1"
       end
     rescue => e
       # Log deployment error
@@ -1123,6 +1133,8 @@ class ScriptoriumWeb < Sinatra::Base
       redirect "/view/#{@current_view.name}?error=Deployment failed: #{e.message}"
     end
   end
+
+
 
   # Browse deployed view
   get '/browse' do
@@ -1146,9 +1158,10 @@ class ScriptoriumWeb < Sinatra::Base
       return
     end
     
-    # Extract domain from deploy config (simple parsing)
+    # Extract domain and path from deploy config (simple parsing)
     lines = deploy_config.split("\n")
     domain = nil
+    path = nil
     lines.each do |line|
       line = line.strip
       next if line.empty? || line.start_with?('#')
@@ -1156,16 +1169,17 @@ class ScriptoriumWeb < Sinatra::Base
         key = $1.strip
         value = $2.strip
         if key == 'proto' && value.start_with?('http')
-          # Look for server field to construct URL
-          lines.each do |server_line|
-            server_line = server_line.strip
-            next if server_line.empty? || server_line.start_with?('#')
-            if server_line.match(/^(\w+)\s+(.+)$/)
-              server_key = $1.strip
-              server_value = $2.strip
-              if server_key == 'server'
-                domain = "#{value}://#{server_value}"
-                break
+          # Look for server and path fields to construct URL
+          lines.each do |config_line|
+            config_line = config_line.strip
+            next if config_line.empty? || config_line.start_with?('#')
+            if config_line.match(/^(\w+)\s+(.+)$/)
+              config_key = $1.strip
+              config_value = $2.strip
+              if config_key == 'server'
+                domain = "#{value}://#{config_value}"
+              elsif config_key == 'path'
+                path = config_value
               end
             end
           end
@@ -1175,7 +1189,12 @@ class ScriptoriumWeb < Sinatra::Base
     end
     
     if domain
-      redirect domain
+      # Append path if it exists
+      if path && !path.empty?
+        redirect "#{domain}/#{path}"
+      else
+        redirect domain
+      end
     else
       redirect "/deploy_config?error=Could not extract domain from deployment configuration."
     end
