@@ -1066,6 +1066,34 @@ class ScriptoriumWeb < Sinatra::Base
     end
   end
 
+  # Deploy current view
+  post '/deploy' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    begin
+      # Check if deployment is ready
+      unless @api.can_deploy?(@current_view.name)
+        redirect "/deploy_config?error=View is not ready for deployment. Please configure deployment first."
+        return
+      end
+      
+      # Perform deployment
+      result = @api.deploy(@current_view.name)
+      
+      if result
+        redirect "/view/#{@current_view.name}?message=Deployment completed successfully"
+      else
+        redirect "/view/#{@current_view.name}?error=Deployment failed"
+      end
+    rescue => e
+      redirect "/view/#{@current_view.name}?error=Deployment failed: #{e.message}"
+    end
+  end
+
   # Layout configuration page
   get '/layout_config' do
     @current_view = @api&.current_view

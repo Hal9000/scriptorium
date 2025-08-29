@@ -8,3 +8,19 @@ private def rather than private block
 
 don't say You're absolutely right!
 
+avoid >2 underscores
+
+avoid excessive comments
+
+all right, not alright
+
+fewer exclamation marks
+
+more conciseness
+
+when to ask permission
+
+use PathSep
+
+rbenv hack
+
