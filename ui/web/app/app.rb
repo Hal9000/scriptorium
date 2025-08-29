@@ -296,20 +296,19 @@ class ScriptoriumWeb < Sinatra::Base
   end
 
   # Preview view
-  post '/preview_view' do
-    view_name = params[:view_name]
+  get '/preview_view' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
     
     begin
-      if view_name.nil? || view_name.strip.empty?
-        redirect "/?error=No view specified"
-        return
-      end
-      
       # Generate the view first to ensure it's up to date
-      @api.generate_view(view_name)
+      @api.generate_view(@current_view.name)
       
       # Redirect to the generated index.html file
-      view_dir = @api.root/"views"/view_name
+      view_dir = @api.root/"views"/@current_view.name
       index_file = view_dir/"output"/"index.html"
       
       if File.exist?(index_file)
@@ -1103,6 +1102,63 @@ class ScriptoriumWeb < Sinatra::Base
       end
     rescue => e
       redirect "/view/#{@current_view.name}?error=Deployment failed: #{e.message}"
+    end
+  end
+
+  # Browse deployed view
+  get '/browse' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    # Check if deployment configuration exists
+    deploy_file = @api.root/"views"/@current_view.name/"config"/"deploy.txt"
+    unless File.exist?(deploy_file)
+      redirect "/deploy_config?error=No deployment configuration found. Please configure deployment first."
+      return
+    end
+    
+    # Read deployment configuration and extract domain
+    deploy_config = read_file(deploy_file).strip
+    if deploy_config.empty?
+      redirect "/deploy_config?error=Deployment configuration is empty."
+      return
+    end
+    
+    # Extract domain from deploy config (simple parsing)
+    lines = deploy_config.split("\n")
+    domain = nil
+    lines.each do |line|
+      line = line.strip
+      next if line.empty? || line.start_with?('#')
+      if line.match(/^(\w+)\s+(.+)$/)
+        key = $1.strip
+        value = $2.strip
+        if key == 'proto' && value.start_with?('http')
+          # Look for server field to construct URL
+          lines.each do |server_line|
+            server_line = server_line.strip
+            next if server_line.empty? || server_line.start_with?('#')
+            if server_line.match(/^(\w+)\s+(.+)$/)
+              server_key = $1.strip
+              server_value = $2.strip
+              if server_key == 'server'
+                domain = "#{value}://#{server_value}"
+                break
+              end
+            end
+          end
+          break
+        end
+      end
+    end
+    
+    if domain
+      redirect domain
+    else
+      redirect "/deploy_config?error=Could not extract domain from deployment configuration."
     end
   end
 
