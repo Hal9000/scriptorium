@@ -1092,8 +1092,22 @@ class ScriptoriumWeb < Sinatra::Base
     end
     
     begin
+      # Log deployment attempt
+      File.open("/tmp/web_deploy.log", "a") do |f|
+        f.puts "=== WEB DEPLOYMENT ATTEMPT #{Time.now} ==="
+        f.puts "  View name: #{@current_view.name}"
+        f.puts "  API object: #{@api.class}"
+        f.puts "  Repo root: #{@api.root}"
+      end
+      
       # Perform deployment
       result = @api.deploy(@current_view.name)
+      
+      # Log deployment result
+      File.open("/tmp/web_deploy.log", "a") do |f|
+        f.puts "  Deployment result: #{result}"
+        f.puts "  Deployment completed successfully"
+      end
       
       if result
         redirect "/view/#{@current_view.name}?message=Deployment completed successfully"
@@ -1101,6 +1115,11 @@ class ScriptoriumWeb < Sinatra::Base
         redirect "/view/#{@current_view.name}?error=Deployment failed"
       end
     rescue => e
+      # Log deployment error
+      File.open("/tmp/web_deploy.log", "a") do |f|
+        f.puts "  Deployment error: #{e.message}"
+        f.puts "  Backtrace: #{e.backtrace.first(5).join("\n    ")}"
+      end
       redirect "/view/#{@current_view.name}?error=Deployment failed: #{e.message}"
     end
   end

@@ -1237,9 +1237,7 @@ class Scriptorium::API
     published_posts = posts(view, published: true)
     undeployed_posts = published_posts.select { |post| !post_deployed?(post.id, view) }
     
-    if undeployed_posts.empty?
-      return true
-    end
+    # Always deploy the entire output directory, regardless of post status
     
     # Read deployment configuration
     deploy_file = @repo.root/"views"/view/"config"/"deploy.txt"
@@ -1267,8 +1265,28 @@ class Scriptorium::API
       return true
     end
     
+    # Log deployment details to /tmp
+    log_file = "/tmp/deployment.log"
+    File.open(log_file, 'a') do |f|
+      f.puts "=== DEPLOYMENT DEBUG #{Time.now} ==="
+      f.puts "  Source directory: #{output_dir}"
+      f.puts "  Remote path: #{remote_path}"
+      f.puts "  Rsync command: #{cmd}"
+      f.puts "  Source directory exists: #{Dir.exist?(output_dir)}"
+      f.puts "  Source files: #{Dir.children(output_dir).join(', ')}"
+      f.puts "  Current working directory: #{Dir.pwd}"
+      f.puts "  Repo root: #{@repo.root}"
+    end
+    
     # Execute deployment
     result = system(cmd)
+    
+    # Log rsync result
+    File.open("/tmp/deployment.log", 'a') do |f|
+      f.puts "  Rsync result: #{result}"
+      f.puts "  Exit status: #{$?.exitstatus}"
+      f.puts "  Exit success: #{$?.success?}"
+    end
     
     if result
       # Mark successfully deployed posts as deployed

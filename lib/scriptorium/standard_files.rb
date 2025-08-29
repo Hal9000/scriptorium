@@ -468,8 +468,8 @@ class Scriptorium::StandardFiles
 
       title.style     bold  
       subtitle.style  bold italic 
-      title.xy        15 60
-      subtitle.xy     15 85
+      title.xy        5 60
+      subtitle.xy     5 85
 
       back.linear #0000cc #000077 lr
 

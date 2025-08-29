@@ -96,10 +96,7 @@ instruct <<~EOS
   - Code examples for syntax highlighting
   - Varied titles and content themes
   
-  Press Enter to continue...
 EOS
-
-STDIN.gets
 
 # Clean up webrick if it was started
 begin

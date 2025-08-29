@@ -114,7 +114,7 @@ But overall, the process is robust and well thought-out. No major changes needed
     return unless File.exist?(layout_file)
 
     flexing = {
-      header: %[id="header" class="header" style="padding: 10px;"],
+      header: %[id="header" class="header" style="padding: 10px; width: 100%; box-sizing: border-box;"],
       footer: %[class="footer" style="background: lightgray; padding: 10px;"],
       left:   %[class="left" style="width: %{width}; background: #f0f0f0; padding: 10px; flex-grow: 0; flex-shrink: 0;"],
       right:  %[class="right" style="width: %{width}; background: #f0f0f0; padding: 10px; flex-grow: 0; flex-shrink: 0;"],
@@ -286,26 +286,13 @@ write output:      write the result to output/panes/header.html
 
   def build_banner(arg)
     # Check if this is an SVG banner request
-    return build_banner_svg_from_file if arg == "svg"
+    return build_banner_svg("svg") if arg == "svg"
     
     # Otherwise, treat as image filename
     return build_banner_image(arg)
   end
 
-  def build_banner_svg_from_file
-    bsvg = Scriptorium::BannerSVG.new(@title, @subtitle)
-    
-    # Look for svg.txt file in the view's config directory
-    svg_config_file = @dir/:config/"svg.txt"
-    if File.exist?(svg_config_file)
-      bsvg.parse_header_svg(svg_config_file)
-    else
-      # No svg.txt file, use defaults
-      bsvg.parse_header_svg
-    end
-    
-    bsvg.get_svg
-  end
+
 
   def build_banner_image(image_filename)
     # Search for image in multiple locations
@@ -384,20 +371,22 @@ write output:      write the result to output/panes/header.html
   def generate_bootstrap_navbar(nav_content)
     menu_items = parse_navbar_content(nav_content)
     
-    # Generate Bootstrap navbar HTML
+    # Generate Bootstrap navbar HTML wrapped in bootstrap-scope
     html = <<~HTML
-      <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container-fluid">
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
-              #{generate_navbar_items(menu_items)}
-            </ul>
+      <div class="bootstrap-scope">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+          <div class="container-fluid">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+              <ul class="navbar-nav">
+                #{generate_navbar_items(menu_items)}
+              </ul>
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </div>
     HTML
     
     html
@@ -541,9 +530,21 @@ write output:      write the result to output/panes/header.html
         raise CannotBuildWidget("Failed to build widget '#{widget}': #{e.message}")
       end
     end
-    verify { content.is_a?(String) }
+    
+    # Wrap widgets in bootstrap-scope container
+    if content.strip.empty?
+      result = content
+    else
+      result = <<~HTML
+        <div class="bootstrap-scope">
+          #{content}
+        </div>
+      HTML
+    end
+    
+    verify { result.is_a?(String) }
     check_invariants
-    content
+    result
   end
 
   private def validate_widget_arg(arg)

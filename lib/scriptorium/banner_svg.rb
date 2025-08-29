@@ -30,6 +30,9 @@ class Scriptorium::BannerSVG
     @text_anchor = "start"
     @aspect = 8.0
     @font = "Verdana"
+    @base_font_size = 60
+    @title_font_size = @base_font_size * @title_scale
+    @subtitle_font_size = @base_font_size * @subtitle_scale
     # Remove default @title_xy and @subtitle_xy
     @background = "#fff"
     @gradient_start_color = nil
@@ -402,10 +405,9 @@ class Scriptorium::BannerSVG
         warn "[BannerSVG] Warning: subtitle.align x=#{@subtitle_align_x} conflicts with subtitle.xy x=#{@subtitle_xy[0]} (xy will override)"
       end
 
-      # Set base font size
-      base_font_size = 60
-      title_font_size = (base_font_size * @title_scale).to_i
-      subtitle_font_size = (base_font_size * @subtitle_scale).to_i
+      # Recalculate font sizes after config parsing
+      @title_font_size = @base_font_size * @title_scale
+      @subtitle_font_size = @base_font_size * @subtitle_scale
 
       width = 800     # Arbitrary starting point for calculations
       height = (width / @aspect).to_i  # height calculated based on aspect ratio
@@ -462,12 +464,12 @@ class Scriptorium::BannerSVG
       
       # Build style strings
       title_style =  "font-family: #{@font}; "
-      title_style << "font-size: #{title_font_size}px; "
+      title_style << "font-size: #{@title_font_size}px; "
       title_style << "font-weight: #{@title_weight}; "
       title_style << "font-style: #{@title_style}"
       
       subtitle_style =  "font-family: #{@font}; "
-      subtitle_style << "font-size: #{subtitle_font_size}px; "
+      subtitle_style << "font-size: #{@subtitle_font_size}px; "
       subtitle_style << "font-weight: #{@subtitle_weight}; "
       subtitle_style << "font-style: #{@subtitle_style}"
       
@@ -502,11 +504,6 @@ class Scriptorium::BannerSVG
     def generate_svg
       check_invariants
       
-      # Set base font size
-      base_font_size = 60
-      title_font_size = (base_font_size * @title_scale).to_i
-      subtitle_font_size = (base_font_size * @subtitle_scale).to_i
-
       width = 800     # Arbitrary starting point for calculations
       height = (width / @aspect).to_i  # height calculated based on aspect ratio
   
@@ -570,12 +567,12 @@ class Scriptorium::BannerSVG
       
       # Build style strings
       title_style =  "font-family: #{@font}; "
-      title_style << "font-size: #{title_font_size}px; "
+      title_style << "font-size: #{@title_font_size}px; "
       title_style << "font-weight: #{@title_weight}; "
       title_style << "font-style: #{@title_style}"
       
       subtitle_style =  "font-family: #{@font}; "
-      subtitle_style << "font-size: #{subtitle_font_size}px; "
+      subtitle_style << "font-size: #{@subtitle_font_size}px; "
       subtitle_style << "font-weight: #{@subtitle_weight}; "
       subtitle_style << "font-style: #{@subtitle_style}"
       
@@ -603,15 +600,15 @@ class Scriptorium::BannerSVG
       subtitle_anchor = @subtitle_text_anchor || @text_anchor
       
       title_svg = <<~EOS
-        <text x='#{title_x}' 
-              y='#{title_y}' 
+        <text x='#{title_x}%' 
+              y='#{title_y}%' 
               text-anchor='#{title_anchor}'
               style='#{title_style}' 
               fill='#{title_color}'>#@title</text>
       EOS
       subtitle_svg = <<~EOS
-        <text x='#{subtitle_x}' 
-              y='#{subtitle_y}' 
+        <text x='#{subtitle_x}%' 
+              y='#{subtitle_y}%' 
               text-anchor='#{subtitle_anchor}'
               style='#{subtitle_style}' 
               fill='#{subtitle_color}'>#@subtitle</text>
@@ -644,6 +641,15 @@ class Scriptorium::BannerSVG
     def get_svg
       check_invariants
       
+      # Debug: log font sizes to file
+      File.write('/tmp/banner_debug.txt', "get_svg called\n", mode: 'a')
+      File.write('/tmp/banner_debug.txt', "  @title_font_size: #{@title_font_size}\n", mode: 'a')
+      File.write('/tmp/banner_debug.txt', "  @subtitle_font_size: #{@subtitle_font_size}\n", mode: 'a')
+      File.write('/tmp/banner_debug.txt', "  @title_scale: #{@title_scale}\n", mode: 'a')
+      File.write('/tmp/banner_debug.txt', "  @subtitle_scale: #{@subtitle_scale}\n", mode: 'a')
+      File.write('/tmp/banner_debug.txt', "  @base_font_size: #{@base_font_size}\n", mode: 'a')
+      File.write('/tmp/banner_debug.txt', "---\n", mode: 'a')
+      
       # Generate SVG without re-parsing config (use current instance variables)
       svg_code = generate_svg
       svg_lines = svg_code.split("\n").map {|line| " "*6 + line }
@@ -671,12 +677,8 @@ class Scriptorium::BannerSVG
             svg.setAttribute('width', svgWidth);
             svg.setAttribute('height', svgHeight);
         
-            const titleScale = #{@title_scale};
-            const subtitleScale = #{@subtitle_scale};
-        
-            const base_font_size = 60;
-            const titleFontSize = titleScale * base_font_size;
-            const subtitleFontSize = subtitleScale * base_font_size;
+                        const titleFontSize = #{@title_font_size};
+            const subtitleFontSize = #{@subtitle_font_size};
         
             const te1 = svg.querySelector('text:nth-of-type(1)')
             const te2 = svg.querySelector('text:nth-of-type(2)')
@@ -702,6 +704,10 @@ class Scriptorium::BannerSVG
             // Set text-anchor for proper positioning (use individual anchors if set)
             te1.setAttribute('text-anchor', '#{@title_text_anchor || @text_anchor}');
             te2.setAttribute('text-anchor', '#{@subtitle_text_anchor || @text_anchor}');
+            
+            // Apply calculated font sizes
+            te1.setAttribute('font-size', titleFontSize + 'px');
+            te2.setAttribute('font-size', subtitleFontSize + 'px');
         
             const containerElement = document.getElementById(container);
           if (containerElement) {
