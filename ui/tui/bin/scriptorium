@@ -9,8 +9,14 @@ class ScriptoriumTUI
   include Scriptorium::Helpers
 
   def initialize
-    @api = Scriptorium::API.new(testmode: true)
-    @testing = true
+    # Parse command line arguments for test mode
+    @testing = ARGV.include?('--test')
+    
+    # Remove --test from ARGV so it doesn't interfere with other processing
+    ARGV.delete('--test')
+    
+    # Default to production mode (use core Repo default: ~/.scriptorium)
+    @api = Scriptorium::API.new(testmode: @testing)
     setup_readline
   end
 
@@ -35,25 +41,61 @@ class ScriptoriumTUI
         return false
       end
     else
-     # Later: for production
+      # Production mode: use core Repo default (~/.scriptorium)
+      home = ENV['HOME']
+      production_path = "#{home}/.scriptorium"
+      
+      if Dir.exist?(production_path)
+        puts "Found existing production repository: #{production_path}"
+        begin
+          @api.open_repo(production_path)
+          puts "Current view: #{@api.current_view&.name || 'nil'}"
+          puts "Loaded production repository"
+          return true
+        rescue => e
+          puts "Error opening repository: #{e.message}"
+          return false
+        end
+      else
+        puts "No repository found."
+        return false
+      end
     end
     return false
   end
 
   def create_new_repo
-    puts "Creating new repository..."
-    @testing = "scriptorium-TEST"
-    @api = Scriptorium::API.new(testmode: true)
-    begin
-      @api.create_repo("scriptorium-TEST")
-      puts "Created repository successfully."
+    if @testing
+      puts "Creating new test repository..."
+      @testing = "scriptorium-TEST"
+      @api = Scriptorium::API.new(testmode: true)
+      begin
+        @api.create_repo("scriptorium-TEST")
+        puts "Created test repository successfully."
+        
+        # Run initial setup (like Runeblog)
+        get_started
+      rescue => e
+        puts "Error creating repository: #{e.message}"
+        puts e.backtrace.first if @testing
+        return false
+      end
+    else
+      puts "Creating new production repository..."
+      home = ENV['HOME']
+      production_path = "#{home}/.scriptorium"
       
-      # Run initial setup (like Runeblog)
-      get_started
-    rescue => e
-      puts "Error creating repository: #{e.message}"
-      puts e.backtrace.first if @testing
-      return false
+      begin
+        # For production, use the full home path
+        @api.create_repo(production_path)
+        puts "Created production repository successfully."
+        
+        # Run initial setup (like Runeblog)
+        get_started
+      rescue => e
+        puts "Error creating repository: #{e.message}"
+        return false
+      end
     end
   end
 
@@ -393,7 +435,15 @@ class ScriptoriumTUI
   private def show_help
     puts
     puts <<~HELP
+      Scriptorium CLI - Blog Management Tool
       
+      Usage: scriptorium [--test]
+      
+      Flags:
+        --test                    - Use test repository (scriptorium-TEST)
+                                  - Default: production repository (~/.scriptorium)
+      
+      Commands:
         view                       - Show current view
         change view [<name>]       - Switch to a view
         cv [<name>]                  

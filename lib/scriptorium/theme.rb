@@ -17,8 +17,8 @@ class Scriptorium::Theme
   def self.create_standard(root)
     assume { root.is_a?(String) && !root.empty? }
     
-    make_tree(root/:themes, <<~EOS)
-      standard/
+    make_tree(root/:themes/:standard, <<~EOS)
+      .
       ├── README.txt
       ├── assets/
       ├── config.txt

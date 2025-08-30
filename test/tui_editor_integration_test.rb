@@ -27,7 +27,7 @@ class TUIEditorIntegrationTest < Minitest::Test
     
     ENV['NOREADLINE'] = '1'
     
-    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
+    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium --test') do |read, write, pid|
       begin
         run_links_widget_workflow(read, write)
       ensure
@@ -44,7 +44,7 @@ class TUIEditorIntegrationTest < Minitest::Test
     # Test basic TUI flow without complex wizard
     ENV['NOREADLINE'] = '1'
     
-    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
+    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium --test') do |read, write, pid|
       begin
         run_basic_tui_workflow(read, write)
         
@@ -62,7 +62,7 @@ class TUIEditorIntegrationTest < Minitest::Test
     # Test creating a post through the TUI
     ENV['NOREADLINE'] = '1'
     
-    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
+    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium --test') do |read, write, pid|
       begin
         run_create_post_workflow(read, write)        
       ensure
@@ -126,7 +126,7 @@ class TUIEditorIntegrationTest < Minitest::Test
     get_string(read, /No repository found\./, "Should show 'No repository found'")
     
     # Send 'y' to create new repository
-    send_and_expect(read, write, "y", "Created repository successfully.",
+    send_and_expect(read, write, "y", "Created test repository successfully.",
                    "Should show repository created")
     
     # Wait for editor setup
@@ -211,7 +211,7 @@ class TUIEditorIntegrationTest < Minitest::Test
     get_string(read, "No repository found.", "Should show 'No repository found'")
     
     # Send 'y' to create new repository
-    send_and_expect(read, write, "y", "Created repository successfully.",
+    send_and_expect(read, write, "y", "Created test repository successfully.",
                    "Should show repository created")
     
     # Wait for editor setup
@@ -244,7 +244,7 @@ class TUIEditorIntegrationTest < Minitest::Test
     get_string(read, "No repository found.", "Should show 'No repository found'")
     
     # Send 'y' to create new repository
-    send_and_expect(read, write, "y", "Created repository successfully.",
+    send_and_expect(read, write, "y", "Created test repository successfully.",
                    "Should show repository created")
     
     # Wait for editor setup

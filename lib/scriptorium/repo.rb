@@ -34,12 +34,9 @@ class Scriptorium::Repo
     home = ENV['HOME']
     @predef = Scriptorium::StandardFiles.new
     @root = path || "#{home}/.scriptorium"
-    parent = path ? "." : home
-    file = path || ".scriptorium"
-    @root = parent/file
     raise self.RepoDirAlreadyExists(@root) if Dir.exist?(@root)
-    make_tree(parent, <<~EOS)
-      #@root
+    make_tree(@root, <<~EOS)
+      .
       ├── config/       # Global config files
       ├── views/        # Views
       ├── drafts/       # Draft posts (global)
@@ -181,8 +178,8 @@ class Scriptorium::Repo
     end
     
     raise ViewDirAlreadyExists(name) if view_exist?(name)
-    make_tree(@root/:views, <<~EOS)
-    #{name}/
+    make_tree(@root/:views/name, <<~EOS)
+    .
     ├── config/              # View-specific config files 
     │   ├── layout.txt       # Overall layout for front page
     │   ├── footer.txt       # Content for footer.html

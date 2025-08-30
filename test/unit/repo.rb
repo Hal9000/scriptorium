@@ -218,10 +218,10 @@ class TestScriptoriumRepo < Minitest::Test
     t = Scriptorium::Theme.new(repo.root, "standard")
 
     path1 = t.file("initial/post.lt3")
-    want1 = "./test/scriptorium-TEST/themes/standard/initial/post.lt3"
-    assert path1 == want1, "Expected: #{want1}"
+    want1 = "test/scriptorium-TEST/themes/standard/initial/post.lt3"
+    assert path1 == want1, "Expected: #{want1}, got: #{path1}"
     path2 = t.file("right.txt")
-    want2 = "./test/scriptorium-TEST/themes/standard/layout/config/right.txt"
+    want2 = "test/scriptorium-TEST/themes/standard/layout/config/right.txt"
     assert path2 == want2, "Expected: #{want2}"
 
     assert_raises(MoreThanOneResult) { t.file("post.lt3") }

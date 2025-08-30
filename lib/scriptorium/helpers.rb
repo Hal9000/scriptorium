@@ -264,16 +264,14 @@ module Scriptorium::Helpers
     lines.each {|line| line.gsub!(/ *#.*$/, "") }
     entries = []
   
-    # Determine the root name
-    first_line = lines.shift
-    root = first_line.strip.sub(/\/$/, "") # remove trailing slash
-    root_path = File.join(base, root)
-    make_dir(root_path) unless File.exist?(root_path)
+    # Always throw away the first line (for backward compatibility)
+    lines.shift
+    
+    # Create the base directory and start stack there
+    make_dir(base) unless File.exist?(base)
+    stack = [base]
   
-    # Prepare stack starting from root
-    stack = [root_path]
-  
-    # Parse the remaining lines
+    # Parse all lines as structure
     lines.each do |line|
       if (i = line.index(/ [a-zA-Z0-9_.]/))
         name = line[(i + 1)..-1]

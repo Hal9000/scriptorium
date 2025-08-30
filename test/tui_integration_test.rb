@@ -15,6 +15,10 @@ class TUIIntegrationTest < Minitest::Test
     # Don't create repo here - let the TUI create it interactively
     # Disable DBC contracts in tests
     ENV['DBC_DISABLED'] = 'true'
+    
+    # rbenv hack to ensure correct Ruby version
+    ENV['PATH'] = "#{ENV['HOME']}/.rbenv/shims:#{ENV['PATH']}"
+    ENV['RBENV_VERSION'] = '3.2.3'
   end
 
   def teardown
@@ -27,7 +31,7 @@ class TUIIntegrationTest < Minitest::Test
     # Test TUI interaction - let TUI create repo interactively
     ENV['NOREADLINE'] = '1'
     
-    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
+    PTY.spawn({'NOREADLINE' => '1'}, '/Users/Hal/.rbenv/versions/3.2.3/bin/ruby bin/scriptorium --test') do |read, write, pid|
       begin
         run_basic_tui_interaction_test(read, write, pid)
       ensure
@@ -42,7 +46,7 @@ class TUIIntegrationTest < Minitest::Test
   def test_002_view_management
     ENV['NOREADLINE'] = '1'
     
-    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
+    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium --test') do |read, write, pid|
       begin
         run_view_management_test(read, write, pid)
       ensure
@@ -57,7 +61,7 @@ class TUIIntegrationTest < Minitest::Test
   def test_003_command_abbreviations
     ENV['NOREADLINE'] = '1'
     
-    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
+    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium --test') do |read, write, pid|
       begin
         run_command_abbreviations_test(read, write, pid)
       ensure
@@ -72,7 +76,7 @@ class TUIIntegrationTest < Minitest::Test
   def test_004_interactive_create_view
     ENV['NOREADLINE'] = '1'
     
-    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
+    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium --test') do |read, write, pid|
       begin
         run_interactive_create_view_test(read, write, pid)
       ensure
@@ -87,7 +91,7 @@ class TUIIntegrationTest < Minitest::Test
   def test_005_unknown_commands
     ENV['NOREADLINE'] = '1'
     
-    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
+    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium --test') do |read, write, pid|
       begin
         run_unknown_commands_test(read, write, pid)
       ensure
@@ -102,13 +106,13 @@ class TUIIntegrationTest < Minitest::Test
   def test_006_asset_management_commands
     ENV['NOREADLINE'] = '1'
     
-    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
+    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium --test') do |read, write, pid|
       begin
         # Wait for "No repository found" message
         await(read, "No repository found.", "Should show 'No repository found'")
         
         # Send 'y' to create new repository
-        send_and_expect(read, write, "y", "Created repository successfully.", "Should show repository created")
+        send_and_expect(read, write, "y", "Created test repository successfully.", "Should show repository created")
         
         # Wait for editor setup
         await(read, "No editor configured", "Should show editor setup")
@@ -151,7 +155,7 @@ class TUIIntegrationTest < Minitest::Test
     
 
     
-    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
+    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium --test') do |read, write, pid|
       begin
         # Debug output removed
         
@@ -159,7 +163,7 @@ class TUIIntegrationTest < Minitest::Test
         await(read, "No repository found.", "Should show 'No repository found'")
         
         # Send 'y' to create new repository
-        send_and_expect(read, write, "y", "Created repository successfully.", "Should show repository created")
+        send_and_expect(read, write, "y", "Created test repository successfully.", "Should show repository created")
         
         # Wait for editor setup
         await(read, "No editor configured", "Should show editor setup")
@@ -216,13 +220,13 @@ class TUIIntegrationTest < Minitest::Test
   def test_008_empty_input_handling
     ENV['NOREADLINE'] = '1'
     
-    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
+    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium --test') do |read, write, pid|
       begin
         # Wait for "No repository found" message
         await(read, "No repository found.", "Should show 'No repository found'")
         
         # Send 'y' to create new repository
-        send_and_expect(read, write, "y", "Created repository successfully.", "Should show repository created")
+        send_and_expect(read, write, "y", "Created test repository successfully.", "Should show repository created")
         
         # Wait for editor setup
         await(read, "No editor configured", "Should show editor setup")
@@ -264,12 +268,12 @@ class TUIIntegrationTest < Minitest::Test
   def test_008_exit_variations
     ENV['NOREADLINE'] = '1'
     
-    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
+    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium --test') do |read, write, pid|
       # Wait for "No repository found" message
       await(read, "No repository found.", "Should show 'No repository found'")
       
       # Send 'y' to create new repository
-      send_and_expect(read, write, "y", "Created repository successfully.", "Should show repository created")
+      send_and_expect(read, write, "y", "Created test repository successfully.", "Should show repository created")
       
       # Wait for editor setup
       await(read, "No editor configured", "Should show editor setup")
@@ -300,12 +304,12 @@ class TUIIntegrationTest < Minitest::Test
   def test_008_error_conditions
     ENV['NOREADLINE'] = '1'
     
-    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium') do |read, write, pid|
+    PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium --test') do |read, write, pid|
       # Wait for "No repository found" message
       await(read, "No repository found.", "Should show 'No repository found'")
         
         # Send 'y' to create new repository
-        send_and_expect(read, write, "y", "Created repository successfully.", "Should show repository created")
+        send_and_expect(read, write, "y", "Created test repository successfully.", "Should show repository created")
         
               # Wait for editor setup
       await(read, "No editor configured", "Should show editor setup")
@@ -374,7 +378,7 @@ class TUIIntegrationTest < Minitest::Test
     await(read, "No repository found.", "Should show 'No repository found'")
     
     # Send 'y' to create new repository
-    send_and_expect(read, write, "y", "Created repository successfully.", "Should show repository created")
+    send_and_expect(read, write, "y", "Created test repository successfully.", "Should show repository created")
     
     # Wait for editor setup
     await(read, "No editor configured", "Should show editor setup")
@@ -422,7 +426,7 @@ class TUIIntegrationTest < Minitest::Test
     await(read, "No repository found.", "Should show 'No repository found'")
     
     # Send 'y' to create new repository
-    send_and_expect(read, write, "y", "Created repository successfully.", "Should show repository created")
+    send_and_expect(read, write, "y", "Created test repository successfully.", "Should show repository created")
     
     # Wait for editor setup
     await(read, "No editor configured", "Should show editor setup")
@@ -503,7 +507,7 @@ class TUIIntegrationTest < Minitest::Test
     await(read, "No repository found.", "Should show 'No repository found'")
     
     # Send 'y' to create new repository
-    send_and_expect(read, write, "y", "Created repository successfully.", "Should show repository created")
+    send_and_expect(read, write, "y", "Created test repository successfully.", "Should show repository created")
     
     # Wait for editor setup
     await(read, "No editor configured", "Should show editor setup")
@@ -551,7 +555,7 @@ class TUIIntegrationTest < Minitest::Test
     await(read, "No repository found.", "Should show 'No repository found'")
     
     # Send 'y' to create new repository
-    send_and_expect(read, write, "y", "Created repository successfully.", "Should show repository created")
+    send_and_expect(read, write, "y", "Created test repository successfully.", "Should show repository created")
     
     # Wait for editor setup
     await(read, "No editor configured", "Should show editor setup")
@@ -602,7 +606,7 @@ class TUIIntegrationTest < Minitest::Test
     await(read, "No repository found.", "Should show 'No repository found'")
     
     # Send 'y' to create new repository
-    send_and_expect(read, write, "y", "Created repository successfully.", "Should show repository created")
+    send_and_expect(read, write, "y", "Created test repository successfully.", "Should show repository created")
     
     # Wait for editor setup
     await(read, "No editor configured", "Should show editor setup")
@@ -644,7 +648,7 @@ class TUIIntegrationTest < Minitest::Test
     await(read, "No repository found.", "Should show 'No repository found'")
     
     # Send 'y' to create new repository
-    send_and_expect(read, write, "y", "Created repository successfully.", "Should show repository created")
+    send_and_expect(read, write, "y", "Created test repository successfully.", "Should show repository created")
     
     # Wait for editor setup
     await(read, "No editor configured", "Should show editor setup")
@@ -686,7 +690,7 @@ class TUIIntegrationTest < Minitest::Test
     await(read, "No repository found.", "Should show 'No repository found'")
     
     # Send 'y' to create new repository
-    send_and_expect(read, write, "y", "Created repository successfully.", "Should show repository created")
+    send_and_expect(read, write, "y", "Created test repository successfully.", "Should show repository created")
     
     # Wait for editor setup
     await(read, "No editor configured", "Should show editor setup")
@@ -716,7 +720,7 @@ class TUIIntegrationTest < Minitest::Test
     await(read, "No repository found.", "Should show 'No repository found'")
     
     # Send 'y' to create new repository
-    send_and_expect(read, write, "y", "Created repository successfully.", "Should show repository created")
+    send_and_expect(read, write, "y", "Created test repository successfully.", "Should show repository created")
     
     # Wait for editor setup
     await(read, "No editor configured", "Should show editor setup")

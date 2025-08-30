@@ -929,7 +929,7 @@ class TestReadWrite < Minitest::Test
 
   def test_081_make_tree_basic
     tree_text = <<~EOS
-      test_tree/
+      .
       ├── file1.txt
       ├── dir1/
       │   ├── file2.txt
@@ -938,7 +938,7 @@ class TestReadWrite < Minitest::Test
       └── file4.txt
     EOS
     
-    make_tree(@test_dir, tree_text)
+    make_tree("#{@test_dir}/test_tree", tree_text)
     
     assert File.exist?("#{@test_dir}/test_tree/file1.txt")
     assert File.exist?("#{@test_dir}/test_tree/dir1/file2.txt")
@@ -948,18 +948,41 @@ class TestReadWrite < Minitest::Test
 
   def test_082_make_tree_with_comments
     tree_text = <<~EOS
-      test_tree_with_comments/
+      .
       ├── file1.txt # This is a comment
       ├── dir1/     # Another comment
       │   └── file2.txt
       └── file3.txt
     EOS
     
-    make_tree(@test_dir, tree_text)
+    make_tree("#{@test_dir}/test_tree_with_comments", tree_text)
     
     assert File.exist?("#{@test_dir}/test_tree_with_comments/file1.txt")
     assert File.exist?("#{@test_dir}/test_tree_with_comments/dir1/file2.txt")
     assert File.exist?("#{@test_dir}/test_tree_with_comments/file3.txt")
+  end
+
+  def test_083_make_tree_simplified
+    tree_text = <<~EOS
+      .
+      ├── config/
+      ├── views/
+      ├── drafts/
+      ├── posts/
+      ├── assets/
+      │   └── library/
+      └── themes/
+    EOS
+    
+    target_dir = "#{@test_dir}/simplified_tree"
+    make_tree(target_dir, tree_text)
+    
+    assert File.exist?("#{target_dir}/config")
+    assert File.exist?("#{target_dir}/views")
+    assert File.exist?("#{target_dir}/drafts")
+    assert File.exist?("#{target_dir}/posts")
+    assert File.exist?("#{target_dir}/assets/library")
+    assert File.exist?("#{target_dir}/themes")
   end
 
   # ========================================
