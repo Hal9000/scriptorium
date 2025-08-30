@@ -98,44 +98,11 @@ The system now checks for Python packages in this order:
 
 ### Potential Enhancements
 1. **Automated Setup Script** - Create virtual environment automatically
-2. **Environment Management** - Commands to update/recreate environment
-3. **Requirements File** - `requirements.txt` for reproducible installations
-4. **Multiple Python Versions** - Support for different Python versions
+2. **Environment Management** - Update, recreate, or clean virtual environments
+3. **Multiple Python Versions** - Support for different Python versions
+4. **Dependency Locking** - Pin exact versions for reproducibility
 
 ### Maintenance Notes
-- Virtual environment should be recreated if Python version changes
-- Consider adding environment recreation to Scriptorium setup process
-- Monitor for new Python packages that might need virtual environment
-
-## Files Modified
-
-### Updated Files
-- `lib/scriptorium/reddit.rb` - Added virtual environment detection
-- `scripts/check_dependencies.rb` - Enhanced Python package checking
-- `doc/reddit_integration.md` - Added virtual environment instructions
-
-### New Files
-- None (enhancements to existing files)
-
-## Key Takeaways
-
-1. **Modern Python Protection** - PEP 668 prevents system-wide package installation
-2. **Virtual Environments** - Best practice for Python package management
-3. **Automatic Detection** - Scriptorium can find and use virtual environments
-4. **User-Friendly** - Simple setup process with clear instructions
-5. **Robust Fallback** - System continues to work even without virtual environment
-
-## Next Steps for User
-
-1. **Create Virtual Environment** - `python3 -m venv ~/.scriptorium-python`
-2. **Install PRAW** - `source ~/.scriptorium-python/bin/activate && pip install praw`
-3. **Test Integration** - Run dependency checker to verify setup
-4. **Optional: Reddit Credentials** - Set up for actual Reddit autoposting
-
-## Notes
-
-- Virtual environment path: `~/.scriptorium-python/`
-- Activation command: `source ~/.scriptorium-python/bin/activate`
-- Deactivation command: `deactivate`
-- Scriptorium automatically detects and uses this environment
-- No manual activation needed for normal Scriptorium usage 
+- **Virtual Environment Paths** - Monitor for changes in Python ecosystem
+- **PEP 668 Compliance** - Stay updated with Python packaging standards
+- **Cross-Platform Support** - Ensure virtual environment detection works on Windows/Linux 

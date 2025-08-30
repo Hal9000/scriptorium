@@ -118,37 +118,37 @@ tests = [
   {
     title: "Perfect Image Background",
     subtitle: "Image test (8:1 aspect)",
-          config: "back.image ../../assets/images/perfect.png",
+    config: "back.image ../../assets/images/perfect.png",
     description: "Perfect match: 8:1 aspect ratio image fits banner exactly - no cropping or scaling needed"
   },
   {
     title: "Wide Image Background", 
     subtitle: "Image test (16:1 aspect)",
-          config: "back.image ../../assets/images/wide.png",
+            config: "back.image ../../assets/images/wide.png",
     description: "Wide image (16:1) cropped to fit 8:1 banner - left/right edges removed, center preserved"
   },
   {
     title: "Tall Image Background",
     subtitle: "Image test (1:1 aspect)", 
-          config: "back.image ../../assets/images/tall.png",
+    config: "back.image ../../assets/images/tall.png",
     description: "Square image (1:1) cropped to fit 8:1 banner - top/bottom removed, center strip visible"
   },
   {
     title: "Very Tall Image Background",
     subtitle: "Image test (1:4 aspect)",
-          config: "back.image ../../assets/images/very_tall.png", 
+    config: "back.image ../../assets/images/very_tall.png", 
     description: "Very tall image (1:4) heavily cropped - only narrow center strip visible, most content lost"
   },
   {
     title: "Very Wide Image Background",
     subtitle: "Image test (16:1 aspect)",
-          config: "back.image ../../assets/images/very_wide.png",
+    config: "back.image ../../assets/images/very_wide.png",
     description: "Very wide image (16:1) heavily cropped - only narrow center strip visible, sides removed"
   },
   {
     title: "Small Image Background",
     subtitle: "Image test (low res, 8:1 aspect)",
-          config: "back.image ../../assets/images/small.png",
+    config: "back.image ../../assets/images/small.png",
     description: "Small low-res image scaled up to fill banner - may appear pixelated but maintains aspect"
   },
   {
@@ -176,26 +176,26 @@ tests.each_with_index do |test, index|
   filename = "test#{page_num.to_s.rjust(2, '0')}.html"
   
   # Write config file for this test
-  File.write(test_dir/"config.txt", test[:config])
+  File.write(test_dir/"svg.txt", test[:config])
   
   # Create banner
   require_relative '../../lib/scriptorium'
   Dir.chdir(test_dir) do
     banner = Scriptorium::BannerSVG.new(test[:title], test[:subtitle])
     banner.parse_header_svg
-    svg_output = banner.generate_svg
+    svg_output = banner.get_svg
     
     # Check if this is an image background test
     image_path = nil
     if test[:config].include?("back.image")
       image_path = test[:config].match(/back\.image\s+(.+)/)&.[](1)
       # For the original image display, we need the path relative to the HTML file
-      # The HTML is in test/manual/banner-tests/, and images are now in the same directory
-      # So browser URL should be just the filename (relative to HTML file)
-      display_path = image_path.gsub('../../assets/images/', '') if image_path
+      # The HTML is in test/manual/banner-tests/, and images are in test/assets/images/
+      # Convert ../../assets/images/... to /assets/images/... (absolute from web server root)
+      display_path = image_path.gsub('../../assets/images/', '/assets/images/') if image_path
       
-      # Fix the SVG pattern path to use the correct relative path for the HTML file
-      svg_output = svg_output.gsub('../../assets/images/', '')
+      # Fix the SVG pattern path to use the correct absolute path
+      svg_output = svg_output.gsub('../../assets/images/', '/assets/images/')
     end
     
     # Create standalone HTML page
@@ -229,7 +229,7 @@ tests.each_with_index do |test, index|
           </style>
       </head>
       <body>
-          <div class="banner">
+          <div class="banner" id="header">
             #{svg_output}
           </div>
           <div class="content">

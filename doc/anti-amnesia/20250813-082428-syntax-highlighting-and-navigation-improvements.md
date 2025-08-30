@@ -26,13 +26,6 @@ pre code[class*="language-"] {
   min-height: auto !important;
   overflow: visible !important;
 }
-
-pre:has(code[class*="language-"]) {
-  height: auto !important;
-  max-height: none !important;
-  min-height: auto !important;
-  overflow: visible !important;
-}
 ```
 
 ## 🔄 **Dynamic Navigation System**
@@ -49,28 +42,6 @@ pre:has(code[class*="language-"]) {
 - **Refresh support**: Page refreshes maintain the correct content state
 - **Navigation buttons**: "Go back" button simplified to direct link to index
 
-### **JavaScript Enhancements**
-```javascript
-// Check if this is a static page request (pages/, assets/, etc.)
-if (slug.startsWith('pages/') || slug.startsWith('assets/') || slug.includes('/')) {
-  console.log('Loading static page:', slug);
-  fetch('./' + slug)
-    .then(response => {
-      if (response.ok) {
-        return response.text();
-      } else {
-        return 'Page not found';
-      }
-    })
-    .then(content => {
-      contentDiv.innerHTML = content;
-      // Don't change URL for static pages to avoid path resolution issues
-      history.pushState({slug: slug}, "", window.location.pathname);
-    });
-  return;
-}
-```
-
 ## 📁 **Pages Directory Support**
 
 ### **generate_front_page Enhancement** (`lib/scriptorium/view.rb`)
@@ -78,93 +49,17 @@ if (slug.startsWith('pages/') || slug.startsWith('assets/') || slug.includes('/'
 - **Asset preservation**: Maintains file permissions and content integrity
 - **Graceful handling**: Works with or without pages directory present
 
-### **Implementation Details**
-```ruby
-# Copy pages directory to output if it exists
-pages_source = @dir/:pages
-pages_output = @dir/:output/:pages
-if Dir.exist?(pages_source)
-  FileUtils.mkdir_p(pages_output)
-  Dir.glob(pages_source/"*").each do |file|
-    next unless File.file?(file)
-    FileUtils.cp(file, pages_output/File.basename(file))
-  end
-end
-```
-
 ## 🧩 **Widget System Enhancements**
 
 ### **Pages Widget** (`lib/scriptorium/widgets.rb`)
 - **List-based**: Reads `list.txt` file containing page filenames
 - **Content separation**: Page content stored in `pages/` directory, not widget directory
 - **Navigation**: Generates proper links to static pages
-- **Back links**: Each page includes "← Back to Home" link
 
-### **Widget Structure**
-```
-view.dir/:widgets/"pages/list.txt"     # List of page filenames
-view.dir/:pages/"about.html"           # Actual page content
-view.dir/:pages/"contact.html"         # Actual page content
-```
-
-### **Generated HTML**
-```html
-<div class="card mb-3">
-  <div class="card-body">
-    <h5 class="card-title">
-      <button type="button" class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#pages">+</button>
-      <a href="javascript:void(0)" onclick="javascript:load_main('pages-main.html')">Pages</a>
-    </h5>
-    <div class="collapse" id="pages">
-      <li class="list-group-item"><a href="javascript:void(0)" onclick="load_main('pages/about.html')">About Us</a></li>
-      <li class="list-group-item"><a href="javascript:void(0)" onclick="load_main('pages/contact.html')">Contact</a></li>
-    </div>
-  </div>
-</div>
-```
-
-## 📋 **Clipboard Functionality**
-
-### **Clipboard Gem Integration**
-- **Added `clipboard` gem** dependency for cross-platform clipboard access
-- **Fallback support**: OS-specific commands if gem unavailable
-- **Helper methods**: `copy_to_clipboard()` and `get_from_clipboard()`
-
-### **Copy Link Button**
-- **Button text**: "Copy link" (cleaner than "Copy Permalink")
-- **Dual placement**: Added to both normal posts and permalink pages
-- **Smart URL logic**: Always copies the clean permalink URL regardless of current view
-- **Visual feedback**: Button changes to green "Copied!" for 2 seconds
-
-### **Implementation**
-```javascript
-function copyPermalinkToClipboard() {
-  // Get the current post slug from the URL or construct it
-  const currentUrl = window.location.href;
-  let permalinkUrl;
-  
-  if (currentUrl.includes('?post=')) {
-    // We're on the main blog page, construct the permalink URL
-    const postSlug = currentUrl.split('?post=')[1];
-    const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
-    permalinkUrl = baseUrl + '/permalink/' + postSlug;
-  } else {
-    // We're already on a permalink page, use current URL
-    permalinkUrl = currentUrl;
-  }
-  
-  navigator.clipboard.writeText(permalinkUrl).then(function() {
-    // Visual feedback
-    const button = event.target;
-    button.textContent = 'Copied!';
-    button.style.background = '#28a745';
-    setTimeout(function() {
-      button.textContent = 'Copy link';
-      button.style.background = '#007bff';
-    }, 2000);
-  });
-}
-```
+### **Clipboard Integration**
+- **Copy link buttons**: Added to post views for easy sharing
+- **Cross-platform support**: Uses `clipboard` gem for reliable clipboard access
+- **User feedback**: Visual confirmation when links are copied
 
 ## 🧪 **Testing Coverage**
 
@@ -174,16 +69,9 @@ function copyPermalinkToClipboard() {
 - **Clipboard tests**: Clipboard helper methods
 - **Integration tests**: Full workflow verification
 
-### **Test Files Modified**
-- `test/unit/view.rb`: Added 4 new tests for pages directory handling
-- `test/unit/widgets.rb`: Added 3 new tests for Pages widget functionality
-- `test/unit/clipboard_test.rb`: New test file for clipboard functionality
-- `test/unit/repo.rb`: Enhanced permalink test to verify copy link button
-
 ### **Test Patterns**
 - **Three-digit prefixes**: Following project convention (test_032, test_033, etc.)
 - **Comprehensive coverage**: Edge cases, error conditions, success scenarios
-- **Integration testing**: Full workflow from source to output
 
 ## 🎯 **User Experience Improvements**
 
@@ -199,12 +87,6 @@ function copyPermalinkToClipboard() {
 - **Responsive design**: Code blocks adapt to content height
 - **Interactive elements**: Collapsible widgets, copy buttons with feedback
 - **Consistent styling**: Bootstrap integration with custom overrides
-
-### **Performance Benefits**
-- **Server-side highlighting**: No client-side JavaScript processing
-- **Eliminated scrolling**: Code blocks display at full height
-- **Reduced layout shifts**: Proper height calculations prevent reflows
-- **Efficient asset handling**: Pages copied once during generation
 
 ## 🔧 **Technical Architecture**
 
@@ -227,18 +109,6 @@ lib/scriptorium/
 - **Enhanced features**: New capabilities added without breaking changes
 - **Fallback support**: Graceful degradation when optional features unavailable
 
-## 📚 **Documentation and Examples**
-
-### **Manual Tests**
-- **`test6.rb`**: Demonstrates Pages widget with Links widget
-- **Syntax highlighting**: Shows Rouge output with proper CSS
-- **Navigation flow**: Complete user journey from index to pages
-
-### **Code Examples**
-- **Widget setup**: How to create and configure Pages widget
-- **Page creation**: HTML structure for static pages
-- **Navigation patterns**: JavaScript for dynamic content loading
-
 ## 🚀 **Future Considerations**
 
 ### **Potential Enhancements**
@@ -252,5 +122,3 @@ lib/scriptorium/
 - **Clipboard API**: Consider fallback strategies for older browsers
 - **Widget system**: Extend patterns for new content types
 - **Testing**: Maintain comprehensive test coverage for new features
-
-This implementation provides a robust, user-friendly blogging system with modern syntax highlighting, intuitive navigation, and professional sharing capabilities.

@@ -13,7 +13,7 @@ Dir.mkdir(test_dir)
 @pid = nil
 # Start server from the project root directory
 server_dir = File.expand_path("../..", __FILE__)
-Dir.chdir(server_dir) do
+Dir.chdir("test") do
   Process.spawn ("ruby -run -e httpd . -p 8000 >/dev/null 2>&1") 
   sleep 1
 end

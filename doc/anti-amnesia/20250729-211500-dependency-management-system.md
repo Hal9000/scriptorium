@@ -99,45 +99,6 @@ Comprehensive support for:
 - **Windows** - Manual installation guidance
 - **Cross-platform** - Python packages via pip3
 
-## Usage Examples
-
-### Check Dependencies
-```bash
-# Run the dependency checker
-ruby scripts/check_dependencies.rb
-```
-
-### Sample Output
-```
-🔍 Scriptorium Dependency Checker
-==================================================
-
-📊 Dependency Status
-==================================================
-
-Individual Dependencies:
-------------------------------
-Ruby                      ✅ Available
-Git                       ✅ Available
-Python 3                  ✅ Available
-PRAW (Reddit API)         ❌ Missing
-LiveText                  ✅ Available
-ImageMagick               ✅ Available
-
-Feature Availability:
-------------------------------
-Core Blogging        ✅ Ready
-Reddit Button        ✅ Ready
-Reddit Autopost      ❌ Missing Dependencies
-   Missing: praw
-LiveText Plugins     ✅ Ready
-```
-
-### Installation Scripts
-Provided ready-to-use installation scripts for:
-- **macOS with Homebrew**
-- **Ubuntu/Debian with apt**
-
 ## Benefits
 
 ### For Users
@@ -184,23 +145,12 @@ Potential improvements identified:
 - `doc/dependencies.md` - Complete dependency documentation
 - `scripts/check_dependencies.rb` - Interactive dependency checker
 
-### Modified Files
-- None (standalone system)
-
 ## Testing Status
 
 - **Dependency checker tested** - Successfully identifies available/missing dependencies
 - **Documentation reviewed** - Complete and accurate installation instructions
 - **Cross-platform verified** - Instructions work for macOS, Linux, Windows
 - **Integration tested** - Works with existing Scriptorium features
-
-## User Impact
-
-This system significantly improves the user experience by:
-1. **Reducing setup friction** - Clear dependency requirements
-2. **Preventing confusion** - Users know what they need before starting
-3. **Enabling self-service** - Users can resolve dependency issues independently
-4. **Improving adoption** - Lower barrier to entry for new users
 
 ## Notes
 

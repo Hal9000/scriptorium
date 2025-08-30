@@ -455,13 +455,15 @@ class BannerSVGTest < Minitest::Test
   def test_052_svg_output_text_has_required_attributes
     svg_output = @banner.parse_header_svg
     
+
+    
     # Check text attributes
     # Note: assert_present is a nonstandard assertion from TestHelpers
     assert_present(svg_output, "text-anchor='start'")
     assert_present(svg_output, "fill='#374151'")
     assert_present(svg_output, 'font-family: Verdana')
-    assert_present(svg_output, 'font-size: 48px') # title
-    assert_present(svg_output, 'font-size: 24px') # subtitle
+    assert_present(svg_output, 'font-size: 48.0px') # title (base_font_size * 0.8)
+    assert_present(svg_output, 'font-size: 24.0px') # subtitle (base_font_size * 0.4)
   end
 
   def test_053_svg_output_with_linear_gradient
@@ -520,7 +522,7 @@ class BannerSVGTest < Minitest::Test
     @banner.handle_xy("subtitle", "15%", "25%")
     svg_output = @banner.parse_header_svg
     
-    # Check text positioning
+    # Check text positioning - coordinates are now in the SVG text elements
     assert_present(svg_output, "x='10%'")
     assert_present(svg_output, "y='20%'")
     assert_present(svg_output, "x='15%'")
@@ -645,8 +647,8 @@ class BannerSVGTest < Minitest::Test
     # Check for JavaScript variables
     assert_present(js_output, 'const svgWidth = window.innerWidth')
     assert_present(js_output, 'const aspectRatio = 8.0')
-    assert_present(js_output, 'const titleScale = 0.8')
-    assert_present(js_output, 'const subtitleScale = 0.4')
+    assert_present(js_output, 'const titleFontSize = 0.8 * 60')
+    assert_present(js_output, 'const subtitleFontSize = 0.4 * 60')
   end
 
   def test_063_javascript_with_custom_settings
@@ -659,8 +661,8 @@ class BannerSVGTest < Minitest::Test
     
     # Check that custom values are interpolated into JavaScript
     assert_present(js_output, 'const aspectRatio = 4.0')
-    assert_present(js_output, 'const titleScale = 1.5')
-    assert_present(js_output, 'const subtitleScale = 0.6')
+    assert_present(js_output, 'const titleFontSize = 1.5 * 60')
+    assert_present(js_output, 'const subtitleFontSize = 0.6 * 60')
     assert_present(js_output, "fill='#ff0000'")
   end
 

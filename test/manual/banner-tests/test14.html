@@ -27,25 +27,96 @@
     </style>
 </head>
 <body>
-    <div class="banner">
-      <svg xmlns='http://www.w3.org/2000/svg' 
-     width='100%' height='100' 
-     viewBox='0 0 800 100' 
-     preserveAspectRatio='xMidYMid meet'>
-  <rect x='0' y='0' width='100%' height='100%' fill='#fff' />
-  <text x='5%' 
-      y='52%' 
-      text-anchor='start'
-      style='font-family: Verdana; font-size: 48px; font-weight: normal; font-style: normal' 
-      fill='#374151'>Green Text</text>
+    <div class="banner" id="header">
+      <script>
+  function insert_svg_header(container) {
+    const svg_text = `      <svg xmlns='http://www.w3.org/2000/svg' 
+           width='100%' height='100' 
+           viewBox='0 0 800 100' 
+           preserveAspectRatio='xMidYMid meet'>
+        <rect x='0' y='0' width='100%' height='100%' fill='#fff' />
+        <text x='5%' 
+            y='52%' 
+            text-anchor='start'
+            style='font-family: Verdana; font-size: 48.0px; font-weight: normal; font-style: normal' 
+            fill='#00ff00'>Green Text</text>
+      
+        <text x='5%' 
+            y='82%' 
+            text-anchor='start'
+            style='font-family: Verdana; font-size: 24.0px; font-weight: normal; font-style: normal' 
+            fill='#00ff00'>Color test</text>
+      
+      </svg>`;
+    const svgElement = document.createElement('div');
+    svgElement.innerHTML = svg_text;
+    const svg = svgElement.firstElementChild;
 
-  <text x='5%' 
-      y='82%' 
-      text-anchor='start'
-      style='font-family: Verdana; font-size: 24px; font-weight: normal; font-style: normal' 
-      fill='#374151'>Color test</text>
+    const svgWidth = window.innerWidth;
+    const aspectRatio = 8.0;
+    const svgHeight = svgWidth / aspectRatio;
 
-</svg>
+    svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+    svg.setAttribute('width', svgWidth);
+    svg.setAttribute('height', svgHeight);
+
+                const titleFontSize = 0.8 * 60;
+    const subtitleFontSize = 0.4 * 60;
+
+    const te1 = svg.querySelector('text:nth-of-type(1)')
+    const te2 = svg.querySelector('text:nth-of-type(2)')
+    
+    // Don't override the styles - they're already set correctly in the SVG
+    // Just update the positioning and text-anchor
+    
+    const titleXpct = "5%";
+    const titleYpct = "52%";
+    const subtitleXpct = "5%";
+    const subtitleYpct = "82%";
+
+    const tX = svgWidth  * (parseFloat(titleXpct) / 100);
+    const tY = svgHeight * (parseFloat(titleYpct) / 100);
+    const sX = svgWidth  * (parseFloat(subtitleXpct) / 100);
+    const sY = svgHeight * (parseFloat(subtitleYpct) / 100);
+
+    te1.setAttribute('x', tX);
+    te1.setAttribute('y', tY);
+    te2.setAttribute('x', sX);
+    te2.setAttribute('y', sY);
+    
+    // Set text-anchor for proper positioning (use individual anchors if set)
+    te1.setAttribute('text-anchor', 'start');
+    te2.setAttribute('text-anchor', 'start');
+    
+    // Apply calculated font sizes
+    te1.setAttribute('font-size', titleFontSize + 'px');
+    te2.setAttribute('font-size', subtitleFontSize + 'px');
+
+    const containerElement = document.getElementById(container);
+  if (containerElement) {
+    console.log('Container found, inserting SVG...');
+    containerElement.innerHTML = svg.outerHTML;
+    console.log('SVG inserted successfully');
+  } else {
+    console.error('Container not found:', container);
+  }
+  }
+
+          console.log('SVG script loaded');
+console.log('Header element exists:', !!document.querySelector('header'));
+
+window.onload = function() {
+  console.log('SVG insertion starting...');
+  insert_svg_header('header');
+  console.log('SVG insertion complete');
+}
+
+// Also try immediate execution
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM ready, trying SVG insertion...');
+  insert_svg_header('header');
+});
+</script>
 
     </div>
     <div class="content">

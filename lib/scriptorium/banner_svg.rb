@@ -600,15 +600,15 @@ class Scriptorium::BannerSVG
       subtitle_anchor = @subtitle_text_anchor || @text_anchor
       
       title_svg = <<~EOS
-        <text x='#{title_x}%' 
-              y='#{title_y}%' 
+        <text x='#{title_x}' 
+              y='#{title_y}' 
               text-anchor='#{title_anchor}'
               style='#{title_style}' 
               fill='#{title_color}'>#@title</text>
       EOS
       subtitle_svg = <<~EOS
-        <text x='#{subtitle_x}%' 
-              y='#{subtitle_y}%' 
+        <text x='#{subtitle_x}' 
+              y='#{subtitle_y}' 
               text-anchor='#{subtitle_anchor}'
               style='#{subtitle_style}' 
               fill='#{subtitle_color}'>#@subtitle</text>

@@ -51,42 +51,6 @@ list themes            - List available themes
 clone <old> <new>      - Clone a theme
 ```
 
-### Implementation Methods
-
-#### `list_themes`
-```ruby
-private def list_themes
-  puts
-  themes = @api.themes_available
-  if themes.empty?
-    puts "  No themes found"
-  else
-    puts "  Available themes:"
-    themes.each do |theme|
-      puts "    #{theme}"
-    end
-  end
-  puts
-end
-```
-
-#### `clone_theme`
-```ruby
-private def clone_theme(args)
-  parts = args.split(/\s+/)
-  if parts.length != 2
-    puts "  Usage: clone <oldtheme> <newtheme>"
-    puts "  Example: clone standard mytheme"
-    return
-  end
-
-  old_theme, new_theme = parts[0], parts[1]
-  
-  # Validation and cloning logic
-  # Uses FileUtils.cp_r for recursive copying
-end
-```
-
 ## Features
 
 ### Validation
@@ -98,17 +62,10 @@ end
 ### User Experience
 - **Clear output**: Consistent formatting with other CLI commands
 - **Error messages**: Descriptive error messages for all failure cases
-- **Success feedback**: Confirmation messages for successful operations
-- **Help integration**: Commands documented in help menu
 
-### File Operations
-- **Recursive copying**: Uses `FileUtils.cp_r` for complete theme copying
-- **Directory structure**: Preserves all theme files and subdirectories
-- **Safe operations**: No destructive operations, only copying
+## Testing Status
 
-## Testing
-
-### Test Results
+### Functionality
 - **List themes**: ✅ Correctly lists available themes
 - **Theme cloning**: ✅ Successfully clones themes with all files
 - **Validation**: ✅ Properly validates source and target
@@ -120,36 +77,6 @@ end
 - **Invalid source**: Handles non-existent source themes
 - **Existing target**: Prevents overwriting existing themes
 - **File structure**: Verifies complete directory copying
-
-## Usage Examples
-
-### List Themes
-```bash
-scriptorium> list themes
-  Available themes:
-    standard
-    mytheme
-```
-
-### Clone Theme
-```bash
-scriptorium> clone standard mytheme
-  ✅ Theme 'standard' cloned to 'mytheme'
-  Edit /path/to/themes/mytheme to customize your theme
-```
-
-### Error Cases
-```bash
-scriptorium> clone nonexistent mytheme
-  Theme 'nonexistent' not found
-
-scriptorium> clone standard standard
-  Theme 'standard' already exists
-
-scriptorium> clone standard
-  Usage: clone <oldtheme> <newtheme>
-  Example: clone standard mytheme
-```
 
 ## Integration
 
@@ -197,9 +124,6 @@ scriptorium> clone standard
 
 ### Updated Files
 - `bin/scriptorium` - Added theme management commands and help text
-
-### New Files
-- None (enhancements to existing CLI)
 
 ## Notes
 

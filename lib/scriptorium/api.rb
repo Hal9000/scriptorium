@@ -1294,7 +1294,6 @@ class Scriptorium::API
         mark_post_deployed(post.id, view)
       end
       
-      puts "Successfully deployed #{undeployed_posts.length} posts: #{undeployed_posts.map(&:id).join(', ')}"
       true
     else
       raise DeploymentFailed($?.exitstatus)
