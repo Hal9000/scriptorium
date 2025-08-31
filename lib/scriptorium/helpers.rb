@@ -36,6 +36,8 @@ module Scriptorium::Helpers
     vhash = Hash.new("")
     lines.each do |line|
       var, val = line.split(" ", 2)
+      # Fix: treat nil values as empty strings
+      val = "" if val.nil?
       vhash[var.to_sym] = val
     end
     vhash
@@ -549,5 +551,8 @@ module Scriptorium::Helpers
       nil
     end
   end
-end
 
+  def tty(str)
+    File.open('/dev/tty', 'w') { |f| f.puts str }
+  end
+end

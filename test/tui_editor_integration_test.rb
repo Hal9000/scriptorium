@@ -144,18 +144,18 @@ class TUIEditorIntegrationTest < Minitest::Test
     get_string(read, "Setup complete", "Should show setup completion")
     
     # Wait for assistance question
-    get_string(read, "Do you want assistance in creating your first view", "Should ask about assistance")
+    get_string(read, /Do you want assistance/, "Should ask about assistance")
     
     # Send 'y' for assistance
-    send_and_expect(read, write, "y", "Enter view name",
+    send_and_expect(read, write, "y", /Enter view name/,
                    "Should prompt for view name")
     
     # Send view name
-    send_and_expect(read, write, "testview", "Enter view title",
+    send_and_expect(read, write, "testview", /Enter view title/,
                    "Should prompt for view title")
     
     # Send view title
-    send_and_expect(read, write, "Test View", "Enter subtitle",
+    send_and_expect(read, write, "Test View", /Enter subtitle/,
                    "Should prompt for subtitle")
     
     # Send subtitle
@@ -229,7 +229,7 @@ class TUIEditorIntegrationTest < Minitest::Test
     get_string(read, "Setup complete", "Should show setup completion")
     
     # Wait for assistance question
-    get_string(read, "Do you want assistance in creating your first view", "Should ask about assistance")
+    get_string(read, /Do you want assistance/, "Should ask about assistance")
     
     # Send 'n' to skip assistance
     send_and_expect(read, write, "n", "[sample]", "Should show main prompt")
@@ -262,13 +262,13 @@ class TUIEditorIntegrationTest < Minitest::Test
     get_string(read, "Setup complete", "Should show setup completion")
     
     # Wait for assistance question
-    get_string(read, "Do you want assistance in creating your first view", "Should ask about assistance")
+    get_string(read, /Do you want assistance/, "Should ask about assistance")
     
     # Send 'n' to skip assistance
     send_and_expect(read, write, "n", "[sample]", "Should show main prompt")
     
     # Create a post
-    send_and_expect(read, write, "new post Test Post", "Created draft",
+    send_and_expect(read, write, "new post Test Post", /Created draft:/,
                    "Should show draft created")
     
     # Wait for editor opening

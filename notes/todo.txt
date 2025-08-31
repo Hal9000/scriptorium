@@ -1,22 +1,20 @@
 VERY SOON:
 ----------
-  dependency management
-  common refactorings for AI
-  add draft management
   legacy import
-  themes into web app
   full reddit support
+  add draft management
+  themes into web app
+  Sample blog additions
+  livetext scriptorium additions
+  common refactorings for AI (incl. dead code)
+  dependency management
   configurator? more wizards?
   post footer?
-  livetext scriptorium additions
-  Sample blog additions
 
 
 SOONISH:
 --------
   Theme components?
-  Work on dependency tree? (user action triggers regeneration)
-  Find dead code
   UI by curses (RubyText)
   facebook button
   x/twitter button
@@ -33,7 +31,7 @@ LATER:
   Widget: Twitter? Instagram?
   Ad support (footer? widget?)
   Backup and versioning
-  Markdown support
+  Markdown support??
   Redirection if posts change?
   Docs: User level (incl. basic Livetext, usage, theme creation)
 

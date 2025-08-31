@@ -24,7 +24,8 @@ class Scriptorium::Repo
   end
 
   def self.create(path = nil, testmode: false)
-    assume { path.nil? || path.is_a?(String) }
+    msg = "path must be nil or String, got #{path.class}"
+    assume(msg) { path.nil? || path.is_a?(String) }
     # Handle backward compatibility: boolean true means testing mode
     if testmode == true
       Scriptorium::Repo.testing = path
@@ -71,14 +72,16 @@ class Scriptorium::Repo
   end
 
   def self.open(root)
-    assume { root.is_a?(String) && !root.empty? }
+    msg = "root must be a non-empty String, got #{root.class} (#{root.inspect})"
+    assume(msg) { root.is_a?(String) && !root.empty? }
     repo = Scriptorium::Repo.new(root)
     verify { repo.is_a?(Scriptorium::Repo) }
     repo
   end
 
   def self.destroy
-    assume { Scriptorium::Repo.testing }
+    msg = "Repo.testing must be true in test mode"
+    assume(msg) { Scriptorium::Repo.testing }
     raise self.TestModeOnly unless Scriptorium::Repo.testing
     system!("rm -rf #@root", "destroying repository")
     verify { !Dir.exist?(@root) }
@@ -96,7 +99,8 @@ class Scriptorium::Repo
   end
 
   def initialize(root)    # repo
-    assume { root.is_a?(String) && !root.empty? }
+    msg = "root must be a non-empty String, got #{root.class} (#{root.inspect})"
+    assume(msg) { root.is_a?(String) && !root.empty? }
     @root = root
     @predef = Scriptorium::StandardFiles.new
     # Scriptorium::Repo.class_eval { @root, @repo = root, self }
@@ -167,8 +171,10 @@ class Scriptorium::Repo
   end
 
   def create_view(name, title, subtitle = "", theme: "standard")
-    assume { name.is_a?(String) }
-    assume { title.is_a?(String) }
+    msg = "name must be a String, got #{name.class}"
+    assume(msg) { name.is_a?(String) }
+    msg = "title must be a String, got #{title.class}"
+    assume(msg) { title.is_a?(String) }
     validate_view_name(name)
     validate_view_title(title)
     
@@ -216,6 +222,7 @@ class Scriptorium::Repo
                  "title    #{title}",
                  "subtitle #{subtitle}",
                  "theme    #{theme}")
+      
       write_file(dir/:config/"global-head.txt",   @predef.html_head_content(true))  # true = view-specific
       write_file(dir/:config/"bootstrap_js.txt",  @predef.bootstrap_js)
       write_file(dir/:config/"bootstrap_css.txt", @predef.bootstrap_css)
@@ -254,7 +261,8 @@ class Scriptorium::Repo
   end
 
   def open_view(name)
-    vhash = getvars(view_dir(name)/"config.txt")
+    config_file = view_dir(name)/"config.txt"
+    vhash = getvars(config_file)
     title, subtitle, theme = vhash.values_at(:title, :subtitle, :theme)
     view = Scriptorium::View.new(name, title, subtitle, theme)
     @views -= [view]
@@ -401,11 +409,16 @@ class Scriptorium::Repo
   end
 
   def create_post(title: nil, views: nil, tags: nil, body: nil, blurb: nil)
-    assume { title.nil? || title.is_a?(String) }
-    assume { views.nil? || views.is_a?(Array) || views.is_a?(String) }
-    assume { tags.nil? || tags.is_a?(Array) || tags.is_a?(String) }
-    assume { body.nil? || body.is_a?(String) }
-    assume { blurb.nil? || blurb.is_a?(String) }
+    msg = "title must be nil or String, got #{title.class}"
+    assume(msg) { title.nil? || title.is_a?(String) }
+    msg = "views must be nil, Array, or String, got #{views.class}"
+    assume(msg) { views.nil? || views.is_a?(Array) || views.is_a?(String) }
+    msg = "tags must be nil, Array, or String, got #{tags.class}"
+    assume(msg) { tags.nil? || tags.is_a?(Array) || tags.is_a?(String) }
+    msg = "body must be nil or String, got #{body.class}"
+    assume(msg) { body.nil? || body.is_a?(String) }
+    msg = "blurb must be nil or String, got #{blurb.class}"
+    assume(msg) { blurb.nil? || blurb.is_a?(String) }
     name = create_draft(title: title, views: views, tags: tags, body: body, blurb: blurb)
     num = finish_draft(name)
     

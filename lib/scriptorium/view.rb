@@ -25,10 +25,14 @@ class Scriptorium::View
   end
 
   def initialize(name, title, subtitle = "", theme = "standard")
-    assume { name.is_a?(String) }
-    assume { title.is_a?(String) }
-    assume { subtitle.is_a?(String) }
-    assume { theme.is_a?(String) }
+    msg = "name must be a String, got #{name.class}"
+    assume(msg) { name.is_a?(String) }
+    msg = "title must be a String, got #{title.class}"
+    assume(msg) { title.is_a?(String) }
+    msg = "subtitle must be a String, got #{subtitle.class}"
+    assume(msg) { subtitle.is_a?(String) }
+    msg = "theme must be a String, got #{theme.class}"
+    assume(msg) { theme.is_a?(String) }
     
     validate_name(name)
     validate_title(title)
@@ -155,7 +159,8 @@ But overall, the process is robust and well thought-out. No major changes needed
 
   def apply_theme(theme)
     check_invariants
-    assume { theme.is_a?(String) && !theme.empty? }
+    msg = "theme must be a non-empty String, got #{theme.class} (#{theme.inspect})"
+    assume(msg) { theme.is_a?(String) && !theme.empty? }
     
     # check to see if ever done before?
     # copy layout.txt to view
@@ -513,7 +518,8 @@ write output:      write the result to output/panes/header.html
   
   def build_widgets(arg)
     check_invariants
-    assume { arg.is_a?(String) }
+    msg = "arg must be a String, got #{arg.class}"
+    assume(msg) { arg.is_a?(String) }
     validate_widget_arg(arg)
     
     widgets = arg.split

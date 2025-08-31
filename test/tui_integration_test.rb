@@ -7,6 +7,8 @@ require 'minitest/autorun'
 require_relative '../lib/scriptorium'
 
 class TUIIntegrationTest < Minitest::Test
+  include Scriptorium::Helpers
+  
   # Test repository path
   TEST_REPO_PATH = "scriptorium-TEST"
   
@@ -105,41 +107,21 @@ class TUIIntegrationTest < Minitest::Test
 
   def test_006_asset_management_commands
     ENV['NOREADLINE'] = '1'
-    
     PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium --test') do |read, write, pid|
       begin
-        # Wait for "No repository found" message
         await(read, "No repository found.", "Should show 'No repository found'")
-        
-        # Send 'y' to create new repository
         send_and_expect(read, write, "y", "Created test repository successfully.", "Should show repository created")
-        
-        # Wait for editor setup
         await(read, "No editor configured", "Should show editor setup")
-        
-        # Wait for editor list
         await(read, "Available editors", "Should show available editors")
-        
-        # Wait for editor choice prompt
         await(read, "Choose editor", "Should prompt for editor selection")
         send_and_expect(read, write, "4", "Selected editor: ed", "Should show editor selection")
-        
-        # Wait for setup completion
         await(read, "Setup complete", "Should show setup completion")
-        
-        # Wait for assistance question
         await(read, "Do you want assistance in creating your first view", "Should ask about assistance")
-        
-        # Send 'n' to skip assistance (simpler test)
         send_and_expect(read, write, "n", "[sample]", "Should show main prompt")
-        
-        # Test asset management commands
         send_and_expect(read, write, "list assets", /No assets found in global/, "Should show no global assets")
         send_and_expect(read, write, "list assets view", /No assets found in view/, "Should show no view assets")
         send_and_expect(read, write, "asset info test.png", /Asset not found/, "Should show asset not found error")
         send_and_expect(read, write, "asset info", /Usage: asset info/, "Should show usage help")
-        
-        # Quit
         send_and_expect(read, write, "q", "Goodbye!", "Should show goodbye")
       ensure
         Process.kill('TERM', pid) rescue nil
@@ -152,60 +134,29 @@ class TUIIntegrationTest < Minitest::Test
 
   def test_007_deployment_commands
     ENV['NOREADLINE'] = '1'
-    
-
-    
     PTY.spawn({'NOREADLINE' => '1'}, 'ruby bin/scriptorium --test') do |read, write, pid|
       begin
-        # Debug output removed
-        
-        # Wait for "No repository found" message
         await(read, "No repository found.", "Should show 'No repository found'")
-        
-        # Send 'y' to create new repository
         send_and_expect(read, write, "y", "Created test repository successfully.", "Should show repository created")
-        
-        # Wait for editor setup
         await(read, "No editor configured", "Should show editor setup")
-        
-        # Wait for editor list
         await(read, "Available editors", "Should show available editors")
-        
-        # Wait for editor choice prompt
         await(read, "Choose editor", "Should prompt for editor selection")
         send_and_expect(read, write, "4", "Selected editor: ed", "Should show editor selection")
-        
-        # Wait for setup completion
         await(read, "Setup complete", "Should show setup completion")
-        
-        # Wait for assistance question
         await(read, "Do you want assistance in creating your first view", "Should ask about assistance")
-        
-        # Send 'n' to skip assistance (simpler test)
         send_and_expect(read, write, "n", "[sample]", "Should show main prompt")
-        
-                 # Test configure deployment command
          write.puts "configure deployment"
-         sleep 1  # Give ed time to open
+         sleep 0.3  # Give ed time to open
          
          # Simulate ed interaction
          write.puts "w"  # Write file
          sleep 0.1
          write.puts "q"  # Quit
          sleep 0.1
-        
-                 # Wait for deployment configuration message
          await(read, /Deployment configuration edited for view/, "Should edit deployment config")
-         
-         # Wait for prompt to return
          await(read, /\[sample\]/, "Should return to main prompt")
-         
-         # Test deploy command
          send_and_expect(read, write, "deploy", /Deployment error:/, "Should show deployment error")
-        
-        # Quit
         send_and_expect(read, write, "q", "Goodbye!", "Should show goodbye")
-        
       ensure
         Process.kill('TERM', pid) rescue nil
         Process.wait(pid) rescue nil
@@ -355,9 +306,8 @@ class TUIIntegrationTest < Minitest::Test
     ENV.delete('NOREADLINE')
   end
 
-  private
-
   def send_and_expect(read, write, input, expected_pattern, description)
+          # tty "USER: #{input}"   # uncomment for debugging
     write.puts input
     sleep 0.1  # Small delay to ensure input is processed
     result = await(read, expected_pattern, description)
@@ -454,13 +404,11 @@ class TUIIntegrationTest < Minitest::Test
     await(read, /\[.*\] /, "Should show prompt after lsv")
     
     # Create a new view first
-    write.puts "new view testview123 This is just a test..."
-    await(read, /Enter subtitle \(optional\):/, "Should prompt for subtitle")
-    write.puts ""  # Empty subtitle
-    await(read, "Created view 'testview123' with title", "Should create new view")
+    send_and_expect(read, write, "new view testview123 This is just a test...", /Enter subtitle \(optional\):/, "Should prompt for subtitle")
+    send_and_expect(read, write, "", /Created view 'testview123' with title/, "Should create new view")
     
     # Wait for the "Switched to view" message that comes after creation
-    await(read, "Switched to view 'testview123'", "Should switch to new view after creation")
+    await(read, /Switched to view 'testview123'/, "Should switch to new view after creation")
     
     # Wait for prompt
     await(read, /\[.*\] /, "Should show prompt after creating view")
@@ -479,8 +427,9 @@ class TUIIntegrationTest < Minitest::Test
     await(read, /\[.*\] /, "Should show prompt after view command")
     
     # Create new view (this should fail because view already exists)
-    write.puts "new view testview123 This is just a test..."
-    await(read, "View 'testview123' already exists", "Should show view already exists error")
+    sleep 0.5  # Wait for first view creation to fully complete
+    send_and_expect(read, write, "new view testview123 This is just a test...", /Enter subtitle \(optional\):/, "Should prompt for subtitle")
+    send_and_expect(read, write, "", /View.*already exists/, "Should show view already exists error")
     
     # Wait for prompt
     await(read, /\[.*\] /, "Should show prompt after failed view creation")
@@ -773,9 +722,10 @@ class TUIIntegrationTest < Minitest::Test
   end
 
   def await(read, expected_pattern, description, timeout = 5)
+    sleep 0.05
     output = read.expect(expected_pattern, timeout)
     if output
-      puts "Found: #{output[0].strip}" if ENV['VERBOSE']
+      # tty "CODE: '#{output[0].strip}'"   # uncomment for debugging
       assert output[0].match?(expected_pattern), "#{description}: Expected pattern '#{expected_pattern}' not found in output"
       return output[0]  # Return the matched string"
     else

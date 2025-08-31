@@ -70,12 +70,16 @@ class ScriptoriumTUI
       @testing = "scriptorium-TEST"
       @api = Scriptorium::API.new(testmode: true)
       begin
+        File.open('/dev/tty', 'w') { |f| f.puts "      DEBUG: About to create repo" }
         @api.create_repo("scriptorium-TEST")
+        File.open('/dev/tty', 'w') { |f| f.puts "      DEBUG: Repo created, about to call get_started" }
         puts "Created test repository successfully."
         
         # Run initial setup (like Runeblog)
         get_started
+        File.open('/dev/tty', 'w') { |f| f.puts "      DEBUG: get_started completed" }
       rescue => e
+        puts "      DEBUG: Exception in create_new_repo: #{e.class} - #{e.message}"
         puts "Error creating repository: #{e.message}"
         puts e.backtrace.first if @testing
         return false
@@ -106,7 +110,7 @@ class ScriptoriumTUI
       puts "Let's set up your first view!"
       
       # Create a new view using existing interactive method
-      create_view("view")
+      create_view
       
       # Get the current view name (the one we just created)
       current_view = @api.current_view
@@ -238,14 +242,13 @@ class ScriptoriumTUI
   end
 
   def mainloop
+    # Ensure we have a valid API with repository
+    if @api.nil? || @api.instance_variable_get(:@repo).nil?
+      puts "Error: No valid repository loaded. Exiting."
+      return
+    end
     loop do
       begin
-        # Ensure we have a valid API with repository
-        if @api.nil? || @api.instance_variable_get(:@repo).nil?
-          puts "Error: No valid repository loaded. Exiting."
-          return
-        end
-        
         current_view = @api.current_view
         current_view_name = current_view&.name || "no-view"
         prompt = "[#{current_view_name}] "
@@ -257,11 +260,8 @@ class ScriptoriumTUI
           print prompt
           input = gets&.chomp&.strip
         end
-
         break if input.nil? || input.downcase == "quit" || input.downcase == "q"
-
         next if input.empty?
-
         execute_command(input)
       rescue Interrupt
         puts "\nUse 'quit' to exit"
@@ -276,9 +276,7 @@ class ScriptoriumTUI
     puts
   end
 
-  private
-
-  def setup_readline
+  private def setup_readline
     # Only set up Readline if we're not in automated testing mode
     return if ENV['NOREADLINE']
     
@@ -343,93 +341,191 @@ class ScriptoriumTUI
     puts "Test repository created successfully!"
   end
 
-  private def execute_command(input)
-    parts = input.strip.split(/\s+/, 2)
-    cmd = parts[0].downcase
-    args = parts[1] || ""
-
-
-
-    # Handle multi-word commands first
-    if cmd == "list" && (args == "views" || args.start_with?("views "))
-      list_views
-    elsif cmd == "list" && (args == "posts" || args.start_with?("posts "))
-      list_posts
-    elsif cmd == "list" && (args == "drafts" || args.start_with?("drafts "))
-      list_drafts
-    elsif cmd == "list" && (args == "assets" || args.start_with?("assets "))
-      list_assets(args)
-    elsif cmd == "list" && (args == "widgets" || args.start_with?("widgets "))
-      list_widgets
-    elsif cmd == "list" && (args == "themes" || args.start_with?("themes "))
-      list_themes
-    elsif cmd == "change" && (args == "view" || args.start_with?("view "))
-      change_view(args)
-    elsif cmd == "new" && (args == "view" || args.start_with?("view "))
-      create_view(args)
-    elsif cmd == "new" && (args == "draft" || args.start_with?("draft "))
-      create_draft(args)
-    elsif cmd == "new" && (args == "post" || args.start_with?("post "))
-      create_post(args)
-    elsif cmd == "upload" && (args == "asset" || args.start_with?("asset "))
-      upload_asset(args)
-    elsif cmd == "copy" && (args == "asset" || args.start_with?("asset "))
-      copy_asset(args)
-    elsif cmd == "delete" && (args == "asset" || args.start_with?("asset "))
-      delete_asset(args)
-    elsif cmd == "asset" && (args == "info" || args.start_with?("info "))
-      asset_info(args)
-    elsif cmd == "configure" && (args == "deployment" || args.start_with?("deployment "))
-      configure_deployment(args)
-    elsif cmd == "add" && (args == "widget" || args.start_with?("widget "))
-      add_widget(args)
-    elsif cmd == "config" && (args == "widget" || args.start_with?("widget "))
-      config_widget(args)
-    elsif cmd == "config" && (args == "social" || args.start_with?("social "))
-      config_social
-    elsif cmd == "config" && (args == "reddit" || args.start_with?("reddit "))
-      config_reddit
-    elsif cmd == "clone" && (args == "theme" || args.start_with?("theme "))
-      clone_theme(args[6..-1])  # Remove "theme " prefix
-    elsif cmd == "delete" && (args == "theme" || args.start_with?("theme "))
-      delete_theme(args)
-
-    else
-      # Handle single-word commands
-      case cmd
-      when "help", "h"
-        show_help
-      when "view"
-        show_current_view
-      when "cv"
-        change_view(args)
-      when "lsv"
-        list_views
-      when "lsp"
-        list_posts
-      when "lsd"
-        list_drafts
-      when "cd"
-        create_draft("draft")
-      when "version", "v"
-        show_version
-      when "deploy"
-        deploy_current_view
-      when "preview"
-        preview_current_view
-        preview_current_view
-      when "browse"
-        browse_deployed_view
-      when "generate"
-        generate_current_view
-      when "quit", "q"
-        exit 0
+  def which(command)
+    # Mock which in test mode to avoid hanging
+    if @testing
+      case command
+      when 'nano', 'vim', 'vi', 'ed'
+        "/usr/bin/#{command}"
       else
-        puts
-        puts "  Unknown command: #{cmd}. Type 'help' for available commands."
-        puts
+        nil
+      end
+    else
+      # Use File.which if available (Ruby 3.2+)
+      if File.respond_to?(:which)
+        File.which(command)
+      else
+        # Fall back to system call
+        result = `which #{command} 2>/dev/null`.chomp
+        result.empty? ? nil : result
       end
     end
+  end
+
+  def get_started
+    puts
+    puts "  No editor configured. Let's set one up."
+    File.open('/dev/tty', 'w') { |f| f.puts "      DEBUG: About to call pick_editor" }
+    pick_editor
+    File.open('/dev/tty', 'w') { |f| f.puts "      DEBUG: pick_editor completed" }
+    
+    puts
+    puts "  Setup complete!"
+    puts "  You can now use 'new post <title>' to create posts with your editor."
+    puts
+  end
+
+  def pick_editor
+    puts
+    puts "  Available editors:"
+    
+    # Check for common editors (prioritized for single file editing)
+    editors = []
+    File.open('/dev/tty', 'w') { |f| f.puts "      DEBUG: Checking for editors" }
+    %w[nano vim emacs vi micro].each do |editor|
+      if which(editor)
+        editors << editor
+        File.open('/dev/tty', 'w') { |f| f.puts "      DEBUG: Found editor: #{editor}" }
+      end
+    end
+    
+    # The original Unix line editor - for the brave souls who want ultimate speed
+    if which("ed")
+      editors << "ed"
+      File.open('/dev/tty', 'w') { |f| f.puts "      DEBUG: Found editor: ed" }
+    end
+    
+    File.open('/dev/tty', 'w') { |f| f.puts "      DEBUG: Total editors found: #{editors.length}" }
+    
+    if editors.empty?
+      puts "    No common editors found. Please install nano, vim, emacs, vi, micro, or ed."
+      puts "    You can manually set your editor later by editing config/editor.txt"
+      puts
+      return
+    end
+    
+    # Show available editors
+    editors.each_with_index do |editor, index|
+      puts "    #{index + 1}. #{editor}"
+    end
+    
+    # Let user pick
+    print "  Choose editor (1-#{editors.length}): "
+    File.open('/dev/tty', 'w') { |f| f.puts "      DEBUG: About to call get_string for editor choice" }
+    choice = get_string
+    File.open('/dev/tty', 'w') { |f| f.puts "      DEBUG: get_string returned: '#{choice}'" }
+    
+    if choice && choice.match?(/^\d+$/) && choice.to_i.between?(1, editors.length)
+      selected_editor = editors[choice.to_i - 1]
+      
+      # Save the choice
+      make_dir(@api.root/"config")
+      write_file(@api.root/"config/editor.txt", selected_editor)
+      
+      puts
+      puts "  Selected editor: #{selected_editor}"
+      puts "  Editor preference saved to config/editor.txt"
+    else
+      puts
+      puts "  Invalid choice. Editor not changed."
+    end
+  end
+
+  private def execute_command(input)
+    calling = parse_cmd(input.strip)
+    name, *args = calling
+    send(name, *args)
+  rescue NoMethodError => e
+    puts
+    puts e.message
+    puts "  ...Unknown command: #{name}. Type 'help' for available commands."
+    puts
+  end
+
+  private def two_words?(parts)
+    cmds = ["list views", "list posts", "list drafts", "list assets", 
+            "list widgets", "list themes","change view", "new view", 
+            "new post", "upload asset", "copy asset", "delete asset",
+            "delete theme", "asset info", "configure deployment", 
+            "add widget", "config widget", "config social", 
+            "config reddit", "clone theme"]
+    two_word_cmd = parts[0..1].join(" ")
+    flag = cmds.include?(two_word_cmd)
+    return flag ? two_word_cmd : nil
+  end
+
+  private def one_word?(parts)
+    cmds = %w[help h view cv lsv lsp lsd version v deploy preview browse 
+              generate quit q]
+    one_word_cmd = parts[0]
+    flag = cmds.include?(one_word_cmd)
+    return flag ? one_word_cmd : nil
+  end
+
+  private def parse_cmd(cmdstr)
+    parts = cmdstr.downcase.split
+    case
+      when cmd = two_words?(parts)
+        args = parts[2..-1]
+      when cmd = one_word?(parts)
+        args = parts[1..-1]
+      else 
+        puts "  Unknown command: #{cmdstr}"
+        return [:unknown_command, cmdstr]
+    end
+    transform(cmd, args)
+  end
+
+  private def transform(cmd, args)
+    command_map = {
+      # Single word commands
+      "help"                    => [:show_help],
+      "h"                       => [:show_help],
+      "view"                    => [:show_current_view],
+      "cv"                      => [:change_view, args.join(" ")],
+      "lsv"                     => [:list_views],
+      "lsp"                     => [:list_posts],
+      "lsd"                     => [:list_drafts],
+      "version"                 => [:show_version],
+      "v"                       => [:show_version],
+      "deploy"                  => [:deploy_current_view],
+      "preview"                 => [:preview_current_view],
+      "browse"                  => [:browse_deployed_view],
+      "generate"                => [:generate_current_view],
+      "quit"                    => [:exit, 0],
+      "q"                       => [:exit, 0],
+      
+      # Two word commands
+      "list views"              => [:list_views],
+      "list posts"              => [:list_posts],
+      "list drafts"             => [:list_drafts],
+      "list assets"             => [:list_assets, args],
+      "list widgets"            => [:list_widgets, args],
+      "list themes"             => [:list_themes, args],
+      "change view"             => [:create_view, args],
+      "new view"                => [:create_view, args],
+      "new post"                => [:create_post, args],
+      "upload asset"            => [:upload_asset, args],
+      "copy asset"              => [:copy_asset, args],
+      "delete asset"            => [:delete_asset, args],
+      "delete theme"            => [:delete_theme, args],
+      "asset info"              => [:asset_info, args],
+      "configure deployment"    => [:configure_deployment, args],
+      "add widget"              => [:add_widget, args],
+      "config widget"           => [:config_widget, args],
+      "config social"           => [:config_social],
+      "config reddit"           => [:config_reddit],
+      "clone theme"             => [:clone_theme, args]
+    }
+    
+    command_map[cmd] || [:unknown_command, cmd]
+  end
+
+
+  private def unknown_command(cmd)
+    puts
+    puts "  Unknown command: #{cmd}. Type 'help' for available commands."
+    puts
   end
 
   private def show_help
@@ -541,159 +637,59 @@ class ScriptoriumTUI
     end
   end
 
-  private def create_view(args)
-    # Handle "new view" format - prompt for all parameters
-    if args == "view" || args.start_with?("view ")
-      # Remove "view " prefix if present, otherwise args is just "view"
-      view_args = args == "view" ? "" : args[5..-1]
+  private def create_view(args = nil)
+    # Handle array arguments from parse_cmd
+    if args.nil? || args.empty?
+      # No arguments provided - interactive mode
+      print "  Enter view name: "
+      name = get_string
+      return if name.nil? || name.empty?
       
-      if view_args.strip.empty?
-        # Interactive mode - prompt for all parameters
-        print "  Enter view name: "
-        name = get_string
-        return if name.nil? || name.empty?
-        
-        print "  Enter view title: "
-        title = get_string
-        return if title.nil? || title.empty?
-        
-        print "  Enter subtitle (optional): "
-        subtitle = get_string
-        subtitle = nil if subtitle.empty?
-        
-        # Check if view already exists
-        existing_views = @api.views
-        if existing_views.any? { |view| view.name == name }
-          puts
-          puts "  View '#{name}' already exists"
-          puts
-          return
-        end
-        
-        # Create view with all parameters
-        begin
-          @api.create_view(name, title, subtitle, theme: "standard")
-          puts
-          puts "  Created view '#{name}' with title '#{title}'"
-          puts "  Switched to view '#{name}'"
-          puts
-        rescue Exception => e
-          puts
-          puts "  #{e.message}"
-          puts
-        end
-      else
-        # Legacy mode - still support "new view <name> <title>"
-        parts = view_args.split(/\s+/, 2)
-        if parts.length < 2
-          puts
-          puts "  Usage: new view [<name> <title>]"
-          puts
-          return
-        end
-
-        name, title = parts
-        
-        # Check if view already exists BEFORE prompting for subtitle
-        existing_views = @api.views
-        if existing_views.any? { |view| view.name == name }
-          puts
-          puts "  View '#{name}' already exists"
-          puts
-          return
-        end
-        
-        # Prompt for subtitle only if view doesn't exist
-        print "  Enter subtitle (optional): "
-        subtitle = get_string
-        subtitle = nil if subtitle.empty?
-        
-        # Create view with all parameters
-        begin
-          @api.create_view(name, title, subtitle, theme: "standard")
-          puts
-          puts "  Created view '#{name}' with title '#{title}'"
-          puts "  Switched to view '#{name}'"
-          puts
-        rescue Exception => e
-          puts
-          puts "  #{e.message}"
-          puts
-        end
-      end
-    else
-      puts
-      puts "  Usage: new view [<name> <title>]"
-      puts
+      print "  Enter view title: "
+      title = get_string
+      return if title.nil? || title.empty?
+      
+      print "  Enter subtitle (optional): "
+      subtitle = get_string
+      subtitle = "" if subtitle.nil? || subtitle.empty?
+    elsif args.length == 1
+      # One argument provided - use as name, prompt for title and subtitle
+      name = args[0]
+      print "  Enter view title: "
+      title = get_string
+      return if title.nil? || title.empty?
+      
+      print "  Enter subtitle (optional): "
+      subtitle = get_string
+      subtitle = "" if subtitle.nil? || subtitle.empty?
+    elsif args.length >= 2
+      # Two or more arguments provided - use first two as name and title, prompt for subtitle
+      name = args[0]
+      title = args[1]
+      print "  Enter subtitle (optional): "
+      subtitle = get_string
+      subtitle = "" if subtitle.nil? || subtitle.empty?
     end
-  end
-
-  private def create_draft(args)
-    # Handle "new draft" format - prompt for all parameters
-    if args == "draft" || args.start_with?("draft ")
-      # Remove "draft " prefix if present, otherwise args is just "draft"
-      draft_args = args == "draft" ? "" : args[6..-1]
-      
-      if draft_args.strip.empty?
-        # Interactive mode - prompt for all parameters
-        print "  Enter draft title: "
-        title = gets&.chomp&.strip
-        return if title.nil? || title.empty?
-        
-        print "  Enter draft body: "
-        body = gets&.chomp&.strip
-        return if body.nil? || body.empty?
-        
-        print "  Enter tags (optional, comma-separated): "
-        tags_input = gets&.chomp&.strip
-        tags = tags_input.empty? ? nil : tags_input.split(",").map(&:strip)
-        
-        print "  Enter blurb (optional): "
-        blurb = gets&.chomp&.strip
-        blurb = nil if blurb.empty?
-        
-        # Create draft with all parameters
-        draft_path = @api.create_draft(
-          title: title,
-          body: body,
-          views: @api.current_view&.name,
-          tags: tags,
-          blurb: blurb
-        )
-        puts
-        puts "  Created draft: #{draft_path}"
-        puts
-      else
-        # Legacy mode - still support "new draft <title>"
-        title = draft_args.strip
-        
-        print "  Enter draft body: "
-        body = gets&.chomp&.strip
-        return if body.nil? || body.empty?
-        
-        print "  Enter tags (optional, comma-separated): "
-        tags_input = gets&.chomp&.strip
-        tags = tags_input.empty? ? nil : tags_input.split(",").map(&:strip)
-        
-        print "  Enter blurb (optional): "
-        blurb = gets&.chomp&.strip
-        blurb = nil if blurb.empty?
-        
-        # Create draft with all parameters
-        draft_path = @api.create_draft(
-          title: title,
-          body: body,
-          views: @api.current_view&.name,
-          tags: tags,
-          blurb: blurb
-        )
-        puts
-        puts "  Created draft: #{draft_path}"
-        puts
-      end
-    else
+    
+    # Check if view already exists
+    existing_views = @api.views
+    if existing_views.any? { |view| view.name == name }
       puts
-      puts "  Usage: new draft [<title>]"
+      puts "  View '#{name}' already exists"
+      puts
+      return
+    end
+    
+    # Create view with all parameters
+    begin
+      @api.create_view(name, title, subtitle, theme: "standard")
+      puts
+      puts "  Created view '#{name}' with title '#{title}'"
+      puts "  Switched to view '#{name}'"
+      puts
+    rescue Exception => e
+      puts
+      puts "  #{e.message}"
       puts
     end
   end
@@ -702,67 +698,6 @@ class ScriptoriumTUI
     puts
     puts "  Scriptorium #{Scriptorium::VERSION}"
     puts
-  end
-
-  def get_started
-    puts
-    puts "  No editor configured. Let's set one up."
-    pick_editor
-    
-    puts
-    puts "  Setup complete!"
-    puts "  You can now use 'new post <title>' to create posts with your editor."
-    puts
-  end
-
-  def pick_editor
-    puts
-    puts "  Available editors:"
-    
-    # Check for common editors (prioritized for single file editing)
-    editors = []
-    %w[nano vim emacs vi micro].each do |editor|
-      if which(editor)
-        editors << editor
-      end
-    end
-    
-    # The original Unix line editor - for the brave souls who want ultimate speed
-    if which("ed")
-      editors << "ed"
-    end
-    
-    
-    if editors.empty?
-      puts "    No common editors found. Please install nano, vim, emacs, vi, micro, or ed."
-      puts "    You can manually set your editor later by editing config/editor.txt"
-      puts
-      return
-    end
-    
-    # Show available editors
-    editors.each_with_index do |editor, index|
-      puts "    #{index + 1}. #{editor}"
-    end
-    
-    # Let user pick
-    print "  Choose editor (1-#{editors.length}): "
-    choice = get_string
-    
-    if choice && choice.match?(/^\d+$/) && choice.to_i.between?(1, editors.length)
-      selected_editor = editors[choice.to_i - 1]
-      
-      # Save the choice
-          make_dir(@api.root/"config")
-    write_file(@api.root/"config/editor.txt", selected_editor)
-      
-      puts
-      puts "  Selected editor: #{selected_editor}"
-      puts "  Editor preference saved to config/editor.txt"
-    else
-      puts
-      puts "  Invalid choice. Editor not changed."
-    end
   end
 
   def list_views
@@ -803,21 +738,17 @@ class ScriptoriumTUI
     end
   end
 
-  private def create_post(args)
-    # Handle "new post <title>" format
-    if args == "post" || args.start_with?("post ")
-      # Remove "post " prefix if present, otherwise args is just "post"
-      post_args = args == "post" ? "" : args[5..-1]
-      
-      if post_args.strip.empty?
-        # Interactive mode - prompt for title
-        print "  Enter post title: "
-        title = gets&.chomp&.strip
-        return if title.nil? || title.empty?
-      else
-        # Use provided title
-        title = post_args.strip
-      end
+  def create_post(args)
+    # Handle array arguments from parse_cmd
+    if args.nil? || args.empty?
+      # No arguments provided - interactive mode
+      print "  Enter post title: "
+      title = gets&.chomp&.strip
+      return if title.nil? || title.empty?
+    else
+      # Use first argument as title
+      title = args[0]
+    end
       
       # Check if editor is configured
       editor_file = @api.root/"config/editor.txt"
@@ -872,14 +803,9 @@ class ScriptoriumTUI
         puts "  Error creating post: #{e.message}"
         puts
       end
-    else
-      puts
-      puts "  Usage: new post [<title>]"
-      puts
-    end
   end
 
-  private def list_posts
+  def list_posts
     current_view = @api.current_view
     if current_view.nil?
       puts
@@ -888,7 +814,7 @@ class ScriptoriumTUI
       return
     end
 
-    posts = @api.all_posts(current_view)
+    posts = @api.posts(current_view)
     
     puts
     if posts.empty?
@@ -902,7 +828,7 @@ class ScriptoriumTUI
     puts
   end
 
-  private def list_drafts
+  def list_drafts
     drafts_dir = @api.root/:drafts
     return unless Dir.exist?(drafts_dir)
     
@@ -928,7 +854,7 @@ class ScriptoriumTUI
     tty.close
   end
 
-  private def deploy_current_view
+  def deploy_current_view
     current_view = @api.current_view
     if current_view.nil?
       puts
@@ -1072,7 +998,7 @@ class ScriptoriumTUI
     end
   end
 
-  private def list_widgets
+  def list_widgets
     current_view = @api.current_view
     if current_view.nil?
       puts
@@ -1435,7 +1361,7 @@ class ScriptoriumTUI
   end
 
   private def clone_theme(args)
-    parts = args.split(/\s+/)
+    parts = args.is_a?(String) ? args.split(/\s+/) : args
     if parts.length != 2
       puts
       puts "  Usage: clone theme <source> <newname>"
@@ -1470,7 +1396,7 @@ class ScriptoriumTUI
   end
 
   private def delete_theme(args)
-    parts = args.split(/\s+/)
+    parts = args.is_a?(String) ? args.split(/\s+/) : args
     if parts.length != 2
       puts
       puts "  Usage: delete theme <theme_path>"
@@ -1504,9 +1430,8 @@ class ScriptoriumTUI
 
   # Asset Management Commands
 
-  private def list_assets(args)
-    parts = args.split(/\s+/)
-    target = parts[1] || 'global'
+  def list_assets(args)
+    target = args[0] || 'global'
     
     unless %w[global library view gem].include?(target)
       puts
@@ -1541,7 +1466,7 @@ class ScriptoriumTUI
   end
 
   private def upload_asset(args)
-    parts = args.split(/\s+/)
+    parts = args.is_a?(String) ? args.split(/\s+/) : args
     if parts.length < 2
       puts
       puts "  Usage: upload asset <filepath> [target]"
@@ -1584,7 +1509,7 @@ class ScriptoriumTUI
   end
 
   private def copy_asset(args)
-    parts = args.split(/\s+/)
+    parts = args.is_a?(String) ? args.split(/\s+/) : args
     if parts.length < 3
       puts
       puts "  Usage: copy asset <filename> <from> <to>"
@@ -1622,12 +1547,11 @@ class ScriptoriumTUI
   end
 
   private def delete_asset(args)
-    parts = args.split(/\s+/)
+    parts = args.is_a?(String) ? args.split(/\s+/) : args
     if parts.length < 2
       puts
       puts "  Usage: delete asset <filename> [target]"
       puts "  Targets: global, library, view"
-      puts "  Example: delete asset old-image.jpg global"
       puts
       return
     end
@@ -1656,8 +1580,8 @@ class ScriptoriumTUI
   end
 
   private def asset_info(args)
-    parts = args.split(/\s+/)
-    if parts.length < 2
+    parts = args.is_a?(String) ? args.split(/\s+/) : args
+    if parts.length < 1
       puts
       puts "  Usage: asset info <filename> [target]"
       puts "  Targets: global, library, view, gem"
@@ -1666,8 +1590,8 @@ class ScriptoriumTUI
       return
     end
 
-    filename = parts[1]
-    target = parts[2] || 'global'
+    filename = parts[0]
+    target = parts[1] || 'global'
     
     unless %w[global library view gem].include?(target)
       puts
@@ -1702,7 +1626,7 @@ class ScriptoriumTUI
   end
 
   private def configure_deployment(args)
-    parts = args.split(/\s+/)
+    parts = args.is_a?(String) ? args.split(/\s+/) : args
     view_name = parts[1] || @api.current_view&.name
     
     unless view_name
@@ -1714,26 +1638,26 @@ class ScriptoriumTUI
 
     begin
       deploy_file = @api.root/"views"/view_name/"config"/"deploy.txt"
-      puts "DEBUG: About to edit file: #{deploy_file}"
-      puts "DEBUG: File exists: #{File.exist?(deploy_file)}"
+      puts "      DEBUG: About to edit file: #{deploy_file}"
+      puts "      DEBUG: File exists: #{File.exist?(deploy_file)}"
       
       # Use TUI's editor configuration instead of API's edit_file
       editor_file = @api.root/"config/editor.txt"
       if File.exist?(editor_file)
         editor = read_file(editor_file).strip
-        puts "DEBUG: Using TUI editor: #{editor}"
+        puts "      DEBUG: Using TUI editor: #{editor}"
         system("#{editor} #{deploy_file}")
       else
-        puts "DEBUG: No TUI editor config, using API edit_file"
+        puts "      DEBUG: No TUI editor config, using API edit_file"
         @api.edit_file(deploy_file)
       end
       
-      puts "DEBUG: edit_file returned"
+      puts "      DEBUG: edit_file returned"
       puts
       puts "  ✅ Deployment configuration edited for view: #{view_name}"
       puts
     rescue => e
-      puts "DEBUG: Exception in configure_deployment: #{e.class} - #{e.message}"
+      puts "      DEBUG: Exception in configure_deployment: #{e.class} - #{e.message}"
       puts
       puts "  ❌ Failed to edit deployment configuration: #{e.message}"
       puts

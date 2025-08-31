@@ -6,9 +6,10 @@ module Scriptorium::Contract
   def assume(condition = nil, message = nil, &block)
     return unless Scriptorium::Contract.enabled?
     if block_given?
-      raise "Precondition violated: #{message}" unless instance_eval(&block)
+      result = instance_eval(&block)
+      raise "Precondition violated: #{message || 'block condition failed'}" unless result
     else
-      raise "Precondition violated: #{message}" unless condition
+      raise "Precondition violated: #{message || condition}" unless condition
     end
   end
   

@@ -881,7 +881,7 @@ class TestReadWrite < Minitest::Test
     
     result = getvars(config_file)
     assert_equal "My Blog", result[:title]
-    assert_nil result[:subtitle]  # When no value after key, split returns nil
+    assert_equal "", result[:subtitle]  # When no value after key, split returns empty string
     assert_equal "standard", result[:theme]
   end
 

@@ -14,7 +14,8 @@ class Scriptorium::API
   end
 
   def initialize(testmode: false)
-    assume { [true, false].include?(testmode) }
+    msg = "testmode must be true or false, got #{testmode}"
+    assume(msg) { [true, false].include?(testmode) }
     
     @testing = testmode
     @repo = nil
@@ -30,7 +31,8 @@ class Scriptorium::API
 
   def create_repo(path)
     check_invariants
-    assume { path.is_a?(String) && !path.empty? }
+    msg = "path must be a non-empty String, got #{path.class} (#{path.inspect})"
+    assume(msg) { path.is_a?(String) && !path.empty? }
     
     raise RepoDirAlreadyExists if repo_exists?(path)
     Scriptorium::Repo.create(path)
@@ -42,7 +44,8 @@ class Scriptorium::API
 
   def open_repo(path)
     check_invariants
-    assume { path.is_a?(String) && !path.empty? }
+    msg = "path must be a non-empty String, got #{path.class} (#{path.inspect})"
+    assume(msg) { path.is_a?(String) && !path.empty? }
     
     @repo = Scriptorium::Repo.open(path)
     
@@ -53,11 +56,16 @@ class Scriptorium::API
   # View management
   def create_view(name, title, subtitle = "", theme: "standard")
     check_invariants
-    assume { name.is_a?(String) }
-    assume { title.is_a?(String) }
-    assume { subtitle.is_a?(String) }
-    assume { theme.is_a?(String) }
-    assume { @repo.is_a?(Scriptorium::Repo) }
+    msg = "name must be a String, got #{name.class}"
+    assume(msg) { name.is_a?(String) }
+    msg = "title must be a String, got #{title.class}"
+    assume(msg) { title.is_a?(String) }
+    msg = "subtitle must be a String, got #{subtitle.class}"
+    assume(msg) { subtitle.is_a?(String) }
+    msg = "theme must be a String, got #{theme.class}"
+    assume(msg) { theme.is_a?(String) }
+    msg = "@repo must be a Scriptorium::Repo, got #{@repo.class}"
+    assume(msg) { @repo.is_a?(Scriptorium::Repo) }
     
     @repo.create_view(name, title, subtitle, theme: theme)
     
@@ -112,12 +120,18 @@ class Scriptorium::API
   # Post creation with convenience defaults
   def create_post(title, body, views: nil, tags: nil, blurb: nil)
     check_invariants
-    assume { title.is_a?(String) }
-    assume { body.is_a?(String) }
-    assume { views.nil? || views.is_a?(String) || views.is_a?(Array) }
-    assume { tags.nil? || tags.is_a?(String) || tags.is_a?(Array) }
-    assume { blurb.nil? || blurb.is_a?(String) }
-    assume { @repo.is_a?(Scriptorium::Repo) }
+    msg = "title must be a String, got #{title.class}"
+    assume(msg) { title.is_a?(String) }
+    msg = "body must be a String, got #{body.class}"
+    assume(msg) { body.is_a?(String) }
+    msg = "views must be nil, String, or Array, got #{views.class}"
+    assume(msg) { views.nil? || views.is_a?(String) || views.is_a?(Array) }
+    msg = "tags must be nil, String, or Array, got #{tags.class}"
+    assume(msg) { tags.nil? || tags.is_a?(String) || tags.is_a?(Array) }
+    msg = "blurb must be nil or String, got #{blurb.class}"
+    assume(msg) { blurb.nil? || blurb.is_a?(String) }
+    msg = "@repo must be a Scriptorium::Repo, got #{@repo.class}"
+    assume(msg) { @repo.is_a?(Scriptorium::Repo) }
     
     views ||= @repo.current_view&.name
     raise ViewTargetNil if views.nil?
@@ -227,8 +241,10 @@ class Scriptorium::API
   # Publication system
   def publish_post(num, view = nil)
     check_invariants
-    assume { num.is_a?(Integer) }
-    assume { @repo.is_a?(Scriptorium::Repo) }
+    msg = "num must be an Integer, got #{num.class}"
+    assume(msg) { num.is_a?(Integer) }
+    msg = "@repo must be a Scriptorium::Repo, got #{@repo.class}"
+    assume(msg) { @repo.is_a?(Scriptorium::Repo) }
     
     post = @repo.publish_post(num, view)
     
@@ -239,8 +255,10 @@ class Scriptorium::API
   
   def unpublish_post(num, view = nil)
     check_invariants
-    assume { num.is_a?(Integer) }
-    assume { @repo.is_a?(Scriptorium::Repo) }
+    msg = "num must be an Integer, got #{num.class}"
+    assume(msg) { num.is_a?(Integer) }
+    msg = "@repo must be a Scriptorium::Repo, got #{@repo.class}"
+    assume(msg) { @repo.is_a?(Scriptorium::Repo) }
     
     @repo.unpublish_post(num, view)
     
@@ -254,8 +272,10 @@ class Scriptorium::API
   # Deployment state management
   def mark_post_deployed(num, view = nil)
     check_invariants
-    assume { num.is_a?(Integer) }
-    assume { @repo.is_a?(Scriptorium::Repo) }
+    msg = "num must be an Integer, got #{num.class}"
+    assume(msg) { num.is_a?(Integer) }
+    msg = "@repo must be a Scriptorium::Repo, got #{@repo.class}"
+    assume(msg) { @repo.is_a?(Scriptorium::Repo) }
     
     @repo.mark_post_deployed(num, view)
     
@@ -264,8 +284,10 @@ class Scriptorium::API
   
   def mark_post_undeployed(num, view = nil)
     check_invariants
-    assume { num.is_a?(Integer) }
-    assume { @repo.is_a?(Scriptorium::Repo) }
+    msg = "num must be an Integer, got #{num.class}"
+    assume(msg) { num.is_a?(Integer) }
+    msg = "@repo must be a Scriptorium::Repo, got #{@repo.class}"
+    assume(msg) { @repo.is_a?(Scriptorium::Repo) }
     
     @repo.mark_post_undeployed(num, view)
     
