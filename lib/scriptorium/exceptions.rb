@@ -196,4 +196,10 @@ module Scriptorium::Exceptions
   make_exception :DeploymentFieldsMissing, "Missing required deployment fields: %1"
   make_exception :DeploymentFailed, "Deployment failed with exit code %1"
 
+  # Backup errors
+  make_exception :BackupNotFound, "Backup not found: %1"
+  make_exception :BackupCreationFailed, "Failed to create backup: %1"
+  make_exception :BackupRestoreFailed, "Failed to restore backup: %1"
+  make_exception :BackupDeleteFailed, "Failed to delete backup: %1"
+
 end

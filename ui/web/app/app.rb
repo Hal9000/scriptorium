@@ -263,6 +263,7 @@ class ScriptoriumWeb < Sinatra::Base
       File.write('/tmp/save_post_debug.log', "Time: #{Time.now}\n", mode: 'a')
       File.write('/tmp/save_post_debug.log', "Post ID: #{params[:id]}\n", mode: 'a')
       File.write('/tmp/save_post_debug.log', "Content length: #{params[:content]&.length || 0}\n", mode: 'a')
+
       File.write('/tmp/save_post_debug.log', "API instance: #{@api.inspect}\n", mode: 'a')
       
       post_id = params[:id]&.to_i
@@ -299,8 +300,14 @@ class ScriptoriumWeb < Sinatra::Base
       
       # Generate the post after saving
       File.write('/tmp/save_post_debug.log', "Generating post...\n", mode: 'a')
-      @api.generate_post(post_id)
-      File.write('/tmp/save_post_debug.log', "Post generated successfully\n", mode: 'a')
+      begin
+        @api.generate_post(post_id)
+        File.write('/tmp/save_post_debug.log', "Post generated successfully\n", mode: 'a')
+      rescue => e
+        File.write('/tmp/save_post_debug.log', "Generate post failed: #{e.class}: #{e.message}\n", mode: 'a')
+        File.write('/tmp/save_post_debug.log', "Backtrace: #{e.backtrace.first(3).join("\n")}\n", mode: 'a')
+        raise e
+      end
       
       File.write('/tmp/save_post_debug.log', "SUCCESS: Redirecting to dashboard\n", mode: 'a')
       redirect "/?message=Post ##{post_id} saved and generated successfully"

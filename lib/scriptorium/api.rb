@@ -1376,4 +1376,471 @@ class Scriptorium::API
     result
   end
 
+  # Backup system methods
+  
+  def create_backup(type: :incremental, label: nil)
+    check_invariants
+    msg = "type must be :full or :incremental, got #{type}"
+    assume(msg) { [:full, :incremental].include?(type) }
+    msg = "@repo must be a Scriptorium::Repo, got #{@repo.class}"
+    assume(msg) { @repo.is_a?(Scriptorium::Repo) }
+    
+    backup_dir = @repo.root/"backups"
+    data_dir = backup_dir/"data"
+    FileUtils.mkdir_p(data_dir)
+    
+    # Sleep 1 second to ensure backup timestamp is clearly after all existing files
+    sleep(1)
+    
+    if type == :full
+      # Full backup - copy entire repository
+      backup_path = data_dir/"temp-full-backup"
+      FileUtils.mkdir_p(backup_path)
+      copy_repo_to_backup(backup_path)
+    else
+      # Incremental backup - copy only changed files since last backup
+      backup_path = data_dir/"temp-incr-backup"
+      FileUtils.mkdir_p(backup_path)
+      copy_changed_files_to_backup(backup_path)
+    end
+    
+    # Record timestamp AFTER backup is created
+    timestamp = Time.now.strftime("%Y%m%d-%H%M%S")
+    backup_name = "#{timestamp}-#{type == :full ? 'full' : 'incr'}"
+    
+    # Rename the backup directory to the final name
+    final_backup_path = data_dir/backup_name
+    FileUtils.mv(backup_path, final_backup_path)
+    
+    # Update backup manifest
+    update_backup_manifest(backup_name, type, label)
+    
+    # Cleanup old backups
+    cleanup_old_backups
+    
+    verify { File.exist?(final_backup_path) }
+    check_invariants
+    backup_name
+  end
+  
+  def list_backups
+    check_invariants
+    manifest_file = @repo.root/"backups"/"manifest.txt"
+    return [] unless File.exist?(manifest_file)
+    
+    backups = []
+    File.readlines(manifest_file).each do |line|
+      line = line.strip
+      next if line.empty? || line.start_with?('#')
+      
+      parts = line.split(' ', 3)
+      next if parts.length < 1
+      
+      timestamp_type = parts[0]
+      description = parts.length > 1 ? parts[1..-1].join(' ') : nil
+      
+      # Parse timestamp-type
+      if timestamp_type.match(/^(\d{8}-\d{6})-(full|incr)$/)
+        timestamp_str = $1
+        type = $2 == 'full' ? :full : :incremental
+        
+        # Convert timestamp to Time object
+        begin
+          timestamp = Time.strptime(timestamp_str, "%Y%m%d-%H%M%S")
+          backups << {
+            name: timestamp_type,
+            type: type,
+            description: description,
+            timestamp: timestamp,
+            size: calculate_backup_size(timestamp_type),
+            file_count: count_backup_files(timestamp_type)
+          }
+        rescue ArgumentError
+          # Skip invalid timestamps
+          next
+        end
+      end
+    end
+    
+    backups.sort_by { |b| b[:timestamp] }.reverse
+  end
+  
+  def restore_backup(backup_name, strategy: :safe)
+    check_invariants
+    backup_path = @repo.root/"backups"/"data"/backup_name
+    raise BackupNotFound, "Backup '#{backup_name}' not found" unless File.exist?(backup_path)
+    
+    case strategy
+    when :safe
+      # Always create pre-restore backup, then restore
+      pre_restore = create_backup(type: :full, label: "pre-restore-#{backup_name}")
+      # Small delay to ensure pre-restore backup has different timestamp
+      sleep(2)
+      restore_from_backup(backup_path)
+      verify { File.exist?(@repo.root/"posts") }
+      check_invariants
+      { restored: backup_name, pre_restore: pre_restore }
+      
+    when :merge
+      # Keep existing files, only restore backup files
+      restore_files_from_backup(backup_path)
+      verify { File.exist?(@repo.root/"posts") }
+      check_invariants
+      { restored: backup_name, strategy: :merge }
+      
+    when :destroy
+      # Current behavior - clear everything and restore
+      restore_from_backup(backup_path)
+      verify { File.exist?(@repo.root/"posts") }
+      check_invariants
+      { restored: backup_name, strategy: :destroy }
+      
+    else
+      raise ArgumentError, "Invalid restore strategy: #{strategy}. Must be :safe, :merge, or :destroy"
+    end
+  end
+  
+  def delete_backup(backup_name)
+    check_invariants
+    backup_path = @repo.root/"backups"/"data"/backup_name
+    raise BackupNotFound, "Backup '#{backup_name}' not found" unless File.exist?(backup_path)
+    
+    # Remove backup directory
+    FileUtils.rm_rf(backup_path)
+    
+    # Update manifest
+    update_backup_manifest_remove(backup_name)
+    
+    verify { !File.exist?(backup_path) }
+    check_invariants
+    true
+  end
+  
+  private def copy_repo_to_backup(backup_path)
+    # Copy all repository files except backups directory
+    Dir.glob(@repo.root/"**/*").each do |file_path|
+      next unless File.file?(file_path)
+      next if file_path.to_s.include?("/backups/")
+      
+      file_pathname = Pathname.new(file_path)
+      repo_root_pathname = Pathname.new(@repo.root)
+      relative_path = file_pathname.relative_path_from(repo_root_pathname)
+      dest_path = backup_path/relative_path
+      FileUtils.mkdir_p(File.dirname(dest_path))
+      FileUtils.cp(file_path, dest_path)
+    end
+  end
+  
+  private def copy_changed_files_to_backup(backup_path)
+    last_backup_time = get_last_backup_time
+    changed_files = find_changed_files_since(last_backup_time)
+    
+    changed_files.each do |file_path|
+      file_pathname = Pathname.new(file_path)
+      repo_root_pathname = Pathname.new(@repo.root)
+      relative_path = file_pathname.relative_path_from(repo_root_pathname)
+      dest_path = backup_path/relative_path
+      FileUtils.mkdir_p(File.dirname(dest_path))
+      FileUtils.cp(file_path, dest_path)
+    end
+  end
+  
+  private def find_changed_files_since(since_time)
+    return [] unless since_time
+    
+    changed_files = []
+    Dir.glob(@repo.root/"**/*").each do |file_path|
+      next unless File.file?(file_path)
+      next if file_path.to_s.include?("/backups/")
+      
+      if File.mtime(file_path) > since_time
+        changed_files << file_path
+      end
+    end
+    
+    changed_files
+  end
+  
+  private def get_last_backup_time
+    manifest_file = @repo.root/"backups"/"manifest.txt"
+    return nil unless File.exist?(manifest_file)
+    
+    last_time = nil
+    File.readlines(manifest_file).each do |line|
+      line = line.strip
+      next if line.empty? || line.start_with?('#')
+      
+      parts = line.split(' ', 3)
+      next if parts.length < 2
+      
+      timestamp_type = parts[0]
+      if timestamp_type.match(/^(\d{8}-\d{6})-(full|incr)$/)
+        timestamp_str = $1
+        begin
+          timestamp = Time.strptime(timestamp_str, "%Y%m%d-%H%M%S")
+          last_time = timestamp if last_time.nil? || timestamp > last_time
+        rescue ArgumentError
+          next
+        end
+      end
+    end
+    
+    last_time
+  end
+  
+  private def update_backup_manifest(backup_name, type, label)
+    manifest_file = @repo.root/"backups"/"manifest.txt"
+    FileUtils.mkdir_p(File.dirname(manifest_file))
+    
+    # Read existing manifest
+    existing_lines = []
+    if File.exist?(manifest_file)
+      existing_lines = File.readlines(manifest_file).map(&:strip)
+    end
+    
+    # Add new backup entry
+    timestamp_type = backup_name
+    description = label ? "#{label}" : ""
+    new_line = "#{timestamp_type} #{description}".strip
+    
+    # Add to beginning of file (most recent first)
+    existing_lines.unshift(new_line)
+    
+    # Write back to file
+    File.write(manifest_file, existing_lines.join("\n") + "\n")
+  end
+  
+  private def update_backup_manifest_remove(backup_name)
+    manifest_file = @repo.root/"backups"/"manifest.txt"
+    return unless File.exist?(manifest_file)
+    
+    # Read existing manifest and remove the backup entry
+    lines = File.readlines(manifest_file).map(&:strip)
+    lines.reject! { |line| line.start_with?("#{backup_name} ") }
+    
+    # Write back to file
+    File.write(manifest_file, lines.join("\n") + "\n")
+  end
+  
+  private def calculate_backup_size(backup_name)
+    backup_path = @repo.root/"backups"/"data"/backup_name
+    return 0 unless File.exist?(backup_path)
+    
+    total_size = 0
+    Dir.glob(backup_path/"**/*").each do |file_path|
+      total_size += File.size(file_path) if File.file?(file_path)
+    end
+    total_size
+  end
+
+  private def count_backup_files(backup_name)
+    backup_path = @repo.root/"backups"/"data"/backup_name
+    return 0 unless File.exist?(backup_path)
+    
+    Dir.glob(backup_path/"**/*").count { |f| File.file?(f) }
+  end
+  
+  private def restore_from_backup(backup_path)
+    # Clear existing content first (except backups)
+    clear_repo_content
+    
+    # Find the most recent full backup before this backup
+    full_backup_path = find_full_backup_for_restore(backup_path)
+    
+    if full_backup_path
+      # Restore from full backup first
+      restore_files_from_backup(full_backup_path)
+      
+      # Then apply all incrementals up to the target backup
+      apply_incrementals_up_to(backup_path)
+    else
+      # No full backup found, just restore the files directly
+      restore_files_from_backup(backup_path)
+    end
+  end
+
+  private def clear_repo_content
+    # Remove existing content (except backups)
+    Dir.glob(@repo.root/"*").each do |item|
+      next if File.basename(item) == "backups"
+      FileUtils.rm_rf(item)
+    end
+  end
+
+  private def restore_files_from_backup(backup_path)
+    # Copy all files from backup to repo
+    Dir.glob(backup_path/"**/*").each do |file_path|
+      next unless File.file?(file_path)
+      
+      file_pathname = Pathname.new(file_path)
+      backup_pathname = Pathname.new(backup_path)
+      relative_path = file_pathname.relative_path_from(backup_pathname)
+      dest_path = @repo.root/relative_path
+      FileUtils.mkdir_p(File.dirname(dest_path))
+      FileUtils.cp(file_path, dest_path)
+    end
+  end
+
+  private def find_full_backup_for_restore(target_backup_path)
+    target_name = File.basename(target_backup_path)
+    target_timestamp = extract_timestamp_from_backup_name(target_name)
+    
+    # Find the most recent full backup before the target backup
+    manifest_file = @repo.root/"backups"/"manifest.txt"
+    return nil unless File.exist?(manifest_file)
+    
+    latest_full_backup = nil
+    latest_full_timestamp = nil
+    
+    File.readlines(manifest_file).each do |line|
+      line = line.strip
+      next if line.empty? || line.start_with?('#')
+      
+      parts = line.split(' ', 3)
+      next if parts.length < 1
+      
+      backup_name = parts[0]
+      if backup_name.end_with?('-full')
+        # Skip pre-restore backups - they shouldn't be used as base for restore
+        next if backup_name.include?('pre-restore')
+        
+        backup_timestamp = extract_timestamp_from_backup_name(backup_name)
+        if backup_timestamp && backup_timestamp < target_timestamp
+          if latest_full_timestamp.nil? || backup_timestamp > latest_full_timestamp
+            latest_full_backup = backup_name
+            latest_full_timestamp = backup_timestamp
+          end
+        end
+      end
+    end
+    
+    return nil unless latest_full_backup
+    
+    full_backup_path = @repo.root/"backups"/"data"/latest_full_backup
+    File.exist?(full_backup_path) ? full_backup_path : nil
+  end
+
+  private def apply_incrementals_up_to(target_backup_path)
+    target_name = File.basename(target_backup_path)
+    target_timestamp = extract_timestamp_from_backup_name(target_name)
+    
+    manifest_file = @repo.root/"backups"/"manifest.txt"
+    return unless File.exist?(manifest_file)
+    
+    # Get all incrementals between the full backup and target backup
+    incrementals = []
+    File.readlines(manifest_file).each do |line|
+      line = line.strip
+      next if line.empty? || line.start_with?('#')
+      
+      parts = line.split(' ', 3)
+      next if parts.length < 1
+      
+      backup_name = parts[0]
+      if backup_name.end_with?('-incr')
+        backup_timestamp = extract_timestamp_from_backup_name(backup_name)
+        if backup_timestamp && backup_timestamp <= target_timestamp
+          incrementals << backup_name
+        end
+      end
+    end
+    
+    # Sort incrementals by timestamp and apply them
+    incrementals.sort_by { |name| extract_timestamp_from_backup_name(name) }.each do |backup_name|
+      incremental_path = @repo.root/"backups"/"data"/backup_name
+      if File.exist?(incremental_path)
+        restore_files_from_backup(incremental_path)
+      end
+    end
+  end
+
+  private def extract_timestamp_from_backup_name(backup_name)
+    if backup_name.match(/^(\d{8}-\d{6})-(full|incr)$/)
+      timestamp_str = $1
+      begin
+        Time.strptime(timestamp_str, "%Y%m%d-%H%M%S")
+      rescue ArgumentError
+        nil
+      end
+    else
+      nil
+    end
+  end
+
+
+  
+  private def cleanup_old_backups
+    # Keep backups for 30 days, but always keep the most recent full backup
+    cutoff_time = Time.now - (30 * 24 * 60 * 60)
+    
+    manifest_file = @repo.root/"backups"/"manifest.txt"
+    return unless File.exist?(manifest_file)
+    
+    # Find the most recent full backup
+    most_recent_full_backup = nil
+    most_recent_full_timestamp = nil
+    
+    File.readlines(manifest_file).each do |line|
+      line = line.strip
+      next if line.empty? || line.start_with?('#')
+      
+      parts = line.split(' ', 3)
+      next if parts.length < 1
+      
+      backup_name = parts[0]
+      if backup_name.end_with?('-full')
+        backup_timestamp = extract_timestamp_from_backup_name(backup_name)
+        if backup_timestamp && (most_recent_full_timestamp.nil? || backup_timestamp > most_recent_full_timestamp)
+          most_recent_full_backup = backup_name
+          most_recent_full_timestamp = backup_timestamp
+        end
+      end
+    end
+    
+    lines_to_keep = []
+    lines_to_remove = []
+    
+    File.readlines(manifest_file).each do |line|
+      line = line.strip
+      next if line.empty? || line.start_with?('#')
+      
+      parts = line.split(' ', 3)
+      next if parts.length < 1
+      
+      backup_name = parts[0]
+      if backup_name.match(/^(\d{8}-\d{6})-(full|incr)$/)
+        timestamp_str = $1
+        begin
+          timestamp = Time.strptime(timestamp_str, "%Y%m%d-%H%M%S")
+          
+          # Always keep the most recent full backup
+          if backup_name == most_recent_full_backup
+            lines_to_keep << line
+          # Keep all backups newer than cutoff
+          elsif timestamp >= cutoff_time
+            lines_to_keep << line
+          # Keep incrementals that are newer than the most recent full backup
+          elsif backup_name.end_with?('-incr') && most_recent_full_timestamp && timestamp > most_recent_full_timestamp
+            lines_to_keep << line
+          else
+            lines_to_remove << backup_name
+          end
+        rescue ArgumentError
+          lines_to_keep << line
+        end
+      else
+        lines_to_keep << line
+      end
+    end
+    
+    # Remove old backup directories
+    lines_to_remove.each do |backup_name|
+      backup_path = @repo.root/"backups"/"data"/backup_name
+      FileUtils.rm_rf(backup_path) if File.exist?(backup_path)
+    end
+    
+    # Update manifest file
+    File.write(manifest_file, lines_to_keep.join("\n") + "\n")
+  end
+
 end 

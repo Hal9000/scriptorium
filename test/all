@@ -40,6 +40,7 @@ test_files = %w[
   livetext_plugin_test.rb
   unit/core.rb
   unit/parse_cmd_test.rb
+  unit/backup_test.rb
   ed_test.rb
   tui_integration_test.rb
   tui_editor_integration_test.rb
