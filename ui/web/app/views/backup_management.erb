@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Backup Management - Scriptorium</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #fd7e14;
+            color: white;
+            padding: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px;
+        }
+        .message {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .backup-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+            border: 1px solid #dee2e6;
+        }
+        .backup-form h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #495057;
+        }
+        .form-group select,
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .form-group select:focus,
+        .form-group input[type="text"]:focus {
+            outline: none;
+            border-color: #fd7e14;
+            box-shadow: 0 0 0 2px rgba(253, 126, 20, 0.25);
+        }
+        .btn {
+            background: #fd7e14;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        .btn:hover {
+            background: #e55a00;
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .backups-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .backups-table th,
+        .backups-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .backups-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #495057;
+        }
+        .backups-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        .backup-type {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .backup-type.full {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .backup-type.incr {
+            background: #d4edda;
+            color: #155724;
+        }
+        .backup-age {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .no-backups {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            padding: 40px;
+        }
+        .back-link {
+            color: #fd7e14;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Backup Management</h1>
+        </div>
+        
+        <div class="content">
+            <a href="/view/<%= @current_view.name %>" class="back-link">← Back to Dashboard</a>
+            
+            <% if @message %>
+                <div class="message success">
+                    <%= @message %>
+                </div>
+            <% end %>
+            
+            <% if @error %>
+                <div class="message error">
+                    <%= @error %>
+                </div>
+            <% end %>
+            
+            <!-- Create Backup Form -->
+            <div class="backup-form">
+                <h3>Create New Backup</h3>
+                <form method="post" action="/backup_management/create">
+                    <div class="form-group">
+                        <label for="type">Backup Type:</label>
+                        <select id="type" name="type" required>
+                            <option value="">Select backup type...</option>
+                            <option value="full">Full Backup (Complete repository snapshot)</option>
+                            <option value="incr">Incremental Backup (Only changed files since last backup)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">Description (optional):</label>
+                        <input type="text" id="description" name="description" placeholder="e.g., Before major changes, Added new posts, etc.">
+                    </div>
+                    
+                    <button type="submit" class="btn">Create Backup</button>
+                </form>
+            </div>
+            
+            <!-- Backups List -->
+            <div>
+                <h3>Available Backups</h3>
+                <% if @backups && !@backups.empty? %>
+                    <table class="backups-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Age</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% @backups.each do |backup| %>
+                                <tr>
+                                    <td><%= backup[:timestamp] %></td>
+                                    <td>
+                                        <span class="backup-type <%= backup[:type] %>">
+                                            <%= backup[:type] %>
+                                        </span>
+                                    </td>
+                                    <td><%= backup[:description] || '<em>No description</em>' %></td>
+                                    <td class="backup-age"><%= backup[:age] %></td>
+                                </tr>
+                            <% end %>
+                        </tbody>
+                    </table>
+                <% else %>
+                    <div class="no-backups">
+                        <p>No backups available yet.</p>
+                        <p>Create your first backup using the form above.</p>
+                    </div>
+                <% end %>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

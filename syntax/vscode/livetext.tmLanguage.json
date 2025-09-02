@@ -1,0 +1,469 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "LiveText",
+  "patterns": [
+    {
+      "include": "#comment"
+    },
+    {
+      "include": "#dot-command"
+    },
+    {
+      "include": "#variable"
+    },
+    {
+      "include": "#function"
+    },
+    {
+      "include": "#markers"
+    },
+    {
+      "include": "#bracketed-formatting"
+    },
+    {
+      "include": "#block-structures"
+    }
+  ],
+  "repository": {
+    "comment": {
+      "match": "^(\\.\\s)(.*)$",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.comment.livetext"
+        },
+        "2": {
+          "name": "comment.line.livetext"
+        }
+      }
+    },
+    "dot-command": {
+      "patterns": [
+        {
+          "match": "^(\\$?\\.)(\\w+)(.*)$",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.command.livetext"
+            },
+            "2": {
+              "name": "keyword.control.livetext"
+            },
+            "3": {
+              "name": "string.unquoted.livetext"
+            }
+          }
+        }
+      ]
+    },
+    "variable": {
+      "match": "(\\$)([a-zA-Z][a-zA-Z0-9_]*(?:\\.[a-zA-Z][a-zA-Z0-9_]*)*)",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.variable.livetext"
+        },
+        "2": {
+          "name": "variable.other.livetext"
+        }
+      }
+    },
+    "function": {
+      "patterns": [
+        {
+          "match": "(\\$\\$)([a-zA-Z][a-zA-Z0-9_]*(?:\\.[a-zA-Z][a-zA-Z0-9_]*)*)(:)(\\S+)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.function.livetext"
+            },
+            "2": {
+              "name": "entity.name.function.livetext"
+            },
+            "3": {
+              "name": "punctuation.separator.parameter.livetext"
+            },
+            "4": {
+              "name": "string.unquoted.parameter.livetext"
+            }
+          }
+        },
+        {
+          "match": "(\\$\\$)([a-zA-Z][a-zA-Z0-9_]*(?:\\.[a-zA-Z][a-zA-Z0-9_]*)*)(\\[)([^\\]]*)(\\])",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.function.livetext"
+            },
+            "2": {
+              "name": "entity.name.function.livetext"
+            },
+            "3": {
+              "name": "punctuation.definition.parameter.begin.livetext"
+            },
+            "4": {
+              "name": "string.unquoted.parameter.livetext"
+            },
+            "5": {
+              "name": "punctuation.definition.parameter.end.livetext"
+            }
+          }
+        },
+        {
+          "match": "(\\$\\$)([a-zA-Z][a-zA-Z0-9_]*(?:\\.[a-zA-Z][a-zA-Z0-9_]*)*)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.function.livetext"
+            },
+            "2": {
+              "name": "entity.name.function.livetext"
+            }
+          }
+        }
+      ]
+    },
+    "markers": {
+      "patterns": [
+        {
+          "comment": "Single markers (space-terminated)",
+          "match": "(\\*)([a-zA-Z0-9_][a-zA-Z0-9_]*)(\\s)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.bold.begin.livetext"
+            },
+            "2": {
+              "name": "markup.bold.livetext"
+            },
+            "3": {
+              "name": "punctuation.definition.bold.end.livetext"
+            }
+          }
+        },
+        {
+          "match": "(_)([a-zA-Z0-9_][a-zA-Z0-9_]*)(\\s)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.italic.begin.livetext"
+            },
+            "2": {
+              "name": "markup.italic.livetext"
+            },
+            "3": {
+              "name": "punctuation.definition.italic.end.livetext"
+            }
+          }
+        },
+        {
+          "match": "(`)([a-zA-Z0-9_][a-zA-Z0-9_]*)(\\s)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.code.begin.livetext"
+            },
+            "2": {
+              "name": "markup.inline.code.livetext"
+            },
+            "3": {
+              "name": "punctuation.definition.code.end.livetext"
+            }
+          }
+        },
+        {
+          "match": "(~)([a-zA-Z0-9_][a-zA-Z0-9_]*)(\\s)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.strikethrough.begin.livetext"
+            },
+            "2": {
+              "name": "markup.strikethrough.livetext"
+            },
+            "3": {
+              "name": "punctuation.definition.strikethrough.end.livetext"
+            }
+          }
+        },
+        {
+          "comment": "Double markers (comma/period-terminated)",
+          "match": "(\\*\\*)([a-zA-Z0-9_][a-zA-Z0-9_]*)([,.])",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.bold.begin.livetext"
+            },
+            "2": {
+              "name": "markup.bold.livetext"
+            },
+            "3": {
+              "name": "punctuation.definition.bold.end.livetext"
+            }
+          }
+        },
+        {
+          "match": "(__)([a-zA-Z0-9_][a-zA-Z0-9_]*)([,.])",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.italic.begin.livetext"
+            },
+            "2": {
+              "name": "markup.italic.livetext"
+            },
+            "3": {
+              "name": "punctuation.definition.italic.end.livetext"
+            }
+          }
+        },
+        {
+          "match": "(``)([a-zA-Z0-9_][a-zA-Z0-9_]*)([,.])",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.code.begin.livetext"
+            },
+            "2": {
+              "name": "markup.inline.code.livetext"
+            },
+            "3": {
+              "name": "punctuation.definition.code.end.livetext"
+            }
+          }
+        },
+        {
+          "match": "(~~)([a-zA-Z0-9_][a-zA-Z0-9_]*)([,.])",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.strikethrough.begin.livetext"
+            },
+            "2": {
+              "name": "markup.strikethrough.livetext"
+            },
+            "3": {
+              "name": "punctuation.definition.strikethrough.end.livetext"
+            }
+          }
+        }
+      ]
+    },
+    "bracketed-formatting": {
+      "patterns": [
+        {
+          "match": "(\\*)(\\[)([^\\]]*)(\\])",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.bold.begin.livetext"
+            },
+            "2": {
+              "name": "punctuation.definition.bracket.begin.livetext"
+            },
+            "3": {
+              "name": "markup.bold.livetext"
+            },
+            "4": {
+              "name": "punctuation.definition.bracket.end.livetext"
+            }
+          }
+        },
+        {
+          "match": "(_)(\\[)([^\\]]*)(\\])",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.italic.begin.livetext"
+            },
+            "2": {
+              "name": "punctuation.definition.bracket.begin.livetext"
+            },
+            "3": {
+              "name": "markup.italic.livetext"
+            },
+            "4": {
+              "name": "punctuation.definition.bracket.end.livetext"
+            }
+          }
+        },
+        {
+          "match": "(`)(\\[)([^\\]]*)(\\])",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.code.begin.livetext"
+            },
+            "2": {
+              "name": "punctuation.definition.bracket.begin.livetext"
+            },
+            "3": {
+              "name": "markup.inline.code.livetext"
+            },
+            "4": {
+              "name": "punctuation.definition.bracket.end.livetext"
+            }
+          }
+        },
+        {
+          "match": "(~)(\\[)([^\\]]*)(\\])",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.strikethrough.begin.livetext"
+            },
+            "2": {
+              "name": "punctuation.definition.bracket.begin.livetext"
+            },
+            "3": {
+              "name": "markup.strikethrough.livetext"
+            },
+            "4": {
+              "name": "punctuation.definition.bracket.end.livetext"
+            }
+          }
+        }
+      ]
+    },
+    "block-structures": {
+      "patterns": [
+        {
+          "begin": "^(\\$?\\.)(raw)\\s*$",
+          "end": "^(__RAW__)\\s*$",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.command.livetext"
+            },
+            "2": {
+              "name": "keyword.control.livetext"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "keyword.control.livetext"
+            }
+          },
+          "contentName": "text.plain.livetext"
+        },
+        {
+          "begin": "^(\\$?\\.)(comment)\\s*$",
+          "end": "^(\\$?\\.)(end)\\s*$",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.command.livetext"
+            },
+            "2": {
+              "name": "keyword.control.livetext"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.command.livetext"
+            },
+            "2": {
+              "name": "keyword.control.livetext"
+            }
+          },
+          "contentName": "comment.block.livetext"
+        },
+        {
+          "begin": "^(\\$?\\.)(def)\\s*$",
+          "end": "^(\\$?\\.)(end)\\s*$",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.command.livetext"
+            },
+            "2": {
+              "name": "keyword.control.livetext"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.command.livetext"
+            },
+            "2": {
+              "name": "keyword.control.livetext"
+            }
+          },
+          "contentName": "source.ruby.embedded.livetext"
+        },
+        {
+          "begin": "^(\\$?\\.)(func)\\s*$",
+          "end": "^(\\$?\\.)(end)\\s*$",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.command.livetext"
+            },
+            "2": {
+              "name": "keyword.control.livetext"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.command.livetext"
+            },
+            "2": {
+              "name": "keyword.control.livetext"
+            }
+          },
+          "contentName": "source.ruby.embedded.livetext"
+        },
+        {
+          "begin": "^(\\$?\\.)(code)\\s+(ruby)\\s*$",
+          "end": "^(\\$?\\.)(end)\\s*$",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.command.livetext"
+            },
+            "2": {
+              "name": "keyword.control.livetext"
+            },
+            "3": {
+              "name": "support.type.language.livetext"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.command.livetext"
+            },
+            "2": {
+              "name": "keyword.control.livetext"
+            }
+          },
+          "contentName": "source.ruby.embedded.livetext"
+        },
+        {
+          "begin": "^(\\$?\\.)(code)\\s+(elixir)\\s*$",
+          "end": "^(\\$?\\.)(end)\\s*$",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.command.livetext"
+            },
+            "2": {
+              "name": "keyword.control.livetext"
+            },
+            "3": {
+              "name": "support.type.language.livetext"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.command.livetext"
+            },
+            "2": {
+              "name": "keyword.control.livetext"
+            }
+          },
+          "contentName": "source.elixir.embedded.livetext"
+        },
+        {
+          "begin": "^(\\$?\\.)(code)\\s+(bash)\\s*$",
+          "end": "^(\\$?\\.)(end)\\s*$",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.command.livetext"
+            },
+            "2": {
+              "name": "keyword.control.livetext"
+            },
+            "3": {
+              "name": "support.type.language.livetext"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.command.livetext"
+            },
+            "2": {
+              "name": "keyword.control.livetext"
+            }
+          },
+          "contentName": "source.shell.embedded.livetext"
+        }
+      ]
+    }
+  },
+  "scopeName": "source.livetext"
+}

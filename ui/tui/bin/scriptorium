@@ -1725,7 +1725,7 @@ class ScriptoriumTUI
       
       # Create backup
       backup_type = type.to_sym
-      timestamp = @api.create_backup(backup_type, description)
+      timestamp = @api.create_backup(type: backup_type, label: description)
       
       puts "  ✅ Backup created: #{timestamp}"
       if description

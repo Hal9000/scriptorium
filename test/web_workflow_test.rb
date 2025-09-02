@@ -339,6 +339,189 @@ class WebWorkflowTest < Minitest::Test
     # Error handling working correctly
   end
 
+  # Test backup management page access
+  def test_005_backup_management_page_access
+    start_web_server
+    setup_test_environment
+    
+    # Test accessing backup management page
+    response = get("/backup_management")
+    assert_response_success(response, "Backup management page should load")
+    assert_includes response.body, "Backup Management", "Should show backup management title"
+    assert_includes response.body, "Create New Backup", "Should show backup creation form"
+    assert_includes response.body, "Available Backups", "Should show backups list section"
+  end
+
+  # Test backup creation via web form
+  def test_006_backup_creation_workflow
+    start_web_server
+    setup_test_environment
+    
+    # Test creating a full backup
+    response = post("/backup_management/create", {
+      "type" => "full",
+      "description" => "Test full backup from web"
+    })
+    assert_response_redirect(response, "Backup creation should redirect after success")
+    
+    # Verify redirect includes success message
+    assert_includes response['Location'], "message=Backup created successfully", "Should redirect with success message"
+    
+    # Test accessing backup management page to verify backup was created
+    response = get("/backup_management")
+    assert_response_success(response, "Backup management page should load after backup creation")
+    assert_includes response.body, "Test full backup from web", "Should show created backup description"
+    assert_includes response.body, "full", "Should show backup type"
+    assert_includes response.body, "ago", "Should show human-readable age"
+  end
+
+  # Test incremental backup creation
+  def test_007_incremental_backup_creation
+    start_web_server
+    setup_test_environment
+    
+    # Create a full backup first
+    response = post("/backup_management/create", {
+      "type" => "full",
+      "description" => "Initial full backup"
+    })
+    assert_response_redirect(response, "Full backup creation should redirect")
+    
+    # Create an incremental backup
+    response = post("/backup_management/create", {
+      "type" => "incr",
+      "description" => "Incremental backup after changes"
+    })
+    assert_response_redirect(response, "Incremental backup creation should redirect")
+    
+    # Verify both backups are listed
+    response = get("/backup_management")
+    assert_response_success(response, "Backup management page should load")
+    assert_includes response.body, "Initial full backup", "Should show full backup"
+    assert_includes response.body, "Incremental backup after changes", "Should show incremental backup"
+    assert_includes response.body, "incr", "Should show incremental type"
+  end
+
+  # Test backup creation with empty description
+  def test_008_backup_creation_empty_description
+    start_web_server
+    setup_test_environment
+    
+    # Test creating backup with empty description
+    response = post("/backup_management/create", {
+      "type" => "full",
+      "description" => ""
+    })
+    assert_response_redirect(response, "Backup creation should redirect even with empty description")
+    
+    # Verify backup was created
+    response = get("/backup_management")
+    assert_response_success(response, "Backup management page should load")
+    assert_includes response.body, "No description", "Should show no description message"
+  end
+
+  # Test backup creation with invalid type
+  def test_009_backup_creation_invalid_type
+    start_web_server
+    setup_test_environment
+    
+    # Test creating backup with invalid type
+    response = post("/backup_management/create", {
+      "type" => "invalid",
+      "description" => "Invalid backup type"
+    })
+    assert_response_redirect(response, "Invalid backup type should redirect with error")
+    
+    # Verify error message in redirect
+    assert_includes response['Location'], "error=Invalid backup type", "Should redirect with error message"
+  end
+
+  # Test backup management page with no backups
+  def test_010_backup_management_empty_state
+    start_web_server
+    setup_test_environment
+    
+    # Access backup management page with no backups
+    response = get("/backup_management")
+    assert_response_success(response, "Backup management page should load")
+    assert_includes response.body, "No backups available yet", "Should show empty state message"
+    assert_includes response.body, "Create your first backup using the form above", "Should show empty state instructions"
+  end
+
+  # Test backup management page styling and UI elements
+  def test_011_backup_management_ui_elements
+    start_web_server
+    setup_test_environment
+    
+    # Create a backup first
+    post("/backup_management/create", {
+      "type" => "full",
+      "description" => "UI test backup"
+    })
+    
+    # Test UI elements
+    response = get("/backup_management")
+    assert_response_success(response, "Backup management page should load")
+    
+    # Check for key UI elements
+    assert_includes response.body, "backup-form", "Should have backup form styling"
+    assert_includes response.body, "backups-table", "Should have backups table styling"
+    assert_includes response.body, "backup-type", "Should have backup type styling"
+    assert_includes response.body, "backup-age", "Should have backup age styling"
+    assert_includes response.body, "Back to Dashboard", "Should have back navigation link"
+  end
+
+  # Test backup management page with multiple backups
+  def test_012_backup_management_multiple_backups
+    start_web_server
+    setup_test_environment
+    
+    # Create multiple backups
+    post("/backup_management/create", {
+      "type" => "full",
+      "description" => "First backup"
+    })
+    
+    sleep(1) # Ensure different timestamps
+    
+    post("/backup_management/create", {
+      "type" => "incr",
+      "description" => "Second backup"
+    })
+    
+    sleep(1) # Ensure different timestamps
+    
+    post("/backup_management/create", {
+      "type" => "full",
+      "description" => "Third backup"
+    })
+    
+    # Verify all backups are listed
+    response = get("/backup_management")
+    assert_response_success(response, "Backup management page should load")
+    
+    # Check that all backups are present
+    assert_includes response.body, "First backup", "Should show first backup"
+    assert_includes response.body, "Second backup", "Should show second backup"
+    assert_includes response.body, "Third backup", "Should show third backup"
+    
+    # Check that backups are sorted by timestamp (newest first)
+    # This is harder to test without parsing the HTML, but we can verify the structure
+    assert_includes response.body, "backups-table", "Should have backups table"
+  end
+
+  # Test backup management page error handling
+  def test_013_backup_management_error_handling
+    start_web_server
+    setup_test_environment
+    
+    # Test accessing backup management without a view (should redirect)
+    # This is harder to test since we need to simulate no current view
+    # For now, just verify the page loads normally with a view
+    response = get("/backup_management")
+    assert_response_success(response, "Backup management page should load with valid view")
+  end
+
   private
   # All helper methods are now in WebTestHelper
 end

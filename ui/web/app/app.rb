@@ -1784,6 +1784,32 @@ class ScriptoriumWeb < Sinatra::Base
     return nil
   end
 
+  def format_backup_age(timestamp)
+    # Parse timestamp (format: YYYYMMDD-HHMMSS)
+    year = timestamp[0..3].to_i
+    month = timestamp[4..5].to_i
+    day = timestamp[6..7].to_i
+    hour = timestamp[9..10].to_i
+    minute = timestamp[11..12].to_i
+    second = timestamp[13..14].to_i
+    
+    backup_time = Time.new(year, month, day, hour, minute, second)
+    now = Time.now
+    diff = now - backup_time
+    
+    if diff < 60
+      "#{diff.to_i} seconds ago"
+    elsif diff < 3600
+      "#{(diff / 60).to_i} minutes ago"
+    elsif diff < 86400
+      "#{(diff / 3600).to_i} hours ago"
+    elsif diff < 2592000  # 30 days
+      "#{(diff / 86400).to_i} days ago"
+    else
+      "#{(diff / 2592000).to_i} months ago"
+    end
+  end
+
 
 
   # Delete a post (move to _postnum directory)
@@ -1902,6 +1928,62 @@ class ScriptoriumWeb < Sinatra::Base
       end
     rescue => e
       redirect "/?error=Failed to toggle post status: #{e.message}"
+    end
+  end
+
+  # Backup management
+  get '/backup_management' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    begin
+      @backups = @api.list_backups
+      # Sort backups by timestamp (newest first)
+      @backups.sort_by! { |backup| backup[:timestamp] }.reverse!
+      
+      # Add human-readable age to each backup
+      @backups.each do |backup|
+        # Convert Time object to string if needed
+        timestamp_str = backup[:timestamp].is_a?(Time) ? backup[:timestamp].strftime("%Y%m%d-%H%M%S") : backup[:timestamp]
+        backup[:age] = format_backup_age(timestamp_str)
+        # Also ensure timestamp is a string for display
+        backup[:timestamp] = timestamp_str
+      end
+    rescue => e
+      @backups = []
+      @error = "Failed to load backups: #{e.message}"
+    end
+    
+    erb :backup_management
+  end
+
+  # Create backup
+  post '/backup_management/create' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/backup_management?error=No view selected. Please select a view first."
+      return
+    end
+    
+    begin
+      type = params[:type] # 'full' or 'incr'
+      description = params[:description]
+      
+      # Validate type
+      unless %w[full incr].include?(type)
+        redirect "/backup_management?error=Invalid backup type. Must be 'full' or 'incr'."
+        return
+      end
+      
+      # Create backup
+      timestamp = @api.create_backup(type: type.to_sym, label: description)
+      
+      redirect "/backup_management?message=Backup created successfully: #{timestamp}"
+    rescue => e
+      redirect "/backup_management?error=Failed to create backup: #{e.message}"
     end
   end
 

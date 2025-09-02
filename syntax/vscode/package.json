@@ -1,0 +1,35 @@
+{
+  "name": "livetext-language-support",
+  "displayName": "LiveText Language Support",
+  "description": "Syntax highlighting and language support for LiveText files",
+  "version": "1.0.0",
+  "publisher": "scriptorium",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "livetext",
+        "aliases": [
+          "LiveText",
+          "livetext"
+        ],
+        "extensions": [
+          ".lt3"
+        ],
+        "configuration": "./livetext-language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "livetext",
+        "scopeName": "source.livetext",
+        "path": "./livetext.tmLanguage.json"
+      }
+    ]
+  }
+}
