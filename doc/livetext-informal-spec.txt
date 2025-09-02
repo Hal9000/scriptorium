@@ -1,0 +1,65 @@
+Markup guidelines
+-----------------
+ 1. A line with no special content is rendered as-is. This includes
+    a blank line.
+ 2. The four "marker" characters are * _ ` ~ (bold, italic, code,
+    and strikethrough). These behave essentially the same way.
+    Let's use _ as a generic example.
+ 3. In general: A marker following a space or SOL marks a string 
+    terminated by a space or EOL.
+ 4. A marker is never terminated by the same marker (as in markdown)
+ 5. A single marker is a prefix that applies to a single token (with
+    no embedded spaces)
+ 6. Examples:
+      This is *bold
+      This is _italic
+      This is `code
+      This is ~strikethrough
+ 7. A special case is the "doubled" marker; this is for tokens (still
+    with no embedded spaces) that end in a period or comma. 
+    Examples:
+      Three variables are ``num, ``count, and ``max.
+      I am __hungry, I must say.
+      COBOL is just **wrong.
+ 8. When we need embedded spaces or greater control, we can use brackets
+    to delimit. Examples:
+      This is _[four words in italics].
+      You should run `[sblog web start] to start the server.
+ 9. A variable starts with a $; the identifier itself starts with a 
+    letter (uppercase or lower); other characters may be letters, digits,
+    or underscores; period is legal, but only as a separator. 
+      - No two periods in a row
+      - No period at beginning or end
+10. Variable examples:  $foo $foo.bar $web_server  $prep44
+11. Functions are named like variables, but start with $$.
+    Examples: $$max $$last.value $$this_line
+12. A function may be parameterless (as above)
+13. We may pass a single parameter (a string with no embedded spaces)
+    via a colon. Example: Please visit $$link:google.com soon.
+14. We may pass a longer parameter with brackets. 
+    Example: Learn $$index[functional programming] today!
+15. If a bracket is not closed, EOL closes it.
+16. A one-line comment starts with ". " (dot-space) at beginning of line.
+17. A dot command is a dot+identifier at SOL. These may or may not have 
+    parameters.
+    Examples:
+      .nopara
+      .index functional programming
+      .banner This is just a banner!
+18. As a special case, a dot command may be indented (preceded only by
+    spaces) with a $.
+    Examples:
+      .banner Not indented
+          $.banner Indented
+              $.index indentation
+19. Some dot commands can have bodies (a block of text terminated by .end).
+20. In general, a body can contain formatting, variables, and functions.
+21. A body cannot have dot commands inside it.
+22. Some dot commands DO NOT process their bodies (formatting, variables,
+    and functions. Notably .comment (block comment) does not. Also the 
+    special .raw (terminated not by .end but by __RAW__) does not.
+23. Dotcmds .def and .func have Ruby code in their bodies.
+24. .code lang - this has language "lang" in its body.
+
+
+

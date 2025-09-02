@@ -17,10 +17,18 @@ class ScriptoriumWebServer
     @port = 4567
     @pid_file = __dir__/"../tmp/web_server.pid"
     @log_file = __dir__/"../tmp/web_server.log"
+    
+    # Parse command line arguments for test mode
+    @testing = ARGV.include?('--test')
+    
+    # Remove --test from ARGV so it doesn't interfere with other processing
+    ARGV.delete('--test')
+    
+    # Web server initialized with test mode: #{@testing}
   end
 
   def start
-    system("kill -9 $(lsof -ti:4567)")
+    system("kill -9 $(lsof -ti:4567) 2>/dev/null")
     if running?
       puts "Server is already running on port #{@port}"
       return
@@ -31,6 +39,10 @@ class ScriptoriumWebServer
 
     # Start the server in background
     cmd = "cd #{__dir__}/.. && ruby app/app.rb"
+    if @testing
+      cmd += " --test"
+    end
+    
     pid = Process.spawn(cmd, 
                        out: @log_file, 
                        err: @log_file,
@@ -39,17 +51,11 @@ class ScriptoriumWebServer
     # Save PID
     File.write(@pid_file, pid.to_s)
     
-    puts "Starting Scriptorium Web UI on port #{@port}..."
-    puts "PID: #{pid}"
-    puts "Log: #{@log_file}"
-    
     # Wait a moment and check if it started successfully
     sleep 2
-    if running?
-      puts "✅ Server started successfully!"
-      puts "Visit: http://localhost:#{@port}"
-    else
+    unless running?
       puts "❌ Server failed to start. Check logs: #{@log_file}"
+      exit 1
     end
   end
 
@@ -57,33 +63,24 @@ class ScriptoriumWebServer
     system("rm #@log_file")
     system("touch #@log_file")
     unless File.exist?(@pid_file)
-      puts "Server is not running"
       return
     end
 
     pid = File.read(@pid_file).strip.to_i
-    puts "Stopping server (PID: #{pid})..."
     
     begin
       Process.kill('TERM', pid)
       Process.wait(pid)
-      puts "✅ Server stopped"
-    rescue Errno::ESRCH
-      puts "Server process not found"
-    rescue Errno::ECHILD
-      puts "Server process already ended"
+    rescue Errno::ESRCH, Errno::ECHILD
+      # Server already stopped
     ensure
       File.delete(@pid_file) if File.exist?(@pid_file)
     end
-    system("kill -9 $(lsof -ti:4567)")
+    system("kill -9 $(lsof -ti:4567) 2>/dev/null")
   end
 
   def status
     if running?
-      pid = File.read(@pid_file).strip
-      puts "✅ Server is running (PID: #{pid})"
-      puts "URL: http://localhost:#{@port}"
-      
       # Try to get JSON status
       begin
         response = Net::HTTP.get_response(URI("http://localhost:#{@port}/status"))
@@ -131,6 +128,10 @@ OptionParser.new do |opts|
   opts.on("-p", "--port PORT", Integer, "Port number (default: 4567)") do |port|
     options[:port] = port
   end
+  
+  opts.on("--test", "Use test repository (scriptorium-TEST)") do
+    options[:test] = true
+  end
 end.parse!
 
 # Get command
@@ -139,6 +140,10 @@ command = ARGV.first || 'status'
 # Create server instance
 server = ScriptoriumWebServer.new
 server.instance_variable_set(:@port, options[:port]) if options[:port]
+server.instance_variable_set(:@testing, options[:test]) if options[:test]
+
+    # Launcher options: #{options.inspect}
+    # Server testing mode: #{server.instance_variable_get(:@testing)}
 
 # Execute command
 case command

@@ -1,0 +1,11 @@
+DBC
+API
+Multiple UIs
+write_file, read_file
+custom exceptions
+PTY tests
+Livetext
+Manual tests
+CodeMirror + toolbar + macros
+Livetext syntax highlighting
+AI assistant?

@@ -1,5 +1,20 @@
 #!/usr/bin/env ruby
 
+require 'optparse'
+
+# Parse command line arguments for test mode BEFORE requiring Sinatra
+# Starting web app, ARGV: #{ARGV.inspect}
+TEST_MODE = false
+OptionParser.new do |opts|
+  opts.on("--test", "Use test repository (scriptorium-TEST)") do
+    TEST_MODE = true
+    # --test flag detected
+  end
+end.parse!
+
+# Command line parsing complete, test_mode: #{TEST_MODE}
+# ARGV remaining: #{ARGV.inspect}
+
 require 'sinatra'
 require 'sinatra/reloader' if development?
 require 'fileutils'
@@ -21,6 +36,15 @@ class ScriptoriumWeb < Sinatra::Base
   set :views, File.join(__dir__, 'views')
   set :show_exceptions, false  # Disable Sinatra's default error display
   
+  # Set test mode
+  def self.test_mode=(value)
+    @@test_mode = value
+  end
+  
+  def self.test_mode
+    @@test_mode
+  end
+  
   # Enable reloading in development
   configure :development do
     register Sinatra::Reloader
@@ -37,11 +61,24 @@ class ScriptoriumWeb < Sinatra::Base
   # Initialize API instance
   before do
     begin
-      @api = Scriptorium::API.new
-      # Use the test repository in the ui/web/ directory
-      test_repo_path = File.join(__dir__, "..", "scriptorium-TEST")
-      @api.open_repo(test_repo_path) if Dir.exist?(test_repo_path)
+      # Use the TEST_MODE constant that was set before OptionParser consumed ARGV
+      # Before block - test_mode: #{TEST_MODE}
+      @api = Scriptorium::API.new(testmode: TEST_MODE)
+      
+      if TEST_MODE
+        # Use test repository in the ui/web/ directory
+        test_repo_path = File.join(__dir__, "..", "scriptorium-TEST")
+        # Opening test repo: #{test_repo_path}
+        @api.open_repo(test_repo_path) if Dir.exist?(test_repo_path)
+      else
+        # Use production repository
+        home = ENV['HOME']
+        production_path = "#{home}/.scriptorium"
+        # Opening production repo: #{production_path}
+        @api.open_repo(production_path) if Dir.exist?(production_path)
+      end
     rescue => e
+      # Error in before block: #{e.message}
       @api = nil
     end
   end
@@ -150,7 +187,8 @@ class ScriptoriumWeb < Sinatra::Base
         @api.generate_post(post_num)
         # Check if meta.txt was created
         meta_file = @api.root/"posts"/"#{post_num.to_s.rjust(4, '0')}"/"meta.txt"
-        redirect "/?message=Post '#{params[:title].strip}' created successfully (##{post_num})"
+        # Redirect to edit the newly created post instead of back to dashboard
+        redirect "/edit_post/#{post_num}?message=Post '#{params[:title].strip}' created successfully (##{post_num})"
               rescue => e
           # Log the actual error for debugging
           STDERR.puts "ERROR in generate_post: #{e.class}: #{e.message}"
@@ -220,38 +258,58 @@ class ScriptoriumWeb < Sinatra::Base
 
   # Save edited post
   post '/save_post/:id' do
-    post_id = params[:id]&.to_i
-    content = params[:content]
-    
-    if post_id.nil? || post_id <= 0
-      redirect "/?error=Invalid post ID"
-      return
-    end
-    
-    if content.nil?
-      redirect "/edit_post/#{post_id}?error=No content provided"
-      return
-    end
-    
     begin
+      File.write('/tmp/save_post_debug.log', "=== SAVE POST ATTEMPT ===\n", mode: 'a')
+      File.write('/tmp/save_post_debug.log', "Time: #{Time.now}\n", mode: 'a')
+      File.write('/tmp/save_post_debug.log', "Post ID: #{params[:id]}\n", mode: 'a')
+      File.write('/tmp/save_post_debug.log', "Content length: #{params[:content]&.length || 0}\n", mode: 'a')
+      File.write('/tmp/save_post_debug.log', "API instance: #{@api.inspect}\n", mode: 'a')
+      
+      post_id = params[:id]&.to_i
+      content = params[:content]
+      
+      if post_id.nil? || post_id <= 0
+        File.write('/tmp/save_post_debug.log', "ERROR: Invalid post ID\n", mode: 'a')
+        redirect "/?error=Invalid post ID"
+        return
+      end
+      
+      if content.nil?
+        File.write('/tmp/save_post_debug.log', "ERROR: No content provided\n", mode: 'a')
+        redirect "/edit_post/#{post_id}?error=No content provided"
+        return
+      end
+      
+      File.write('/tmp/save_post_debug.log', "Looking up post #{post_id}\n", mode: 'a')
       post = @api.post(post_id)
       if post.nil?
+        File.write('/tmp/save_post_debug.log', "ERROR: Post not found\n", mode: 'a')
         redirect "/?error=Post not found"
         return
       end
       
+      File.write('/tmp/save_post_debug.log', "Post found: #{post.inspect}\n", mode: 'a')
+      File.write('/tmp/save_post_debug.log', "Post num: #{post.num}\n", mode: 'a')
+      
       # Write the content to the source file
       source_file = @api.root/"posts"/post.num/"source.lt3"
+      File.write('/tmp/save_post_debug.log', "Source file: #{source_file}\n", mode: 'a')
       write_file(source_file, content)
+      File.write('/tmp/save_post_debug.log', "File written successfully\n", mode: 'a')
       
       # Generate the post after saving
+      File.write('/tmp/save_post_debug.log', "Generating post...\n", mode: 'a')
       @api.generate_post(post_id)
+      File.write('/tmp/save_post_debug.log', "Post generated successfully\n", mode: 'a')
       
+      File.write('/tmp/save_post_debug.log', "SUCCESS: Redirecting to dashboard\n", mode: 'a')
       redirect "/?message=Post ##{post_id} saved and generated successfully"
     rescue => e
+      File.write('/tmp/save_post_debug.log', "EXCEPTION: #{e.class}: #{e.message}\n", mode: 'a')
+      File.write('/tmp/save_post_debug.log', "Backtrace: #{e.backtrace.first(5).join("\n")}\n", mode: 'a')
       redirect "/edit_post/#{post_id}?error=Failed to save post: #{e.message}"
     end
-    end
+  end
 
   # Generate post
   post '/generate_post' do
@@ -473,7 +531,7 @@ class ScriptoriumWeb < Sinatra::Base
     
     # Get current SVG config
     svg_file = @api.root/"views"/@current_view.name/"config"/"svg.txt"
-          @svg_config = File.exist?(svg_file) ? read_file(svg_file) : ""
+    @svg_config = File.exist?(svg_file) ? read_file(svg_file) : ""
     
     # Generate current banner for display
     begin
@@ -531,7 +589,7 @@ class ScriptoriumWeb < Sinatra::Base
     
     # Get current navbar config
     navbar_file = @api.root/"views"/@current_view.name/"config"/"navbar.txt"
-          @navbar_config = File.exist?(navbar_file) ? read_file(navbar_file).strip : ""
+    @navbar_config = File.exist?(navbar_file) ? read_file(navbar_file).strip : ""
     
     # Generate current navbar preview
     begin
@@ -781,8 +839,15 @@ class ScriptoriumWeb < Sinatra::Base
 
   # Save page content
   post '/edit_pages/save' do
+    File.write('/tmp/edit_pages_debug.log', "=== SAVE ATTEMPT ===\n", mode: 'a')
+    File.write('/tmp/edit_pages_debug.log', "Time: #{Time.now}\n", mode: 'a')
+    File.write('/tmp/edit_pages_debug.log', "API instance: #{@api.inspect}\n", mode: 'a')
+    File.write('/tmp/edit_pages_debug.log', "Current view: #{@api&.current_view&.inspect}\n", mode: 'a')
+    File.write('/tmp/edit_pages_debug.log', "Params: #{params.inspect}\n", mode: 'a')
+    
     @current_view = @api&.current_view
     if @current_view.nil?
+      File.write('/tmp/edit_pages_debug.log', "ERROR: No current view\n", mode: 'a')
       redirect "/?error=No view selected. Please select a view first."
       return
     end
@@ -791,19 +856,28 @@ class ScriptoriumWeb < Sinatra::Base
       filename = params[:filename]&.strip
       content = params[:content]&.strip || ""
       
+      File.write('/tmp/edit_pages_debug.log', "Filename: #{filename.inspect}\n", mode: 'a')
+      File.write('/tmp/edit_pages_debug.log', "Content length: #{content.length}\n", mode: 'a')
+      
       if filename.nil? || filename.empty?
+        File.write('/tmp/edit_pages_debug.log', "ERROR: Filename is empty\n", mode: 'a')
         redirect "/edit_pages?error=Filename is required"
         return
       end
       
       # Save the page
       pages_dir = @api.root/"views"/@current_view.name/"pages"
+      File.write('/tmp/edit_pages_debug.log', "Pages dir: #{pages_dir}\n", mode: 'a')
       FileUtils.mkdir_p(pages_dir)
       page_file = pages_dir/filename
-              write_file(page_file, content)
+      File.write('/tmp/edit_pages_debug.log', "Page file: #{page_file}\n", mode: 'a')
+      File.write(page_file, content)
+      File.write('/tmp/edit_pages_debug.log', "SUCCESS: File written\n", mode: 'a')
       
       redirect "/edit_pages?message=Page '#{filename}' saved successfully"
     rescue => e
+      File.write('/tmp/edit_pages_debug.log', "EXCEPTION: #{e.class}: #{e.message}\n", mode: 'a')
+      File.write('/tmp/edit_pages_debug.log', "Backtrace: #{e.backtrace.first(5).join("\n")}\n", mode: 'a')
       redirect "/edit_pages?error=Failed to save page: #{e.message}"
     end
   end
@@ -1237,6 +1311,31 @@ class ScriptoriumWeb < Sinatra::Base
       redirect "/advanced_config?message=Layout configuration updated successfully"
     rescue => e
       redirect "/layout_config?error=Failed to save layout configuration: #{e.message}"
+    end
+  end
+
+  # Serve web app's own assets (like livetext_mode.js)
+  get '/web_assets/*' do
+    begin
+      asset_path = params[:splat].first
+      asset_file = File.join(Dir.pwd, 'ui', 'web', 'app', 'assets', asset_path)
+      
+      puts "DEBUG: Asset path: #{asset_path}"
+      puts "DEBUG: Asset file: #{asset_file}"
+      puts "DEBUG: File exists: #{File.exist?(asset_file)}"
+      puts "DEBUG: Is file: #{File.file?(asset_file)}"
+      
+      if File.exist?(asset_file) && File.file?(asset_file)
+        send_file asset_file
+      else
+        status 404
+        "Web asset not found"
+      end
+    rescue => e
+      puts "DEBUG: Exception in web_assets: #{e.class}: #{e.message}"
+      puts "DEBUG: Backtrace: #{e.backtrace.first(3).join("\n")}"
+      status 500
+      "Internal server error: #{e.message}"
     end
   end
 
@@ -1808,4 +1907,7 @@ end
 # Start the server if this file is run directly
 if __FILE__ == $0
   ScriptoriumWeb.run!
-end 
+end
+
+# Set initial test mode from command line after class definition
+ScriptoriumWeb.test_mode = test_mode 

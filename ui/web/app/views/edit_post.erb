@@ -2,6 +2,11 @@
 <html>
 <head>
   <title>Edit Post - Scriptorium Web UI</title>
+  
+  <!-- CodeMirror CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
+  
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     .header { border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; }
@@ -13,7 +18,7 @@
     .button.secondary { background: #6c757d; }
     .button.secondary:hover { background: #545b62; }
     .content-area { margin: 20px 0; }
-    textarea { width: 100%; height: 500px; font-family: 'Courier New', monospace; font-size: 14px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+    .CodeMirror { height: 500px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
     .post-info { background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
     .post-info h2 { margin: 0 0 10px 0; }
     .post-info p { margin: 5px 0; }
@@ -39,7 +44,7 @@
     <p><strong>File:</strong> posts/<%= @post.num %>/source.lt3</p>
   </div>
 
-  <form method="post" action="/save_post/<%= @post.id %>">
+  <form method="post" action="/save_post/<%= @post.id %>" onsubmit="syncCodeMirrorContent()">
     <div class="content-area">
       <label for="content"><strong>Post Content:</strong></label>
       <textarea name="content" id="content" placeholder="Enter your post content here..."><%= @content %></textarea>
@@ -50,5 +55,124 @@
       <a href="/" class="button secondary" style="text-decoration: none;">Cancel</a>
     </div>
   </form>
+
+  <!-- CodeMirror JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script>
+    // LiveText mode for CodeMirror
+    CodeMirror.defineMode("livetext", function() {
+      return {
+        startState: function() {
+          return {
+            inRaw: false,
+            inComment: false,
+            inDef: false,
+            inFunc: false,
+            inCode: false,
+            codeLanguage: null
+          };
+        },
+        
+        token: function(stream, state) {
+          // Raw blocks
+          if (stream.match(/^\.raw\b/)) {
+            state.inRaw = true;
+            return "keyword";
+          }
+          if (state.inRaw && stream.match(/^__RAW__/)) {
+            state.inRaw = false;
+            return "keyword";
+          }
+          if (state.inRaw) {
+            stream.skipToEnd();
+            return "string";
+          }
+          
+          // Comment blocks
+          if (stream.match(/^\.comment\b/)) {
+            state.inComment = true;
+            return "keyword";
+          }
+          if (state.inComment && stream.match(/^\.end\b/)) {
+            state.inComment = false;
+            return "keyword";
+          }
+          if (state.inComment) {
+            stream.skipToEnd();
+            return "comment";
+          }
+          
+          // Code blocks
+          if (stream.match(/^\.code\s+(ruby|elixir|bash)\b/)) {
+            state.inCode = true;
+            state.codeLanguage = stream.match(/^\.code\s+(ruby|elixir|bash)/)[1];
+            return "keyword";
+          }
+          if (state.inCode && stream.match(/^\.end\b/)) {
+            state.inCode = false;
+            state.codeLanguage = null;
+            return "keyword";
+          }
+          if (state.inCode) {
+            stream.skipToEnd();
+            return "string";
+          }
+          
+          // Dot commands
+          if (stream.match(/^\.\w+/)) {
+            return "keyword";
+          }
+          
+          // Variables
+          if (stream.match(/^\$\w+/)) {
+            return "variable";
+          }
+          
+          // Functions
+          if (stream.match(/^\$\$\w+/)) {
+            return "function";
+          }
+          
+          // Markers
+          if (stream.match(/^[\*_`~]/)) {
+            return "formatting";
+          }
+          
+          // Default
+          stream.next();
+          return null;
+        }
+      };
+    });
+  </script>
+  
+  <script>
+    let editor = null;
+    
+    // Initialize CodeMirror when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      editor = CodeMirror.fromTextArea(document.getElementById('content'), {
+        mode: 'livetext',
+        theme: 'monokai',
+        lineNumbers: true,
+        lineWrapping: false,
+        indentUnit: 2,
+        tabSize: 2,
+        indentWithTabs: false,
+        scrollbarStyle: 'native',
+        viewportMargin: Infinity
+      });
+      
+      // Hide the original textarea
+      document.getElementById('content').style.display = 'none';
+    });
+    
+    function syncCodeMirrorContent() {
+      if (editor) {
+        // Sync CodeMirror content back to the hidden textarea
+        document.getElementById('content').value = editor.getValue();
+      }
+    }
+  </script>
 </body>
 </html> 

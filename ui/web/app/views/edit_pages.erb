@@ -158,11 +158,11 @@
                 
                 <div id="edit-form" class="edit-form">
                     <h4 id="edit-filename"></h4>
-                    <form method="post" action="/edit_pages/save">
+                    <form id="page-form" method="post" action="/edit_pages/save">
                         <input type="hidden" name="filename" id="edit-filename-input">
                         <textarea name="content" id="edit-content" placeholder="Enter page content..."></textarea>
                         <div class="buttons">
-                            <button type="submit" class="btn btn-primary">Save Page</button>
+                            <button type="button" class="btn btn-primary" onclick="savePage()">Save Page</button>
                             <button type="button" class="btn btn-secondary" onclick="hideEditForm()">Cancel</button>
                         </div>
                     </form>
@@ -176,19 +176,187 @@
         </div>
     </div>
 
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
+    
+    <!-- CodeMirror JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
     <script>
+      // LiveText mode for CodeMirror
+      CodeMirror.defineMode("livetext", function() {
+        return {
+          startState: function() {
+            return {
+              inRaw: false,
+              inComment: false,
+              inDef: false,
+              inFunc: false,
+              inCode: false,
+              codeLanguage: null
+            };
+          },
+          
+          token: function(stream, state) {
+            // Raw blocks
+            if (stream.match(/^\.raw\b/)) {
+              state.inRaw = true;
+              return "keyword";
+            }
+            if (state.inRaw && stream.match(/^__RAW__/)) {
+              state.inRaw = false;
+              return "keyword";
+            }
+            if (state.inRaw) {
+              stream.skipToEnd();
+              return "string";
+            }
+            
+            // Comment blocks
+            if (stream.match(/^\.comment\b/)) {
+              state.inComment = true;
+              return "keyword";
+            }
+            if (state.inComment && stream.match(/^\.end\b/)) {
+              state.inComment = false;
+              return "keyword";
+            }
+            if (state.inComment) {
+              stream.skipToEnd();
+              return "comment";
+            }
+            
+            // Code blocks
+            if (stream.match(/^\.code\s+(ruby|elixir|bash)\b/)) {
+              state.inCode = true;
+              state.codeLanguage = stream.match(/^\.code\s+(ruby|elixir|bash)/)[1];
+              return "keyword";
+            }
+            if (state.inCode && stream.match(/^\.end\b/)) {
+              state.inCode = false;
+              state.codeLanguage = null;
+              return "keyword";
+            }
+            if (state.inCode) {
+              stream.skipToEnd();
+              return "string";
+            }
+            
+            // Dot commands
+            if (stream.match(/^\.\w+/)) {
+              return "keyword";
+            }
+            
+            // Variables
+            if (stream.match(/^\$\w+/)) {
+              return "variable";
+            }
+            
+            // Functions
+            if (stream.match(/^\$\$\w+/)) {
+              return "function";
+            }
+            
+            // Markers
+            if (stream.match(/^[\*_`~]/)) {
+              return "formatting";
+            }
+            
+            // Default
+            stream.next();
+            return null;
+          }
+        };
+      });
+    </script>
+    
+    <script>
+        let editor = null;
+        
         function editPage(filename, content) {
+            alert('editPage called with filename: ' + filename);
+            console.log('editPage called with filename:', filename, 'content length:', content.length);
             document.getElementById('edit-filename').textContent = filename;
             document.getElementById('edit-filename-input').value = filename;
             document.getElementById('edit-content').value = content;
             document.getElementById('edit-form').classList.add('active');
+            console.log('Edit form activated');
+            
+            // Initialize CodeMirror if not already done
+            if (!editor) {
+                console.log('Initializing CodeMirror...');
+                editor = CodeMirror.fromTextArea(document.getElementById('edit-content'), {
+                    mode: 'livetext',
+                    theme: 'monokai',
+                    lineNumbers: true,
+                    lineWrapping: false,
+                    indentUnit: 2,
+                    tabSize: 2,
+                    indentWithTabs: false,
+                    scrollbarStyle: 'native',
+                    viewportMargin: Infinity
+                });
+                console.log('CodeMirror initialized');
+                
+                // Hide the original textarea
+                document.getElementById('edit-content').style.display = 'none';
+            } else {
+                console.log('Updating existing CodeMirror content');
+                // Update content in existing editor
+                editor.setValue(content);
+            }
             
             // Scroll to edit form
+            document.getElementById('edit-form').classList.add('active');
             document.getElementById('edit-form').scrollIntoView({ behavior: 'smooth' });
+            console.log('Edit form should now be visible');
         }
         
         function hideEditForm() {
             document.getElementById('edit-form').classList.remove('active');
+        }
+        
+        function savePage() {
+            alert('savePage called');
+            console.log('savePage called');
+            
+            // Sync CodeMirror content back to the hidden textarea
+            if (editor) {
+                const content = editor.getValue();
+                console.log('CodeMirror content length:', content.length);
+                document.getElementById('edit-content').value = content;
+                console.log('Textarea value set, length:', document.getElementById('edit-content').value.length);
+            } else {
+                console.log('No editor instance found');
+            }
+            
+            // Get form data
+            const form = document.getElementById('page-form');
+            const formData = new FormData(form);
+            
+            console.log('Form data:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+            
+            // Submit the form
+            console.log('Submitting form...');
+            form.submit();
+        }
+        
+        function syncCodeMirrorContent() {
+            console.log('syncCodeMirrorContent called');
+            if (editor) {
+                // Sync CodeMirror content back to the hidden textarea
+                const content = editor.getValue();
+                console.log('CodeMirror content length:', content.length);
+                document.getElementById('edit-content').value = content;
+                console.log('Textarea value set, length:', document.getElementById('edit-content').value.length);
+            } else {
+                console.log('No editor instance found');
+            }
+            console.log('Form submission proceeding...');
+            return true; // Allow form submission
         }
     </script>
 </body>

@@ -1,26 +1,69 @@
-cap Boolean
-don't say: monkey-patch(ing), truthy, falsy, truthiness
 
-Try to keep lines under 80 chars
+Conversational guidelines:
 
-private def rather than private block
+ 1. Capitalize Boolean unless there is a good reason not to (e.g., a reserved 
+    word or identifier in some language or context).
+ 
+ 2. Avoid terms I dislike: monkey-patch(ing), truthy, falsy, truthiness
+ 
+ 3. Don't say You're absolutely right!
+ 
+ 4. Don't tell me I'm right until you've investigated.
+ 
+ 5. Avoid exclamation points in conversation.
+ 
+ 6. Try to keep answers under 1 page, not 3. Do not make me scroll back.
+ 
+ 7. "All right," not "alright."
+ 
+ 
+Coding guidelines
+ 
+ 8. Try to keep lines under 80 chars
+ 
+ 9. private def rather than private by itself
+
+10. Avoid using begin/rescue/end inside a method when you can use def/rescue/end.
+
+11. If a method call has parameters that are too long, consider using one or more
+    variables passed in. 
+
+12. If a method call has many parameters, consider continuing over more than one
+    line (flush with the start of the parameters on the first line).
+
+13. Prefer "statement if condition" over an if with a single statement inside.
+
+14. Prefer a one-line block with { ... } over do/end with a single line inside.
+
+15. Avoid identifiers of more than 3 underscore-separated words; 1 or 2 is best.
+
+16. Avoid excessive comments that provide little extra information.
 
 
-don't say You're absolutely right!
+Project guidelines
 
-avoid >2 underscores
+17. Always remember the doc/anti-amnesia directory. It has most of the things
+    you need to know when a new chat starts. We do housecleaning on it from 
+    time to time.
 
-avoid excessive comments
+18. Remember that you (Cursor) have a strange bug such that you seem to find
+    Ruby 2.6 instead of 3.2.3; we have an "rbenv hack" that you can use if
+    this comes up.
 
-all right, not alright
+19. The file exceptions.rb has custom exceptions defined. In general, every
+    exception raised in this project should be one of these (rather than
+    something like:  raise "Failed to manipulate the thingy").
 
-fewer exclamation marks
+20. Basic I/O is handled by helpers such as read_file and write_file. These
+    exist so that errors can be caught neatly and comprehensively. Avoid
+    using File.read, File.write, and so on. Favor the helpers.
 
-more conciseness
+21. PathSep is one of my quirks. Use it instead of File.join, etc.
+
+22. 
+
 
 when to ask permission
 
-use PathSep
 
-rbenv hack
 

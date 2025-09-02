@@ -31,32 +31,37 @@ class ScriptoriumLauncher
   private
 
   def launch_tui
-    puts "Launching Scriptorium TUI..."
     exec(@tui_path, *ARGV)
   end
 
   def launch_web(args)
     if args.empty?
-      puts "Launching Scriptorium Web UI..."
       exec(@web_path, 'start')
     else
-      puts "Running Scriptorium Web command: #{args.join(' ')}"
       exec(@web_path, *args)
     end
   end
 
   def show_help
-    puts <<~HELP
-      Scriptorium - A command-line blogging system
+          puts <<~HELP
+        Scriptorium - A command-line blogging system
 
-      USAGE:
-        sblog                   # Launch TUI (default)
-        sblog tui               # Launch TUI explicitly
-        sblog web               # Launch web app
-        sblog web start         # Start web server
-        sblog web stop          # Stop web server
-        sblog web status        # Check web server status
-        sblog help              # Show this help
+        FLAGS:
+          --test                    - Use test repository (scriptorium-TEST)
+                                      - Default: production repository (~/.scriptorium)
+
+        USAGE:
+          sblog                     # Launch TUI (default)
+          sblog --test              # Launch TUI in test mode
+          sblog tui                 # Launch TUI explicitly
+          sblog tui --test          # Launch TUI in test mode
+          sblog web                 # Launch web app
+          sblog web --test          # Launch web app in test mode
+          sblog web start           # Start web server
+          sblog web start --test    # Start web server in test mode
+          sblog web stop            # Stop web server
+          sblog web status          # Check web server status
+          sblog help                # Show this help
 
       INTERFACES:
         TUI (Text User Interface):

@@ -187,12 +187,29 @@
             </div>
             
             <div class="config-buttons">
-                <a href="/" class="btn">Create Post</a>
+                <button type="button" class="btn" onclick="showCreatePostForm()">Create Post</button>
                 <a href="/asset_management" class="btn">Asset Management</a>
                 <a href="/deploy" class="btn" style="background: #28a745;" title="Deploy to server" onclick="showUploadingPopup()">Deploy</a>
                 <a href="/preview_view" class="btn" style="background: #17a2b8;" title="Preview locally">Preview</a>
                 <a href="/browse" class="btn" style="background: #6f42c1;" title="Browse deployed site">Browse</a>
                 <a href="/advanced_config" class="btn btn-secondary">Advanced Config</a>
+            </div>
+            
+            <!-- Create Post Modal -->
+            <div id="createPostModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; min-width: 300px;">
+                    <h3>Create New Post</h3>
+                    <form method="post" action="/create_post">
+                        <div style="margin-bottom: 15px;">
+                            <label for="post_title" style="display: block; margin-bottom: 5px; font-weight: bold;">Post Title:</label>
+                            <input type="text" id="post_title" name="title" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                        </div>
+                        <div style="text-align: right;">
+                            <button type="button" onclick="hideCreatePostForm()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;">Cancel</button>
+                            <button type="submit" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Create Post</button>
+                        </div>
+                    </form>
+                </div>
             </div>
             
 
@@ -327,6 +344,14 @@
     
     <script>
         // Global functions accessible from HTML onclick attributes
+        function showCreatePostForm() {
+            document.getElementById('createPostModal').style.display = 'block';
+        }
+        
+        function hideCreatePostForm() {
+            document.getElementById('createPostModal').style.display = 'none';
+        }
+        
         function showUploadingPopup() {
             console.log('showUploadingPopup called');
             let popup = document.getElementById('uploading-popup');

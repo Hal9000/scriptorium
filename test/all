@@ -43,6 +43,8 @@ test_files = %w[
   ed_test.rb
   tui_integration_test.rb
   tui_editor_integration_test.rb
+  web_integration_test.rb
+  web_workflow_test.rb
 ]
 
 
