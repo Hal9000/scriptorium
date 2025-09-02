@@ -739,6 +739,118 @@ class TUIIntegrationTest < Minitest::Test
     flunk "#{description}: Error - #{e.message}"
   end
 
+  def test_009_backup_commands
+    ENV['NOREADLINE'] = '1'
+    
+    PTY.spawn({'NOREADLINE' => '1'}, '/Users/Hal/.rbenv/versions/3.2.3/bin/ruby bin/scriptorium --test') do |read, write, pid|
+      begin
+        run_backup_commands_test(read, write, pid)
+      ensure
+        Process.kill('TERM', pid) rescue nil
+        Process.wait(pid) rescue nil
+      end
+    end
+  ensure
+    ENV.delete('NOREADLINE')
+  end
+
+  def run_backup_commands_test(read, write, pid)
+    # Wait for TUI to start
+    read.expect(/Create new repository\?/, 10)
+    write.puts "y"
+    
+    # Wait for view creation prompt
+    read.expect(/Do you want assistance in creating your first view\?/, 10)
+    write.puts "n"
+    
+    # Wait for prompt
+    read.expect(/\[sample\]/, 10)
+    
+    # Test list backups command
+    write.puts "list backups"
+    read.expect(/No backups available/, 5)
+    
+    # Test create backup command
+    write.puts "backup full \"Test backup\""
+    read.expect(/Backup created/, 10)
+    
+    # Test list backups again
+    write.puts "list backups"
+    read.expect(/Available backups/, 5)
+    
+    # Test delete backup command (should prompt for selection)
+    write.puts "delete backup"
+    read.expect(/Available backups/, 5)
+    read.expect(/Select backup to delete/, 5)
+    write.puts "1"  # Select first (and only) backup
+    read.expect(/Are you sure/, 5)
+    write.puts "y"  # Confirm deletion
+    read.expect(/Backup deleted successfully/, 5)
+    
+    # Verify backup was deleted
+    write.puts "list backups"
+    read.expect(/No backups available/, 5)
+    
+    # Test help command to see backup commands
+    write.puts "help"
+    read.expect(/list backups/, 5)
+    read.expect(/backup.*Create backup/, 5)
+    read.expect(/restore.*Restore from backup/, 5)
+    read.expect(/delete backup/, 5)
+    
+    # Exit
+    write.puts "quit"
+    read.expect(/Goodbye/, 5)
+  end
+
+  def test_010_restore_commands
+    ENV['NOREADLINE'] = '1'
+    
+    PTY.spawn({'NOREADLINE' => '1'}, '/Users/Hal/.rbenv/versions/3.2.3/bin/ruby bin/scriptorium --test') do |read, write, pid|
+      begin
+        run_restore_commands_test(read, write, pid)
+      ensure
+        Process.kill('TERM', pid) rescue nil
+        Process.wait(pid) rescue nil
+      end
+    end
+  ensure
+    ENV.delete('NOREADLINE')
+  end
+
+  def run_restore_commands_test(read, write, pid)
+    # Wait for TUI to start
+    read.expect(/Create new repository\?/, 10)
+    write.puts "y"
+    
+    # Wait for view creation prompt
+    read.expect(/Do you want assistance in creating your first view\?/, 10)
+    write.puts "n"
+    
+    # Wait for prompt
+    read.expect(/\[sample\]/, 10)
+    
+    # Create a backup first
+    write.puts "backup full \"Test restore backup\""
+    read.expect(/Backup created/, 10)
+    
+    # Test restore command (should prompt for selection and strategy)
+    write.puts "restore"
+    read.expect(/Available backups/, 5)
+    read.expect(/Select backup/, 5)
+    write.puts "1"  # Select first (and only) backup
+    read.expect(/Strategy.*Enter=safe/, 5)
+    write.puts ""   # Press Enter for safe strategy
+    read.expect(/About to restore backup/, 5)
+    read.expect(/Continue\?/, 5)
+    write.puts "y"  # Confirm restore
+    read.expect(/Backup restored successfully/, 10)
+    
+    # Exit
+    write.puts "quit"
+    read.expect(/Goodbye/, 5)
+  end
+
   def cleanup_test_repo
     # Clean up test repositories
     FileUtils.rm_rf(TEST_REPO_PATH) if Dir.exist?(TEST_REPO_PATH)

@@ -444,9 +444,9 @@ class ScriptoriumTUI
 
   private def two_words?(parts)
     cmds = ["list views", "list posts", "list drafts", "list assets", 
-            "list widgets", "list themes","change view", "new view", 
+            "list widgets", "list themes", "list backups", "change view", "new view", 
             "new post", "upload asset", "copy asset", "delete asset",
-            "delete theme", "asset info", "configure deployment", 
+            "delete theme", "delete backup", "asset info", "configure deployment", 
             "add widget", "config widget", "config social", 
             "config reddit", "clone theme"]
     two_word_cmd = parts[0..1].join(" ")
@@ -456,7 +456,7 @@ class ScriptoriumTUI
 
   private def one_word?(parts)
     cmds = %w[help h view cv lsv lsp lsd version v deploy preview browse 
-              generate quit q]
+              generate quit q backup restore]
     one_word_cmd = parts[0]
     flag = cmds.include?(one_word_cmd)
     return flag ? one_word_cmd : nil
@@ -494,6 +494,8 @@ class ScriptoriumTUI
       "generate"                => [:generate_current_view],
       "quit"                    => [:exit, 0],
       "q"                       => [:exit, 0],
+      "backup"                  => [:create_backup, args],
+      "restore"                 => [:restore_backup, args],
       
       # Two word commands
       "list views"              => [:list_views],
@@ -502,6 +504,7 @@ class ScriptoriumTUI
       "list assets"             => [:list_assets, args],
       "list widgets"            => [:list_widgets, args],
       "list themes"             => [:list_themes, args],
+      "list backups"            => [:list_backups],
       "change view"             => [:create_view, args],
       "new view"                => [:create_view, args],
       "new post"                => [:create_post, args],
@@ -509,6 +512,7 @@ class ScriptoriumTUI
       "copy asset"              => [:copy_asset, args],
       "delete asset"            => [:delete_asset, args],
       "delete theme"            => [:delete_theme, args],
+      "delete backup"           => [:delete_backup, args],
       "asset info"              => [:asset_info, args],
       "configure deployment"    => [:configure_deployment, args],
       "add widget"              => [:add_widget, args],
@@ -574,6 +578,11 @@ class ScriptoriumTUI
         list themes            - List available themes
         clone theme <source> <name>  - Clone a theme
         delete theme <path>    - Delete a user theme
+      
+        list backups          - List available backups
+        backup [type] [desc]  - Create backup (full/incr)
+        restore [timestamp] [strategy] - Restore from backup
+        delete backup [timestamp] - Delete a backup
       
         version, v                - Show version
         help, h                   - Show this help
@@ -1664,7 +1673,201 @@ class ScriptoriumTUI
     end
   end
 
-end
+  end
+
+  def list_backups
+    puts
+    begin
+      backups = @api.list_backups
+      if backups.empty?
+        puts "  No backups available"
+      else
+        puts "  Available backups:"
+        backups.each do |backup|
+          timestamp = backup[:timestamp]
+          type = backup[:type]
+          description = backup[:description]
+          desc_text = description ? " - #{description}" : ""
+          puts "    #{timestamp} (#{type})#{desc_text}"
+        end
+      end
+    rescue => e
+      puts "  ❌ Failed to list backups: #{e.message}"
+    end
+    puts
+  end
+
+  def create_backup(args)
+    puts
+    begin
+      # Parse arguments
+      parts = args.is_a?(String) ? args.split(/\s+/) : args
+      type = parts[0]&.downcase
+      description = parts[1..-1]&.join(" ")
+      
+      # Prompt for missing type
+      unless %w[full incr].include?(type)
+        print "  Backup type (full/incr): "
+        type = gets.chomp.downcase
+        unless %w[full incr].include?(type)
+          puts "  ❌ Invalid backup type. Must be 'full' or 'incr'"
+          puts
+          return
+        end
+      end
+      
+      # Prompt for description if not provided
+      if description.nil? || description.empty?
+        print "  Description (optional): "
+        description = gets.chomp
+        description = nil if description.empty?
+      end
+      
+      # Create backup
+      backup_type = type.to_sym
+      timestamp = @api.create_backup(backup_type, description)
+      
+      puts "  ✅ Backup created: #{timestamp}"
+      if description
+        puts "  Description: #{description}"
+      end
+    rescue => e
+      puts "  ❌ Failed to create backup: #{e.message}"
+    end
+    puts
+  end
+
+  def restore_backup(args)
+    puts
+    begin
+      # Parse arguments
+      parts = args.is_a?(String) ? args.split(/\s+/) : args
+      timestamp = parts[0]
+      strategy = parts[1]&.downcase
+      
+      # Prompt for missing timestamp
+      if timestamp.nil? || timestamp.empty?
+        backups = @api.list_backups
+        if backups.empty?
+          puts "  No backups available to restore"
+          puts
+          return
+        end
+        
+        puts "  Available backups:"
+        backups.each_with_index do |backup, index|
+          desc_text = backup[:description] ? " - #{backup[:description]}" : ""
+          puts "    #{index + 1}. #{backup[:timestamp]} (#{backup[:type]})#{desc_text}"
+        end
+        
+        print "  Select backup (number or timestamp): "
+        selection = gets.chomp
+        
+        # Check if it's a number
+        if selection.match?(/^\d+$/)
+          index = selection.to_i - 1
+          if index >= 0 && index < backups.length
+            timestamp = backups[index][:timestamp]
+          else
+            puts "  ❌ Invalid selection"
+            puts
+            return
+          end
+        else
+          timestamp = selection
+        end
+      end
+      
+      # Prompt for strategy if not provided
+      unless %w[safe merge destroy].include?(strategy)
+        print "  Strategy (Enter=safe, or type: merge, destroy): "
+        strategy_input = gets.chomp.downcase
+        strategy = strategy_input.empty? ? "safe" : strategy_input
+        
+        unless %w[safe merge destroy].include?(strategy)
+          puts "  ❌ Invalid strategy. Must be 'safe', 'merge', or 'destroy'"
+          puts
+          return
+        end
+      end
+      
+      # Confirm restore
+      puts "  About to restore backup: #{timestamp}"
+      puts "  Strategy: #{strategy}"
+      unless yesno("Continue?")
+        puts "  Restore cancelled"
+        puts
+        return
+      end
+      
+      # Restore backup
+      strategy_sym = strategy.to_sym
+      @api.restore_backup(timestamp, strategy: strategy_sym)
+      
+      puts "  ✅ Backup restored successfully"
+    rescue => e
+      puts "  ❌ Failed to restore backup: #{e.message}"
+    end
+    puts
+  end
+
+  def delete_backup(args)
+    puts
+    begin
+      # Parse arguments
+      parts = args.is_a?(String) ? args.split(/\s+/) : args
+      timestamp = parts[0]
+      
+      # Prompt for missing timestamp
+      if timestamp.nil? || timestamp.empty?
+        backups = @api.list_backups
+        if backups.empty?
+          puts "  No backups available to delete"
+          puts
+          return
+        end
+        
+        puts "  Available backups:"
+        backups.each_with_index do |backup, index|
+          desc_text = backup[:description] ? " - #{backup[:description]}" : ""
+          puts "    #{index + 1}. #{backup[:timestamp]} (#{backup[:type]})#{desc_text}"
+        end
+        
+        print "  Select backup to delete (number or timestamp): "
+        selection = gets.chomp
+        
+        # Check if it's a number
+        if selection.match?(/^\d+$/)
+          index = selection.to_i - 1
+          if index >= 0 && index < backups.length
+            timestamp = backups[index][:timestamp]
+          else
+            puts "  ❌ Invalid selection"
+            puts
+            return
+          end
+        else
+          timestamp = selection
+        end
+      end
+      
+      # Confirm deletion
+      puts "  About to delete backup: #{timestamp}"
+      unless yesno("Are you sure?")
+        puts "  Deletion cancelled"
+        puts
+        return
+      end
+      
+      # Delete backup
+      @api.delete_backup(timestamp)
+      
+      puts "  ✅ Backup deleted successfully"
+    rescue => e
+      puts "  ❌ Failed to delete backup: #{e.message}"
+    end
+    puts
+  end
 
 ###### Main ######
 

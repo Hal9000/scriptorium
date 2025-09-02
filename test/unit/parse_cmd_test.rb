@@ -13,9 +13,9 @@ class ParseCmdTest < Minitest::Test
       # Check if first two words form a known 2-word command
       two_word_cmd = parts[0..1].join(" ")
       case two_word_cmd.downcase
-      when "list views", "list posts", "list drafts", "list assets", "list widgets", "list themes",
+      when "list views", "list posts", "list drafts", "list assets", "list widgets", "list themes", "list backups",
            "change view", "new view", "new post", "upload asset", "copy asset", "delete asset",
-           "delete theme", "asset info", "configure deployment", "add widget", "config widget",
+           "delete theme", "delete backup", "asset info", "configure deployment", "add widget", "config widget",
            "config social", "config reddit", "clone theme"
         cmd = two_word_cmd
         args = parts[2..-1]
@@ -23,7 +23,7 @@ class ParseCmdTest < Minitest::Test
         # Check if first word is a single-word command that can take parameters
         first_word = parts[0].downcase
         case first_word
-        when "cv"  # Only cv is a single-word command that takes parameters
+        when "cv", "backup", "restore"  # Single-word commands that take parameters
           # First word can take parameters, rest are arguments
           cmd = first_word
           args = parts[1..-1]
@@ -77,6 +77,8 @@ class ParseCmdTest < Minitest::Test
       [:list_widgets]
     when "list themes"
       [:list_themes]
+    when "list backups"
+      [:list_backups]
     when "change view"
       [:change_view, args]
     when "new view"
@@ -91,6 +93,8 @@ class ParseCmdTest < Minitest::Test
       [:delete_asset, args]
     when "delete theme"
       [:delete_theme, args]
+    when "delete backup"
+      [:delete_backup, args]
     when "asset info"
       [:asset_info, args]
     when "configure deployment"
@@ -105,6 +109,10 @@ class ParseCmdTest < Minitest::Test
       [:config_reddit]
     when "clone theme"
       [:clone_theme, args]
+    when "backup"
+      [:create_backup, args]
+    when "restore"
+      [:restore_backup, args]
     else
       [:unknown_command, cmd]
     end
@@ -136,6 +144,7 @@ class ParseCmdTest < Minitest::Test
     assert_equal [:list_assets, ["assets", "global"]], parse_cmd("list assets assets global")
     assert_equal [:list_widgets], parse_cmd("list widgets")
     assert_equal [:list_themes], parse_cmd("list themes")
+    assert_equal [:list_backups], parse_cmd("list backups")
   end
 
   def test_003_parse_cmd_change_commands
@@ -183,6 +192,31 @@ class ParseCmdTest < Minitest::Test
   def test_010_parse_cmd_theme_commands
     # Test theme commands
     assert_equal [:delete_theme, ["mytheme"]], parse_cmd("delete theme mytheme")
+  end
+
+  def test_015_parse_cmd_backup_commands
+    # Test backup commands
+    assert_equal [:create_backup, []], parse_cmd("backup")
+    assert_equal [:create_backup, ["full"]], parse_cmd("backup full")
+    assert_equal [:create_backup, ["incr"]], parse_cmd("backup incr")
+    assert_equal [:create_backup, ["full", "Before", "major", "changes"]], parse_cmd("backup full Before major changes")
+    assert_equal [:create_backup, ["incr", "Added", "new", "post"]], parse_cmd("backup incr Added new post")
+  end
+
+  def test_016_parse_cmd_restore_commands
+    # Test restore commands
+    assert_equal [:restore_backup, []], parse_cmd("restore")
+    assert_equal [:restore_backup, ["20250902-120000-full"]], parse_cmd("restore 20250902-120000-full")
+    assert_equal [:restore_backup, ["20250902-120000-full", "safe"]], parse_cmd("restore 20250902-120000-full safe")
+    assert_equal [:restore_backup, ["20250902-130000-incr", "merge"]], parse_cmd("restore 20250902-130000-incr merge")
+    assert_equal [:restore_backup, ["20250902-140000-incr", "destroy"]], parse_cmd("restore 20250902-140000-incr destroy")
+  end
+
+  def test_017_parse_cmd_delete_backup_commands
+    # Test delete backup commands
+    assert_equal [:delete_backup, []], parse_cmd("delete backup")
+    assert_equal [:delete_backup, ["20250902-120000-full"]], parse_cmd("delete backup 20250902-120000-full")
+    assert_equal [:delete_backup, ["20250902-130000-incr"]], parse_cmd("delete backup 20250902-130000-incr")
   end
 
   def test_011_parse_cmd_edge_cases
