@@ -200,7 +200,7 @@ class TestScriptoriumRepo < Minitest::Test
     root = repo.root
     file = "#{root}/themes/standard/initial/post.lt3"
     assert_file_exist?(file)
-    assert_file_lines(file, 10)
+    assert_file_lines(file, 12)
   end
 
   def test_014_check_interpolated_initial_post

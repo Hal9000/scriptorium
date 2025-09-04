@@ -640,16 +640,7 @@ class Scriptorium::BannerSVG
   
     def get_svg
       check_invariants
-      
-      # Debug: log font sizes to file
-      File.write('/tmp/banner_debug.txt', "get_svg called\n", mode: 'a')
-      File.write('/tmp/banner_debug.txt', "  @title_font_size: #{@title_font_size}\n", mode: 'a')
-      File.write('/tmp/banner_debug.txt', "  @subtitle_font_size: #{@subtitle_font_size}\n", mode: 'a')
-      File.write('/tmp/banner_debug.txt', "  @title_scale: #{@title_scale}\n", mode: 'a')
-      File.write('/tmp/banner_debug.txt', "  @subtitle_scale: #{@subtitle_scale}\n", mode: 'a')
-      File.write('/tmp/banner_debug.txt', "  @base_font_size: #{@base_font_size}\n", mode: 'a')
-      File.write('/tmp/banner_debug.txt', "---\n", mode: 'a')
-      
+    
       # Generate SVG without re-parsing config (use current instance variables)
       svg_code = generate_svg
       svg_lines = svg_code.split("\n").map {|line| " "*6 + line }
@@ -717,24 +708,24 @@ class Scriptorium::BannerSVG
           } else {
             console.error('Container not found:', container);
           }
-          }
-        
-                  console.log('SVG script loaded');
-        console.log('Header element exists:', !!document.querySelector('header'));
-        
-        window.onload = function() {
-          console.log('SVG insertion starting...');
-          insert_svg_header('header');
-          console.log('SVG insertion complete');
         }
         
-        // Also try immediate execution
-        document.addEventListener('DOMContentLoaded', function() {
-          console.log('DOM ready, trying SVG insertion...');
-          insert_svg_header('header');
-        });
-        </script>
+      console.log('SVG script loaded');
+  
+      window.onload = function() {
+        console.log('SVG insertion starting...');
+        insert_svg_header('header');
+        console.log('SVG insertion complete');
+      }
+        
+      // Also try immediate execution
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM ready, trying SVG insertion...');
+        insert_svg_header('header');
+      });
+      </script>
       EOS
+      
       code
     end
   

@@ -249,8 +249,8 @@ class IntegrationTest < Minitest::Test
     assert_present(index_html, *targets)
     assert_ordered(index_html, *targets)
     FileUtils.cp(index_file, "/tmp/testcms1.html")
-    post_div = %[class="index-entry"]
-    num_posts = index_html.scan(/#{Regexp.escape(post_div)}/).length
+    post_links = %[onclick="load_main]
+    num_posts = index_html.scan(/#{Regexp.escape(post_links)}/).length
     assert_equal 7, num_posts, "Expected 7 posts, found #{num_posts}"
   end
 

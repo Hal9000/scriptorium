@@ -230,6 +230,8 @@ module Scriptorium::Helpers
   end
   
   def slugify(id, title)
+    return "#{d4(id)}-untitled" if title.nil? || title.strip.empty?
+    
     slug = title.downcase.strip
                .gsub(/[^a-z0-9\s_-]/, '')  # remove punctuation
                .gsub(/[\s_-]+/, '-')       # replace spaces and underscores with hyphen
@@ -248,7 +250,11 @@ module Scriptorium::Helpers
   end
   
   def ymdhms
-    Time.now.strftime("%Y-%m-%d-%H-%M-%S")
+    Time.now.strftime("%Y-%m-%d %H:%M:%S")
+  end
+  
+  def ymdhms_filename
+    Time.now.strftime("%Y%m%d-%H%M%S")
   end
 
   def see_file(file)   # Really from TestHelpers

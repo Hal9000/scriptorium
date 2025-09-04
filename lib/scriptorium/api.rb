@@ -212,11 +212,9 @@ class Scriptorium::API
   end
   
   private def substitute(post, template)
-    # Simple substitution - replace %{post.field} with post.field
-    template.gsub(/%\{([^}]+)\}/) { |match| 
-      field = $1.strip
-      post.respond_to?(field) ? post.send(field) : match
-    }
+    # Use the same substitution system as helpers - text % vars
+    vars = post.vars
+    template % vars
   end
 
   def generate_post(post_id)

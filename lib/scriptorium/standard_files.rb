@@ -21,6 +21,8 @@ class Scriptorium::StandardFiles
       javascript # See common.js 
       bootstrap  # See bootstrap.txt
       social     # See social.txt for configuration
+      prism      # See prism_css.txt for syntax highlighting
+      prism_custom # Custom CSS overrides for Prism
     EOS
     str
   end
@@ -30,10 +32,8 @@ class Scriptorium::StandardFiles
       // Handle the back button (or JavaScript history.go(-1))
       window.onpopstate = function(event) {
         console.log('onpopstate event:', event); // Log the event object
-        if (event.state && event.state.slug) {
-          console.log('Navigating to slug:', event.state.slug); // Log the slug
-          load_main(event.state.slug);  // Load the post for the previous history state
-        }
+        // Simply reload the page to avoid nesting issues
+        window.location.reload();
       };
 
         // Initialize with the front page when navigating via the back button or similar
@@ -68,27 +68,63 @@ class Scriptorium::StandardFiles
         const leftDiv = document.querySelector(".left");
         const rightDiv = document.querySelector(".right");
         console.log('Loading main with slug:', slug); // Log the slug
+        
+        // Clear any existing content to prevent nesting
+        contentDiv.innerHTML = '';
+        contentDiv.dataset.currentSlug = slug;
 
                       // Check if this is a post parameter request
       if (slug.includes('?post=')) {
           const postSlug = slug.split('?post=')[1];
           console.log('Loading post:', postSlug);
           
-          // Load the post content - add .html extension if it's missing
-          const postFile = postSlug.endsWith('.html') ? postSlug : postSlug + '.html';
-          fetch('posts/' + postFile)
-              .then(response => {
-                  if (response.ok) {
-                      return response.text();
-                  } else {
-                      console.error('Failed to load post:', response.status);
-                      return 'Post not found';
-                  }
-              })
-              .then(content => {
-                  contentDiv.innerHTML = content;
-                  history.pushState({slug: 'index.html?post=' + postSlug}, "", 'index.html?post=' + postSlug);
-              })
+                  // Load the post content - add .html extension if it's missing
+        const postFile = postSlug.endsWith('.html') ? postSlug : postSlug + '.html';
+              console.log('Fetching post file:', 'posts/' + postFile);
+      fetch('posts/' + postFile)
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (response.ok) {
+                    return response.text();
+                } else {
+                    console.error('Failed to load post:', response.status);
+                    return 'Post not found';
+                }
+            })
+                          .then(content => {
+                console.log('Loaded content length:', content.length);
+                console.log('Content preview:', content.substring(0, 200));
+                contentDiv.innerHTML = content;
+                
+                        // Debug: Check what pre elements exist
+        const allPreElements = contentDiv.querySelectorAll('pre');
+        console.log('All pre elements found:', allPreElements.length);
+        allPreElements.forEach((pre, index) => {
+            console.log(`Pre element ${index}:`, pre.outerHTML.substring(0, 100));
+        });
+
+        // Highlight only the newly loaded content
+        if (typeof hljs !== 'undefined') {
+            // Find all code blocks in the new content and highlight them
+            const codeBlocks = contentDiv.querySelectorAll('pre code[class*="language-"]');
+            console.log('Found code blocks:', codeBlocks.length);
+            if (codeBlocks.length > 0) {
+                // Highlight each code block
+                codeBlocks.forEach((codeBlock, index) => {
+                    console.log(`Highlighting code block ${index}:`, codeBlock);
+                    try {
+                        hljs.highlightElement(codeBlock);
+                        console.log(`Successfully highlighted code block ${index}`);
+                    } catch (error) {
+                        console.error(`Error highlighting code block ${index}:`, error);
+                    }
+                });
+            }
+        } else {
+            console.log('hljs is not defined');
+        }
+                history.pushState({slug: 'index.html?post=' + postSlug}, "", 'index.html?post=' + postSlug);
+            })
               .catch(error => {
                   console.log("Error loading post:", error);
                   contentDiv.innerHTML = 'Error loading post';
@@ -150,10 +186,10 @@ class Scriptorium::StandardFiles
         .catch(error => {
             console.log("Error loading content:", error); // Log any errors during fetch
         });
-      }
+    }
 
-      // Copy permalink to clipboard functionality
-      function copyPermalinkToClipboard() {
+    // Copy permalink to clipboard functionality
+    function copyPermalinkToClipboard() {
         // Get the current post slug from the URL or construct it
         const currentUrl = window.location.href;
         let permalinkUrl;
@@ -161,7 +197,7 @@ class Scriptorium::StandardFiles
         if (currentUrl.includes('?post=')) {
           // We're on the main blog page, construct the permalink URL
           const postSlug = currentUrl.split('?post=')[1];
-          const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
+          const baseUrl = window.location.origin + window.location.pathname.replace(/\\/[^\\/]*$/, '');
           permalinkUrl = baseUrl + '/permalink/' + postSlug;
         } else {
           // We're already on a permalink page, use current URL
@@ -178,12 +214,17 @@ class Scriptorium::StandardFiles
             button.textContent = originalText;
             button.style.background = '#007bff';
           }, 2000);
-        }).catch(function(err) {
-          console.error('Failed to copy: ', err);
-          alert('Failed to copy link to clipboard');
-        });
-      }
-    EOS
+              }).catch(function(err) {
+        console.error('Failed to copy: ', err);
+        alert('Failed to copy link to clipboard');
+      });
+    }
+
+            // Initialize highlight.js syntax highlighting
+        if (typeof hljs !== 'undefined') {
+          hljs.highlightAll();
+        }
+  EOS
   end
 
 
@@ -203,6 +244,55 @@ class Scriptorium::StandardFiles
     # integrity has a problem - compute instead?
     # integrity    sha384-pzjw8f+ua7Kw1TIq0+v5+GZkR6P/6v03cI0myXcJU22Hc5p5BY5/X93HmaJXjm4C
     crossorigin  anonymous
+    EOS
+  end
+
+  def prism_css
+    <<~EOS
+    href         https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css
+    rel          stylesheet
+    EOS
+  end
+
+  def prism_custom_css
+    <<~EOS
+    <style>
+    pre {
+      max-height: none !important;
+      height: auto !important;
+      overflow: visible !important;
+      background: #f5f2f0 !important;
+      padding: 1em !important;
+      margin: 1em 0 !important;
+      border-radius: 0.3em !important;
+      display: block !important;
+    }
+    code {
+      white-space: pre-wrap !important;
+      word-wrap: break-word !important;
+      display: block !important;
+    }
+    /* Normal whitespace handling */
+    #main {
+      white-space: normal;
+    }
+    #main tt {
+      white-space: nowrap;
+      display: inline;
+    }
+    </style>
+    EOS
+  end
+
+  def prism_js
+    <<~EOS
+    src          https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js
+    EOS
+  end
+
+  def prism_ruby_js
+    <<~EOS
+    src          https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/ruby.min.js
     EOS
   end
 
@@ -253,10 +343,12 @@ class Scriptorium::StandardFiles
     str = 
     <<~EOS
       . Initial file created by StandardFiles#post_template(num)
-      .created %{created}
+      .created
       
       .title %{title}
-      .blurb %{blurb}
+      .blurb 
+      %{blurb}
+      .end
       
       .views %{views}  
       .tags  %{tags}   
@@ -396,20 +488,24 @@ class Scriptorium::StandardFiles
   def index_entry
     # Note the use of %% to escape the % in the flex-basis attribute!
     <<~EOS
-      <div class="index-entry" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px;">
-        <!-- Left Side: Date (right aligned) -->
-        <div style="text-align: right; font-size: 0.7em; flex-basis: 10%%; padding-top: 3px;">
-          <div>%{post.pubdate.month} %{post.pubdate.day}</div>
-          <div>%{post.pubdate.year}</div>
-        </div>
-        <!-- Right Side: Title and Blurb (left aligned) -->
-        <div style="font-size: 1.2em; margin-left: 10px; flex-grow: 1; padding-top: 0;">
-          <div><a href="javascript:void(0)" 
-                  style="text-decoration: none;"
-                  onclick="load_main('index.html?post=%{post.slug}')">%{post.title}</a></div>
-          <div style="font-size: 0.9em;">%{post.blurb}</div>
-        </div>
-      </div>
+      <table width=100%% cellpadding=3 style="margin-bottom: 2px;">
+        <tr>
+          <td width=14%% valign=top align=right style="margin-top: -1px;">
+            <div style="text-align: right; font-size: 0.7em;">
+              <div>%{post.pubdate.month} %{post.pubdate.day}</div>
+              <div>%{post.pubdate.year}</div>
+            </div>
+          </td>
+          <td valign=top> 
+            <div style="font-size: 1.2em;">
+              <div><a href="javascript:void(0)" 
+                      style="text-decoration: none;"
+                      onclick="load_main('index.html?post=%{post.slug}')">%{post.title}</a></div>
+              <div style="font-size: 0.8em;">%{post.blurb}</div>
+            </div>
+          </td>
+        </tr>
+      </table>
     EOS
   end
 

@@ -69,31 +69,6 @@ class Scriptorium::View
     raise ViewTitleEmpty if title.to_s.strip.empty?
   end
 
-=begin
-1. The theme provides layout/config/header.txt with default content instructions.
-2. When the theme is applied, header.txt is copied to views/VIEW/config/.
-3. A placeholder layout/header.html is created in views/VIEW/layout/ with <!-- HEADER CONTENT -->.
-4. The file views/VIEW/config/header.txt is parsed to generate actual HTML.
-5. That HTML replaces the placeholder and is written to views/VIEW/output/panes/header.html.
-6. Later, output/panes/header.html is included when assembling views/VIEW/output/index.html.
-
-That process is clean and logical. I see only minor points worth considering:
-
-Copying header.txt from theme to view config/ is irreversible by design—once copied, 
-any theme updates won’t affect the view’s header.txt. That’s good for isolation, but 
-it might be worth exposing a way to “reapply” or “sync” a theme’s layout/config/ 
-if desired.
-Placeholder files like layout/header.html in layout/ may be unnecessary once 
-output/panes/header.html is reliably generated. If they exist solely for the 
-<!-- CONTENT --> tags, consider templating that in-memory instead.
-You may want to enforce (or warn) if config/header.txt is missing or invalid 
-at generation time, to catch misconfigured views.
-If you add more optional components (like navbars, banners, etc.), consider 
-adding light validation or doc comments to header.txt to aid future users/editors.
-
-But overall, the process is robust and well thought-out. No major changes needed.
-=end
-
   def read_layout
     layout_file = @dir/:config/"layout.txt"
     
@@ -626,7 +601,7 @@ write output:      write the result to output/panes/header.html
   end
 
   def view_posts
-    @repo.all_posts(self).sort_by {|post| post.pubdate}
+    @repo.all_posts(self).sort {|a,b| post_compare(a, b)}
   end
 
   def generate_html_head(view = nil)
@@ -661,8 +636,10 @@ write output:      write the result to output/panes/header.html
         content << generate_bootstrap_css(view)
       when "social"
         content << generate_social_meta_tags(args)
-      when "syntax"
-        content << generate_syntax_css
+      when "prism"
+        content << generate_prism_css(view)
+      when "prism_custom"
+        content << @predef.prism_custom_css
       end
     end
     content << "</head>\n"
@@ -907,6 +884,8 @@ write output:      write the result to output/panes/header.html
     content = build_containers
     common = get_common_js
     boot   = generate_bootstrap_js
+    prism_js = generate_prism_js(true)
+    prism_ruby_js = generate_prism_ruby_js(true)
     full_html = <<~HTML
       <!DOCTYPE html>
       #{html_head}
@@ -914,18 +893,21 @@ write output:      write the result to output/panes/header.html
         <body style="height: 100%; margin: 0; display: flex; flex-direction: column;">
           #{content.strip}
           #{boot.strip}
+          #{prism_js.strip}
+          #{prism_ruby_js.strip}
           #{common.strip}
         </body>
       </html>
     HTML
 
     # Beautify HTML if HtmlBeautifier is available
-    begin
-      full_html = ::HtmlBeautifier.beautify(full_html)
-    rescue NameError, LoadError => e
-      # HtmlBeautifier not available, continue without beautification
-      # This is not critical for functionality
-    end
+    # TEMPORARILY DISABLED FOR TESTING
+    # begin
+    #   full_html = ::HtmlBeautifier.beautify(full_html)
+    # rescue NameError, LoadError => e
+    #   # HtmlBeautifier not available, continue without beautification
+    #   # This is not critical for functionality
+    # end
 
     # Write the main index file
     write_file(index_file, full_html)
@@ -949,14 +931,55 @@ write output:      write the result to output/panes/header.html
     end
   end
 
-  def generate_syntax_css
-    highlighter = Scriptorium::SyntaxHighlighter.new
-    "<style>\n#{highlighter.generate_css}\n</style>\n"
+  def generate_prism_css(view = nil)
+    global_prism = @root/:config/"prism_css.txt"
+    view_prism   = @dir/:config/"prism_css.txt"
+    prism_file = view ? view_prism : global_prism
+    lines = read_commented_file(prism_file)
+    href = rel = nil
+    lines.each do |line|
+      component, args = line.split(/\s+/, 2)
+      case component.downcase
+      when "href"
+        href = args
+      when "rel"
+        rel = args
+      end
+    end
+    %[<link rel="#{rel}" href="#{href}">\n]
   end
 
-  def highlight_code(code, language = nil)
-    highlighter = Scriptorium::SyntaxHighlighter.new
-    highlighter.highlight(code, language)
+  def generate_prism_js(view = nil)
+    global_prism = @root/:config/"prism_js.txt"
+    view_prism   = @dir/:config/"prism_js.txt"
+    prism_file = view ? view_prism : global_prism
+    lines = read_commented_file(prism_file)
+    src = nil
+    lines.each do |line|
+      component, args = line.split(/\s+/, 2)
+      case component.downcase
+      when "src"
+        src = args
+      end
+    end
+    %[<script src="#{src}"></script>\n]
   end
+
+  def generate_prism_ruby_js(view = nil)
+    global_prism = @root/:config/"prism_ruby_js.txt"
+    view_prism   = @dir/:config/"prism_ruby_js.txt"
+    prism_file = view ? view_prism : global_prism
+    lines = read_commented_file(prism_file)
+    src = nil
+    lines.each do |line|
+      component, args = line.split(/\s+/, 2)
+      case component.downcase
+      when "src"
+        src = args
+      end
+    end
+    %[<script src="#{src}"></script>\n]
+  end
+
 
 end

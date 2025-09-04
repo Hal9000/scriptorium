@@ -63,8 +63,6 @@ class Scriptorium::Post
       end
     end
   
-
-
     def blurb
       meta["post.blurb"]
     end
@@ -115,7 +113,7 @@ class Scriptorium::Post
       raise PubdateInvalidFormat(date) unless date.to_s.match?(/^\d{4}-\d{2}-\d{2}$/)
     end
 
-    private def update_pubdate_metadata(time)
+    def update_pubdate_metadata(time)
       meta["post.pubdate"] = time.strftime("%Y-%m-%d %H:%M:%S") 
       meta["post.pubdate.month"] = time.strftime("%B") 
       meta["post.pubdate.day"] = time.strftime("%e") 
@@ -201,6 +199,20 @@ class Scriptorium::Post
       return @vars if defined?(@vars)
       @vars = Hash.new("")
       meta.each_pair {|k,v| @vars[k.to_sym] = v }
+      
+      # Add computed date components for template access
+      date_value = pubdate || created
+      if date_value
+        begin
+          date_obj = Date.parse(date_value)
+          @vars[:"post.pubdate.month"] = date_obj.strftime("%B")
+          @vars[:"post.pubdate.day"] = date_obj.strftime("%e").strip
+          @vars[:"post.pubdate.year"] = date_obj.strftime("%Y")
+        rescue Date::Error
+          # If date is invalid, leave the computed fields empty
+        end
+      end
+      
       @vars
     end
 

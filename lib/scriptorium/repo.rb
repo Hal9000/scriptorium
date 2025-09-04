@@ -226,6 +226,9 @@ class Scriptorium::Repo
       write_file(dir/:config/"global-head.txt",   @predef.html_head_content(true))  # true = view-specific
       write_file(dir/:config/"bootstrap_js.txt",  @predef.bootstrap_js)
       write_file(dir/:config/"bootstrap_css.txt", @predef.bootstrap_css)
+      write_file(dir/:config/"prism_js.txt",      @predef.prism_js)
+      write_file(dir/:config/"prism_ruby_js.txt", @predef.prism_ruby_js)
+      write_file(dir/:config/"prism_css.txt",     @predef.prism_css)
       write_file(dir/:config/"common.js",         @predef.common_js)
       write_file(dir/:config/"social.txt",        @predef.social_config)
       write_file(dir/:config/"reddit.txt",        @predef.reddit_config)
@@ -483,9 +486,6 @@ class Scriptorium::Repo
       write_file(metadata_file, lines.join("\n"))
     end
     
-    # Generate the post (this will preserve the updated metadata)
-    generate_post(num)
-    
     self.post(num)
   end
   
@@ -667,35 +667,39 @@ class Scriptorium::Repo
     
     # Read content file
     vars = { View: @current_view.name, :"post.id" => num }
-    # live = Livetext.customize(mix: "lt3scriptor", call: ".nopara", vars: vars)
-    # text = live.xform_file(content_file)
-    # vars, _body = live.vars.vars, live.body
+    
+    # Merge metadata into vars if metadata file exists
+    if File.exist?(metadata_file)
+      metadata = getvars(metadata_file)
+      vars.merge!(metadata)
+    end
     
     live = Livetext.customize(mix: "lt3scriptor", call: ".nopara", vars: vars)
     body, vars = live.process(file: content_file)
 
-    # Create or update metadata from post content
-    if File.exist?(metadata_file)
-      # Preserve existing metadata (like post.published timestamp)
-      existing_metadata = getvars(metadata_file)
-      metadata_vars = create_metadata_from_content(num, vars)
-      # Merge existing metadata over defaults
-      existing_metadata.each do |key, value|
-        metadata_vars[key] = value
-      end
-    else
-      # Create new metadata
-      metadata_vars = create_metadata_from_content(num, vars)
-    end
+
+
+    # Use metadata from LiveText processing
+    # Filter vars to only include post.* fields for metadata
+    metadata_vars = vars.select {|k,v| k.to_s.start_with?("post.") }
+    metadata_vars.delete(:"post.body")
+    metadata_vars[:"post.slug"] = slugify(num, vars[:"post.title"]) + ".html"
+    metadata_vars[:"post.published"] = "no"
+    metadata_vars[:"post.deployed"] = "no"
     
+    if vars[:"post.created"]
+      time = Time.parse(vars[:"post.created"])
+      metadata_vars["post.pubdate"]       = time.strftime("%Y-%m-%d %H:%M:%S") 
+      metadata_vars["post.pubdate.month"] = time.strftime("%B") 
+      metadata_vars["post.pubdate.day"]   = time.strftime("%e") 
+      metadata_vars["post.pubdate.year"]  = time.strftime("%Y")
+    end 
+  
     # Write metadata file
     lines = metadata_vars.map { |k, v| sprintf("%-18s  %s", k, v) }
     write_file(metadata_file, lines.join("\n"))
     
-    # Merge metadata into vars, but don't override content vars
-    metadata_vars.each { |key, value| vars[key] = value unless vars.key?(key) }
-    
-    views = vars[:"post.views"].strip.split(/\s+/)
+    views = (vars[:"post.views"] || "").strip.split(/\s+/)
     vars[:"post.views"] = views.join(" ")  # Ensure post.views is set in vars
     views.each do |view|  
       view = lookup_view(view)
@@ -710,23 +714,7 @@ class Scriptorium::Repo
     end
   end
 
-  private def create_metadata_from_content(num, vars)
-    metadata = {}
-    
-    # Set required fields
-    metadata[:"post.id"] = d4(num)
-    metadata[:"post.created"] = ymdhms
-    metadata[:"post.published"] = "no"  # Default to unpublished
-    metadata[:"post.deployed"] = "no"
-    
-    # Copy fields from content vars
-    metadata[:"post.title"] = vars[:"post.title"] || "ADD TITLE HERE"
-    metadata[:"post.blurb"] = vars[:"post.blurb"] || "ADD BLURB HERE"
-    metadata[:"post.views"] = vars[:"post.views"] || "sample"
-    metadata[:"post.tags"] = vars[:"post.tags"] || ""
-    
-    metadata
-  end
+
 
   def all_posts(view = nil)
     posts = []
@@ -886,6 +874,8 @@ class Scriptorium::Repo
     
     raise ViewNameEmpty if name.to_s.strip.empty?
   end
+
+
 
   private def validate_view_title(title)
     raise ViewTitleNil if title.nil?

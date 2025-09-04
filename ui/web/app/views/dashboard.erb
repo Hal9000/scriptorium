@@ -21,23 +21,31 @@
   </style>
   <script>
     function previewView(viewName) {
-      // Create a form to submit the POST request
-      var form = document.createElement('form');
-      form.method = 'POST';
-      form.action = '/preview_view';
-      form.target = '_blank'; // Open in new tab/window
+      // Open preview in new tab with GET request
+      window.open('/preview', '_blank');
+    }
+    
+    function changeView(viewName) {
+      // Submit form via AJAX to avoid URL change
+      const formData = new FormData();
+      formData.append('view_name', viewName);
       
-      // Add the view_name parameter
-      var input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'view_name';
-      input.value = viewName;
-      form.appendChild(input);
-      
-      // Submit the form
-      document.body.appendChild(form);
-      form.submit();
-      document.body.removeChild(form);
+      fetch('/change_view', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        if (response.ok) {
+          // Reload the page to show the new view
+          window.location.reload();
+        } else {
+          alert('Failed to change view');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error changing view');
+      });
     }
   </script>
 </head>
@@ -79,12 +87,9 @@
                     </span>
                   <% else %>
                     <!-- Other views - actually clickable -->
-                    <form method="post" action="/change_view" style="display: inline;">
-                      <input type="hidden" name="view_name" value="<%= view.name %>">
-                      <button type="submit" style="background: none; border: none; color: #007cba; cursor: pointer; font-family: monospace; font-size: inherit;" title="Change to <%= view.name %>">
-                        <%= view.name %>
-                      </button>
-                    </form>
+                    <button type="button" onclick="changeView('<%= view.name %>')" style="background: none; border: none; color: #007cba; cursor: pointer; font-family: monospace; font-size: inherit;" title="Change to <%= view.name %>">
+                      <%= view.name %>
+                    </button>
                   <% end %>
                 </td>
                 <td>

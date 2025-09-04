@@ -1,6 +1,6 @@
 VERY SOON:
 ----------
-  legacy import
+x legacy import
   full reddit support
   add draft management
   themes into web app

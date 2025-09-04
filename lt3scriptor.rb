@@ -25,7 +25,7 @@ slug     URL-safe identifier (usually derived from title, e.g. my-first-post)
 views    (Optional) Names of views this post belongs to
 status   e.g., draft, published, archived
 tags     List of tags or categories
-blurb    (Optional) Short summary or excerpt
+c    (Optional) Short summary or excerpt
 
 Some will go into meta.lt3 - I will use:  id, title, created, views
 
@@ -47,8 +47,13 @@ def title(args, data)
   setvar("post.title", data)
 end
 
-def created
-  setvar("post.created", Time.now.strftime("%Y-%m-%d-%H-%M-%S"))
+def created(args, data)
+  if args.empty?
+    time = Time.now.strftime("%Y-%m-%d %H:%M:%S")
+  else
+    time = data
+  end
+  setvar("post.created", time)
 end
 
 def last_updated
@@ -87,10 +92,30 @@ def tags(args, data)
   setvar("post.tags", data.strip)
 end
 
-def blurb(args, data)
-  setvar("post.blurb", data.strip)
+def blurb(args, data, body)
+  text = body.join("\n").strip
+  setvar("post.blurb", text)
 end
 
+def pin(args, data)
+  # Legacy command - just ignore it for now
+  # Could be used to pin posts to specific views
+  setvar("post.pin", data)
+end
+
+def mono(args, data, body)
+  # Wrap body in <pre> tags for monospace display
+  code_content = body.join("\n")
+  api.out %[<pre>#{code_content}</pre>]
+  api.optional_blank_line
+end
+
+def ruby(args, data, body)
+  # Show Ruby code for client-side highlighting
+  code_content = body.join("\n")
+  api.out %[<pre><code class="language-ruby">#{code_content}</code></pre>]
+  api.optional_blank_line
+end
 
 # Old liveblog code:
 

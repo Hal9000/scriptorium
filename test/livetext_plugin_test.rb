@@ -23,7 +23,9 @@ class LivetextPluginTest < Minitest::Test
       .created
       .views sample
       .tags ruby, testing
-      .blurb This is a test post
+      .blurb 
+      This is a test post
+      .end
       This is the body content
     EOS
     

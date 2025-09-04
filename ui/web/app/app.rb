@@ -27,14 +27,32 @@ end
 require_relative '../../../lib/scriptorium'
 require_relative 'error_helpers'
 
-include ErrorHelpers
-include Scriptorium::Helpers
-
 class ScriptoriumWeb < Sinatra::Base
+  include ErrorHelpers
+  include Scriptorium::Helpers
+  
   set :port, 4567
   set :bind, '0.0.0.0'
   set :views, File.join(__dir__, 'views')
   set :show_exceptions, false  # Disable Sinatra's default error display
+  
+  # Helper method to render dashboard with error/message
+  def render_dashboard(error: nil, message: nil)
+    @error = error
+    @message = message
+    @current_view = @api&.current_view
+    @views = @api&.views || []
+    @posts = []
+    erb :dashboard
+  end
+  
+  # Helper method to add file/line info to error messages
+  def error_with_location(error, message)
+    error_location = "#{error.backtrace.first}" if error.backtrace
+    result = message
+    result += " (#{error_location})" if error_location
+    result
+  end
   
   # Set test mode
   def self.test_mode=(value)
@@ -118,16 +136,16 @@ class ScriptoriumWeb < Sinatra::Base
     view_name = params[:view_name]
     
     if view_name.nil? || view_name.strip.empty?
-      redirect "/?error=No view selected"
+      render_dashboard(error: "No view selected")
       return
     end
     
     begin
       view = @api.lookup_view(view_name)
       @api.view(view_name)
-      redirect '/?message=View changed successfully'
+      render_dashboard(message: "View changed successfully")
     rescue => e
-      redirect "/?error=Failed to change view: #{e.message}"
+      render_dashboard(error: error_with_location(e, "Failed to change view: #{e.message}"))
     end
   end
   
@@ -314,7 +332,8 @@ class ScriptoriumWeb < Sinatra::Base
     rescue => e
       File.write('/tmp/save_post_debug.log', "EXCEPTION: #{e.class}: #{e.message}\n", mode: 'a')
       File.write('/tmp/save_post_debug.log', "Backtrace: #{e.backtrace.first(5).join("\n")}\n", mode: 'a')
-      redirect "/edit_post/#{post_id}?error=Failed to save post: #{e.message}"
+      error_location = e.backtrace&.first || "unknown location"
+      redirect "/edit_post/#{post_id}?error=Failed to save post: #{e.message} at #{error_location}"
     end
   end
 
@@ -348,23 +367,23 @@ class ScriptoriumWeb < Sinatra::Base
     
     begin
       if view_name.nil? || view_name.strip.empty?
-        redirect "/?error=No view specified"
+        render_dashboard(error: "No view specified")
         return
       end
       
       # Generate the view
       @api.generate_view(view_name)
-      redirect "/?message=View '#{view_name}' generated successfully"
+      render_dashboard(message: "View '#{view_name}' generated successfully")
     rescue => e
-      redirect "/?error=Failed to generate view: #{e.message}"
+      render_dashboard(error: error_with_location(e, "Failed to generate view: #{e.message}"))
     end
   end
 
   # Preview view
-  get '/preview_view' do
+  get '/preview' do
     @current_view = @api&.current_view
     if @current_view.nil?
-      redirect "/?error=No view selected. Please select a view first."
+      render_dashboard(error: "No view selected. Please select a view first.")
       return
     end
     
@@ -381,10 +400,10 @@ class ScriptoriumWeb < Sinatra::Base
         content_type :html
         read_file(index_file)
       else
-        redirect "/?error=Preview file not found - view may not have been generated properly"
+        render_dashboard(error: "Preview file not found - view may not have been generated properly")
       end
     rescue => e
-      redirect "/?error=Failed to preview view: #{e.message}"
+      render_dashboard(error: error_with_location(e, "Failed to preview view: #{e.message}"))
     end
   end
 
@@ -412,6 +431,89 @@ class ScriptoriumWeb < Sinatra::Base
     rescue => e
       status 500
       "Error loading file: #{e.message}"
+    end
+  end
+
+  # Serve post files relative to preview route
+  get '/posts/:filename' do
+    filename = params[:filename]
+    @current_view = @api&.current_view
+    
+    begin
+      if filename.nil? || filename.strip.empty? || @current_view.nil?
+        status 404
+        return "File not found"
+      end
+      
+      # Construct the file path
+      post_file = @api.root/"views"/@current_view.name/"output"/"posts"/filename
+      
+      if File.exist?(post_file)
+        content_type :html
+        read_file(post_file)
+      else
+        status 404
+        "File not found: #{filename}"
+      end
+    rescue => e
+      status 500
+      "Error loading file: #{e.message}"
+    end
+  end
+
+  # Handle direct access to posts via index.html?post=filename
+  get '/index.html' do
+    post_param = params[:post]
+    @current_view = @api&.current_view
+    
+    begin
+      if @current_view.nil?
+        status 404
+        return "View not found"
+      end
+      
+      # Always return the full index.html page
+      # The JavaScript will handle loading the specific post if post_param is provided
+      index_file = @api.root/"views"/@current_view.name/"output"/"index.html"
+      
+      if File.exist?(index_file)
+        content_type :html
+        read_file(index_file)
+      else
+        status 404
+        "Index page not found"
+      end
+    rescue => e
+      status 500
+      "Error loading page: #{e.message}"
+    end
+  end
+
+  # Handle permalink access to posts
+  get '/permalink/:filename' do
+    filename = params[:filename]
+    @current_view = @api&.current_view
+    
+    begin
+      if filename.nil? || filename.strip.empty? || @current_view.nil?
+        status 404
+        return "Post not found"
+      end
+      
+      # Construct the file path
+      post_file = @api.root/"views"/@current_view.name/"output"/"posts"/filename
+      
+      if File.exist?(post_file)
+        # Redirect to the index page with the post parameter
+        # This allows the JavaScript to handle the post loading properly
+        redirect "/index.html?post=#{filename}"
+      else
+        status 404
+        "Post not found: #{filename}"
+      end
+    rescue => e
+      status 500
+      "Error loading post: #{e.message}"
     end
   end
 
@@ -1768,7 +1870,7 @@ class ScriptoriumWeb < Sinatra::Base
   end
 
   def get_image_dimensions(file_path)
-    return nil unless File.exist?(file_path)
+    return nil unless file_path && File.exist?(file_path)
     
     # Check if it's an image file
     image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp']

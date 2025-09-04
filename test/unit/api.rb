@@ -1339,12 +1339,12 @@ class TestScriptoriumAPI < Minitest::Test
     assert @api.post_published?(post.id)
     assert @api.post_deployed?(post.id)
     
-    # Regenerate the post - should NOT change state
+    # Regenerate the post - should reset state to unpublished/undeployed
     @api.repo.generate_post(post.id)
     
-    # Post should still be published and deployed (no state change)
-    assert @api.post_published?(post.id)
-    assert @api.post_deployed?(post.id)
+    # Post should now be unpublished and undeployed (content changed)
+    refute @api.post_published?(post.id)
+    refute @api.post_deployed?(post.id)
   end
 
   def test_074_create_post_with_generation
