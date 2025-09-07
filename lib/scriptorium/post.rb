@@ -63,6 +63,10 @@ class Scriptorium::Post
       end
     end
   
+    def blurb_text
+      meta["post.blurb"]
+    end
+    
     def blurb
       meta["post.blurb"]
     end

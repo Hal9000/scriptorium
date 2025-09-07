@@ -797,6 +797,9 @@ class Scriptorium::API
     view ||= @repo.current_view&.name
     raise ViewTargetNil if view.nil?
     
+    # Check for stale posts and regenerate them before view generation
+    regenerate_stale_posts(view)
+    
     @repo.generate_front_page(view)
     true
   end
@@ -837,6 +840,31 @@ class Scriptorium::API
     # Delete the file
     File.delete(draft_path)
     true
+  end
+
+  private def regenerate_stale_posts(view)
+    # Get all posts for this view
+    posts = @repo.all_posts(view)
+    
+    posts.each do |post|
+      source_file = post.dir/"source.lt3"
+      body_file = post.dir/"body.html"
+      
+      # Skip if source file doesn't exist
+      next unless File.exist?(source_file)
+      
+      # Skip if body file doesn't exist (post needs initial generation)
+      next unless File.exist?(body_file)
+      
+      # Compare modification times
+      source_mtime = File.mtime(source_file)
+      body_mtime = File.mtime(body_file)
+      
+      # If source is newer than body, regenerate the post
+      if source_mtime > body_mtime
+        @repo.generate_post(post.id)
+      end
+    end
   end
 
   private def extract_title_from_draft(draft_path)

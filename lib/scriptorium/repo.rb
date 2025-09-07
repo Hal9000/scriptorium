@@ -226,9 +226,9 @@ class Scriptorium::Repo
       write_file(dir/:config/"global-head.txt",   @predef.html_head_content(true))  # true = view-specific
       write_file(dir/:config/"bootstrap_js.txt",  @predef.bootstrap_js)
       write_file(dir/:config/"bootstrap_css.txt", @predef.bootstrap_css)
-      write_file(dir/:config/"prism_js.txt",      @predef.prism_js)
-      write_file(dir/:config/"prism_ruby_js.txt", @predef.prism_ruby_js)
-      write_file(dir/:config/"prism_css.txt",     @predef.prism_css)
+      write_file(dir/:config/"prism_js.txt",      @predef.highlight_js)
+      write_file(dir/:config/"prism_ruby_js.txt", @predef.highlight_ruby_js)
+      write_file(dir/:config/"prism_css.txt",     @predef.highlight_css)
       write_file(dir/:config/"common.js",         @predef.common_js)
       write_file(dir/:config/"social.txt",        @predef.social_config)
       write_file(dir/:config/"reddit.txt",        @predef.reddit_config)
@@ -676,6 +676,12 @@ class Scriptorium::Repo
     
     live = Livetext.customize(mix: "lt3scriptor", call: ".nopara", vars: vars)
     body, vars = live.process(file: content_file)
+    
+    # Debug: Write vars to file
+    File.open("/tmp/debug_vars_#{num}.txt", "w") do |f|
+      f.puts "Vars after LiveText processing:"
+      vars.each { |k, v| f.puts "#{k} = #{v.inspect}" }
+    end
 
 
 

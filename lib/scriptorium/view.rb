@@ -568,7 +568,7 @@ write output:      write the result to output/panes/header.html
     args = sections["main"]
     return "" unless args
     html = "  <!-- Section: main (output) -->\n"
-    html << %[  <div id="main" class="main" style="flex-grow: 1; padding: 10px; overflow-y: auto; position: relative; display: flex; flex-direction: column;">]
+    html << %[  <div id="main" class="main" style="flex-grow: 1; padding: 5px; overflow-y: auto; position: relative; display: block;">]
     # html << %[<div id="main" class="main" style="position: relative; display: flex; flex-direction: column;">\n]
     html << @predef.post_index_style
     if view_posts.empty?
@@ -636,10 +636,10 @@ write output:      write the result to output/panes/header.html
         content << generate_bootstrap_css(view)
       when "social"
         content << generate_social_meta_tags(args)
-      when "prism"
-        content << generate_prism_css(view)
-      when "prism_custom"
-        content << @predef.prism_custom_css
+      when "highlight"
+        content << generate_highlight_css(view)
+      when "highlight_custom"
+        content << @predef.highlight_custom_css
       end
     end
     content << "</head>\n"
@@ -884,8 +884,8 @@ write output:      write the result to output/panes/header.html
     content = build_containers
     common = get_common_js
     boot   = generate_bootstrap_js
-    prism_js = generate_prism_js(true)
-    prism_ruby_js = generate_prism_ruby_js(true)
+    highlight_js = generate_highlight_js(true)
+    highlight_ruby_js = generate_highlight_ruby_js(true)
     full_html = <<~HTML
       <!DOCTYPE html>
       #{html_head}
@@ -893,8 +893,8 @@ write output:      write the result to output/panes/header.html
         <body style="height: 100%; margin: 0; display: flex; flex-direction: column;">
           #{content.strip}
           #{boot.strip}
-          #{prism_js.strip}
-          #{prism_ruby_js.strip}
+          #{highlight_js.strip}
+          #{highlight_ruby_js.strip}
           #{common.strip}
         </body>
       </html>
@@ -931,11 +931,11 @@ write output:      write the result to output/panes/header.html
     end
   end
 
-  def generate_prism_css(view = nil)
-    global_prism = @root/:config/"prism_css.txt"
-    view_prism   = @dir/:config/"prism_css.txt"
-    prism_file = view ? view_prism : global_prism
-    lines = read_commented_file(prism_file)
+  def generate_highlight_css(view = nil)
+    global_highlight = @root/:config/"prism_css.txt"
+    view_highlight   = @dir/:config/"prism_css.txt"
+    highlight_file = view ? view_highlight : global_highlight
+    lines = read_commented_file(highlight_file)
     href = rel = nil
     lines.each do |line|
       component, args = line.split(/\s+/, 2)
@@ -949,11 +949,11 @@ write output:      write the result to output/panes/header.html
     %[<link rel="#{rel}" href="#{href}">\n]
   end
 
-  def generate_prism_js(view = nil)
-    global_prism = @root/:config/"prism_js.txt"
-    view_prism   = @dir/:config/"prism_js.txt"
-    prism_file = view ? view_prism : global_prism
-    lines = read_commented_file(prism_file)
+  def generate_highlight_js(view = nil)
+    global_highlight = @root/:config/"prism_js.txt"
+    view_highlight   = @dir/:config/"prism_js.txt"
+    highlight_file = view ? view_highlight : global_highlight
+    lines = read_commented_file(highlight_file)
     src = nil
     lines.each do |line|
       component, args = line.split(/\s+/, 2)
@@ -965,11 +965,11 @@ write output:      write the result to output/panes/header.html
     %[<script src="#{src}"></script>\n]
   end
 
-  def generate_prism_ruby_js(view = nil)
-    global_prism = @root/:config/"prism_ruby_js.txt"
-    view_prism   = @dir/:config/"prism_ruby_js.txt"
-    prism_file = view ? view_prism : global_prism
-    lines = read_commented_file(prism_file)
+  def generate_highlight_ruby_js(view = nil)
+    global_highlight = @root/:config/"prism_ruby_js.txt"
+    view_highlight   = @dir/:config/"prism_ruby_js.txt"
+    highlight_file = view ? view_highlight : global_highlight
+    lines = read_commented_file(highlight_file)
     src = nil
     lines.each do |line|
       component, args = line.split(/\s+/, 2)

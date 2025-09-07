@@ -21,8 +21,8 @@ class Scriptorium::StandardFiles
       javascript # See common.js 
       bootstrap  # See bootstrap.txt
       social     # See social.txt for configuration
-      prism      # See prism_css.txt for syntax highlighting
-      prism_custom # Custom CSS overrides for Prism
+      highlight      # See prism_css.txt for syntax highlighting
+      highlight_custom # Custom CSS overrides for Highlight.js
     EOS
     str
   end
@@ -247,14 +247,14 @@ class Scriptorium::StandardFiles
     EOS
   end
 
-  def prism_css
+  def highlight_css
     <<~EOS
     href         https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css
     rel          stylesheet
     EOS
   end
 
-  def prism_custom_css
+  def highlight_custom_css
     <<~EOS
     <style>
     pre {
@@ -267,30 +267,124 @@ class Scriptorium::StandardFiles
       border-radius: 0.3em !important;
       display: block !important;
     }
-    code {
+    pre code {
       white-space: pre-wrap !important;
       word-wrap: break-word !important;
       display: block !important;
+    }
+    pre code tt {
+      white-space: normal !important;
+      display: inline !important;
+    }
+    code {
+      white-space: normal;
+      display: inline;
     }
     /* Normal whitespace handling */
     #main {
       white-space: normal;
     }
     #main tt {
-      white-space: nowrap;
-      display: inline;
+      white-space: nowrap !important;
+      display: inline !important;
+      float: none !important;
+      clear: none !important;
+    }
+    tt {
+      white-space: nowrap !important;
+      display: inline !important;
+      float: none !important;
+      clear: none !important;
+    }
+    .main tt {
+      white-space: nowrap !important;
+      display: inline !important;
+      float: none !important;
+      clear: none !important;
+    }
+    p tt {
+      white-space: nowrap !important;
+      display: inline !important;
+      float: none !important;
+      clear: none !important;
+    }
+    * tt {
+      white-space: nowrap !important;
+      display: inline !important;
+      float: none !important;
+      clear: none !important;
+    }
+    body tt {
+      white-space: nowrap !important;
+      display: inline !important;
+      float: none !important;
+      clear: none !important;
+    }
+    html tt {
+      white-space: nowrap !important;
+      display: inline !important;
+      float: none !important;
+      clear: none !important;
+    }
+    p tt {
+      white-space: nowrap !important;
+      display: inline !important;
+      float: none !important;
+      clear: none !important;
+    }
+    /* Normal paragraph styling - Bootstrap isolation not needed with proper HTML */
+    #main p {
+      margin: 0 0 1em 0;
+    }
+    #main p:last-child {
+      margin-bottom: 0;
+    }
+    p:only-child {
+      display: inline !important;
+    }
+    p tt {
+      white-space: nowrap !important;
+      display: inline !important;
+      float: none !important;
+      clear: none !important;
+    }
+    /* More specific selectors to override Bootstrap */
+    #main p tt {
+      white-space: nowrap !important;
+      display: inline !important;
+      float: none !important;
+      clear: none !important;
+    }
+    body #main p tt {
+      white-space: nowrap !important;
+      display: inline !important;
+      float: none !important;
+      clear: none !important;
+    }
+    html body #main p tt {
+      white-space: nowrap !important;
+      display: inline !important;
+      float: none !important;
+      clear: none !important;
+    }
+    /* Ensure br elements work for paragraph spacing */
+    br {
+      display: block !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      line-height: 1.2em !important;
     }
     </style>
     EOS
   end
 
-  def prism_js
+  def highlight_js
     <<~EOS
     src          https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js
     EOS
   end
 
-  def prism_ruby_js
+  def highlight_ruby_js
     <<~EOS
     src          https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/ruby.min.js
     EOS
@@ -388,6 +482,9 @@ class Scriptorium::StandardFiles
   def post_template(theme)
     str = <<~EOS
       <!-- theme: #{theme} -->
+      <style>
+      body { font-family: verdana; line-height: 1.1 }
+      </style>
 
       <div align='right'><a style="text-decoration: none" href="index.html">
         <img src="assets/back-icon.png" width=24 height=24 alt="Go to Index"></img></a>
@@ -426,7 +523,7 @@ class Scriptorium::StandardFiles
   def post_index_style   # Not really a file
     <<~EOS
       <style>
-      body { font-family: verdana }
+      body { font-family: verdana; line-height: 1.1 }
 
       .recent-title a {
         color: #010101;
@@ -488,20 +585,21 @@ class Scriptorium::StandardFiles
   def index_entry
     # Note the use of %% to escape the % in the flex-basis attribute!
     <<~EOS
-      <table width=100%% cellpadding=3 style="margin-bottom: 2px;">
+      <table width=100%% cellpadding=4 style="margin-bottom: 6px;">
         <tr>
-          <td width=14%% valign=top align=right style="margin-top: -1px;">
+          <td width=14%% valign=top align=right>
             <div style="text-align: right; font-size: 0.7em;">
+              <div style="height: 0.1em;">&nbsp;</div>
               <div>%{post.pubdate.month} %{post.pubdate.day}</div>
               <div>%{post.pubdate.year}</div>
             </div>
           </td>
           <td valign=top> 
-            <div style="font-size: 1.2em;">
+            <div style="font-size: 1.1em;">
               <div><a href="javascript:void(0)" 
                       style="text-decoration: none;"
                       onclick="load_main('index.html?post=%{post.slug}')">%{post.title}</a></div>
-              <div style="font-size: 0.8em;">%{post.blurb}</div>
+              <div style="font-size: 0.75em;">%{post.blurb}</div>
             </div>
           </td>
         </tr>

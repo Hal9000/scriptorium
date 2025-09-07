@@ -1,6 +1,6 @@
 VERY SOON:
 ----------
-x legacy import
+  post_index.txt config (see notes)
   full reddit support
   add draft management
   themes into web app
@@ -94,3 +94,4 @@ x widget management
 x new exceptions replacing RuntimeError
 x add to TUI: assets, etc.
 x add post state management
+x legacy import

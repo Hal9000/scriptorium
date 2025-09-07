@@ -78,26 +78,27 @@
               <th>Title <em style="font-size: 0.8em; font-weight: normal;">(Click to configure)</em></th>
             </tr>
             <% @views.each do |view| %>
-              <tr style="<%= 'background-color: #e3f2fd;' if @current_view && view.name == @current_view.name %>">
-                <td>
-                  <% if @current_view && view.name == @current_view.name %>
-                    <!-- Current view - looks clickable but does nothing -->
-                    <span style="background: none; border: none; color: #007cba; cursor: pointer; font-family: monospace; font-size: inherit;" title="Current view (clicking does nothing)">
-                      <%= view.name %>
-                    </span>
-                  <% else %>
-                    <!-- Other views - actually clickable -->
-                    <button type="button" onclick="changeView('<%= view.name %>')" style="background: none; border: none; color: #007cba; cursor: pointer; font-family: monospace; font-size: inherit;" title="Change to <%= view.name %>">
-                      <%= view.name %>
-                    </button>
-                  <% end %>
-                </td>
-                <td>
-                  <a href="/configure_view/<%= view.name %>" style="color: #007cba; text-decoration: none; cursor: pointer;" title="Configure <%= view.name %>">
-                    <%= view.title %><%= ' (Current)' if @current_view && view.name == @current_view.name %>
-                  </a>
-                </td>
-              </tr>
+              <% if @current_view && view.name == @current_view.name %>
+                <!-- Current view - entire row clickable but does nothing -->
+                <tr style="background-color: #e3f2fd; cursor: pointer;" onclick="void(0)" title="Current view (clicking does nothing)">
+                  <td style="color: #007cba; font-family: monospace;">
+                    <%= view.name %>
+                  </td>
+                  <td style="color: #007cba;">
+                    <%= view.title %> (Current)
+                  </td>
+                </tr>
+              <% else %>
+                <!-- Other views - entire row clickable -->
+                <tr style="cursor: pointer;" onclick="changeView('<%= view.name %>')" title="Change to <%= view.name %>">
+                  <td style="color: #007cba; font-family: monospace;">
+                    <%= view.name %>
+                  </td>
+                  <td style="color: #007cba;">
+                    <%= view.title %>
+                  </td>
+                </tr>
+              <% end %>
             <% end %>
           </table>
           

@@ -44,6 +44,9 @@ def copyright
 end
 
 def title(args, data)
+  File.open("/tmp/debug_directives.txt", "a") do |f|
+    f.puts "DEBUG: title directive called with data: #{data.inspect}"
+  end
   setvar("post.title", data)
 end
 
@@ -93,14 +96,27 @@ def tags(args, data)
 end
 
 def blurb(args, data, body)
-  text = body.join("\n").strip
+  # body contains only the content between .blurb and .end
+  text = body.join(" ").strip
+  File.open("/tmp/debug_blurb.txt", "a") do |f|
+    f.puts "DEBUG: blurb function called at #{Time.now}"
+    f.puts "DEBUG: blurb function called with body: #{body.inspect}"
+    f.puts "DEBUG: blurb text: #{text.inspect}"
+    f.puts "---"
+  end
   setvar("post.blurb", text)
+end
+
+def testblurb(args, data, body)
+  File.open("/tmp/debug_testblurb.txt", "w") do |f|
+    f.puts "DEBUG: testblurb function called with body: #{body.inspect}"
+  end
+  setvar("post.testblurb", "test worked")
 end
 
 def pin(args, data)
   # Legacy command - just ignore it for now
   # Could be used to pin posts to specific views
-  setvar("post.pin", data)
 end
 
 def mono(args, data, body)
@@ -342,7 +358,7 @@ class Livetext::Functions
     svg.strip
   end
 
-  private def d4(num)
+  public def d4(num)
     "%04d" % num.to_i
   end
 

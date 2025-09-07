@@ -79,28 +79,34 @@ class TestAssetManagement < Minitest::Test
   def test_001_asset_function_finds_global_asset
     content = "$$asset[image1.jpg]"
     result = process_livetext(content)
-    assert_equal "assets/image1.jpg", result[:body].strip
+    # Strip paragraph tags for asset function tests
+    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal "assets/image1.jpg", body.strip
   end
 
   def test_002_asset_function_finds_view_asset
     content = "$$asset[image2.jpg]"
     result = process_livetext(content)
-    
-    assert_equal "assets/image2.jpg", result[:body].strip
+    # Strip paragraph tags for asset function tests
+    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal "assets/image2.jpg", body.strip
   end
 
   def test_003_asset_function_finds_post_asset
     content = "$$asset[image3.jpg]"
     result = process_livetext(content)
-    
-    assert_equal "assets/0001/image3.jpg", result[:body].strip
+    # Strip paragraph tags for asset function tests
+    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal "assets/0001/image3.jpg", body.strip
   end
 
   def test_003b_asset_function_finds_library_asset
     content = "$$asset[image4.jpg]"
     result = process_livetext(content)
     
-    assert_equal "assets/image4.jpg", result[:body].strip
+    # Strip paragraph tags for asset function tests
+    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal "assets/image4.jpg", body.strip
   end
 
   def test_004_asset_function_search_hierarchy
@@ -113,14 +119,18 @@ class TestAssetManagement < Minitest::Test
     result = process_livetext(content)
     
     # Should find post asset first (highest priority)
-    assert_equal "assets/0001/duplicate.jpg", result[:body].strip
+    # Strip paragraph tags for asset function tests
+    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal "assets/0001/duplicate.jpg", body.strip
   end
 
   def test_005_asset_function_missing_asset_generates_placeholder
     content = "$$asset[nonexistent.jpg]"
     result = process_livetext(content)
     
-    assert_equal "assets/missing/nonexistent.jpg.svg", result[:body].strip
+    # Strip paragraph tags for asset function tests
+    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal "assets/missing/nonexistent.jpg.svg", body.strip
   end
 
   def test_006_image_asset_function_wraps_in_img_tag
@@ -128,7 +138,9 @@ class TestAssetManagement < Minitest::Test
     result = process_livetext(content)
     
     expected = '<img src="assets/image1.jpg" alt="image1.jpg">'
-    assert_equal expected, result[:body].strip
+    # Strip paragraph tags for asset function tests
+    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal expected, body.strip
   end
 
   def test_007_image_asset_function_with_missing_asset
@@ -136,7 +148,9 @@ class TestAssetManagement < Minitest::Test
     result = process_livetext(content)
     
     expected = '<img src="assets/missing/missing.jpg.svg" alt="missing.jpg">'
-    assert_equal expected, result[:body].strip
+    # Strip paragraph tags for asset function tests
+    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal expected, body.strip
   end
 
   def test_008_asset_function_without_post_id
@@ -145,12 +159,16 @@ class TestAssetManagement < Minitest::Test
     
     content = "$$asset[image1.jpg]"
     result = process_livetext(content)
-    assert_equal "assets/image1.jpg", result[:body].strip
+    # Strip paragraph tags for asset function tests
+    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal "assets/image1.jpg", body.strip
     
     # Post assets should not be found
     content = "$$asset[image3.jpg]"
     result = process_livetext(content)
-    assert_equal "assets/missing/image3.jpg.svg", result[:body].strip
+    # Strip paragraph tags for asset function tests
+    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal "assets/missing/image3.jpg.svg", body.strip
     
     # Restore post.id for other tests
     @vars["post.id"] = "0001"
@@ -164,10 +182,15 @@ class TestAssetManagement < Minitest::Test
     result4 = process_livetext("$$asset[nonexistent.jpg]")
     
     # Verify correct paths are returned
-    assert_equal "assets/image1.jpg", result1[:body].strip
-    assert_equal "assets/image2.jpg", result2[:body].strip
-    assert_equal "assets/0001/image3.jpg", result3[:body].strip
-    assert_equal "assets/missing/nonexistent.jpg.svg", result4[:body].strip
+    # Strip paragraph tags for asset function tests
+    body1 = result1[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    body2 = result2[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    body3 = result3[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    body4 = result4[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal "assets/image1.jpg", body1.strip
+    assert_equal "assets/image2.jpg", body2.strip
+    assert_equal "assets/0001/image3.jpg", body3.strip
+    assert_equal "assets/missing/nonexistent.jpg.svg", body4.strip
   end
 
   def test_010_asset_function_idempotent_calling
@@ -195,7 +218,9 @@ class TestAssetManagement < Minitest::Test
     # Test with post context - should find post asset first (highest priority)
     content = "$$asset[theme-test.jpg]"
     result = process_livetext(content)
-    assert_equal "assets/0001/theme-test.jpg", result[:body].strip
+    # Strip paragraph tags for asset function tests
+    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal "assets/0001/theme-test.jpg", body.strip
     
     # Test without post context - should find view asset first
     # Temporarily remove post.id from vars
@@ -204,7 +229,9 @@ class TestAssetManagement < Minitest::Test
     
     content = "$$asset[theme-test.jpg]"
     result = process_livetext(content)
-    assert_equal "assets/theme-test.jpg", result[:body].strip
+    # Strip paragraph tags for asset function tests
+    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal "assets/theme-test.jpg", body.strip
     
     # Restore post.id for other tests
     @vars["post.id"] = original_post_id
@@ -216,7 +243,9 @@ class TestAssetManagement < Minitest::Test
     result = process_livetext(content)
     
     # Should find gem asset and return correct path
-    assert_equal "assets/icons/ui/back.png", result[:body].strip
+    # Strip paragraph tags for asset function tests
+    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal "assets/icons/ui/back.png", body.strip
   end
 
   # ========================================
@@ -229,7 +258,9 @@ class TestAssetManagement < Minitest::Test
     result = process_livetext(content)
     
     # Should find library asset
-    assert_equal "assets/image4.jpg", result[:body].strip
+    # Strip paragraph tags for asset function tests
+    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal "assets/image4.jpg", body.strip
   end
 
   def test_014_asset_function_priority_order
@@ -243,7 +274,9 @@ class TestAssetManagement < Minitest::Test
     # With post context - should find post asset (highest priority)
     content = "$$asset[priority-test.jpg]"
     result = process_livetext(content)
-    assert_equal "assets/0001/priority-test.jpg", result[:body].strip
+    # Strip paragraph tags for asset function tests
+    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal "assets/0001/priority-test.jpg", body.strip
     
     # Without post context - should find view asset
     original_post_id = @vars["post.id"]
@@ -251,7 +284,9 @@ class TestAssetManagement < Minitest::Test
     
     content = "$$asset[priority-test.jpg]"
     result = process_livetext(content)
-    assert_equal "assets/priority-test.jpg", result[:body].strip
+    # Strip paragraph tags for asset function tests
+    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal "assets/priority-test.jpg", body.strip
     
     # Restore post.id
     @vars["post.id"] = original_post_id
@@ -266,7 +301,9 @@ class TestAssetManagement < Minitest::Test
     result = process_livetext(content)
     
     # Should handle special characters correctly
-    assert_equal "assets/#{special_filename}", result[:body].strip
+    # Strip paragraph tags for asset function tests
+    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal "assets/#{special_filename}", body.strip
   end
 
   def test_016_asset_function_with_spaces_in_filename
@@ -278,7 +315,9 @@ class TestAssetManagement < Minitest::Test
     result = process_livetext(content)
     
     # Should handle spaces correctly
-    assert_equal "assets/#{spaced_filename}", result[:body].strip
+    # Strip paragraph tags for asset function tests
+    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
+    assert_equal "assets/#{spaced_filename}", body.strip
   end
 
   private

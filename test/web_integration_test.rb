@@ -104,6 +104,61 @@ class WebIntegrationTest < Minitest::Test
     # Deployment configuration accessible
   end
 
+  # Test view generation via web
+  def test_006_view_generation_web
+    start_web_server
+    
+    # Setup test environment first
+    setup_test_environment
+    
+    # Test view generation
+    response = post("/generate_view", { 'view_name' => 'computing' })
+    assert_response_redirect(response, "View generation should redirect")
+    
+    # Check that the generated HTML has valid JavaScript
+    index_file = "ui/web/scriptorium-TEST/views/computing/output/index.html"
+    assert File.exist?(index_file), "Index file should exist after generation"
+    
+    html_content = File.read(index_file)
+    
+    # Check that load_main function is defined
+    assert_match /function load_main/, html_content, "load_main function should be defined"
+    
+    # Check for JavaScript syntax errors by looking for the specific broken pattern
+    refute_match /}\s*}\s*console\.log\('SVG script loaded'\)/, html_content, 
+                 "Should not have extra closing brace before SVG script loaded"
+    
+    # Check that the function ends properly
+    assert_match /}\s*console\.log\('SVG script loaded'\)/, html_content,
+                 "Should have proper function ending before SVG script loaded"
+  end
+
+  # Test generated HTML has clickable posts
+  def test_007_generated_html_has_clickable_posts
+    start_web_server
+    
+    # Setup test environment first
+    setup_test_environment
+    
+    # Generate the view first
+    post("/generate_view", { 'view_name' => 'computing' })
+    
+    # Check the generated HTML
+    index_file = "ui/web/scriptorium-TEST/views/computing/output/index.html"
+    html_content = File.read(index_file)
+    
+    # Should have onclick handlers for posts
+    assert_match /onclick="load_main\('index\.html\?post=/, html_content,
+                 "Should have onclick handlers for posts"
+    
+    # Should have post files
+    posts_dir = "ui/web/scriptorium-TEST/views/computing/output/posts"
+    assert Dir.exist?(posts_dir), "Posts directory should exist"
+    
+    post_files = Dir.glob("#{posts_dir}/*.html")
+    assert post_files.length > 0, "Should have generated post files"
+  end
+
     private
   # All helper methods are now in WebTestHelper
 end

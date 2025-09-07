@@ -13,7 +13,7 @@ class TestLivetextCompatibility < Minitest::Test
       live = Livetext.customize(call: ".nopara")
       body, vars = live.process(text: content)
       vars = vars.to_h
-      assert_equal "Simple text content", body.strip
+      assert_equal "<p>\nSimple text content\n</p>", body.strip
       assert vars.is_a?(Hash)
     rescue => e
       flunk "Basic Livetext processing failed: #{e.message}"

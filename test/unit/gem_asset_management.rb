@@ -46,6 +46,8 @@ class TestGemAssetManagement < Minitest::Test
       live = Livetext.customize(mix: "lt3scriptor", call: ".nopara", vars: @vars)
       body, vars = live.process(file: temp_file)
       vars = vars.to_h
+      # Strip paragraph tags for asset function tests
+      body = body.gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
       return { vars: vars, body: body }
     rescue => e
       puts "Livetext error: #{e.message}"
