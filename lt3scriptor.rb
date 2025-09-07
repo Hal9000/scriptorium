@@ -140,14 +140,10 @@ end
 # "dot" commands
 ##################
   
-def dropcap(args, data)
-  # Ask Cursor about dropcap and ::first-letter
-  text = data
-  api.out " "
-  letter = text[0]
-  remain = text[1..-1]
-  api.out %[<div class='mydrop'>#{letter}</div>]
-  api.out %[<div style="padding-top: 1px">#{remain}</div>]
+def dropcap(args, data, body)
+  content = body.join(" ")
+  api.out %[<p class="dropcap">#{content}</p>]
+  api.optional_blank_line
 end
   
 def faq(args, data, body)

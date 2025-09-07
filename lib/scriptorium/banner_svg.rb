@@ -710,19 +710,13 @@ class Scriptorium::BannerSVG
           }
         }
         
-      console.log('SVG script loaded');
+        console.log('SVG script loaded');
   
-      window.onload = function() {
-        console.log('SVG insertion starting...');
-        insert_svg_header('header');
-        console.log('SVG insertion complete');
-      }
-        
-      // Also try immediate execution
-      document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM ready, trying SVG insertion...');
-        insert_svg_header('header');
-      });
+        // Use DOMContentLoaded to avoid conflicts with main window.onload
+        document.addEventListener('DOMContentLoaded', function() {
+          console.log('DOM ready, trying SVG insertion...');
+          insert_svg_header('header');
+        });
       </script>
       EOS
       

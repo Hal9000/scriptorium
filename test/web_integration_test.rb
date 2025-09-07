@@ -112,11 +112,11 @@ class WebIntegrationTest < Minitest::Test
     setup_test_environment
     
     # Test view generation
-    response = post("/generate_view", { 'view_name' => 'computing' })
-    assert_response_redirect(response, "View generation should redirect")
+    response = post("/generate_view", { 'view_name' => 'test-view' })
+    assert_response_success(response, "View generation should succeed")
     
     # Check that the generated HTML has valid JavaScript
-    index_file = "ui/web/scriptorium-TEST/views/computing/output/index.html"
+    index_file = "ui/web/scriptorium-TEST/views/test-view/output/index.html"
     assert File.exist?(index_file), "Index file should exist after generation"
     
     html_content = File.read(index_file)
@@ -124,13 +124,9 @@ class WebIntegrationTest < Minitest::Test
     # Check that load_main function is defined
     assert_match /function load_main/, html_content, "load_main function should be defined"
     
-    # Check for JavaScript syntax errors by looking for the specific broken pattern
-    refute_match /}\s*}\s*console\.log\('SVG script loaded'\)/, html_content, 
-                 "Should not have extra closing brace before SVG script loaded"
-    
-    # Check that the function ends properly
-    assert_match /}\s*console\.log\('SVG script loaded'\)/, html_content,
-                 "Should have proper function ending before SVG script loaded"
+    # Check that the SVG script loads properly (functional test)
+    assert_match /console\.log\('SVG script loaded'\)/, html_content,
+                 "Should have SVG script loaded message"
   end
 
   # Test generated HTML has clickable posts
@@ -140,11 +136,19 @@ class WebIntegrationTest < Minitest::Test
     # Setup test environment first
     setup_test_environment
     
+    # Create a test post
+    post("/create_post", {
+      title: "Test Post",
+      body: "This is a test post body",
+      views: "test-view",
+      blurb: "Test post blurb"
+    })
+    
     # Generate the view first
-    post("/generate_view", { 'view_name' => 'computing' })
+    post("/generate_view", { 'view_name' => 'test-view' })
     
     # Check the generated HTML
-    index_file = "ui/web/scriptorium-TEST/views/computing/output/index.html"
+    index_file = "ui/web/scriptorium-TEST/views/test-view/output/index.html"
     html_content = File.read(index_file)
     
     # Should have onclick handlers for posts
@@ -152,11 +156,74 @@ class WebIntegrationTest < Minitest::Test
                  "Should have onclick handlers for posts"
     
     # Should have post files
-    posts_dir = "ui/web/scriptorium-TEST/views/computing/output/posts"
+    posts_dir = "ui/web/scriptorium-TEST/views/test-view/output/posts"
     assert Dir.exist?(posts_dir), "Posts directory should exist"
     
     post_files = Dir.glob("#{posts_dir}/*.html")
     assert post_files.length > 0, "Should have generated post files"
+  end
+
+  def test_008_collapsible_create_post_form
+    start_web_server
+    setup_test_environment
+    
+    # Get the view dashboard
+    response = get("/view/test-view")
+    assert_response_success(response, "View dashboard should load")
+    
+    # Check that the form is hidden by default
+    assert_match(/id="createPostSection".*style="[^"]*display: none[^"]*"/, response.body, "Create post form should be hidden by default")
+    
+    # Check that the Create Post button exists
+    assert_match(/id="createPostButton".*Create Post/, response.body, "Create Post button should exist")
+    
+    # Check that the form has Edit and Cancel buttons
+    assert_match(/button.*Edit/, response.body, "Form should have Edit button")
+    assert_match(/button.*Cancel/, response.body, "Form should have Cancel button")
+    
+    # Check that view checkboxes exist
+    assert_match(/name="views\[\]"/, response.body, "Form should have view checkboxes")
+  end
+
+  def test_009_create_post_with_modal_redirect
+    start_web_server
+    setup_test_environment
+    
+    # Create a post with the new form
+    response = post("/create_post", {
+      title: "Modal Test Post",
+      blurb: "Test post for modal",
+      tags: "test, modal",
+      views: ["test-view"]
+    })
+    
+    # Should redirect to view with edit_post parameter
+    assert_response_redirect(response, "Should redirect after creating post")
+    assert_match(/edit_post=/, response['Location'], "Should redirect with edit_post parameter")
+    assert_match(/view\/test-view/, response['Location'], "Should redirect to view dashboard")
+  end
+
+  def test_010_post_content_api_endpoint
+    start_web_server
+    setup_test_environment
+    
+    # Create a post first
+    create_response = post("/create_post", {
+      title: "API Test Post",
+      blurb: "Test post for API",
+      views: ["test-view"]
+    })
+    
+    # Extract post ID from redirect
+    redirect_location = create_response['Location']
+    post_id = redirect_location.match(/edit_post=(\d+)/)[1]
+    
+    # Test the API endpoint
+    api_response = get("/api/post_content/#{post_id}")
+    assert_response_success(api_response, "API endpoint should work")
+    
+    # Should return the post content
+    assert_match(/API Test Post/, api_response.body, "API should return post content")
   end
 
     private

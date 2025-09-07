@@ -1111,4 +1111,101 @@ class TestReadWrite < Minitest::Test
     # Test CannotSetPubdate
     assert CannotSetPubdate
   end
+
+  # ========================================
+  # format_date() tests
+  # ========================================
+
+  def test_001_format_date_basic_functionality
+    # Test basic date formatting
+    result = format_date("month dd yyyy", Date.new(2025, 2, 22))
+    assert_equal "February 22 2025", result
+  end
+
+  def test_002_format_date_with_ordinal
+    # Test ordinal day formatting
+    result = format_date("month day, yyyy", Date.new(2025, 2, 22))
+    assert_equal "February 22nd, 2025", result
+  end
+
+  def test_003_format_date_with_break
+    # Test line break formatting
+    result = format_date("month dd break yyyy", Date.new(2025, 2, 22))
+    assert_equal "February 22<br>2025", result
+  end
+
+  def test_004_format_date_string_input
+    # Test string date input
+    result = format_date("dd month yyyy", "2025-02-22")
+    assert_equal "22 February 2025", result
+  end
+
+  def test_005_format_date_nil_input
+    # Test nil date input (should return original format)
+    result = format_date("month dd yyyy", nil)
+    assert_equal "month dd yyyy", result
+  end
+
+  def test_006_format_date_invalid_string
+    # Test invalid date string (should return original format)
+    result = format_date("month dd yyyy", "invalid-date")
+    assert_equal "month dd yyyy", result
+  end
+
+  def test_007_format_date_ordinal_edge_cases
+    # Test ordinal edge cases
+    assert_equal "1st", ordinalize(1)
+    assert_equal "2nd", ordinalize(2)
+    assert_equal "3rd", ordinalize(3)
+    assert_equal "4th", ordinalize(4)
+    assert_equal "11th", ordinalize(11)
+    assert_equal "12th", ordinalize(12)
+    assert_equal "13th", ordinalize(13)
+    assert_equal "21st", ordinalize(21)
+    assert_equal "22nd", ordinalize(22)
+    assert_equal "23rd", ordinalize(23)
+  end
+
+  def test_008_format_date_various_formats
+    # Test various format combinations
+    date = Date.new(2025, 2, 22)
+    
+    assert_equal "02/22/2025", format_date("mm/dd/yyyy", date)
+    assert_equal "22/02/25", format_date("dd/mm/yy", date)
+    assert_equal "February 22nd, 2025", format_date("month day, yyyy", date)
+    assert_equal "22 February 2025", format_date("dd month yyyy", date)
+    assert_equal "February 22<br>2025", format_date("month dd break yyyy", date)
+  end
+
+  def test_009_format_date_smart_padding
+    # Test smart padding logic
+    date = Date.new(2025, 7, 4)
+    
+    # Should pad when surrounded by punctuation
+    assert_equal "04/07/2025", format_date("dd/mm/yyyy", date)
+    assert_equal "07/04/2025", format_date("mm/dd/yyyy", date)
+    assert_equal "2025-07-04", format_date("yyyy-mm-dd", date)
+    assert_equal "04.07.2025", format_date("dd.mm.yyyy", date)
+    
+    # Should not pad when surrounded by spaces
+    assert_equal "July 4, 2025", format_date("month dd, yyyy", date)
+    assert_equal "4 July 2025", format_date("dd month yyyy", date)
+    assert_equal "July 4 2025", format_date("month dd yyyy", date)
+  end
+
+  private
+
+  def ordinalize(number)
+    case number % 100
+    when 11, 12, 13
+      "#{number}th"
+    else
+      case number % 10
+      when 1 then "#{number}st"
+      when 2 then "#{number}nd"
+      when 3 then "#{number}rd"
+      else "#{number}th"
+      end
+    end
+  end
 end 

@@ -155,6 +155,12 @@ class Scriptorium::Post
       meta["post.tags"]
     end
 
+    def tags_array
+      tags_str = meta["post.tags"]
+      return [] if tags_str.nil? || tags_str.strip.empty?
+      tags_str.strip.split(/,\s*/)
+    end
+
     def deleted
       # Check what directory actually exists
       normal_dir = @repo.root/:posts/@num

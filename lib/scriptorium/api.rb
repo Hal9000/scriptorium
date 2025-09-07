@@ -945,15 +945,30 @@ class Scriptorium::API
 
   # Asset management methods
   
-  def list_assets(target: 'global', view: nil, include_gem: true)
-    view ||= @repo.current_view&.name
-    raise ViewTargetNil if target == 'view' && view.nil?
-    
+  def list_assets(target = 'global', target_id = nil, include_gem: true, **kwargs)
+    # Handle backward compatibility with keyword arguments
+    if kwargs.any?
+      target = kwargs[:target] || target
+      target_id = kwargs[:view] || target_id
+    end
     assets = []
     
     case target
     when 'view'
-      assets_dir = @repo.root/"views"/view/"assets"
+      target_id ||= @repo.current_view&.name
+      raise ViewTargetNil if target_id.nil?
+      assets_dir = @repo.root/"views"/target_id/"assets"
+      if Dir.exist?(assets_dir)
+        Dir.glob(assets_dir/"*").each do |file|
+          next unless File.file?(file)
+          assets << build_asset_info(file)
+        end
+      end
+    when 'post'
+      raise ArgumentError, "Post ID required for post assets" if target_id.nil?
+      post_id = target_id.to_i
+      post_num = d4(post_id)
+      assets_dir = @repo.root/"posts"/post_num/"assets"
       if Dir.exist?(assets_dir)
         Dir.glob(assets_dir/"*").each do |file|
           next unless File.file?(file)
@@ -997,13 +1012,19 @@ class Scriptorium::API
     assets.sort_by { |asset| asset[:filename] }
   end
   
-  def get_asset_info(filename, target: 'global', view: nil, include_gem: true)
+  def get_asset_info(filename, target: 'global', view: nil, post: nil, include_gem: true)
     view ||= @repo.current_view&.name
     raise ViewTargetNil if target == 'view' && view.nil?
+    raise ArgumentError, "Post ID required for post assets" if target == 'post' && post.nil?
     
     case target
     when 'view'
       asset_path = @repo.root/"views"/view/"assets"/filename
+      return build_asset_info(asset_path) if File.exist?(asset_path)
+    when 'post'
+      post_id = post.to_i
+      post_num = d4(post_id)
+      asset_path = @repo.root/"posts"/post_num/"assets"/filename
       return build_asset_info(asset_path) if File.exist?(asset_path)
     when 'global'
       asset_path = @repo.root/"assets"/filename
@@ -1011,16 +1032,16 @@ class Scriptorium::API
     when 'library'
       asset_path = @repo.root/"assets"/"library"/filename
       return build_asset_info(asset_path) if File.exist?(asset_path)
-          when 'gem'
-        if include_gem
-          gem_spec = Gem.loaded_specs['scriptorium']
-          if gem_spec
-            gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{filename}"
-            return build_asset_info(gem_asset_path, filename) if File.exist?(gem_asset_path)
-          end
+    when 'gem'
+      if include_gem
+        gem_spec = Gem.loaded_specs['scriptorium']
+        if gem_spec
+          gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{filename}"
+          return build_asset_info(gem_asset_path, filename) if File.exist?(gem_asset_path)
         end
-      else
-        raise InvalidFormatError("target", target)
+      end
+    else
+      raise InvalidFormatError("target", target)
     end
     
     nil
@@ -1030,10 +1051,14 @@ class Scriptorium::API
     !get_asset_info(filename, target: target, view: view, include_gem: include_gem).nil?
   end
   
-  def copy_asset(filename, from: 'global', to: 'view', view: nil)
-    view ||= @repo.current_view&.name
-    raise ViewTargetNil if to == 'view' && view.nil?
-    
+  def copy_asset(filename, from = 'global', to = 'view', from_id = nil, to_id = nil, **kwargs)
+    # Handle backward compatibility with keyword arguments
+    if kwargs.any?
+      from = kwargs[:from] || from
+      to = kwargs[:to] || to
+      from_id = kwargs[:view] || from_id
+      to_id = kwargs[:view] || to_id if to == 'view'
+    end
     # Determine source path
     source_path = case from
     when 'gem'
@@ -1048,12 +1073,17 @@ class Scriptorium::API
       @repo.root/"assets"/filename
     when 'library'
       @repo.root/"assets"/"library"/filename
-          when 'view'
-        view ||= @repo.current_view&.name
-        raise ViewTargetNil if view.nil?
-        @repo.root/"views"/view/"assets"/filename
-      else
-        raise InvalidFormatError("source", from)
+    when 'view'
+      from_id ||= @repo.current_view&.name
+      raise ViewTargetNil if from_id.nil?
+      @repo.root/"views"/from_id/"assets"/filename
+    when 'post'
+      raise ArgumentError, "Post ID required for post assets" if from_id.nil?
+      post_id = from_id.to_i
+      post_num = d4(post_id)
+      @repo.root/"posts"/post_num/"assets"/filename
+    else
+      raise InvalidFormatError("source", from)
     end
     
     # Determine target path
@@ -1063,7 +1093,14 @@ class Scriptorium::API
     when 'library'
       @repo.root/"assets"/"library"/filename
     when 'view'
-      @repo.root/"views"/view/"assets"/filename
+      to_id ||= @repo.current_view&.name
+      raise ViewTargetNil if to_id.nil?
+      @repo.root/"views"/to_id/"assets"/filename
+    when 'post'
+      raise ArgumentError, "Post ID required for post assets" if to_id.nil?
+      post_id = to_id.to_i
+      post_num = d4(post_id)
+      @repo.root/"posts"/post_num/"assets"/filename
     else
       raise InvalidFormatError("target", to)
     end
@@ -1080,10 +1117,12 @@ class Scriptorium::API
     target_path
   end
   
-  def upload_asset(file_path, target: 'global', view: nil)
-    view ||= @repo.current_view&.name
-    raise ViewTargetNil if target == 'view' && view.nil?
-    
+  def upload_asset(file_path, target = 'global', target_id = nil, **kwargs)
+    # Handle backward compatibility with keyword arguments
+    if kwargs.any?
+      target = kwargs[:target] || target
+      target_id = kwargs[:view] || target_id
+    end
     unless File.exist?(file_path)
       raise FileNotFoundError(file_path)
     end
@@ -1097,7 +1136,14 @@ class Scriptorium::API
     when 'library'
       @repo.root/"assets"/"library"
     when 'view'
-      @repo.root/"views"/view/"assets"
+      target_id ||= @repo.current_view&.name
+      raise ViewTargetNil if target_id.nil?
+      @repo.root/"views"/target_id/"assets"
+    when 'post'
+      raise ArgumentError, "Post ID required for post uploads" if target_id.nil?
+      post_id = target_id.to_i
+      post_num = d4(post_id)
+      @repo.root/"posts"/post_num/"assets"
     else
       raise InvalidFormatError("target", target)
     end
@@ -1112,10 +1158,12 @@ class Scriptorium::API
     target_file
   end
   
-  def delete_asset(filename, target: 'global', view: nil)
-    view ||= @repo.current_view&.name
-    raise ViewTargetNil if target == 'view' && view.nil?
-    
+  def delete_asset(filename, target = 'global', target_id = nil, **kwargs)
+    # Handle backward compatibility with keyword arguments
+    if kwargs.any?
+      target = kwargs[:target] || target
+      target_id = kwargs[:view] || target_id
+    end
     # Determine target file
     target_file = case target
     when 'global'
@@ -1123,7 +1171,14 @@ class Scriptorium::API
     when 'library'
       @repo.root/"assets"/"library"/filename
     when 'view'
-      @repo.root/"views"/view/"assets"/filename
+      target_id ||= @repo.current_view&.name
+      raise ViewTargetNil if target_id.nil?
+      @repo.root/"views"/target_id/"assets"/filename
+    when 'post'
+      raise ArgumentError, "Post ID required for post assets" if target_id.nil?
+      post_id = target_id.to_i
+      post_num = d4(post_id)
+      @repo.root/"posts"/post_num/"assets"/filename
     else
       raise InvalidFormatError("target", target)
     end
@@ -1137,13 +1192,19 @@ class Scriptorium::API
     true
   end
   
-  def get_asset_path(filename, target: 'global', view: nil, include_gem: true)
+  def get_asset_path(filename, target: 'global', view: nil, post: nil, include_gem: true)
     view ||= @repo.current_view&.name
     raise ViewTargetNil if target == 'view' && view.nil?
+    raise ArgumentError, "Post ID required for post assets" if target == 'post' && post.nil?
     
     case target
     when 'view'
       asset_path = @repo.root/"views"/view/"assets"/filename
+      return asset_path.to_s if File.exist?(asset_path)
+    when 'post'
+      post_id = post.to_i
+      post_num = d4(post_id)
+      asset_path = @repo.root/"posts"/post_num/"assets"/filename
       return asset_path.to_s if File.exist?(asset_path)
     when 'global'
       asset_path = @repo.root/"assets"/filename
@@ -1151,16 +1212,16 @@ class Scriptorium::API
     when 'library'
       asset_path = @repo.root/"assets"/"library"/filename
       return asset_path.to_s if File.exist?(asset_path)
-          when 'gem'
-        if include_gem
-          gem_spec = Gem.loaded_specs['scriptorium']
-          if gem_spec
-            gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{filename}"
-            return gem_asset_path if File.exist?(gem_asset_path)
-          end
+    when 'gem'
+      if include_gem
+        gem_spec = Gem.loaded_specs['scriptorium']
+        if gem_spec
+          gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{filename}"
+          return gem_asset_path if File.exist?(gem_asset_path)
         end
-      else
-        raise InvalidFormatError("target", target)
+      end
+    else
+      raise InvalidFormatError("target", target)
     end
     
     nil

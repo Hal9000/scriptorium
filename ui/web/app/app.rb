@@ -189,13 +189,21 @@ class ScriptoriumWeb < Sinatra::Base
         return
       end
       
+      # Get selected views from checkboxes
+      selected_views = params[:views] || [current_view.name]
+      selected_views = [current_view.name] if selected_views.empty?
+      
+      # Process tags
+      tags = params[:tags]&.strip
+      tags = tags&.split(',')&.map(&:strip) if tags && !tags.empty?
+      
       # Create a draft first
       draft_path = @api.create_draft(
         title: params[:title].strip,
         body: "",  # Empty body to start
-        views: current_view.name,
-        tags: nil,
-        blurb: nil
+        views: selected_views,
+        tags: tags,
+        blurb: params[:blurb]&.strip
       )
       
       # Convert draft to post immediately
@@ -205,8 +213,8 @@ class ScriptoriumWeb < Sinatra::Base
         @api.generate_post(post_num)
         # Check if meta.txt was created
         meta_file = @api.root/"posts"/"#{post_num.to_s.rjust(4, '0')}"/"meta.txt"
-        # Redirect to edit the newly created post instead of back to dashboard
-        redirect "/edit_post/#{post_num}?message=Post '#{params[:title].strip}' created successfully (##{post_num})"
+        # Redirect back to dashboard with modal parameter to open CodeMirror editor
+        redirect "/view/#{current_view.name}?edit_post=#{post_num}"
               rescue => e
           # Log the actual error for debugging
           STDERR.puts "ERROR in generate_post: #{e.class}: #{e.message}"
@@ -236,11 +244,43 @@ class ScriptoriumWeb < Sinatra::Base
         return
       end
       
-      # Redirect to the edit page
-      redirect "/edit_post/#{params[:post_id]}"
+      # Redirect back to the view dashboard
+      current_view = @api&.current_view
+      if current_view
+        redirect "/view/#{current_view.name}?message=Post saved successfully"
+      else
+        redirect "/?message=Post saved successfully"
+      end
     rescue => e
       error_info = friendly_error_message(e)
       redirect "/?error=#{error_info[:message]}&suggestion=#{error_info[:suggestion]}"
+    end
+  end
+
+  # API endpoint to get post content for modal
+  get '/api/post_content/:id' do
+    begin
+      post_id = params[:id].to_i
+      post = @api.post(post_id)
+      
+      if post.nil?
+        status 404
+        return "Post not found"
+      end
+      
+      # Read the source file
+      source_file = @api.root/"posts"/"#{post.num.to_s.rjust(4, '0')}"/"source.lt3"
+      if File.exist?(source_file)
+        content = File.read(source_file)
+        content_type :text
+        content
+      else
+        status 404
+        "Source file not found"
+      end
+    rescue => e
+      status 500
+      "Error loading post content: #{e.message}"
     end
   end
 
@@ -267,6 +307,9 @@ class ScriptoriumWeb < Sinatra::Base
       else
         @content = "# #{@post.title}\n\n"
       end
+      
+      # Set current view for template
+      @current_view = @api&.current_view
       
       erb :edit_post
     rescue => e
@@ -327,8 +370,26 @@ class ScriptoriumWeb < Sinatra::Base
         raise e
       end
       
-      File.write('/tmp/save_post_debug.log', "SUCCESS: Redirecting to dashboard\n", mode: 'a')
-      redirect "/?message=Post ##{post_id} saved and generated successfully"
+      # Regenerate the view index to include the updated post
+      File.write('/tmp/save_post_debug.log', "Regenerating view index...\n", mode: 'a')
+      begin
+        current_view = @api&.current_view
+        if current_view
+          @api.generate_view(current_view.name)
+          File.write('/tmp/save_post_debug.log', "View index regenerated successfully\n", mode: 'a')
+        end
+      rescue => e
+        File.write('/tmp/save_post_debug.log', "View regeneration failed: #{e.class}: #{e.message}\n", mode: 'a')
+        # Don't fail the save if view regeneration fails
+      end
+      
+      File.write('/tmp/save_post_debug.log', "SUCCESS: Redirecting to view dashboard\n", mode: 'a')
+      current_view = @api&.current_view
+      if current_view
+        redirect "/view/#{current_view.name}?message=Post saved successfully"
+      else
+        redirect "/?message=Post ##{post_id} saved and generated successfully"
+      end
     rescue => e
       File.write('/tmp/save_post_debug.log', "EXCEPTION: #{e.class}: #{e.message}\n", mode: 'a')
       File.write('/tmp/save_post_debug.log', "Backtrace: #{e.backtrace.first(5).join("\n")}\n", mode: 'a')
@@ -406,6 +467,34 @@ class ScriptoriumWeb < Sinatra::Base
       render_dashboard(error: error_with_location(e, "Failed to preview view: #{e.message}"))
     end
   end
+  
+  # Preview specific view index
+  get '/preview/:view_name/index.html' do
+    view_name = params[:view_name]
+    
+    begin
+      if view_name.nil? || view_name.strip.empty?
+        status 400
+        return "Bad request: missing view name"
+      end
+      
+      # Generate the view to ensure it's up to date
+      @api.generate_view(view_name)
+      
+      # Serve the generated index.html file
+      index_file = @api.root/"views"/view_name/"output"/"index.html"
+      if File.exist?(index_file)
+        content_type :html
+        read_file(index_file)
+      else
+        status 404
+        "Index file not found for view: #{view_name}"
+      end
+    rescue => e
+      status 500
+      "Error loading view: #{e.message}"
+    end
+  end
 
   # Serve post files for preview
   get '/preview/:view_name/posts/:filename' do
@@ -423,7 +512,127 @@ class ScriptoriumWeb < Sinatra::Base
       
       if File.exist?(post_file)
         content_type :html
-        read_file(post_file)
+        
+        # Read the post content
+        post_content = read_file(post_file)
+        
+        # Create wrapper with Close button and iframe
+        html = <<~HTML
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Post Preview</title>
+            <style>
+              body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+              .header { background: #f8f9fa; border-bottom: 1px solid #dee2e6; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
+              .close-btn { background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+              .close-btn:hover { background: #c82333; }
+              .iframe-container { height: calc(100vh - 60px); }
+              iframe { width: 100%; height: 100%; border: none; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h3 style="margin: 0;">Post Preview</h3>
+              <button class="close-btn" onclick="window.close()">Close</button>
+            </div>
+            <div class="iframe-container">
+              <iframe src="/preview/#{view_name}/posts/#{filename}/content"></iframe>
+            </div>
+          </body>
+          </html>
+        HTML
+        
+        html
+      else
+        status 404
+        "File not found: #{filename}"
+      end
+    rescue => e
+      status 500
+      "Error loading file: #{e.message}"
+    end
+  end
+
+  # Serve post content for iframe (with syntax highlighting)
+  get '/preview/:view_name/posts/:filename/content' do
+    view_name = params[:view_name]
+    filename = params[:filename]
+    
+    begin
+      if view_name.nil? || view_name.strip.empty? || filename.nil? || filename.strip.empty?
+        status 404
+        return "File not found"
+      end
+      
+      # Construct the file path
+      post_file = @api.root/"views"/view_name/"output"/"posts"/filename
+      
+      if File.exist?(post_file)
+        content_type :html
+        
+        # Read the post content
+        post_content = read_file(post_file)
+        
+        # Wrap in HTML document with syntax highlighting
+        html = <<~HTML
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Post Content</title>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 20px; line-height: 1.6; }
+              pre { background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; }
+              code { background: #f5f5f5; padding: 2px 4px; border-radius: 3px; }
+            </style>
+          </head>
+          <body>
+            #{post_content}
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+            <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                Prism.highlightAll();
+                hljs.highlightAll();
+              });
+            </script>
+          </body>
+          </html>
+        HTML
+        
+        html
+      else
+        status 404
+        "File not found: #{filename}"
+      end
+    rescue => e
+      status 500
+      "Error loading file: #{e.message}"
+    end
+  end
+  
+  # Serve permalink files for preview
+  get '/preview/:view_name/permalink/:filename' do
+    view_name = params[:view_name]
+    filename = params[:filename]
+    
+    begin
+      if view_name.nil? || view_name.strip.empty? || filename.nil? || filename.strip.empty?
+        status 404
+        return "File not found"
+      end
+      
+      # Construct the file path
+      permalink_file = @api.root/"views"/view_name/"output"/"permalink"/filename
+      
+      if File.exist?(permalink_file)
+        content_type :html
+        read_file(permalink_file)
       else
         status 404
         "File not found: #{filename}"
@@ -1006,6 +1215,9 @@ class ScriptoriumWeb < Sinatra::Base
         return
       end
       
+      # Get all views for the checkbox list
+      @views = @api.views || []
+      
       # Set as current view
       @api.view(view_name)
       # @current_view = @api.current_view # This line is now redundant as @current_view is set above
@@ -1475,6 +1687,27 @@ class ScriptoriumWeb < Sinatra::Base
     end
   end
 
+  # Serve post-specific assets
+  get '/posts/:post_id/assets/*' do
+    post_id = params[:post_id]
+    asset_path = params[:splat].first
+    
+    # Validate post_id format (4 digits)
+    unless post_id.match?(/^\d{4}$/)
+      status 404
+      return "Invalid post ID format"
+    end
+    
+    asset_file = @api.root/"posts"/post_id/"assets"/asset_path
+    
+    if File.exist?(asset_file) && File.file?(asset_file)
+      send_file asset_file
+    else
+      status 404
+      "Asset not found"
+    end
+  end
+
   # Server status endpoint
   get '/status' do
     content_type :json
@@ -1550,12 +1783,74 @@ class ScriptoriumWeb < Sinatra::Base
       end
     end
     
+    # Get post-specific assets
+    @post_assets = []
+    posts_dir = @api.root/:posts
+    if Dir.exist?(posts_dir)
+      Dir.glob(posts_dir/"*").each do |post_dir|
+        next unless Dir.exist?(post_dir)
+        post_num = File.basename(post_dir)
+        next unless post_num.match?(/^\d{4}$/) # Only process 4-digit post numbers
+        
+        post_id = post_num.to_i
+        assets = @api.list_assets('post', post_id)
+        assets.each do |asset|
+          @post_assets << asset.merge({
+            post_id: post_id,
+            post_title: get_post_title(post_id)
+          })
+        end
+      end
+    end
+    
     # Sort all asset lists
     @global_assets.sort_by! { |asset| asset[:filename] }
     @library_assets.sort_by! { |asset| asset[:filename] }
     @view_assets.sort_by! { |asset| asset[:filename] }
+    @post_assets.sort_by! { |asset| [asset[:post_id], asset[:filename]] }
     
     erb :asset_management
+  end
+
+  # Upload post-specific asset
+  post '/upload_post_asset' do
+    @current_view = @api&.current_view
+    if @current_view.nil?
+      redirect "/?error=No view selected. Please select a view first."
+      return
+    end
+    
+    begin
+      post_id = params[:post_id]&.to_i
+      file = params[:file]
+      
+      if post_id.nil? || post_id <= 0
+        redirect "/view/#{@current_view.name}?error=Invalid post ID"
+        return
+      end
+      
+      if file.nil? || file[:tempfile].nil?
+        redirect "/view/#{@current_view.name}?error=No file selected"
+        return
+      end
+      
+      # Check if post exists
+      post = @api.post(post_id)
+      if post.nil?
+        redirect "/view/#{@current_view.name}?error=Post #{post_id} not found"
+        return
+      end
+      
+      filename = file[:filename]
+      tempfile = file[:tempfile]
+      
+      # Use the API to upload the asset
+      target_file = @api.upload_asset(tempfile.path, 'post', post_id)
+      
+      redirect "/view/#{@current_view.name}?message=Asset '#{filename}' uploaded successfully to post ##{post_id}"
+    rescue => e
+      redirect "/view/#{@current_view.name}?error=Failed to upload asset: #{e.message}"
+    end
   end
 
   # Upload asset
@@ -1886,6 +2181,15 @@ class ScriptoriumWeb < Sinatra::Base
     return nil
   end
 
+  def get_post_title(post_id)
+    begin
+      post = @api.post(post_id)
+      post.title
+    rescue => e
+      "Post ##{post_id}"
+    end
+  end
+
   def format_backup_age(timestamp)
     # Parse timestamp (format: YYYYMMDD-HHMMSS)
     year = timestamp[0..3].to_i
@@ -2089,10 +2393,167 @@ class ScriptoriumWeb < Sinatra::Base
     end
   end
 
+  # Theme management routes
+  
+  # Theme management page
+  get '/theme_management' do
+    begin
+      @themes = @api.themes_available
+      @system_themes = @api.system_themes
+      @user_themes = @api.user_themes
+      erb :theme_management
+    rescue => e
+      redirect "/?error=Failed to load themes: #{e.message}"
+    end
+  end
+  
+  # Clone theme
+  post '/theme_management/clone' do
+    begin
+      source_theme = params[:source_theme]&.strip
+      new_name = params[:new_name]&.strip
+      
+      if source_theme.nil? || source_theme.empty?
+        redirect "/theme_management?error=Source theme is required"
+        return
+      end
+      
+      if new_name.nil? || new_name.empty?
+        redirect "/theme_management?error=New theme name is required"
+        return
+      end
+      
+      # Validate new name format
+      unless new_name.match?(/^[a-zA-Z0-9_-]+$/)
+        redirect "/theme_management?error=Theme name can only contain letters, numbers, hyphens, and underscores"
+        return
+      end
+      
+      # Clone the theme
+      @api.clone_theme(source_theme, new_name)
+      redirect "/theme_management?message=Theme '#{new_name}' cloned successfully from '#{source_theme}'"
+    rescue => e
+      error_info = friendly_error_message(e)
+      redirect "/theme_management?error=#{error_info[:message]}&suggestion=#{error_info[:suggestion]}"
+    end
+  end
+  
+  # Delete theme (user themes only)
+  post '/theme_management/delete' do
+    begin
+      theme_name = params[:theme_name]&.strip
+      
+      if theme_name.nil? || theme_name.empty?
+        redirect "/theme_management?error=Theme name is required"
+        return
+      end
+      
+      # Check if it's a system theme
+      if @api.system_themes.include?(theme_name)
+        redirect "/theme_management?error=Cannot delete system theme '#{theme_name}'"
+        return
+      end
+      
+      # Check if it's a user theme
+      unless @api.user_themes.include?(theme_name)
+        redirect "/theme_management?error=Theme '#{theme_name}' not found or not a user theme"
+        return
+      end
+      
+      # Delete the theme directory
+      theme_dir = @api.root/:themes/theme_name
+      if Dir.exist?(theme_dir)
+        FileUtils.rm_rf(theme_dir)
+        redirect "/theme_management?message=Theme '#{theme_name}' deleted successfully"
+      else
+        redirect "/theme_management?error=Theme directory not found"
+      end
+    rescue => e
+      redirect "/theme_management?error=Failed to delete theme: #{e.message}"
+    end
+  end
+  
+  # Edit theme files
+  get '/edit_theme/:theme_name' do
+    begin
+      theme_name = params[:theme_name]&.strip
+      unless @api.theme_exists?(theme_name)
+        redirect "/theme_management?error=Theme '#{theme_name}' not found."
+      end
+      
+      @theme_name = theme_name
+      @theme_dir = @api.root/:themes/theme_name
+      
+      # List all editable files within the theme directory
+      @editable_files = []
+      if Dir.exist?(@theme_dir)
+        Dir.glob(File.join(@theme_dir, "**", "*.txt")).each do |file_path|
+          relative_path = Pathname.new(file_path).relative_path_from(Pathname.new(@theme_dir)).to_s
+          @editable_files << relative_path
+        end
+      end
+      
+      erb :edit_theme
+    rescue => e
+      "Error in edit_theme route: #{e.class}: #{e.message}\n#{e.backtrace.first(5).join("\n")}"
+    end
+  end
+  
+  # Edit specific theme file
+  get '/edit_theme/:theme_name/*' do
+    theme_name = params[:theme_name]&.strip
+    file_path_param = params[:splat].first
+    
+    unless @api.theme_exists?(theme_name)
+      redirect "/theme_management?error=Theme '#{theme_name}' not found."
+    end
+    
+    theme_file_path = File.join(@api.root/:themes/theme_name, file_path_param)
+    
+    unless File.exist?(theme_file_path)
+      redirect "/edit_theme/#{theme_name}?error=File '#{file_path_param}' not found in theme '#{theme_name}'."
+    end
+    
+    @theme_name = theme_name
+    @file_name = file_path_param
+    @file_content = File.read(theme_file_path)
+    
+    erb :edit_theme_file
+  end
+  
+  # Save theme file
+  post '/save_theme_file/:theme_name/*' do
+    theme_name = params[:theme_name]&.strip
+    file_path_param = params[:splat].first
+    file_content = params[:content]
+    
+    unless @api.theme_exists?(theme_name)
+      redirect "/theme_management?error=Theme '#{theme_name}' not found."
+    end
+    
+    # Ensure it's a user theme if we're allowing edits
+    unless @api.user_themes.include?(theme_name)
+      redirect "/edit_theme/#{theme_name}?error=Cannot edit system theme files directly."
+    end
+    
+    theme_file_path = File.join(@api.root/:themes/theme_name, file_path_param)
+    
+    unless File.exist?(theme_file_path)
+      redirect "/edit_theme/#{theme_name}?error=File '#{file_path_param}' not found in theme '#{theme_name}'."
+    end
+    
+    File.write(theme_file_path, file_content)
+    redirect "/edit_theme/#{theme_name}/#{file_path_param}?message=File saved successfully."
+  rescue => e
+    redirect "/edit_theme/#{theme_name}/#{file_path_param}?error=Failed to save file: #{e.message}"
+  end
+
   # Debug route to verify code is updated
   get '/debug' do
     "Server is running updated code at #{Time.now}"
   end
+  
+  
 end
 
 # Start the server if this file is run directly
@@ -2101,4 +2562,4 @@ if __FILE__ == $0
 end
 
 # Set initial test mode from command line after class definition
-ScriptoriumWeb.test_mode = test_mode 
+ScriptoriumWeb.test_mode = TEST_MODE 

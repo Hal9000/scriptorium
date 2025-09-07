@@ -583,16 +583,45 @@ write output:      write the result to output/panes/header.html
 
   def generate_post_index
     posts = @repo.all_posts(self) 
-    str = ""
+    config = read_post_index_config
+    
+    # Build table with configurable margin-top
+    margin_top = config[:"index.margin.top"] || "0px"
+    str = "<table width=100% cellpadding=#{config[:'entry.cellpadding']} style=\"margin-top: #{margin_top};\">"
+    
     # FIXME - many decisions to make here...
     posts.each {|post| str << post_index_entry(post) }
+    str << "</table>"
+    
     write_file(@dir/:output/"post_index.html", str)    
   end
 
   def post_index_entry(post)
     template = @predef.index_entry
-    entry = substitute(post, template)
+    config = read_post_index_config
+    vars = post.vars.merge(config)
+    
+    # Add formatted_date to vars
+    date_format = config[:"entry.date.format"] || "month dd break yyyy"
+    vars[:formatted_date] = format_date(date_format, post.pubdate)
+    
+    entry = substitute(vars, template)
     entry
+  end
+
+  def read_post_index_config
+    # Read global defaults first
+    global_config_file = @repo.root/:config/"post_index_defaults.txt"
+    global_config = File.exist?(global_config_file) ? parse_commented_file(global_config_file) : {}
+    
+    # Read view-specific overrides
+    view_config_file = @dir/:config/"post_index.txt"
+    view_config = File.exist?(view_config_file) ? parse_commented_file(view_config_file) : {}
+    
+    # Merge: view config overrides global defaults
+    global_config.merge(view_config)
+  rescue => e
+    {}
   end
 
   def post_index_array
@@ -856,10 +885,10 @@ write output:      write the result to output/panes/header.html
   end
 
   def paginate_posts
-    config = read_commented_file(dir/:config/"post_index.txt")
+    config = read_post_index_config
     posts = @repo.all_posts(self)
     posts.sort! {|a,b| post_compare(a, b) }
-    @ppp ||= config.first.split.last.to_i
+    @ppp ||= config[:"posts.per.page"].to_i
     pages = []
     posts.each_slice(@ppp).with_index do |group, i|
       pages << group.map {|post| post_index_entry(post) }

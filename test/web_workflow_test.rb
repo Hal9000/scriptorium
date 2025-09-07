@@ -120,12 +120,12 @@ class WebWorkflowTest < Minitest::Test
     assert_response_redirect(response, "Post creation should redirect after success")
     
     # Step 4: Get the post ID from the redirect
-    # The redirect should be to /edit_post/#{post_num}
+    # The redirect should be to /view/test-view?edit_post=#{post_num}
     redirect_location = response['Location']
-    assert_includes redirect_location, "/edit_post/", "Should redirect to edit page"
+    assert_includes redirect_location, "edit_post=", "Should redirect with edit_post parameter"
     
     # Extract post ID from redirect URL
-    post_id = redirect_location.split('/').last.split('?').first
+    post_id = redirect_location.match(/edit_post=(\d+)/)[1]
     assert_match(/^\d+$/, post_id, "Post ID should be numeric")
     
     # Step 5: Edit the post content
@@ -137,7 +137,7 @@ class WebWorkflowTest < Minitest::Test
     assert_response_redirect(response, "Post saving should redirect after success")
     
     # Step 6: Verify the post was saved by checking the redirect message
-    assert_includes response['Location'], "message=Post ##{post_id} saved", "Should show success message"
+    assert_includes response['Location'], "message=Post saved successfully", "Should show success message"
     
     # Step 7: Verify the content was actually saved by reading the post file
     # This tests the actual file writing functionality
@@ -245,7 +245,7 @@ class WebWorkflowTest < Minitest::Test
     
     # Extract post ID from redirect
     redirect_location = response['Location']
-    post_id = redirect_location.split('/').last.split('?').first
+    post_id = redirect_location.match(/edit_post=(\d+)/)[1]
     
     # Initially post should be unpublished
     post_file = "#{WebTestHelper::TEST_REPO_PATH}/posts/#{sprintf("%04d", post_id.to_i)}/source.lt3"
@@ -291,7 +291,7 @@ class WebWorkflowTest < Minitest::Test
     
     # Extract post ID from redirect
     redirect_location = response['Location']
-    post_id = redirect_location.split('/').last.split('?').first
+    post_id = redirect_location.match(/edit_post=(\d+)/)[1]
     
     # Initially post should be visible
     response = get("/view/test-view")

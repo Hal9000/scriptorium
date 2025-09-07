@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Edit Theme File: <%= @theme_name %> / <%= @file_name %> - Scriptorium Web UI</title>
+  <link rel="stylesheet" href="/codemirror/lib/codemirror.css">
+  <script src="/codemirror/lib/codemirror.js"></script>
+  <script src="/codemirror/mode/xml/xml.js"></script>
+  <script src="/codemirror/mode/htmlmixed/htmlmixed.js"></script>
+  <script src="/codemirror/mode/css/css.js"></script>
+  <script src="/codemirror/mode/javascript/javascript.js"></script>
+  <script src="/codemirror/mode/ruby/ruby.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .error { color: red; background: #ffe6e6; padding: 10px; margin: 10px 0; }
+    .message { color: green; background: #e6ffe6; padding: 10px; margin: 10px 0; }
+    .button { background: #007cba; color: white; padding: 8px 15px; text-decoration: none; border-radius: 3px; border: none; cursor: pointer; }
+    .button:hover { background: #005a87; }
+    .button.secondary { background: #6c757d; }
+    .button.secondary:hover { background: #545b62; }
+    .CodeMirror { border: 1px solid #ccc; height: 500px; }
+    form { margin-top: 20px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; }
+    textarea { width: 100%; height: 400px; margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 3px; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <h1>Edit Theme File: <%= @theme_name %> / <%= @file_name %></h1>
+  
+  <a href="/edit_theme/<%= @theme_name %>" class="button secondary">← Back to Theme Files</a>
+  <a href="/theme_management" class="button secondary" style="margin-left: 5px;">← Back to Theme Management</a>
+  
+  <% if @error %>
+    <div class="error"><strong>Error:</strong> <%= @error %></div>
+  <% end %>
+  
+  <% if @message %>
+    <div class="message"><strong>Success:</strong> <%= @message %></div>
+  <% end %>
+
+  <form action="/save_theme_file/<%= @theme_name %>/<%= @file_name %>" method="post">
+    <label for="content">File Content:</label>
+    <textarea id="content" name="content"><%= @file_content %></textarea>
+    <button type="submit" class="button">Save Changes</button>
+  </form>
+
+  <script>
+    var editor = CodeMirror.fromTextArea(document.getElementById("content"), {
+      lineNumbers: true,
+      mode: "htmlmixed", // Default mode, can be adjusted based on file extension
+      indentUnit: 2,
+      tabSize: 2,
+      indentWithTabs: false,
+      theme: "default"
+    });
+    
+    // Basic mode detection based on file extension
+    var fileName = "<%= @file_name %>";
+    if (fileName.endsWith(".css")) {
+      editor.setOption("mode", "css");
+    } else if (fileName.endsWith(".js")) {
+      editor.setOption("mode", "javascript");
+    } else if (fileName.endsWith(".rb")) {
+      editor.setOption("mode", "ruby");
+    } else if (fileName.endsWith(".txt")) {
+      // For .txt files, if they contain HTML, use htmlmixed, otherwise plain text
+      if (editor.getValue().match(/<[a-z][\s\S]*>/i)) {
+        editor.setOption("mode", "htmlmixed");
+      } else {
+        editor.setOption("mode", "text/plain");
+      }
+    }
+  </script>
+</body>
+</html>

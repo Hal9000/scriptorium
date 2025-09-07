@@ -109,10 +109,7 @@
         /* Hover actions styles */
         .actions-container {
             position: relative;
-            text-align: center;
-            height: 20px;
-            line-height: 20px;
-            vertical-align: middle;
+            display: inline-block;
         }
         
         .gear-icon {
@@ -127,12 +124,22 @@
         
         .action-icons {
             display: none;
-            gap: 3px;
+            position: absolute;
+            top: 50%;
+            right: 100%;
+            transform: translateY(-50%);
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            padding: 4px;
+            z-index: 1000;
+            flex-direction: column;
+            gap: 2px;
             justify-content: center;
             align-items: center;
-            height: 20px;
-            line-height: 20px;
-            vertical-align: middle;
+            min-width: 40px;
+            margin-right: 8px;
         }
         
         .action-icon {
@@ -150,12 +157,12 @@
             transform: scale(1.2);
         }
         
-        /* Show action icons on hover, hide gear */
-        .actions-container:hover .gear-icon {
+        /* Show action icons on click, hide gear */
+        .actions-container.active .gear-icon {
             display: none;
         }
         
-        .actions-container:hover .action-icons {
+        .actions-container.active .action-icons {
             display: flex;
         }
         
@@ -187,7 +194,7 @@
             </div>
             
             <div class="config-buttons">
-                <button type="button" class="btn" onclick="showCreatePostForm()">Create Post</button>
+                <button type="button" class="btn" onclick="showUploadAssetForm()" style="background: #6c757d;">Upload Asset</button>
                 <a href="/asset_management" class="btn">Asset Management</a>
                 <a href="/backup_management" class="btn" style="background: #fd7e14;" title="Backup and restore repository">Backup/Restore</a>
                 <a href="/deploy" class="btn" style="background: #28a745;" title="Deploy to server" onclick="showUploadingPopup()">Deploy</a>
@@ -196,23 +203,32 @@
                 <a href="/advanced_config" class="btn btn-secondary">Advanced Config</a>
             </div>
             
-            <!-- Create Post Modal -->
-            <div id="createPostModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; min-width: 300px;">
-                    <h3>Create New Post</h3>
-                    <form method="post" action="/create_post">
+            
+            <!-- Upload Asset Modal -->
+            <div id="uploadAssetModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; min-width: 400px;">
+                    <h3>Upload Asset to Post</h3>
+                    <form method="post" action="/upload_post_asset" enctype="multipart/form-data">
                         <div style="margin-bottom: 15px;">
-                            <label for="post_title" style="display: block; margin-bottom: 5px; font-weight: bold;">Post Title:</label>
-                            <input type="text" id="post_title" name="title" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                            <label for="post_id" style="display: block; margin-bottom: 5px; font-weight: bold;">Post ID:</label>
+                            <select id="post_id" name="post_id" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                                <option value="">Select a post...</option>
+                                <% @posts.each do |post| %>
+                                    <option value="<%= post.id %>">#<%= post.id %> - <%= post.title %></option>
+                                <% end %>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label for="asset_file" style="display: block; margin-bottom: 5px; font-weight: bold;">File:</label>
+                            <input type="file" id="asset_file" name="file" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
                         </div>
                         <div style="text-align: right;">
-                            <button type="button" onclick="hideCreatePostForm()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;">Cancel</button>
-                            <button type="submit" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Create Post</button>
+                            <button type="button" onclick="hideUploadAssetForm()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;">Cancel</button>
+                            <button type="submit" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Upload Asset</button>
                         </div>
                     </form>
                 </div>
             </div>
-            
 
             
             <% if params[:error] %>
@@ -221,6 +237,53 @@
                 </div>
             <% end %>
             
+            <!-- Create Post Button -->
+            <div style="margin-bottom: 20px;">
+                <button type="button" onclick="toggleCreatePostForm()" id="createPostButton" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;">Create Post</button>
+            </div>
+
+            <!-- Create Post Section (Hidden by default) -->
+            <div id="createPostSection" class="create-post-section" style="display: none; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px;">
+                <h3 style="margin-top: 0;">Create New Post</h3>
+                <form method="post" action="/create_post" id="createPostForm">
+                    <div style="display: flex; gap: 15px; align-items: end; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label for="post_title" style="display: block; margin-bottom: 5px; font-weight: bold;">Title:</label>
+                            <input type="text" id="post_title" name="title" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                        </div>
+                        <div style="flex: 1; min-width: 200px;">
+                            <label for="post_blurb" style="display: block; margin-bottom: 5px; font-weight: bold;">Blurb:</label>
+                            <input type="text" id="post_blurb" name="blurb" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                        </div>
+                        <div style="flex: 1; min-width: 200px;">
+                            <label for="post_tags" style="display: block; margin-bottom: 5px; font-weight: bold;">Tags (comma-separated):</label>
+                            <input type="text" id="post_tags" name="tags" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                        </div>
+                    </div>
+                    
+                    <!-- View Selection -->
+                    <div style="margin-top: 15px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: bold;">Views:</label>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <% @views.each do |view| %>
+                                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                    <input type="checkbox" name="views[]" value="<%= view.name %>" 
+                                           <%= 'checked' if view.name == @current_view.name %> 
+                                           style="margin: 0;">
+                                    <span><%= view.name %></span>
+                                </label>
+                            <% end %>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Buttons -->
+                    <div style="margin-top: 15px; text-align: right;">
+                        <button type="button" onclick="hideCreatePostForm()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;">Cancel</button>
+                        <button type="submit" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Edit</button>
+                    </div>
+                </form>
+            </div>
+
             <% if @posts && !@posts.empty? %>
                 <div class="posts-section">
                     <h3>Posts (<%= @total_posts %> total)</h3>
@@ -247,7 +310,7 @@
                                         <td style="padding: 6px; border: 1px solid #ddd;"><%= post.pubdate ? post.pubdate.split(' ').first : '—' %></td>
                                         <!-- Col 3: Title -->
                                         <td style="padding: 6px; border: 1px solid #ddd;">
-                                            <a href="/edit_post/<%= post.id %>" style="color: #007bff; text-decoration: none; cursor: pointer; <%= 'text-decoration: line-through;' if post.deleted %>" title="Edit <%= post.title %>">
+                                            <a href="#" onclick="openPostPreview(<%= post.id %>); return false;" style="color: #007bff; text-decoration: none; cursor: pointer; <%= 'text-decoration: line-through;' if post.deleted %>" title="Preview <%= post.title %>">
                                                 <%= post.title %>
                                             </a>
                                         </td>
@@ -345,12 +408,82 @@
     
     <script>
         // Global functions accessible from HTML onclick attributes
-        function showCreatePostForm() {
-            document.getElementById('createPostModal').style.display = 'block';
+        
+        function toggleCreatePostForm() {
+            console.log('toggleCreatePostForm called');
+            let form = document.getElementById('createPostSection');
+            let button = document.getElementById('createPostButton');
+            console.log('Form element:', form);
+            console.log('Button element:', button);
+            console.log('Form display style:', form.style.display);
+            
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+                button.textContent = 'Hide';
+                console.log('Showing form');
+            } else {
+                form.style.display = 'none';
+                button.textContent = 'Create Post';
+                console.log('Hiding form');
+            }
         }
         
         function hideCreatePostForm() {
-            document.getElementById('createPostModal').style.display = 'none';
+            let form = document.getElementById('createPostSection');
+            let button = document.getElementById('createPostButton');
+            form.style.display = 'none';
+            button.textContent = 'Create Post';
+        }
+        
+        function openEditModal(postId) {
+            // Hide the create post form
+            hideCreatePostForm();
+            
+            // Show the edit modal
+            let modal = document.getElementById('editPostModal');
+            if (modal) {
+                modal.style.display = 'block';
+                // Load post content via AJAX
+                loadPostContent(postId);
+            }
+        }
+        
+        function closeEditModal() {
+            let modal = document.getElementById('editPostModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        function loadPostContent(postId) {
+            // Set the post ID in the form
+            document.getElementById('editPostId').value = postId;
+            
+            // Set the form action to the correct route
+            document.getElementById('editPostForm').action = `/save_post/${postId}`;
+            
+            // Load post content via AJAX
+            fetch(`/api/post_content/${postId}`)
+                .then(response => response.text())
+                .then(content => {
+                    if (editor) {
+                        editor.setValue(content);
+                    } else {
+                        document.getElementById('editContent').value = content;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading post content:', error);
+                    document.getElementById('editContent').value = 'Error loading post content.';
+                });
+        }
+        
+        function showUploadAssetForm() {
+            document.getElementById('uploadAssetModal').style.display = 'block';
+        }
+        
+        function hideUploadAssetForm() {
+            document.getElementById('uploadAssetModal').style.display = 'none';
         }
         
         function showUploadingPopup() {
@@ -379,7 +512,45 @@
             }
         }
         
+        function openPostPreview(postId) {
+            // Get the post data from the table to find the title and construct the slug
+            const postRow = document.querySelector(`a[onclick*="openPostPreview(${postId})"]`);
+            if (!postRow) {
+                console.error('Could not find post row for ID:', postId);
+                alert('Error: Could not find post');
+                return;
+            }
+            const postTitle = postRow.textContent.trim();
+            
+            // Construct the expected filename based on the pattern we saw
+            const paddedId = postId.toString().padStart(4, '0');
+            const slug = postTitle.toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')  // Remove special chars
+                .replace(/\s+/g, '-')          // Replace spaces with hyphens
+                .replace(/-+/g, '-')           // Replace multiple hyphens with single
+                .replace(/^-|-$/g, '');        // Remove leading/trailing hyphens
+            
+            const filename = `${paddedId}-${slug}.html`;
+            
+            // Open the individual post file directly
+            const url = `/preview/computing/posts/${filename}`;
+            
+            // Open in a new window
+            window.open(url, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+        }
+        
+        
         document.addEventListener('DOMContentLoaded', function() {
+            // Check if we should open the edit modal
+            const urlParams = new URLSearchParams(window.location.search);
+            const editPostId = urlParams.get('edit_post');
+            if (editPostId) {
+                openEditModal(editPostId);
+                // Clean up URL to remove edit_post parameter
+                const newUrl = window.location.pathname + (urlParams.get('message') ? '?message=' + encodeURIComponent(urlParams.get('message')) : '');
+                window.history.replaceState({}, document.title, newUrl);
+            }
+            
             // Handle status toggle buttons
             document.querySelectorAll('.toggle-status-btn').forEach(function(btn) {
                 btn.addEventListener('click', function() {
@@ -466,9 +637,9 @@
 
             
             // Check for deployment success message in URL parameters
-            const urlParams = new URLSearchParams(window.location.search);
-            const deployMessage = urlParams.get('deploy_success');
-            const hideUploading = urlParams.get('hide_uploading');
+            const deployParams = new URLSearchParams(window.location.search);
+            const deployMessage = deployParams.get('deploy_success');
+            const hideUploading = deployParams.get('hide_uploading');
             
             if (deployMessage) {
                 showMessage(deployMessage, 'success');
@@ -477,11 +648,114 @@
                 window.history.replaceState({}, document.title, newUrl);
             }
             
+            // Clean up any message parameters
+            const message = urlParams.get('message');
+            if (message) {
+                showMessage(message, 'success');
+                // Clean up URL after showing message
+                setTimeout(() => {
+                    const newUrl = window.location.pathname;
+                    window.history.replaceState({}, document.title, newUrl);
+                }, 1000);
+            }
+            
             // Hide uploading popup if deployment completed
             if (hideUploading) {
                 hideUploadingPopup();
             }
+            
+            // Add click handlers for action containers
+            document.querySelectorAll('.actions-container').forEach(container => {
+                container.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    // Close all other action containers
+                    document.querySelectorAll('.actions-container.active').forEach(active => {
+                        if (active !== this) {
+                            active.classList.remove('active');
+                        }
+                    });
+                    // Toggle this container
+                    this.classList.toggle('active');
+                });
+            });
+            
+            // Close action containers when clicking elsewhere
+            document.addEventListener('click', function() {
+                document.querySelectorAll('.actions-container.active').forEach(container => {
+                    container.classList.remove('active');
+                });
+            });
         });
+    </script>
+    
+    <!-- Edit Post Modal -->
+    <div id="editPostModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 8px; width: 80vw; height: 80vh; max-width: 1200px; max-height: 800px; display: flex; flex-direction: column;">
+            <!-- Modal Header -->
+            <div style="padding: 20px; border-bottom: 1px solid #ddd;">
+                <h2 style="margin: 0;">Edit Post</h2>
+            </div>
+            
+            <!-- Modal Content -->
+            <div style="flex: 1; padding: 20px; overflow: hidden;">
+                <form id="editPostForm" method="post" onsubmit="syncCodeMirrorContent()">
+                    <input type="hidden" id="editPostId" name="post_id" value="">
+                    <div style="height: 100%; display: flex; flex-direction: column;">
+                        <label for="editContent" style="margin-bottom: 10px; font-weight: bold;">Post Content:</label>
+                        <textarea name="content" id="editContent" placeholder="Enter your post content here..." style="flex: 1; font-family: monospace; font-size: 14px; border: 1px solid #ddd; border-radius: 4px; padding: 10px; resize: none;"></textarea>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div style="padding: 20px; border-top: 1px solid #ddd; text-align: right;">
+                <button type="button" onclick="closeEditModal()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;">Cancel</button>
+                <button type="submit" form="editPostForm" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Save Post</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- CodeMirror CSS and JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    
+    <script>
+        let editor = null;
+        
+        function syncCodeMirrorContent() {
+            if (editor) {
+                document.getElementById('editContent').value = editor.getValue();
+            }
+        }
+        
+        
+        // Initialize CodeMirror when modal opens
+        function initCodeMirror() {
+            if (!editor) {
+                editor = CodeMirror.fromTextArea(document.getElementById('editContent'), {
+                    mode: 'livetext',
+                    theme: 'monokai',
+                    lineNumbers: true,
+                    lineWrapping: false,
+                    indentUnit: 2,
+                    tabSize: 2,
+                    indentWithTabs: false,
+                    scrollbarStyle: 'native',
+                    viewportMargin: Infinity
+                });
+                
+                // Hide the original textarea
+                document.getElementById('editContent').style.display = 'none';
+            }
+        }
+        
+        // Override openEditModal to initialize CodeMirror
+        const originalOpenEditModal = openEditModal;
+        openEditModal = function(postId) {
+            originalOpenEditModal(postId);
+            setTimeout(initCodeMirror, 100); // Small delay to ensure modal is visible
+        };
     </script>
 </body>
 </html> 

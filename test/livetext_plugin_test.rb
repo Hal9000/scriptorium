@@ -77,7 +77,10 @@ class LivetextPluginTest < Minitest::Test
   def test_003_special_formatting
     # Test special formatting like dropcap and inset
     content = <<~EOS
-      .dropcap This is a dropcap test
+      .dropcap
+      This is a dropcap test with multiple lines.
+      The dropcap should apply to the first letter of this content.
+      .end
       .inset left 25
       |This goes in the inset
       This goes in the body
@@ -87,9 +90,10 @@ class LivetextPluginTest < Minitest::Test
     
     body, vars = process_livetext(content)
     
-    # Check for dropcap formatting
-    assert_match(/mydrop/, body)
-    assert_match(/his is a dropcap test/, body)  # The remainder after the dropcap
+    # Check for dropcap formatting - should be a single paragraph with class
+    assert_match(/<p class="dropcap">/, body)
+    assert_match(/This is a dropcap test with multiple lines\./, body)
+    assert_match(/The dropcap should apply to the first letter/, body)
     
     # Check for inset formatting
     assert_match(/float:left/, body)
@@ -114,7 +118,28 @@ class LivetextPluginTest < Minitest::Test
     assert_match(/<img src='test\.jpg'><\/img>/, body)
   end
 
-  def test_005_faq_command
+  def test_005_dropcap_command
+    # Test the dropcap command
+    content = <<~EOS
+      .dropcap
+      Once upon a time there was a story that began with a dropcap.
+      This is the rest of the paragraph that flows naturally.
+      .end
+    EOS
+    
+    body, vars = process_livetext(content)
+    
+    # Check dropcap formatting
+    assert_match(/<p class="dropcap">/, body)
+    assert_match(/Once upon a time there was a story/, body)
+    assert_match(/This is the rest of the paragraph/, body)
+    
+    # Should be a single paragraph, not split into multiple divs
+    refute_match(/mydrop/, body)
+    refute_match(/padding-top: 1px/, body)
+  end
+
+  def test_006_faq_command
     # Test the FAQ command
     content = <<~EOS
       .faq What is this?
@@ -134,7 +159,7 @@ class LivetextPluginTest < Minitest::Test
     assert_match(/Another question\?/, body)
   end
 
-  def test_006_last_updated_command
+  def test_007_last_updated_command
     skip "Possible LiveText bug with last_updated command"
     content = <<~EOS
       .created
@@ -149,7 +174,7 @@ class LivetextPluginTest < Minitest::Test
 
 
 
-  def test_009_image_command
+  def test_008_image_command
     # Test the .image command
     content = <<~EOS
       .title Test Post

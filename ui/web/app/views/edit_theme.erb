@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Edit Theme: <%= @theme_name %> - Scriptorium Web UI</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .error { color: red; background: #ffe6e6; padding: 10px; margin: 10px 0; }
+    .message { color: green; background: #e6ffe6; padding: 10px; margin: 10px 0; }
+    .button { background: #007cba; color: white; padding: 5px 10px; text-decoration: none; border-radius: 3px; border: none; cursor: pointer; }
+    .button:hover { background: #005a87; }
+    .button.secondary { background: #6c757d; }
+    .button.secondary:hover { background: #545b62; }
+    .file-list { margin: 20px 0; }
+    .file-item { 
+      border: 1px solid #ddd; 
+      margin: 10px 0; 
+      border-radius: 5px; 
+      overflow: hidden;
+    }
+    .file-header { 
+      background: #f8f9fa; 
+      padding: 10px; 
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .file-header h4 { margin: 0; font-size: 1em; }
+    .file-content { padding: 10px; background: #fff; }
+    .file-content pre { white-space: pre-wrap; word-wrap: break-word; }
+  </style>
+</head>
+<body>
+  <h1>Edit Theme: <%= @theme_name %></h1>
+  
+  <a href="/theme_management" class="button">← Back to Theme Management</a>
+  
+  <% if @error %>
+    <div class="error"><strong>Error:</strong> <%= @error %></div>
+  <% end %>
+  
+  <% if @message %>
+    <div class="message"><strong>Success:</strong> <%= @message %></div>
+  <% end %>
+
+  <div class="file-list">
+    <h3>Theme Files (<%= @theme_name %>)</h3>
+    <% if @editable_files && !@editable_files.empty? %>
+      <table>
+        <tr>
+          <th>File Name</th>
+          <th>Actions</th>
+        </tr>
+        <% @editable_files.sort.each do |file_name| %>
+          <tr>
+            <td><%= file_name %></td>
+            <td>
+              <a href="/edit_theme/<%= @theme_name %>/<%= file_name %>" class="button">Edit</a>
+            </td>
+          </tr>
+        <% end %>
+      </table>
+    <% else %>
+      <p>No editable files found in this theme.</p>
+    <% end %>
+  </div>
+
+  <div class="section">
+    <h3>Theme Directory Structure</h3>
+    <p>The theme files are located in <code><%= @theme_dir %></code>. You can also edit them directly on the file system.</p>
+  </div>
+</body>
+</html>

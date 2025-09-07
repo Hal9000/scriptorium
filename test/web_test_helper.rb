@@ -14,13 +14,13 @@ module WebTestHelper
   
   # Start web server in test mode
   def start_web_server
-    system("ruby bin/sblog web start --test")
+    system("rbenv exec ruby ui/web/bin/scriptorium-web start --test")
     wait_for_server
   end
 
   # Stop web server
   def stop_web_server
-    system("ruby bin/sblog web stop 2>/dev/null")
+    system("rbenv exec ruby ui/web/bin/scriptorium-web stop")
   end
 
   # Wait for server to be ready

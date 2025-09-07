@@ -1700,4 +1700,56 @@ class TestScriptoriumAPI < Minitest::Test
       @api.list_assets(target: 'view')
     end
   end
+
+  def test_999_creates_posts_with_sequential_ids
+    # Create three posts
+    post1 = @api.create_post(
+      "First Post",
+      "This is the first post content.",
+      views: "sample",
+      tags: "test"
+    )
+    
+    post2 = @api.create_post(
+      "Second Post", 
+      "This is the second post content.",
+      views: "sample",
+      tags: "test"
+    )
+    
+    post3 = @api.create_post(
+      "Third Post",
+      "This is the third post content.", 
+      views: "sample",
+      tags: "test"
+    )
+    
+    # Verify they have sequential IDs
+    assert_equal 1, post1.id, "First post should have ID 1"
+    assert_equal 2, post2.id, "Second post should have ID 2" 
+    assert_equal 3, post3.id, "Third post should have ID 3"
+    
+    # Verify the posts exist in the repository
+    assert_equal "First Post", @api.post(1).title
+    assert_equal "Second Post", @api.post(2).title
+    assert_equal "Third Post", @api.post(3).title
+  end
+
+  def test_998_post_counter_is_correctly_updated
+    # Check initial counter
+    initial_counter = @api.instance_variable_get(:@repo).last_post_num
+    assert_equal 0, initial_counter, "Initial counter should be 0"
+    
+    # Create a post
+    post = @api.create_post(
+      "Test Post",
+      "Test content",
+      views: "sample"
+    )
+    
+    # Check counter after creation
+    updated_counter = @api.instance_variable_get(:@repo).last_post_num
+    assert_equal 1, updated_counter, "Counter should be 1 after creating one post"
+    assert_equal 1, post.id, "Post should have ID 1"
+  end
 end 

@@ -1,34 +1,19 @@
-Here's a brainstormed list of config options for the post index:
-Layout & Spacing:
-cellpadding - internal table cell padding
-margin.bottom - space between post entries
-main.padding - padding around the main content area
-Font Sizes:
-title.size - post title font size (currently 1.1em)
-blurb.size - post blurb font size (currently 0.75em)
-date.size - date font size (currently 0.7em)
-line.height - overall line height (currently 1.1)
-Column Layout:
-date.width - width of date column (currently 14%)
-date.alignment - date column alignment (left/right/center)
-date.spacing - spacing above date (currently 0.1em)
-Visual Styling:
-title.color - post title text color
-blurb.color - post blurb text color
-date.color - date text color
-hover.effects - enable/disable hover effects on titles
-Content Display:
-blurb.max.length - maximum blurb character length
-date.format - date display format (month/day/year, etc.)
-show.tags - show/hide post tags in index
-show.read.time - show estimated reading time
-Pagination:
-posts.per.page - number of posts per page (already exists)
-pagination.style - pagination display style
-load.more - use "load more" instead of page numbers
-Responsive:
-mobile.layout - different layout for mobile
-tablet.layout - different layout for tablet
-breakpoints - responsive breakpoint definitions
-This would make the post index highly customizable per view!
+x   index.padding - padding around the main content area
+x   entry.line.height - overall line height (currently 1.1)
+x   entry.date.alignment - date column alignment (left/right/center)
+x   entry.date.spacing - spacing above date (currently 0.1em)
+x   entry.title.color - post title text color
+x   entry.blurb.color - post blurb text color
+x   entry.date.color - date text color
+x   entry.blurb.max.length - maximum blurb character length
+
+    entry.date.format - date display format (month/day/year, etc.)
+
+x   posts.per.page 10
+x   entry.cellpadding 4
+x   entry.margin.bottom 6px
+x   entry.title.size 1.1em
+x   entry.blurb.size 0.75em
+x   entry.date.size 0.7em
+x   entry.date.width 14%
 

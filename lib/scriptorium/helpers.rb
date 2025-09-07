@@ -561,4 +561,88 @@ module Scriptorium::Helpers
   def tty(str)
     File.open('/dev/tty', 'w') { |f| f.puts str }
   end
+
+  def format_date(format, day = Time.now.to_date)
+    # Handle nil dates
+    return format if day.nil?
+    
+    # Handle string dates by parsing them
+    if day.is_a?(String)
+      begin
+        day = Date.parse(day)
+      rescue Date::Error
+        return format # Return original format if date is invalid
+      end
+    end
+    
+    # Parse the format string and replace tokens
+    result = format.dup
+    
+    # Month name vs number
+    result.gsub!(/\bmonth\b/, day.strftime("%B"))
+    result.gsub!(/\bmm\b/, day.strftime("%m"))
+    
+    # Day ordinal vs number - use smart padding
+    result.gsub!(/\bday\b/, ordinalize(day.day))
+    result.gsub!(/\bdd\b/) { smart_pad_day(day.day, result, $~.offset(0)[0]) }
+    
+    # Year formats
+    result.gsub!(/\byyyy\b/, day.strftime("%Y"))
+    result.gsub!(/\byy\b/, day.strftime("%y"))
+    
+    # Line breaks - handle spaces around break
+    result.gsub!(/\s+break\s+/, "<br>")
+    result.gsub!(/\s+break\b/, "<br>")
+    result.gsub!(/\bbreak\s+/, "<br>")
+    result.gsub!(/\bbreak\b/, "<br>")
+    
+    result
+  end
+
+  private
+
+  def smart_pad_day(day, format_string, position)
+    # Look at the context around the dd token to determine padding
+    before = format_string[0...position]
+    after = format_string[position + 2..-1] || ""
+    
+    # Check if we should pad based on context
+    should_pad = false
+    
+    # Rule 1: Initial number followed immediately by punctuation
+    if position == 0 && after.match?(/^[^a-zA-Z\s]/)
+      should_pad = true
+    end
+    
+    # Rule 2: Number enclosed in punctuation (before and after)
+    if before.match?(/[^a-zA-Z\s]$/) && after.match?(/^[^a-zA-Z\s]/)
+      should_pad = true
+    end
+    
+    # Rule 3: Terminal number preceded by punctuation
+    if after.empty? && before.match?(/[^a-zA-Z\s]$/)
+      should_pad = true
+    end
+    
+    # Rule 4: Middle number with spaces - don't pad
+    if before.match?(/\s$/) || after.match?(/^\s/)
+      should_pad = false
+    end
+    
+    should_pad ? day.to_s.rjust(2, '0') : day.to_s
+  end
+
+  def ordinalize(number)
+    case number % 100
+    when 11, 12, 13
+      "#{number}th"
+    else
+      case number % 10
+      when 1 then "#{number}st"
+      when 2 then "#{number}nd"
+      when 3 then "#{number}rd"
+      else "#{number}th"
+      end
+    end
+  end
 end

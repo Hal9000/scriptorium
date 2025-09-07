@@ -1,15 +1,14 @@
 VERY SOON:
 ----------
-  post_index.txt config (see notes)
+  annotate backups with version numbers (incl Livetext)
   full reddit support
-  add draft management
-  themes into web app
-  Sample blog additions
   livetext scriptorium additions
+  Sample blog additions
   common refactorings for AI (incl. dead code)
   dependency management
   configurator? more wizards?
   post footer?
+  add draft management??
 
 
 SOONISH:
@@ -95,3 +94,7 @@ x new exceptions replacing RuntimeError
 x add to TUI: assets, etc.
 x add post state management
 x legacy import
+x post_index.txt config (see notes)
+x theme into web app
+x post-specific assets
+x multi-view post creation

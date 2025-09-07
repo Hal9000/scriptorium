@@ -8,12 +8,12 @@ manual_setup
 global_head_file = "test/scriptorium-TEST/views/testview/config/global-head.txt"
 File.open(global_head_file, "a") { |f| f.puts "syntax     # Enable Rouge syntax highlighting" }
 
-# Post with Rouge syntax highlighting for multiple languages
+# Post with comprehensive syntax highlighting tests
 draft_body = <<~'BODY'
-  .blurb Testing Rouge syntax highlighting for Ruby, Elixir, and JavaScript.
-  This post tests the integrated Rouge syntax highlighter with three different programming languages.
+  .blurb Testing both Prism and Rouge syntax highlighting with multiple languages.
+  This post tests the integrated syntax highlighters with Ruby, Elixir, JavaScript, and plain text.
 
-  ## Ruby Code Example
+  ## Ruby Code Example (Rouge)
 
   .code ruby
   class User
@@ -37,7 +37,7 @@ draft_body = <<~'BODY'
   user.greet
   .end
 
-  ## Elixir Code Example
+  ## Elixir Code Example (Rouge)
 
   .code elixir
   defmodule Calculator do
@@ -62,7 +62,7 @@ draft_body = <<~'BODY'
   IO.puts("5 + 3 = 8")
   .end
 
-  ## JavaScript Code Example
+  ## JavaScript Code Example (Prism)
 
   .code javascript
   class TodoList {
@@ -90,57 +90,64 @@ draft_body = <<~'BODY'
       }
       return todo;
     }
-    
-    removeTodo(id) {
-      const index = this.todos.findIndex(t => t.id === id);
-      if (index > -1) {
-        return this.todos.splice(index, 1)[0];
-      }
-      return null;
-    }
-    
-    getCompletedTodos() {
-      return this.todos.filter(t => t.completed);
-    }
-    
-    getPendingTodos() {
-      return this.todos.filter(t => !t.completed);
-    }
   }
 
   // Usage example
   const todoList = new TodoList();
-  todoList.addTodo("Learn Rouge syntax highlighting");
+  todoList.addTodo("Learn syntax highlighting");
   todoList.addTodo("Test multiple languages");
-  todoList.addTodo("Write documentation", true);
+  .end
 
-  console.log("Pending todos:", todoList.getPendingTodos().length);
-  console.log("Completed todos:", todoList.getCompletedTodos().length);
+  ## Simple Ruby Example (Prism)
+
+  .code ruby
+  def hello_world
+    puts "Hello, World!"
+    @greeting = "Welcome to Scriptorium"
+    return @greeting
+  end
+  .end
+
+  ## Plain Text Example
+
+  .code text
+  This is just plain text
+  No syntax highlighting needed
+  But it should still be in a code block
   .end
 
   ## Test Results
 
   Each code block above should display with proper syntax highlighting:
 
-  - **Ruby**: Keywords in red, strings in blue, variables in orange
-  - **Elixir**: Functions in purple, atoms in green, strings in blue  
-  - **JavaScript**: Keywords in red, functions in purple, strings in blue
+  - **Ruby (Rouge)**: Keywords in red, strings in blue, variables in orange
+  - **Elixir (Rouge)**: Functions in purple, atoms in green, strings in blue  
+  - **JavaScript (Prism)**: Keywords in red, functions in purple, strings in blue
+  - **Plain text**: No highlighting, just code block formatting
 
-  The highlighting should work automatically thanks to our Rouge integration!
+  Both Rouge and Prism highlighting should work automatically!
 BODY
 
-name = @repo.create_draft(title: "Rouge Syntax Highlighting Test", views: ["testview"], body: draft_body)
+name = @repo.create_draft(title: "Comprehensive Syntax Highlighting Test", views: ["testview"], body: draft_body)
 num = @repo.finish_draft(name)
 @repo.generate_post(num)
 
 @repo.generate_front_page("testview")
 
 instruct <<~EOS
-  Front page should have one post with Rouge syntax highlighting.
-  Ruby code should be highlighted with Ruby syntax (keywords red, strings blue, variables orange).
-  Elixir code should be highlighted with Elixir syntax (functions purple, atoms green, strings blue).
-  JavaScript code should be highlighted with JS syntax (keywords red, functions purple, strings blue).
-  Check that Rouge CSS is included in the generated HTML.
+  Front page should have one post with comprehensive syntax highlighting.
+  
+  Rouge highlighting (Ruby, Elixir):
+  - Ruby: Keywords red, strings blue, variables orange
+  - Elixir: Functions purple, atoms green, strings blue
+  
+  Prism highlighting (JavaScript, Ruby):
+  - JavaScript: Keywords red, functions purple, strings blue
+  - Ruby: Standard Prism Ruby highlighting
+  
+  Plain text: No highlighting, just code block formatting
+  
+  Check that both Rouge CSS and Prism CSS/JS are included in the generated HTML.
   All code blocks should have proper token classes and syntax highlighting.
 EOS
 

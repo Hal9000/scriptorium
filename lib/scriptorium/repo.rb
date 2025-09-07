@@ -54,6 +54,7 @@ class Scriptorium::Repo
     write_file(@root/:config/"bootstrap_css.txt", @predef.bootstrap_css)
     write_file(@root/:config/"common.js",         @predef.common_js)
     write_file(@root/:config/"widgets.txt",       @predef.available_widgets)
+    write_file(@root/:config/"post_index_defaults.txt", @predef.post_index_config)
     
 
     
@@ -285,15 +286,14 @@ class Scriptorium::Repo
     # Maybe solution is as simple as: Initial post is not theme-dependent
     views ||= @current_view.name   # initial_post wants a String!
     views, tags = Array(views), Array(tags)
-    id = incr_post_num
     
     # Create content file (no ID, no created date)
     content = @predef.initial_post(:filled, title: title, blurb: blurb, 
                                    views: views, tags: tags, body: body)
     write_file(content_name, content)
     
-    # Create metadata file (with ID and created date)
-    metadata = @predef.initial_post_metadata(num: id, title: title, blurb: blurb, 
+    # Create metadata file (no ID for drafts)
+    metadata = @predef.initial_post_metadata(title: title, blurb: blurb, 
                                             views: views, tags: tags)
     write_file(metadata_name, metadata)
     
@@ -312,7 +312,7 @@ class Scriptorium::Repo
   end
 
   def finish_draft(name)
-    id = last_post_num
+    id = incr_post_num
     id4 = d4(id)
     posts = @root/:posts
     make_dir(posts/id4)

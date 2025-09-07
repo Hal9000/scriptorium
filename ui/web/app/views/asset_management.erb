@@ -476,6 +476,62 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Post Assets Column -->
+                <div class="assets-column">
+                    <div class="section">
+                        <div class="section-header">Post-Specific Assets</div>
+                        <div class="section-content">
+                            <% if @post_assets.empty? %>
+                                <div class="empty-message">No post-specific assets found.</div>
+                            <% else %>
+                                <div class="assets-list">
+                                    <table class="assets-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 60px;">Icon</th>
+                                                <th>File Info</th>
+                                                <th>Post</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% @post_assets.each do |asset| %>
+                                                <tr>
+                                                    <td>
+                                                        <div class="asset-icon">
+                                                            <% if asset[:filename].match?(/\.(jpg|jpeg|png|gif|svg)$/i) %>
+                                                                <img src="/posts/<%= asset[:post_id].to_s.rjust(4, '0') %>/assets/<%= asset[:filename] %>" alt="<%= asset[:filename] %>">
+                                                            <% else %>
+                                                                📄
+                                                            <% end %>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div class="file-info">
+                                                            <div class="filename"><%= asset[:filename] %></div>
+                                                            <div class="file-details">
+                                                                <%= number_to_human_size(asset[:size]) %>
+                                                                <% if asset[:dimensions] %>
+                                                                    • <%= asset[:dimensions] %>
+                                                                <% end %>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div class="post-info">
+                                                            <div class="post-title">#<%= asset[:post_id] %></div>
+                                                            <div class="post-name"><%= asset[:post_title] %></div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <% end %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <% end %>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <div class="button-group">

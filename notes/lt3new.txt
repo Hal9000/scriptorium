@@ -1,0 +1,19 @@
+links
+ $$link[This is a test|https://...]
+
+Image links?
+Internal links?
+
+separator
+
+click-to-expand
+
+boxquote
+
+popout ?  pdf, image, ...
+
+.p paragraph wrapper
+
+.para/.end
+
+

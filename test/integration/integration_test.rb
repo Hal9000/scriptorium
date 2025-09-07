@@ -95,7 +95,7 @@ class IntegrationTest < Minitest::Test
     @repo.all_posts("blog1").each do |post|
       next unless post.pubdate && post.title
       month, day, year = post.pubdate_month_day_year
-      assert_includes content, month + " " + day + "</div>", "Expected pubdate #{month} #{day} to appear"
+      assert_includes content, month + " " + day + ",", "Expected pubdate #{month} #{day} to appear"
       assert_includes content, year + "</div>", "Expected year #{year} to appear"
       assert_includes content, post.title,   "Expected title #{post.title} to appear"
     end

@@ -517,6 +517,20 @@ class Scriptorium::StandardFiles
   def post_index_config
     <<~EOS
       posts.per.page 10
+      entry.title.size 1.1em
+      entry.blurb.size 0.75em
+      entry.date.size 0.7em
+      entry.date.width 14%
+      entry.cellpadding 4
+      entry.margin.bottom 6px
+      entry.title.color #000000
+      entry.blurb.color #666666
+      entry.date.color #888888
+      entry.line.height 1.1
+      entry.date.alignment right
+      entry.date.spacing 0.1em
+      entry.date.format month dd, yyyy
+      index.margin.top 20px
     EOS
   end
 
@@ -585,25 +599,22 @@ class Scriptorium::StandardFiles
   def index_entry
     # Note the use of %% to escape the % in the flex-basis attribute!
     <<~EOS
-      <table width=100%% cellpadding=4 style="margin-bottom: 6px;">
-        <tr>
-          <td width=14%% valign=top align=right>
-            <div style="text-align: right; font-size: 0.7em;">
-              <div style="height: 0.1em;">&nbsp;</div>
-              <div>%{post.pubdate.month} %{post.pubdate.day}</div>
-              <div>%{post.pubdate.year}</div>
-            </div>
-          </td>
-          <td valign=top> 
-            <div style="font-size: 1.1em;">
-              <div><a href="javascript:void(0)" 
-                      style="text-decoration: none;"
-                      onclick="load_main('index.html?post=%{post.slug}')">%{post.title}</a></div>
-              <div style="font-size: 0.75em;">%{post.blurb}</div>
-            </div>
-          </td>
-        </tr>
-      </table>
+      <tr style="margin-bottom: %{entry.margin.bottom};">
+        <td width=%{entry.date.width} valign=top align=right>
+          <div style="text-align: %{entry.date.alignment}; font-size: %{entry.date.size}; color: %{entry.date.color}; line-height: %{entry.line.height};">
+            <div style="height: %{entry.date.spacing};">&nbsp;</div>
+            <div>%{formatted_date}</div>
+          </div>
+        </td>
+        <td valign=top> 
+          <div style="font-size: %{entry.title.size}; line-height: %{entry.line.height};">
+            <div><a href="javascript:void(0)" 
+                    style="text-decoration: none; color: %{entry.title.color};"
+                    onclick="load_main('index.html?post=%{post.slug}')">%{post.title}</a></div>
+            <div style="font-size: %{entry.blurb.size}; color: %{entry.blurb.color};">%{post.blurb}</div>
+          </div>
+        </td>
+      </tr>
     EOS
   end
 

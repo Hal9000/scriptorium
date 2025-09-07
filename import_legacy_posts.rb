@@ -175,7 +175,7 @@ converted_files.each do |file|
     # Read the converted content
     content = File.read(file)
     
-    # Extract post number from filename
+    # Extract post number from filename to preserve original numbering
     post_num = filename.match(/^(\d+)/)
     if post_num
       target_post_id = post_num[1].to_i
@@ -183,16 +183,6 @@ converted_files.each do |file|
       puts "     ❌ Could not extract post number from filename"
       import_error_count += 1
       next
-    end
-    
-    # Check if post already exists - quit with error if it does
-    begin
-      existing_post = api.post(target_post_id)
-      puts "     ❌ Post #{target_post_id} already exists! Aborting import."
-      puts "     This should not happen with a fresh repository."
-      exit 1
-    rescue CannotGetPost
-      # Post doesn't exist, which is what we want
     end
     
     # Extract title from content
@@ -247,24 +237,25 @@ end
 puts "   ✓ Successfully imported #{success_count} posts"
 
 # Step 5: Create new test posts
+# Update last_post_num.txt to reflect the highest post ID used during import
+if success_count > 0
+  max_imported_id = converted_files.map { |f| File.basename(f).match(/^(\d+)/)[1].to_i }.max
+  last_post_num_file = File.join(repo_path, 'config', 'last_post_num.txt')
+  File.write(last_post_num_file, max_imported_id.to_s)
+  puts "✓ Updated last_post_num.txt to #{max_imported_id}"
+end
+
 puts
 puts "5. Creating new test posts..."
-
-# Find the highest post number to continue from
-max_post_num = 0
-if success_count > 0
-  max_post_num = converted_files.map { |f| File.basename(f).match(/^(\d+)/)[1].to_i }.max
-end
 
 new_posts = [
   { title: "New Post After Import", blurb: "This is a new post created after importing legacy posts." },
   { title: "Another New Post", blurb: "Testing date display with new posts." },
-  { title: "Final Test Post", blurb: "This should be post ##{max_post_num + 3} if everything works correctly." }
+  { title: "Final Test Post", blurb: "This should be the next available post number." }
 ]
 
-new_posts.each_with_index do |post_data, index|
-  post_num = max_post_num + index + 1
-  puts "   Creating new post #{post_num}: #{post_data[:title]}"
+new_posts.each do |post_data|
+  puts "   Creating new post: #{post_data[:title]}"
   
   begin
     post = api.create_post(
@@ -273,10 +264,10 @@ new_posts.each_with_index do |post_data, index|
       views: "computing",
       tags: "test"
     )
-    
+    sleep 1    
     puts "     ✓ Created post #{post.num}: #{post.title}"
   rescue => e
-    puts "     ❌ Error creating post #{post_num}: #{e.message}"
+    puts "     ❌ Error creating post: #{e.message}"
     exit 1
   end
 end
@@ -288,5 +279,6 @@ puts "✓ Converted #{converted_count} legacy posts"
 puts "✓ Created #{default_views.length} views"
 puts "✓ Imported #{success_count} legacy posts"
 puts "✓ Created #{new_posts.length} new test posts"
+
 puts
 puts "🎉 All done! You can now test the repository at #{repo_path}"

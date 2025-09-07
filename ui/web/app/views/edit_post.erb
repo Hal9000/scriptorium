@@ -20,7 +20,8 @@
     .content-area { margin: 20px 0; }
     .CodeMirror { height: 500px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
     .post-info { background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
-    .post-info h2 { margin: 0 0 10px 0; }
+    .post-info h2 { margin: 0; }
+    .post-info h2 .post-number { font-size: 0.7em; font-weight: normal; }
     .post-info p { margin: 5px 0; }
   </style>
 </head>
@@ -37,11 +38,7 @@
   <% end %>
 
   <div class="post-info">
-    <h2><%= @post.title %></h2>
-    <p><strong>ID:</strong> #<%= @post.id %></p>
-    <p><strong>View:</strong> <%= @post.views_array.join(', ') || 'none' %></p>
-    <p><strong>Tags:</strong> <%= @post.tags&.join(', ') || 'none' %></p>
-    <p><strong>File:</strong> posts/<%= @post.num %>/source.lt3</p>
+    <h2><span class="post-number">[<%= @post.id %>]</span> <%= @post.title %></h2>
   </div>
 
   <form method="post" action="/save_post/<%= @post.id %>" onsubmit="syncCodeMirrorContent()">
@@ -52,7 +49,7 @@
     
     <div>
       <button type="submit" class="button">Save Post</button>
-      <a href="/" class="button secondary" style="text-decoration: none;">Cancel</a>
+      <a href="/view/<%= @current_view.name %>" class="button secondary" style="text-decoration: none;">Cancel</a>
     </div>
   </form>
 
