@@ -444,8 +444,8 @@ class WebWorkflowTest < Minitest::Test
     # Access backup management page with no backups
     response = get("/backup_management")
     assert_response_success(response, "Backup management page should load")
-    assert_includes response.body, "No backups available yet", "Should show empty state message"
-    assert_includes response.body, "Create your first backup using the form above", "Should show empty state instructions"
+    assert_includes_concise response, "No backups available yet", "Should show empty state message"
+    assert_includes_concise response, "Create your first backup using the form above", "Should show empty state instructions"
   end
 
   # Test backup management page styling and UI elements

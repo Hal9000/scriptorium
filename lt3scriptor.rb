@@ -168,6 +168,27 @@ def quote(args, data, body)
   api.optional_blank_line
 end
 
+def pullquote(args, data, body)
+  position = args[0] || 'right'
+  width = args[1] || '200px'
+  quote = body.join(" ").strip
+  
+  api.out %[<div class="pullquote pullquote-#{position}" style="width: #{width};">]
+  api.out quote
+  api.out "</div>"
+  api.optional_blank_line
+end
+
+def p(args, data)
+  api.out "<p>#{data}</p>"
+  api.optional_blank_line
+end
+
+def para(args, data, body)
+  api.out "<p>#{body.join(" ")}</p>"
+  api.optional_blank_line
+end
+
 # Move elsewhere later!
 # was _passthru??? via runeblog
 def h1(args, data); api.out "<h1>#{data}</h1>"; end
@@ -374,6 +395,115 @@ class Livetext::Functions
 
   def image(param)
     "<img src='#{param}'></img>"
+  end
+
+  def post(param)
+    # param = "36" (post ID)
+    post_id = param.to_i
+    post_num = d4(post_id)
+    
+    # Get post metadata to find title and slug
+    begin
+      root = Scriptorium::Repo.root
+      view_name = @live.vars.to_h[:View]
+      
+      # Look for post metadata
+      metadata_file = "#{root}/posts/#{post_num}/meta.txt"
+      if File.exist?(metadata_file)
+        metadata = {}
+        File.readlines(metadata_file).each do |line|
+          key, value = line.strip.split(/\s+/, 2)
+          metadata[key] = value if key && value
+        end
+        
+        title = metadata["post.title"] || "Post #{post_id}"
+        slug = metadata["post.slug"] || "#{post_num}-untitled"
+        
+        # Remove .html extension if present
+        slug = slug.sub(/\.html$/, '') if slug.end_with?('.html')
+        
+        # Generate the link
+        "<a href=\"#{slug}\">#{title}</a>"
+      else
+        # Post doesn't exist - generate broken link
+        "<a href=\"#{post_num}-untitled.html\">Post #{post_id}</a> <i style=\"font-size: 0.8em; color: #999;\">[link is broken]</i>"
+      end
+    rescue => e
+      # Error case - still generate link but mark as broken
+      "<a href=\"#{post_num}-untitled.html\">Post #{post_id}</a> <i style=\"font-size: 0.8em; color: #999;\">[link is broken]</i>"
+    end
+  end
+
+  def page(param)
+    # param = "about" (page name)
+    page_name = param
+    
+    begin
+      root = Scriptorium::Repo.root
+      view_name = @live.vars.to_h[:View]
+      
+      # Look for page in current view
+      page_file = "#{root}/views/#{view_name}/pages/#{page_name}.lt3"
+      if File.exist?(page_file)
+        # Read page title from first line or use page name
+        first_line = File.readlines(page_file).first&.strip
+        title = if first_line && first_line.start_with?('.title ')
+          first_line.sub('.title ', '')
+        else
+          page_name.capitalize
+        end
+        
+        # Generate the link
+        "<a href=\"#{page_name}.html\">#{title}</a>"
+      else
+        # Page doesn't exist - generate broken link
+        "<a href=\"#{page_name}.html\">#{page_name.capitalize}</a> <i style=\"font-size: 0.8em; color: #999;\">[link is broken]</i>"
+      end
+    rescue => e
+      # Error case - still generate link but mark as broken
+      "<a href=\"#{page_name}.html\">#{page_name.capitalize}</a> <i style=\"font-size: 0.8em; color: #999;\">[link is broken]</i>"
+    end
+  end
+
+  def link(param)
+    # param = "text|url|options" (pipe-separated)
+    parts = param.split('|')
+    text = parts[0]
+    url = parts[1]
+    options = parts[2] || ""
+    
+    # Parse options
+    external = options.include?('external')
+    classes = options.gsub('external', '').strip
+    
+    # Build attributes
+    attrs = ["href=\"#{url}\""]
+    attrs << "target=\"_blank\"" if external
+    attrs << "rel=\"noopener\"" if external
+    attrs << "class=\"#{classes}\"" unless classes.empty?
+    
+    "<a #{attrs.join(' ')}>#{text}</a>"
+  end
+
+  def imglink(param)
+    # param = "image.jpg|url|alt text"
+    parts = param.split('|')
+    image_file = parts[0] || "missing.jpg"
+    url = parts[1] || "#"
+    alt_text = parts[2] || "Image"
+    
+    # Use existing asset function to resolve image path
+    image_path = asset(image_file)
+    
+    "<a href=\"#{url}\"><img src=\"#{image_path}\" alt=\"#{alt_text}\"></a>"
+  end
+
+  def foobar
+    "Hello, world!"
+  end
+
+  def testparam(param)
+    "Param received: '#{param}'"
   end
 end
 

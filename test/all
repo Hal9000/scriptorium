@@ -3,6 +3,24 @@
 # Set up environment
 ENV['PATH'] = "#{ENV['HOME']}/.rbenv/shims:#{ENV['PATH']}"
 
+def delete(path)
+  if Dir.exist?(path)
+    puts "Deleting: #{path}"
+    system("rm -rf #{path}")
+  end
+end
+
+puts
+puts "Killing server..."
+
+system("lsof -ti:4567 | xargs kill -9")
+
+puts
+
+test_repos = %w[scriptorium-TEST  test/scriptorium-TEST ui/web/scriptorium-TEST]
+
+test_repos.each {|repo| delete(repo) }
+
 require 'minitest/autorun'
 
 puts "\n" + "="*60

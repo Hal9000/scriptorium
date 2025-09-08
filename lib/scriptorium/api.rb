@@ -176,6 +176,22 @@ class Scriptorium::API
     )
   end
 
+  def create_page(view_name, page_name, title, content)
+    view = @repo.lookup_view(view_name)
+    raise ViewTargetNil if view.nil?
+    
+    page_content = <<~LT3
+      .title #{title}
+      
+      #{content}
+    LT3
+    
+    page_file = "#{@repo.root}/views/#{view_name}/pages/#{page_name}.lt3"
+    write_file(page_file, page_content)
+    
+    page_name
+  end
+
   def finish_draft(draft_path)
     @repo.finish_draft(draft_path)
   end
@@ -1465,6 +1481,17 @@ class Scriptorium::API
 
   # Backup system methods
   
+  def get_backup_directory
+    repo_path = Pathname.new(@repo.root)
+    repo_parent = repo_path.parent
+    repo_name = repo_path.basename.to_s
+    if repo_name == "scriptorium-TEST"
+      repo_parent/"backup-scriptorium-TEST"
+    else
+      repo_parent/"backup-scriptorium"
+    end
+  end
+  
   def create_backup(type: :incremental, label: nil)
     check_invariants
     msg = "type must be :full or :incremental, got #{type}"
@@ -1472,7 +1499,7 @@ class Scriptorium::API
     msg = "@repo must be a Scriptorium::Repo, got #{@repo.class}"
     assume(msg) { @repo.is_a?(Scriptorium::Repo) }
     
-    backup_dir = @repo.root/"backups"
+    backup_dir = get_backup_directory
     data_dir = backup_dir/"data"
     FileUtils.mkdir_p(data_dir)
     
@@ -1481,23 +1508,32 @@ class Scriptorium::API
     
     if type == :full
       # Full backup - copy entire repository
-      backup_path = data_dir/"temp-full-backup"
-      FileUtils.mkdir_p(backup_path)
-      copy_repo_to_backup(backup_path)
+      temp_backup_path = data_dir/"temp-full-backup"
+      FileUtils.mkdir_p(temp_backup_path)
+      copy_repo_to_backup(temp_backup_path)
     else
       # Incremental backup - copy only changed files since last backup
-      backup_path = data_dir/"temp-incr-backup"
-      FileUtils.mkdir_p(backup_path)
-      copy_changed_files_to_backup(backup_path)
+      temp_backup_path = data_dir/"temp-incr-backup"
+      FileUtils.mkdir_p(temp_backup_path)
+      copy_changed_files_to_backup(temp_backup_path)
     end
     
     # Record timestamp AFTER backup is created
     timestamp = Time.now.strftime("%Y%m%d-%H%M%S")
     backup_name = "#{timestamp}-#{type == :full ? 'full' : 'incr'}"
     
-    # Rename the backup directory to the final name
+    # Create final backup directory
     final_backup_path = data_dir/backup_name
-    FileUtils.mv(backup_path, final_backup_path)
+    FileUtils.mkdir_p(final_backup_path)
+    
+    # Create backup info file in final directory
+    create_backup_info(final_backup_path, type, backup_name)
+    
+    # Compress the backup data into data.tar.gz
+    compress_backup_data(temp_backup_path, final_backup_path/"data.tar.gz")
+    
+    # Remove temporary directory
+    FileUtils.rm_rf(temp_backup_path)
     
     # Update backup manifest
     update_backup_manifest(backup_name, type, label)
@@ -1506,13 +1542,15 @@ class Scriptorium::API
     cleanup_old_backups
     
     verify { File.exist?(final_backup_path) }
+    verify { File.exist?(final_backup_path/"data.tar.gz") }
     check_invariants
     backup_name
   end
   
   def list_backups
     check_invariants
-    manifest_file = @repo.root/"backups"/"manifest.txt"
+    backup_dir = get_backup_directory
+    manifest_file = backup_dir/"manifest.txt"
     return [] unless File.exist?(manifest_file)
     
     backups = []
@@ -1554,7 +1592,8 @@ class Scriptorium::API
   
   def restore_backup(backup_name, strategy: :safe)
     check_invariants
-    backup_path = @repo.root/"backups"/"data"/backup_name
+    backup_dir = get_backup_directory
+    backup_path = backup_dir/"data"/backup_name
     raise BackupNotFound, "Backup '#{backup_name}' not found" unless File.exist?(backup_path)
     
     case strategy
@@ -1589,7 +1628,8 @@ class Scriptorium::API
   
   def delete_backup(backup_name)
     check_invariants
-    backup_path = @repo.root/"backups"/"data"/backup_name
+    backup_dir = get_backup_directory
+    backup_path = backup_dir/"data"/backup_name
     raise BackupNotFound, "Backup '#{backup_name}' not found" unless File.exist?(backup_path)
     
     # Remove backup directory
@@ -1618,6 +1658,117 @@ class Scriptorium::API
     end
   end
   
+  private def compress_backup_data(source_dir, tar_gz_path)
+    # Ensure target directory exists
+    FileUtils.mkdir_p(File.dirname(tar_gz_path))
+    
+    # Convert to absolute paths
+    source_dir = File.absolute_path(source_dir)
+    tar_gz_path = File.absolute_path(tar_gz_path)
+    
+    # Check if source directory has any files
+    files = Dir.glob(source_dir/"**/*").select { |f| File.file?(f) }
+    if files.empty?
+      # Create empty tar.gz if no files
+      system("tar -czf '#{tar_gz_path}' -T /dev/null")
+    else
+      # Change to source directory to create relative paths in tar
+      Dir.chdir(source_dir) do
+        # Create tar.gz archive with all files in source directory
+        system("tar -czf '#{tar_gz_path}' .")
+      end
+    end
+    
+    raise "Failed to create compressed backup" unless $?.success?
+  end
+  
+  private def create_backup_info(backup_path, type, backup_name)
+    # Get version information
+    scriptorium_version = Scriptorium::VERSION
+    livetext_version = get_livetext_version
+    ruby_version = RUBY_VERSION
+    platform = "#{RUBY_PLATFORM} #{RUBY_ENGINE}"
+    
+    # Calculate backup statistics
+    file_count = count_files_in_backup(backup_path)
+    total_size = calculate_directory_size(backup_path)
+    
+    # Get git commit if available
+    git_commit = get_git_commit_hash
+    
+    # Create backup info content
+    info_content = <<~INFO
+      # Scriptorium Backup Information
+      # Generated: #{Time.now.strftime("%Y-%m-%d %H:%M:%S")}
+      scriptorium_version: #{scriptorium_version}
+      livetext_version: #{livetext_version}
+      ruby_version: #{ruby_version}
+      backup_type: #{type}
+      backup_name: #{backup_name}
+      repository_path: #{@repo.root}
+      file_count: #{file_count}
+      total_size: #{total_size}
+      platform: #{platform}
+      git_commit: #{git_commit}
+    INFO
+    
+    # Write backup info file
+    info_file = backup_path/"backup-info.txt"
+    File.write(info_file, info_content)
+  end
+  
+  private def get_livetext_version
+    # Try to get LiveText version from command line
+    result = `livetext -v 2>/dev/null`.strip
+    result.empty? ? "unknown" : result
+  rescue
+    "unknown"
+  end
+  
+  private def get_git_commit_hash
+    # Try to get git commit hash if in a git repository
+    result = `git rev-parse HEAD 2>/dev/null`.strip
+    result.empty? ? "unknown" : result[0..7] # First 8 characters
+  rescue
+    "unknown"
+  end
+  
+  private def count_files_in_backup(backup_path)
+    # Check if this is a compressed backup
+    tar_gz_path = backup_path/"data.tar.gz"
+    if File.exist?(tar_gz_path)
+      # Count files in compressed archive using tar -tf
+      output = `tar -tf #{tar_gz_path} 2>/dev/null`
+      return 0 unless $?.success?
+      output.lines.count { |line| !line.strip.empty? }
+    else
+      # Legacy uncompressed backup
+      count = 0
+      Dir.glob(backup_path/"**/*").each do |file_path|
+        count += 1 if File.file?(file_path)
+      end
+      count
+    end
+  end
+  
+  private def calculate_directory_size(backup_path)
+    # Check if this is a compressed backup
+    tar_gz_path = backup_path/"data.tar.gz"
+    if File.exist?(tar_gz_path)
+      # Get size of compressed file plus backup-info.txt
+      compressed_size = File.size(tar_gz_path)
+      info_size = File.exist?(backup_path/"backup-info.txt") ? File.size(backup_path/"backup-info.txt") : 0
+      compressed_size + info_size
+    else
+      # Legacy uncompressed backup
+      size = 0
+      Dir.glob(backup_path/"**/*").each do |file_path|
+        size += File.size(file_path) if File.file?(file_path)
+      end
+      size
+    end
+  end
+  
   private def copy_changed_files_to_backup(backup_path)
     last_backup_time = get_last_backup_time
     changed_files = find_changed_files_since(last_backup_time)
@@ -1635,6 +1786,44 @@ class Scriptorium::API
   private def find_changed_files_since(since_time)
     return [] unless since_time
     
+    # Get the most recent backup to compare against
+    last_backup = get_last_backup_name
+    return [] unless last_backup
+    
+    backup_dir = get_backup_directory
+    last_backup_path = backup_dir/"data"/last_backup
+    last_backup_tar = last_backup_path/"data.tar.gz"
+    
+    # If no compressed backup exists, fall back to file system comparison
+    unless File.exist?(last_backup_tar)
+      return find_changed_files_since_filesystem(since_time)
+    end
+    
+    # Get file timestamps from the last backup's tar TOC
+    last_backup_files = get_tar_file_timestamps(last_backup_tar)
+    
+    changed_files = []
+    Dir.glob(@repo.root/"**/*").each do |file_path|
+      next unless File.file?(file_path)
+      next if file_path.to_s.include?("/backups/")
+      
+      file_pathname = Pathname.new(file_path)
+      repo_root_pathname = Pathname.new(@repo.root)
+      relative_path = file_pathname.relative_path_from(repo_root_pathname).to_s
+      
+      current_mtime = File.mtime(file_path)
+      # Try both with and without ./ prefix
+      last_mtime = last_backup_files[relative_path] || last_backup_files["./#{relative_path}"]
+      
+      # File is changed if it's new or modified
+      if last_mtime.nil? || current_mtime > last_mtime
+        changed_files << file_path
+      end
+    end
+    changed_files
+  end
+  
+  private def find_changed_files_since_filesystem(since_time)
     changed_files = []
     Dir.glob(@repo.root/"**/*").each do |file_path|
       next unless File.file?(file_path)
@@ -1648,8 +1837,62 @@ class Scriptorium::API
     changed_files
   end
   
+  private def get_last_backup_name
+    backup_dir = get_backup_directory
+    manifest_file = backup_dir/"manifest.txt"
+    return nil unless File.exist?(manifest_file)
+    
+    File.readlines(manifest_file).each do |line|
+      line = line.strip
+      next if line.empty? || line.start_with?('#')
+      
+      parts = line.split(' ', 3)
+      next if parts.length < 1
+      
+      backup_name = parts[0]
+      if backup_name.match(/^\d{8}-\d{6}-(full|incr)$/)
+        return backup_name
+      end
+    end
+    
+    nil
+  end
+  
+  private def get_tar_file_timestamps(tar_gz_path)
+    file_timestamps = {}
+    
+    # Use tar -tvf to get file list with timestamps
+    output = `tar -tvf #{tar_gz_path} 2>/dev/null`
+    return file_timestamps unless $?.success?
+    
+    output.lines.each do |line|
+      # Parse tar -tvf output format:
+      # -rw-r--r-- user/group size date time filename
+      # drwxr-xr-x user/group size date time filename
+      # Format: drwxr-xr-x  0 Hal    staff       0 Sep  7 22:06 ./
+      if line.match(/^[d-]\S+\s+\d+\s+\S+\s+\S+\s+\d+\s+(\w{3})\s+(\d{1,2})\s+(\d{2}:\d{2})\s+(.+?)\s*$/)
+        month_str = $1
+        day_str = $2
+        time_str = $3
+        filename = $4
+        
+        begin
+          # Parse abbreviated month name and day
+          timestamp = Time.strptime("#{month_str} #{day_str} #{time_str}", "%b %d %H:%M")
+          # Set year to current year (tar doesn't include year)
+          timestamp = Time.new(Time.now.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.min)
+          file_timestamps[filename] = timestamp
+        rescue ArgumentError
+          # Skip invalid timestamps
+        end
+      end
+    end
+    file_timestamps
+  end
+  
   private def get_last_backup_time
-    manifest_file = @repo.root/"backups"/"manifest.txt"
+    backup_dir = get_backup_directory
+    manifest_file = backup_dir/"manifest.txt"
     return nil unless File.exist?(manifest_file)
     
     last_time = nil
@@ -1676,7 +1919,8 @@ class Scriptorium::API
   end
   
   private def update_backup_manifest(backup_name, type, label)
-    manifest_file = @repo.root/"backups"/"manifest.txt"
+    backup_dir = get_backup_directory
+    manifest_file = backup_dir/"manifest.txt"
     FileUtils.mkdir_p(File.dirname(manifest_file))
     
     # Read existing manifest
@@ -1698,7 +1942,8 @@ class Scriptorium::API
   end
   
   private def update_backup_manifest_remove(backup_name)
-    manifest_file = @repo.root/"backups"/"manifest.txt"
+    backup_dir = get_backup_directory
+    manifest_file = backup_dir/"manifest.txt"
     return unless File.exist?(manifest_file)
     
     # Read existing manifest and remove the backup entry
@@ -1710,7 +1955,8 @@ class Scriptorium::API
   end
   
   private def calculate_backup_size(backup_name)
-    backup_path = @repo.root/"backups"/"data"/backup_name
+    backup_dir = get_backup_directory
+    backup_path = backup_dir/"data"/backup_name
     return 0 unless File.exist?(backup_path)
     
     total_size = 0
@@ -1721,7 +1967,8 @@ class Scriptorium::API
   end
 
   private def count_backup_files(backup_name)
-    backup_path = @repo.root/"backups"/"data"/backup_name
+    backup_dir = get_backup_directory
+    backup_path = backup_dir/"data"/backup_name
     return 0 unless File.exist?(backup_path)
     
     Dir.glob(backup_path/"**/*").count { |f| File.file?(f) }
@@ -1755,13 +2002,38 @@ class Scriptorium::API
   end
 
   private def restore_files_from_backup(backup_path)
-    # Copy all files from backup to repo
-    Dir.glob(backup_path/"**/*").each do |file_path|
+    # Check if this is a compressed backup
+    tar_gz_path = backup_path/"data.tar.gz"
+    if File.exist?(tar_gz_path)
+      # Decompress to temporary directory and restore from there
+      temp_extract_dir = backup_path/"temp_extract"
+      FileUtils.mkdir_p(temp_extract_dir)
+      
+      begin
+        # Extract tar.gz to temporary directory
+        system("tar -xzf #{tar_gz_path} -C #{temp_extract_dir}")
+        raise "Failed to extract compressed backup" unless $?.success?
+        
+        # Restore files from extracted directory
+        restore_files_from_directory(temp_extract_dir)
+      ensure
+        # Clean up temporary directory
+        FileUtils.rm_rf(temp_extract_dir) if Dir.exist?(temp_extract_dir)
+      end
+    else
+      # Legacy uncompressed backup - restore directly
+      restore_files_from_directory(backup_path)
+    end
+  end
+  
+  private def restore_files_from_directory(source_dir)
+    # Copy all files from source directory to repo
+    Dir.glob(source_dir/"**/*").each do |file_path|
       next unless File.file?(file_path)
       
       file_pathname = Pathname.new(file_path)
-      backup_pathname = Pathname.new(backup_path)
-      relative_path = file_pathname.relative_path_from(backup_pathname)
+      source_pathname = Pathname.new(source_dir)
+      relative_path = file_pathname.relative_path_from(source_pathname)
       dest_path = @repo.root/relative_path
       FileUtils.mkdir_p(File.dirname(dest_path))
       FileUtils.cp(file_path, dest_path)
@@ -1773,7 +2045,8 @@ class Scriptorium::API
     target_timestamp = extract_timestamp_from_backup_name(target_name)
     
     # Find the most recent full backup before the target backup
-    manifest_file = @repo.root/"backups"/"manifest.txt"
+    backup_dir = get_backup_directory
+    manifest_file = backup_dir/"manifest.txt"
     return nil unless File.exist?(manifest_file)
     
     latest_full_backup = nil
@@ -1803,7 +2076,8 @@ class Scriptorium::API
     
     return nil unless latest_full_backup
     
-    full_backup_path = @repo.root/"backups"/"data"/latest_full_backup
+    backup_dir = get_backup_directory
+    full_backup_path = backup_dir/"data"/latest_full_backup
     File.exist?(full_backup_path) ? full_backup_path : nil
   end
 
@@ -1811,7 +2085,8 @@ class Scriptorium::API
     target_name = File.basename(target_backup_path)
     target_timestamp = extract_timestamp_from_backup_name(target_name)
     
-    manifest_file = @repo.root/"backups"/"manifest.txt"
+    backup_dir = get_backup_directory
+    manifest_file = backup_dir/"manifest.txt"
     return unless File.exist?(manifest_file)
     
     # Get all incrementals between the full backup and target backup
@@ -1834,7 +2109,8 @@ class Scriptorium::API
     
     # Sort incrementals by timestamp and apply them
     incrementals.sort_by { |name| extract_timestamp_from_backup_name(name) }.each do |backup_name|
-      incremental_path = @repo.root/"backups"/"data"/backup_name
+      backup_dir = get_backup_directory
+      incremental_path = backup_dir/"data"/backup_name
       if File.exist?(incremental_path)
         restore_files_from_backup(incremental_path)
       end
@@ -1860,7 +2136,8 @@ class Scriptorium::API
     # Keep backups for 30 days, but always keep the most recent full backup
     cutoff_time = Time.now - (30 * 24 * 60 * 60)
     
-    manifest_file = @repo.root/"backups"/"manifest.txt"
+    backup_dir = get_backup_directory
+    manifest_file = backup_dir/"manifest.txt"
     return unless File.exist?(manifest_file)
     
     # Find the most recent full backup
@@ -1922,7 +2199,8 @@ class Scriptorium::API
     
     # Remove old backup directories
     lines_to_remove.each do |backup_name|
-      backup_path = @repo.root/"backups"/"data"/backup_name
+      backup_dir = get_backup_directory
+      backup_path = backup_dir/"data"/backup_name
       FileUtils.rm_rf(backup_path) if File.exist?(backup_path)
     end
     

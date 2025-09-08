@@ -16,6 +16,21 @@ class LivetextPluginTest < Minitest::Test
     cleanup_test_repo
   end
 
+  def create_test_environment_with_content
+    # Create test repo using API
+    @api = Scriptorium::API.new(testmode: true)
+    @api.create_repo(@test_repo_path)
+    
+    # Create a view
+    @api.create_view("testview", "Test View")
+    
+    # Create a page using the API
+    @api.create_page("testview", "testpage", "Test Page", "This is a test page for link testing.")
+    
+    # Create a post using the API
+    @api.create_post("Test Post", "This is a test post for link testing.", views: "testview", tags: "test")
+  end
+
   def test_001_basic_dot_commands
     # Test basic dot commands that should work
     content = <<~EOS
@@ -172,8 +187,6 @@ class LivetextPluginTest < Minitest::Test
     assert_match(/#{today}/, body)
   end
 
-
-
   def test_008_image_command
     # Test the .image command
     content = <<~EOS
@@ -228,6 +241,143 @@ class LivetextPluginTest < Minitest::Test
     assert_match(/src=assets\/test\.jpg/, body)
     assert_match(/alt='Alt text for image'/, body)
     assert_match(/This is the body content/, body)
+  end
+
+  def test_012_pullquote_command
+    # Test the pullquote command
+    content = <<~EOS
+      .title Test Post
+      This is some content before the pullquote.
+      
+      .pullquote right 200px
+      This is an impactful sentence that will be highlighted in a box.
+      .end
+      
+      This is content after the pullquote that should flow around it.
+      
+      .pullquote left 180px
+      This is another important point on the left side.
+      .end
+      
+      More content that flows around the left-aligned pullquote.
+    EOS
+    
+    body, vars = process_livetext(content)
+    
+    # Check that pullquote HTML was generated
+    assert_match(/<div class="pullquote pullquote-right"/, body)
+    assert_match(/<div class="pullquote pullquote-left"/, body)
+    assert_match(/style="width: 200px;"/, body)
+    assert_match(/style="width: 180px;"/, body)
+    
+    # Check that the content is included
+    assert_match(/This is an impactful sentence/, body)
+    assert_match(/This is another important point/, body)
+    
+    # Check that surrounding content is present
+    assert_match(/This is some content before/, body)
+    assert_match(/This is content after the pullquote/, body)
+    assert_match(/More content that flows around/, body)
+    
+    # Should not contain the literal ".pullquote" if working
+    refute_match(/\.pullquote/, body)
+  end
+
+  def test_013_page_function_with_content
+    create_test_environment_with_content
+    
+    content = <<~EOS
+      Check out this page: $$page[testpage]
+    EOS
+    
+    # Set the view context for the LiveText functions
+    temp_file = "test/temp_livetext.lt3"
+    write_file(temp_file, content)
+    live = Livetext.customize(mix: "lt3scriptor", call: ".nopara", vars: { View: "testview" })
+    body, vars = live.process(file: temp_file)
+    
+    assert_includes body, '<a href="testpage.html">Test Page</a>'
+    refute_includes body, '[link is broken]'
+  ensure
+    File.delete(temp_file) if temp_file && File.exist?(temp_file)
+  end
+
+  def test_014_page_function_missing
+    create_test_environment_with_content
+    
+    content = <<~EOS
+      Check out this missing page: $$page[nonexistent]
+    EOS
+    
+    temp_file = "test/temp_livetext.lt3"
+    write_file(temp_file, content)
+    live = Livetext.customize(mix: "lt3scriptor", call: ".nopara", vars: { View: "testview" })
+    body, vars = live.process(file: temp_file)
+    
+    assert_includes body, '<a href="nonexistent.html">Nonexistent</a>'
+    assert_includes body, '[link is broken]'
+  ensure
+    File.delete(temp_file) if temp_file && File.exist?(temp_file)
+  end
+
+  def test_015_post_function_with_content
+    create_test_environment_with_content
+    
+    content = <<~EOS
+      Check out this post: $$post[1]
+    EOS
+    
+    temp_file = "test/temp_livetext.lt3"
+    write_file(temp_file, content)
+    live = Livetext.customize(mix: "lt3scriptor", call: ".nopara", vars: { View: "testview" })
+    body, vars = live.process(file: temp_file)
+    
+    assert_includes body, '<a href="0001-test-post">Test Post</a>'
+    refute_includes body, '[link is broken]'
+  ensure
+    File.delete(temp_file) if temp_file && File.exist?(temp_file)
+  end
+
+  def test_016_post_function_missing
+    create_test_environment_with_content
+    
+    content = <<~EOS
+      Check out this missing post: $$post[999]
+    EOS
+    
+    temp_file = "test/temp_livetext.lt3"
+    write_file(temp_file, content)
+    live = Livetext.customize(mix: "lt3scriptor", call: ".nopara", vars: { View: "testview" })
+    body, vars = live.process(file: temp_file)
+    
+    assert_includes body, '<a href="0999-untitled.html">Post 999</a>'
+    assert_includes body, '[link is broken]'
+  ensure
+    File.delete(temp_file) if temp_file && File.exist?(temp_file)
+  end
+
+  def test_017_imglink_function
+    content = <<~EOS
+      Check out this image: $$imglink[test.jpg|https://example.com|Click me]
+    EOS
+    
+    body, vars = process_livetext(content)
+    
+    assert_includes body, '<a href="https://example.com">'
+    assert_includes body, '<img src='
+    assert_includes body, 'alt="Click me"'
+  end
+
+  def test_018_imglink_function_minimal
+    content = <<~EOS
+      Simple image: $$imglink[icon.png]
+    EOS
+    
+    body, vars = process_livetext(content)
+    
+    assert_includes body, '<a href="#">'
+    assert_includes body, '<img src='
+    assert_includes body, 'alt="Image"'
   end
 
   private

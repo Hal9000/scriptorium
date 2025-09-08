@@ -1,12 +1,11 @@
 VERY SOON:
 ----------
-  annotate backups with version numbers (incl Livetext)
+  title for pages
   full reddit support
   livetext scriptorium additions
   Sample blog additions
   common refactorings for AI (incl. dead code)
-  dependency management
-  configurator? more wizards?
+  manual tests: dropcap, quote, etc.
   post footer?
   add draft management??
 
@@ -98,3 +97,5 @@ x post_index.txt config (see notes)
 x theme into web app
 x post-specific assets
 x multi-view post creation
+x annotate backups with version numbers (incl Livetext)
+x compress backups

@@ -484,6 +484,41 @@ class Scriptorium::StandardFiles
       <!-- theme: #{theme} -->
       <style>
       body { font-family: verdana; line-height: 1.1 }
+      
+      /* Dropcap styles */
+      .dropcap {
+        float: left;
+        font-size: 3em;
+        line-height: 0.8;
+        margin: 0.1em 0.1em 0 0;
+        padding: 0;
+        font-weight: bold;
+      }
+      
+      /* Pullquote styles */
+      .pullquote {
+        float: right;
+        width: 200px;
+        margin: 0 0 20px 20px;
+        padding: 15px;
+        background: #f5f5f5;
+        border-left: 4px solid #333;
+        font-size: 1.2em;
+        font-style: italic;
+        line-height: 1.4;
+        color: #666;
+        border-radius: 4px;
+      }
+      
+      .pullquote-left {
+        float: left;
+        margin: 0 20px 20px 0;
+      }
+      
+      .pullquote-right {
+        float: right;
+        margin: 0 0 20px 20px;
+      }
       </style>
 
       <div align='right'><a style="text-decoration: none" href="index.html">

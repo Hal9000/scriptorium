@@ -14,8 +14,26 @@ module WebTestHelper
   
   # Start web server in test mode
   def start_web_server
+    # Check if server is already running
+    return if server_running?
+    
+    # Kill any existing server on the port first
+    system("lsof -ti:#{WEB_SERVER_PORT} | xargs kill -9 2>/dev/null")
+    sleep(1) # Give it time to release the port
+    
+    # Start the server
     system("rbenv exec ruby ui/web/bin/scriptorium-web start --test")
     wait_for_server
+  end
+
+  # Check if server is already running
+  def server_running?
+    begin
+      response = Net::HTTP.get_response(URI("#{WEB_SERVER_URL}/status"))
+      response.code == "200"
+    rescue
+      false
+    end
   end
 
   # Stop web server
@@ -24,8 +42,10 @@ module WebTestHelper
   end
 
   # Wait for server to be ready
-  def wait_for_server(timeout = 10)
+  def wait_for_server(timeout = 15)
     start_time = Time.now
+    last_error = nil
+    
     while Time.now - start_time < timeout
       begin
         response = Net::HTTP.get_response(URI("#{WEB_SERVER_URL}/status"))
@@ -33,11 +53,18 @@ module WebTestHelper
           return true
         end
       rescue => e
+        last_error = e
         # Server not ready yet
       end
       sleep 0.5
     end
-    flunk "Web server did not start within #{timeout} seconds"
+    
+    # If we get here, the server didn't start
+    error_msg = "Web server did not start within #{timeout} seconds"
+    if last_error
+      error_msg += " (last error: #{last_error.message})"
+    end
+    flunk error_msg
   end
 
   # Make GET request
@@ -110,6 +137,15 @@ module WebTestHelper
     assert_equal "404", response.code, "#{description}: Expected 404, got #{response.code}"
   end
 
+  # Assert that response body includes text, with concise error message
+  def assert_includes_concise(response, text, description)
+    unless response.body.include?(text)
+      # Show first 200 chars of response for debugging
+      snippet = response.body[0, 200].gsub(/\s+/, ' ').strip
+      flunk "#{description} - Expected to find '#{text}' in response. Response snippet: #{snippet}..."
+    end
+  end
+
   # Parse JSON response
   def parse_json_response(response)
     return nil unless response.body
@@ -121,6 +157,9 @@ module WebTestHelper
   # Clean up test repository
   def cleanup_test_repo
     FileUtils.rm_rf(TEST_REPO_PATH) if Dir.exist?(TEST_REPO_PATH)
+    # Also clean up backup directory for test repo
+    backup_dir = File.dirname(TEST_REPO_PATH) + "/backup-scriptorium-TEST"
+    FileUtils.rm_rf(backup_dir) if Dir.exist?(backup_dir)
   end
 
   # Setup basic test environment (repo + view)

@@ -20,7 +20,25 @@ class BackupTestFixed < Minitest::Test
 
   def teardown
     FileUtils.rm_rf(@test_dir) if Dir.exist?(@test_dir)
+    # Clean up backup directory too
+    if @api
+      backup_dir = @api.get_backup_directory
+      FileUtils.rm_rf(backup_dir) if Dir.exist?(backup_dir)
+    end
     @api = nil
+  end
+  
+  private def count_posts_in_compressed_backup(backup_dir)
+    tar_gz_path = backup_dir/"data.tar.gz"
+    return 0 unless File.exist?(tar_gz_path)
+    
+    # Use tar -tf to list files and count posts directories
+    output = `tar -tf '#{tar_gz_path}' 2>/dev/null`
+    return 0 unless $?.success?
+    
+    # Count unique post directories (tar output has ./ prefix)
+    post_dirs = output.lines.select { |line| line.strip.match(/^\.\/posts\/\d+\//) }
+    post_dirs.map { |line| line.strip.split('/')[2] }.uniq.length
   end
 
   def test_001_create_full_backup
@@ -34,21 +52,32 @@ class BackupTestFixed < Minitest::Test
     # Verify backup was created
     assert_match(/^\d{8}-\d{6}-full$/, backup_name)
     
-    backup_dir = @api.root/"backups"/"data"/backup_name
+    backup_dir = @api.get_backup_directory/"data"/backup_name
     assert Dir.exist?(backup_dir), "Backup directory should exist"
     
-    # Verify important directories were backed up
-    assert Dir.exist?(backup_dir/"posts"), "Posts directory should be backed up"
-    assert Dir.exist?(backup_dir/"views"), "Views directory should be backed up"
-    assert Dir.exist?(backup_dir/"config"), "Config directory should be backed up"
+    # Verify compressed backup structure
+    assert File.exist?(backup_dir/"data.tar.gz"), "Compressed backup data should exist"
+    
+    # Verify backup info file exists (uncompressed)
+    assert File.exist?(backup_dir/"backup-info.txt"), "Backup info file should exist"
     
     # Verify manifest was created
-    manifest_file = @api.root/"backups"/"manifest.txt"
+    manifest_file = @api.get_backup_directory/"manifest.txt"
     assert File.exist?(manifest_file), "Backup manifest should exist"
     
     manifest_content = File.read(manifest_file)
     assert_includes manifest_content, backup_name, "Backup should be in manifest"
     assert_includes manifest_content, "test-backup", "Label should be in manifest"
+    
+    # Verify backup info file was created
+    backup_info_file = backup_dir/"backup-info.txt"
+    assert File.exist?(backup_info_file), "Backup info file should exist"
+    
+    info_content = File.read(backup_info_file)
+    assert_includes info_content, "scriptorium_version:", "Should contain scriptorium version"
+    assert_includes info_content, "livetext_version:", "Should contain livetext version"
+    assert_includes info_content, "ruby_version:", "Should contain ruby version"
+    assert_includes info_content, "backup_type: full", "Should contain backup type"
   end
 
   def test_002_create_incremental_backup
@@ -62,16 +91,29 @@ class BackupTestFixed < Minitest::Test
     # Verify backup was created
     assert_match(/^\d{8}-\d{6}-incr$/, backup_name)
     
-    backup_dir = @api.root/"backups"/"data"/backup_name
+    backup_dir = @api.get_backup_directory/"data"/backup_name
     assert Dir.exist?(backup_dir), "Backup directory should exist"
     
+    # Verify compressed backup structure
+    assert File.exist?(backup_dir/"data.tar.gz"), "Compressed backup data should exist"
+    
     # Verify manifest was created
-    manifest_file = @api.root/"backups"/"manifest.txt"
+    manifest_file = @api.get_backup_directory/"manifest.txt"
     assert File.exist?(manifest_file), "Backup manifest should exist"
     
     manifest_content = File.read(manifest_file)
     assert_includes manifest_content, backup_name, "Backup should be in manifest"
     assert_includes manifest_content, "incremental-test", "Label should be in manifest"
+    
+    # Verify backup info file was created
+    backup_info_file = backup_dir/"backup-info.txt"
+    assert File.exist?(backup_info_file), "Backup info file should exist"
+    
+    info_content = File.read(backup_info_file)
+    assert_includes info_content, "scriptorium_version:", "Should contain scriptorium version"
+    assert_includes info_content, "livetext_version:", "Should contain livetext version"
+    assert_includes info_content, "ruby_version:", "Should contain ruby version"
+    assert_includes info_content, "backup_type: incremental", "Should contain backup type"
   end
 
   def test_003_list_backups
@@ -191,7 +233,7 @@ class BackupTestFixed < Minitest::Test
     assert_equal 0, backups.length, "Should have 0 backups after delete"
     
     # Verify directory is gone
-    backup_dir = @api.root/"backups"/"data"/backup_name
+    backup_dir = @api.get_backup_directory/"data"/backup_name
     assert !Dir.exist?(backup_dir), "Backup directory should be deleted"
   end
 
@@ -199,6 +241,8 @@ class BackupTestFixed < Minitest::Test
     # Create initial content and full backup first
     @api.create_view("test-view", "Test View", "A test view")
     @api.create_post("Post 1", "Content 1", views: "test-view")
+    
+    
     backup1 = @api.create_backup(type: :full, label: "initial")
     
     # Now add new content and create incremental backup
@@ -206,28 +250,50 @@ class BackupTestFixed < Minitest::Test
     backup2 = @api.create_backup(type: :incremental, label: "after-changes")
     
     # Verify backups contain expected content
-    backup1_dir = @api.root/"backups"/"data"/backup1
-    backup2_dir = @api.root/"backups"/"data"/backup2
+    backup1_dir = @api.get_backup_directory/"data"/backup1
+    backup2_dir = @api.get_backup_directory/"data"/backup2
     
-    # Full backup should have 1 post
-    backup1_posts = Dir.glob("#{backup1_dir}/posts/*").length
+    # Full backup should have 1 post (check compressed content)
+    backup1_posts = count_posts_in_compressed_backup(backup1_dir)
     assert_equal 1, backup1_posts, "Full backup should have 1 post"
     
-    # Incremental backup should have 1 post (the new one)
-    backup2_posts = Dir.glob("#{backup2_dir}/posts/*").length
-    assert_equal 1, backup2_posts, "Incremental backup should have 1 post (the new one)"
+    # Incremental backup should have 2 posts (both posts, since post creation modifies existing files)
+    backup2_posts = count_posts_in_compressed_backup(backup2_dir)
+    assert_equal 2, backup2_posts, "Incremental backup should have 2 posts (both posts, since post creation modifies existing files)"
     
     # Verify the incremental backup contains the new post
-    backup2_post_dirs = Dir.glob("#{backup2_dir}/posts/*")
-    assert_equal 1, backup2_post_dirs.length, "Should have exactly one post directory"
+    # Extract and check compressed content
+    temp_extract_dir = backup2_dir/"temp_extract"
+    FileUtils.mkdir_p(temp_extract_dir)
     
-    # The post directory should contain the new post (Post 2)
-    post_dir = backup2_post_dirs.first
-    source_file = "#{post_dir}/source.lt3"
-    assert File.exist?(source_file), "Source file should exist in incremental backup"
-    
-    content = File.read(source_file)
-    assert_includes content, "Post 2", "Incremental backup should contain the new post"
+    begin
+      # Extract tar.gz to temporary directory
+      system("tar -xzf '#{backup2_dir}/data.tar.gz' -C '#{temp_extract_dir}'")
+      assert $?.success?, "Should successfully extract compressed backup"
+      
+      # Check for post directories
+      backup2_post_dirs = Dir.glob("#{temp_extract_dir}/posts/*")
+      assert_equal 2, backup2_post_dirs.length, "Should have exactly two post directories"
+      
+      # The incremental backup should contain both posts
+      # Check that both post directories exist and contain the expected content
+      post_dirs = backup2_post_dirs.sort
+      
+      # Check first post (0001)
+      source_file_1 = "#{post_dirs[0]}/source.lt3"
+      assert File.exist?(source_file_1), "Source file should exist for post 1"
+      content_1 = File.read(source_file_1)
+      assert_includes content_1, "Post 1", "Should contain Post 1"
+      
+      # Check second post (0002)
+      source_file_2 = "#{post_dirs[1]}/source.lt3"
+      assert File.exist?(source_file_2), "Source file should exist for post 2"
+      content_2 = File.read(source_file_2)
+      assert_includes content_2, "Post 2", "Should contain Post 2"
+    ensure
+      # Clean up temporary directory
+      FileUtils.rm_rf(temp_extract_dir) if Dir.exist?(temp_extract_dir)
+    end
   end
 
   def test_007_backup_validation

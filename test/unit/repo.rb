@@ -232,7 +232,7 @@ class TestScriptoriumRepo < Minitest::Test
     root = repo.root
     file = "#{root}/themes/standard/templates/post.lt3"
     assert_file_exist?(file)
-    assert_file_lines(file, 19)  # Template now includes copy link button but no inline JavaScript
+    assert_file_lines(file, 54)  # Template now includes CSS for dropcap and pullquote
   end
 
   def test_015_change_view
@@ -301,7 +301,7 @@ class TestScriptoriumRepo < Minitest::Test
     File.open("/tmp/mock.html", "w") do |f|
       f.puts result
     end
-    assert_file_lines("/tmp/mock.html", 27)  # Template + expanded body content (newlines in body create extra lines)
+    assert_file_lines("/tmp/mock.html", 62)  # Template + expanded body content (newlines in body create extra lines) + CSS
   end
 
 

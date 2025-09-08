@@ -51,7 +51,24 @@ class TestScriptoriumAPI < Minitest::Test
     assert_equal "test", post.tags
   end
 
-  def test_004_posts
+  def test_004_create_page
+    @api.create_view("test_view", "Test View")
+    
+    page_name = @api.create_page("test_view", "about", "About Us", "This is our about page content.")
+    
+    assert_equal "about", page_name
+    
+    # Check that the page file was created
+    page_file = "test/scriptorium-TEST/views/test_view/pages/about.lt3"
+    assert File.exist?(page_file), "Page file should exist"
+    
+    # Check the content
+    content = read_file(page_file)
+    assert_includes content, ".title About Us"
+    assert_includes content, "This is our about page content."
+  end
+
+  def test_005_posts
     @api.create_view("test_view", "Test View")
     @api.create_post("Post 1", "Body 1")
     @api.create_post("Post 2", "Body 2")
