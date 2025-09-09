@@ -45,16 +45,16 @@ class Scriptorium::Theme
     predef = Scriptorium::StandardFiles.new
     std = root/:themes/:standard
     write_file(std/:initial/"post.lt3",          predef.initial_post(:raw))
-    write_file(std/:templates/"post.lt3",        predef.post_template("standard"))
-    write_file(std/:templates/"index_entry.lt3", predef.index_entry)
+    copy_support_file('templates/post.lt3', std/:templates/"post.lt3")
+    copy_support_file('templates/index_entry.lt3', std/:templates/"index_entry.lt3")
     layout_text = std/:layout/"layout.txt"
-    write_file(layout_text,                      predef.layout_text)
+    copy_support_file('templates/layout.txt', layout_text)
     config, gen = std/:layout/:config, std/:layout/:gen
-    write_file(config/"header.txt",              predef.theme_header)
-    write_file(config/"footer.txt",              predef.theme_footer)
-    write_file(config/"left.txt",                predef.theme_left)
-    write_file(config/"right.txt",               predef.theme_right)
-    write_file(config/"main.txt",                predef.theme_main)
+    copy_support_file('theme/header.lt3', config/"header.txt")
+    copy_support_file('theme/footer.lt3', config/"footer.txt")
+    copy_support_file('theme/left.lt3', config/"left.txt")
+    copy_support_file('theme/right.lt3', config/"right.txt")
+    copy_support_file('theme/main.lt3', config/"main.txt")
     
     # Copy gem assets to standard theme
     copy_gem_assets_to_theme(std)

@@ -295,7 +295,7 @@ class TestScriptoriumRepo < Minitest::Test
     vars = {:"post.title" => title, :"post.pubdate" => pubdate, :"post.date" => pubdate,
             :"post.tags" => tags,   :"post.body" => body, :"reddit_button" => ""}
     predef = Scriptorium::StandardFiles.new
-    template = predef.post_template("standard")
+    template = predef.post_template
     result = template % vars
     assert result =~ /August 2, 2024/
     File.open("/tmp/mock.html", "w") do |f|

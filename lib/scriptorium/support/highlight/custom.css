@@ -1,0 +1,119 @@
+<style>
+pre {
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
+  background: #f5f2f0 !important;
+  padding: 1em !important;
+  margin: 1em 0 !important;
+  border-radius: 0.3em !important;
+  display: block !important;
+}
+pre code {
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  display: block !important;
+}
+pre code tt {
+  white-space: normal !important;
+  display: inline !important;
+}
+code {
+  white-space: normal;
+  display: inline;
+}
+/* Normal whitespace handling */
+#main {
+  white-space: normal;
+}
+#main tt {
+  white-space: nowrap !important;
+  display: inline !important;
+  float: none !important;
+  clear: none !important;
+}
+tt {
+  white-space: nowrap !important;
+  display: inline !important;
+  float: none !important;
+  clear: none !important;
+}
+.main tt {
+  white-space: nowrap !important;
+  display: inline !important;
+  float: none !important;
+  clear: none !important;
+}
+p tt {
+  white-space: nowrap !important;
+  display: inline !important;
+  float: none !important;
+  clear: none !important;
+}
+* tt {
+  white-space: nowrap !important;
+  display: inline !important;
+  float: none !important;
+  clear: none !important;
+}
+body tt {
+  white-space: nowrap !important;
+  display: inline !important;
+  float: none !important;
+  clear: none !important;
+}
+html tt {
+  white-space: nowrap !important;
+  display: inline !important;
+  float: none !important;
+  clear: none !important;
+}
+p tt {
+  white-space: nowrap !important;
+  display: inline !important;
+  float: none !important;
+  clear: none !important;
+}
+/* Normal paragraph styling - Bootstrap isolation not needed with proper HTML */
+#main p {
+  margin: 0 0 1em 0;
+}
+#main p:last-child {
+  margin-bottom: 0;
+}
+p:only-child {
+  display: inline !important;
+}
+p tt {
+  white-space: nowrap !important;
+  display: inline !important;
+  float: none !important;
+  clear: none !important;
+}
+/* More specific selectors to override Bootstrap */
+#main p tt {
+  white-space: nowrap !important;
+  display: inline !important;
+  float: none !important;
+  clear: none !important;
+}
+body #main p tt {
+  white-space: nowrap !important;
+  display: inline !important;
+  float: none !important;
+  clear: none !important;
+}
+html body #main p tt {
+  white-space: nowrap !important;
+  display: inline !important;
+  float: none !important;
+  clear: none !important;
+}
+/* Ensure br elements work for paragraph spacing */
+br {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.2em !important;
+}
+</style>

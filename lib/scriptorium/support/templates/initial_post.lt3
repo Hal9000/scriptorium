@@ -1,0 +1,12 @@
+. Initial file created by StandardFiles#post_template(num)
+.created
+
+.title %{title}
+.blurb 
+%{blurb}
+.end
+
+.views %{views}  
+.tags  %{tags}   
+
+%{body}

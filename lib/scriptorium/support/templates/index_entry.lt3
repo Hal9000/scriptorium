@@ -1,0 +1,16 @@
+<tr style="margin-bottom: %{entry.margin.bottom};">
+  <td width=%{entry.date.width} valign=top align=right>
+    <div style="text-align: %{entry.date.alignment}; font-size: %{entry.date.size}; color: %{entry.date.color}; line-height: %{entry.line.height};">
+      <div style="height: %{entry.date.spacing};">&nbsp;</div>
+      <div>%{formatted_date}</div>
+    </div>
+  </td>
+  <td valign=top> 
+    <div style="font-size: %{entry.title.size}; line-height: %{entry.line.height};">
+      <div><a href="javascript:void(0)" 
+              style="text-decoration: none; color: %{entry.title.color};"
+              onclick="load_main('index.html?post=%{post.slug}')">%{post.title}</a></div>
+      <div style="font-size: %{entry.blurb.size}; color: %{entry.blurb.color};">%{post.blurb}</div>
+    </div>
+  </td>
+</tr>

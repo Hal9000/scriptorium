@@ -380,6 +380,54 @@ class LivetextPluginTest < Minitest::Test
     assert_includes body, 'alt="Image"'
   end
 
+  def test_019_p_dotcmd
+    content = <<~EOS
+      .p This is a paragraph
+    EOS
+    
+    body, vars = process_livetext(content)
+    
+    assert_includes body, '<p>This is a paragraph</p>'
+  end
+
+  def test_020_para_dotcmd
+    content = <<~EOS
+      .para
+      This is a paragraph
+      with multiple lines
+      .end
+    EOS
+    
+    body, vars = process_livetext(content)
+    
+    assert_includes body, '<p>This is a paragraph with multiple lines</p>'
+  end
+
+  def test_021_quote_dotcmd
+    content = <<~EOS
+      .quote
+      This is a quote
+      with multiple lines
+      .end
+    EOS
+    
+    body, vars = process_livetext(content)
+    
+    assert_includes body, '<blockquote>'
+    assert_includes body, 'This is a quote with multiple lines'
+    assert_includes body, '</blockquote>'
+  end
+
+  def test_022_page_title_dotcmd
+    content = <<~EOS
+      .page_title My Page Title
+    EOS
+    
+    body, vars = process_livetext(content)
+    
+    assert_equal "My Page Title", vars[:"page.title"]
+  end
+
   private
 
   def process_livetext(content)

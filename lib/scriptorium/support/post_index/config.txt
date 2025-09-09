@@ -1,0 +1,15 @@
+posts.per.page 10
+entry.title.size 1.1em
+entry.blurb.size 0.75em
+entry.date.size 0.7em
+entry.date.width 14%
+entry.cellpadding 4
+entry.margin.bottom 6px
+entry.title.color #000000
+entry.blurb.color #666666
+entry.date.color #888888
+entry.line.height 1.1
+entry.date.alignment right
+entry.date.spacing 0.1em
+entry.date.format month dd, yyyy
+index.margin.top 20px

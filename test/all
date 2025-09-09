@@ -10,6 +10,11 @@ def delete(path)
   end
 end
 
+t0 = Time.now
+puts "Starting at: #{t0}"
+t1 = t0 + 500
+puts "Finish ETA : #{t1}"
+
 puts
 puts "Killing server..."
 

@@ -645,4 +645,31 @@ module Scriptorium::Helpers
       end
     end
   end
+
+  def support_file(relative_path)
+    # Get the path to support files, handling both dev and gem environments
+    begin
+      gem_spec = Gem.loaded_specs['scriptorium']
+      if gem_spec
+        # Production: use gem path
+        "#{gem_spec.full_gem_path}/lib/scriptorium/support/#{relative_path}"
+      else
+        # Development: use project root (not current working directory)
+        project_root = File.expand_path(File.join(File.dirname(__FILE__), '..', '..'))
+        File.expand_path("lib/scriptorium/support/#{relative_path}", project_root)
+      end
+    rescue => e
+      # Fallback to development path if gem lookup fails
+      project_root = File.expand_path(File.join(File.dirname(__FILE__), '..', '..'))
+      File.expand_path("lib/scriptorium/support/#{relative_path}", project_root)
+    end
+  end
+
+  def support_data(relative_path)
+    read_file(support_file(relative_path))
+  end
+
+  def copy_support_file(relative_path, target_path)
+    FileUtils.cp(support_file(relative_path), target_path)
+  end
 end

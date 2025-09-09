@@ -223,7 +223,7 @@ class Scriptorium::API
   private def post_index_entry(post, view)
     # Get the view object to access its predef
     view_obj = @repo.lookup_view(view)
-    template = view_obj.predef.index_entry
+    template = support_data('templates/index_entry.lt3')
     substitute(post, template)
   end
   

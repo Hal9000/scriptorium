@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'scriptorium'
+require_relative '../lib/scriptorium'
 
 puts "=== Scriptorium Gem Asset Test ==="
 puts "Gem version: #{Scriptorium::VERSION}"
@@ -11,7 +11,7 @@ predef = Scriptorium::StandardFiles.new
 puts "✅ StandardFiles class accessible"
 
 # Test post template generation
-template = predef.post_template("standard")
+template = predef.support_data('templates/post.lt3')
 puts "✅ Post template generated (#{template.lines.count} lines)"
 
 # Test that clipboard function is in common.js
@@ -26,6 +26,7 @@ end
 vars = {
   :'post.title' => 'Test Post',
   :'post.pubdate' => '2025-08-14',
+  :'post.date' => '2025-08-14',
   :'post.tags' => 'test, gem',
   :'post.body' => 'This is a test post from the installed gem.',
   :reddit_button => ''

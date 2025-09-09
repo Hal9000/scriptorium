@@ -50,11 +50,11 @@ class Scriptorium::Repo
     postnum_file = "#@root/config/last_post_num.txt"
     write_file(postnum_file, "0")
     write_file(@root/:config/"global-head.txt",   @predef.html_head_content)
-    write_file(@root/:config/"bootstrap_js.txt",  @predef.bootstrap_js)
-    write_file(@root/:config/"bootstrap_css.txt", @predef.bootstrap_css)
+    copy_support_file('bootstrap/js.txt', @root/:config/"bootstrap_js.txt")
+    copy_support_file('bootstrap/css.txt', @root/:config/"bootstrap_css.txt")
     write_file(@root/:config/"common.js",         @predef.common_js)
     write_file(@root/:config/"widgets.txt",       @predef.available_widgets)
-    write_file(@root/:config/"post_index_defaults.txt", @predef.post_index_config)
+    copy_support_file('post_index/config.txt', @root/:config/"post_index_defaults.txt")
     
 
     
@@ -225,17 +225,17 @@ class Scriptorium::Repo
                  "theme    #{theme}")
       
       write_file(dir/:config/"global-head.txt",   @predef.html_head_content(true))  # true = view-specific
-      write_file(dir/:config/"bootstrap_js.txt",  @predef.bootstrap_js)
-      write_file(dir/:config/"bootstrap_css.txt", @predef.bootstrap_css)
-      write_file(dir/:config/"prism_js.txt",      @predef.highlight_js)
+      copy_support_file('bootstrap/js.txt', dir/:config/"bootstrap_js.txt")
+      copy_support_file('bootstrap/css.txt', dir/:config/"bootstrap_css.txt")
+      copy_support_file('highlight/js.txt', dir/:config/"prism_js.txt")
       write_file(dir/:config/"prism_ruby_js.txt", @predef.highlight_ruby_js)
-      write_file(dir/:config/"prism_css.txt",     @predef.highlight_css)
+      copy_support_file('highlight/css.txt', dir/:config/"prism_css.txt")
       write_file(dir/:config/"common.js",         @predef.common_js)
-      write_file(dir/:config/"social.txt",        @predef.social_config)
-      write_file(dir/:config/"reddit.txt",        @predef.reddit_config)
+      copy_support_file('config/social.txt', dir/:config/"social.txt")
+      copy_support_file('config/reddit.txt', dir/:config/"reddit.txt")
       write_file(dir/:config/"deploy.txt",        @predef.deploy_text % {view: name, domain: "example.com"})
       write_file(dir/:config/"status.txt",        @predef.status_txt)
-      write_file(dir/:config/"post_index.txt",    @predef.post_index_config)
+      copy_support_file('post_index/config.txt', dir/:config/"post_index.txt")
       
       # Create post state tracking files
       write_file(dir/:posts/"unpublished.txt",   "")  # Empty = all posts published
@@ -683,8 +683,6 @@ class Scriptorium::Repo
       vars.each { |k, v| f.puts "#{k} = #{v.inspect}" }
     end
 
-
-
     # Use metadata from LiveText processing
     # Filter vars to only include post.* fields for metadata
     metadata_vars = vars.select {|k,v| k.to_s.start_with?("post.") }
@@ -712,7 +710,7 @@ class Scriptorium::Repo
       vars[:"post.id"] = num.to_s  # Always use the post number as ID
       vars[:"post.body"] = body
       vars[:"post.date"] = self.post(num).date  # Set post.date for templates
-      template = @predef.post_template("standard")
+      template = support_data('templates/post.lt3')
       # Add Reddit button if enabled
       vars[:"reddit_button"] = view.generate_reddit_button(vars)
       final = substitute(vars, template) 

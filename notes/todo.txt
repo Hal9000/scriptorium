@@ -1,21 +1,26 @@
 VERY SOON:
 ----------
-  title for pages
+  reddit retro support
   full reddit support
+  title for pages
+  manual test runner
+  custom post template(s)
+  Theme components?
   livetext scriptorium additions
   Sample blog additions
   common refactorings for AI (incl. dead code)
-  manual tests: dropcap, quote, etc.
+  manual tests: dropcap, quote, pullquote, etc.
   post footer?
   add draft management??
 
 
 SOONISH:
 --------
-  Theme components?
   UI by curses (RubyText)
   facebook button
   x/twitter button
+  Livetext help
+  analytics
   Docs: Project contributor level
   Docs: Widget creator level
   Docs: Livetext for Scriptorium
@@ -26,6 +31,7 @@ LATER:
   Atom/RSS support?
   Widget: TagCloud
   Widget: Calendar
+  LaTex
   Widget: Twitter? Instagram?
   Ad support (footer? widget?)
   Backup and versioning
@@ -99,3 +105,5 @@ x post-specific assets
 x multi-view post creation
 x annotate backups with version numbers (incl Livetext)
 x compress backups
+x split js, CSS
+x refactor StandardFiles

@@ -570,7 +570,7 @@ write output:      write the result to output/panes/header.html
     html = "  <!-- Section: main (output) -->\n"
     html << %[  <div id="main" class="main" style="flex-grow: 1; padding: 5px; overflow-y: auto; position: relative; display: block;">]
     # html << %[<div id="main" class="main" style="position: relative; display: flex; flex-direction: column;">\n]
-    html << @predef.post_index_style
+    html << support_data('post_index/style.css')
     if view_posts.empty?
       html << "  <h1>No posts yet!</h1>"
     else
@@ -597,7 +597,7 @@ write output:      write the result to output/panes/header.html
   end
 
   def post_index_entry(post)
-    template = @predef.index_entry
+    template = support_data('templates/index_entry.lt3')
     config = read_post_index_config
     vars = post.vars.merge(config)
     
@@ -668,7 +668,7 @@ write output:      write the result to output/panes/header.html
       when "highlight"
         content << generate_highlight_css(view)
       when "highlight_custom"
-        content << @predef.highlight_custom_css
+        content << support_data('highlight/custom.css')
       end
     end
     content << "</head>\n"
