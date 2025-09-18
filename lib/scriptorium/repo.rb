@@ -56,6 +56,10 @@ class Scriptorium::Repo
     write_file(@root/:config/"widgets.txt",       @predef.available_widgets)
     copy_support_file('post_index/config.txt', @root/:config/"post_index_defaults.txt")
     
+    # Create global credentials directory and template
+    FileUtils.mkdir_p(@root/:credentials)
+    copy_support_file('config/reddit_template.txt', @root/:credentials/"reddit.txt")
+    
 
     
     Scriptorium::Theme.create_standard(@root)     # Theme: templates, etc.
@@ -227,15 +231,41 @@ class Scriptorium::Repo
       write_file(dir/:config/"global-head.txt",   @predef.html_head_content(true))  # true = view-specific
       copy_support_file('bootstrap/js.txt', dir/:config/"bootstrap_js.txt")
       copy_support_file('bootstrap/css.txt', dir/:config/"bootstrap_css.txt")
-      copy_support_file('highlight/js.txt', dir/:config/"prism_js.txt")
-      write_file(dir/:config/"prism_ruby_js.txt", @predef.highlight_ruby_js)
-      copy_support_file('highlight/css.txt', dir/:config/"prism_css.txt")
+      # Highlight.js config files (renamed from prism_* for clarity)
+      copy_support_file('highlight/js.txt',        dir/:config/"highlight_js.txt")
+      write_file(dir/:config/"highlight_ruby_js.txt", @predef.highlight_ruby_js)
+      copy_support_file('highlight/css.txt',       dir/:config/"highlight_css.txt")
       write_file(dir/:config/"common.js",         @predef.common_js)
       copy_support_file('config/social.txt', dir/:config/"social.txt")
       copy_support_file('config/reddit.txt', dir/:config/"reddit.txt")
       write_file(dir/:config/"deploy.txt",        @predef.deploy_text % {view: name, domain: "example.com"})
       write_file(dir/:config/"status.txt",        @predef.status_txt)
       copy_support_file('post_index/config.txt', dir/:config/"post_index.txt")
+      
+      # Create view credentials directory and template
+      FileUtils.mkdir_p(dir/:credentials)
+      copy_support_file('config/reddit_template.txt', dir/:credentials/"reddit.txt")
+      
+      # Copy essential icons to view assets directory
+      view_assets_dir = dir/:assets
+      FileUtils.mkdir_p(view_assets_dir)
+      FileUtils.mkdir_p(view_assets_dir/"icons"/"ui")
+      FileUtils.mkdir_p(view_assets_dir/"icons"/"social")
+      
+      # Copy UI icons
+      if File.exist?(@root/:assets/"icons"/"ui"/"back.png")
+        FileUtils.cp(@root/:assets/"icons"/"ui"/"back.png", view_assets_dir/"icons"/"ui"/"back.png")
+      end
+      
+      # Copy social icons
+      if File.exist?(@root/:assets/"icons"/"social"/"reddit.png")
+        FileUtils.cp(@root/:assets/"icons"/"social"/"reddit.png", view_assets_dir/"icons"/"social"/"reddit.png")
+      end
+      
+      # Copy missing image placeholder
+      if File.exist?(@root/:assets/"imagenotfound.jpg")
+        FileUtils.cp(@root/:assets/"imagenotfound.jpg", view_assets_dir/"imagenotfound.jpg")
+      end
       
       # Create post state tracking files
       write_file(dir/:posts/"unpublished.txt",   "")  # Empty = all posts published
@@ -334,28 +364,6 @@ class Scriptorium::Repo
   end
 
 
-  private def copy_post_assets_to_view(num, view)
-    id4 = d4(num)
-    post_assets_dir = @root/:posts/id4/"assets"
-    view_assets_dir = view.dir/:output/"assets"
-    
-    # Only copy if post has assets
-    return unless Dir.exist?(post_assets_dir)
-    
-    # Create view assets directory if it doesn't exist
-    make_dir(view_assets_dir)
-    
-    # Copy all files from post assets to view assets
-    Dir.glob(post_assets_dir/"*").each do |file|
-      next unless File.file?(file)
-      filename = File.basename(file)
-      target_file = view_assets_dir/filename
-      
-      # Copy file, overwriting if it exists (post assets take precedence)
-      FileUtils.cp(file, target_file)
-    end
-  end
-
   private def write_post_metadata(data, view)
     num, title = data.values_at(:"post.id", :"post.title")
     metadata_file = @root/:posts/d4(num)/"meta.txt"
@@ -393,8 +401,10 @@ class Scriptorium::Repo
     #   view/.../output/permalink/0123-this-is-me.html (for direct access)
     permalink_path = view.dir/:output/:permalink/slug
     make_dir(File.dirname(permalink_path))
+    # Remove the Back-to-index block from permalink content
+    cleaned_final = final.gsub(/<div align='right'>.*?Back to index<\/a>\s*<\/div>\s*/m, "")
     # Write the permalink version with "Visit Blog" link and "Copy link" button
-    permalink_content = final + "\n<div style=\"text-align: center; margin-top: 20px;\">\n<a href=\"../index.html\">Visit Blog</a>\n</div>\n<div style=\"text-align: center; margin-top: 10px;\">\n<button onclick=\"copyPermalinkToClipboard()\" style=\"padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;\">Copy link</button>\n</div>\n<script>\nfunction copyPermalinkToClipboard() {\n  navigator.clipboard.writeText(window.location.href).then(function() {\n    // Change button text temporarily to show success\n    const button = event.target;\n    const originalText = button.textContent;\n    button.textContent = 'Copied!';\n    button.style.background = '#28a745';\n    setTimeout(function() {\n      button.textContent = originalText;\n      button.style.background = '#007bff';\n    }, 2000);\n  }).catch(function(err) {\n    console.error('Failed to copy: ', err);\n    alert('Failed to copy link to clipboard');\n  });\n}\n</script>"
+    permalink_content = cleaned_final + "\n<div style=\"text-align: center; margin-top: 20px;\">\n<a href=\"../index.html\">Visit Blog</a>\n</div>\n<div style=\"text-align: center; margin-top: 10px;\">\n<button onclick=\"copyPermalinkToClipboard()\" style=\"padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;\">Copy link</button>\n</div>\n<script>\nfunction copyPermalinkToClipboard() {\n  navigator.clipboard.writeText(window.location.href).then(function() {\n    const button = event.target;\n    const originalText = button.textContent;\n    button.textContent = 'Copied!';\n    button.style.background = '#28a745';\n    setTimeout(function() {\n      button.textContent = originalText;\n      button.style.background = '#007bff';\n    }, 2000);\n  }).catch(function(err) {\n    console.error('Failed to copy: ', err);\n    alert('Failed to copy link to clipboard');\n  });\n}\n</script>"
     write_file(permalink_path, permalink_content)
     
     # Create copy for clean URL (without numeric prefix)
@@ -406,9 +416,6 @@ class Scriptorium::Repo
     
     # Copy the permalink file to create clean URL
     FileUtils.cp(permalink_path, clean_copy_path)
-    
-    # Copy post-specific assets to view output directory for deployment
-    copy_post_assets_to_view(num, view)
   end
 
   def create_post(title: nil, views: nil, tags: nil, body: nil, blurb: nil)
@@ -667,6 +674,8 @@ class Scriptorium::Repo
     
     # Read content file
     vars = { View: @current_view.name, :"post.id" => num }
+    # Mark transform as post-context
+    vars[:"post.context"] = "post"
     
     # Merge metadata into vars if metadata file exists
     if File.exist?(metadata_file)
@@ -710,6 +719,8 @@ class Scriptorium::Repo
       vars[:"post.id"] = num.to_s  # Always use the post number as ID
       vars[:"post.body"] = body
       vars[:"post.date"] = self.post(num).date  # Set post.date for templates
+      
+      
       template = support_data('templates/post.lt3')
       # Add Reddit button if enabled
       vars[:"reddit_button"] = view.generate_reddit_button(vars)

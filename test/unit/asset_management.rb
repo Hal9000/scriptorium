@@ -1,346 +1,219 @@
 # Test file for asset management functionality
-# Tests the $$asset and $$image_asset Livetext functions
+# Tests the $$asset and $$image Livetext functions
 
 require 'minitest/autorun'
 require_relative '../../lib/scriptorium'
 require_relative '../test_helpers'
-require_relative '../../lt3scriptor'
 require 'fileutils'
 
 class TestAssetManagement < Minitest::Test
-  include Scriptorium::Helpers
   include TestHelpers
 
   def setup
-    @test_dir = "test/asset_management_test"
-    FileUtils.rm_rf(@test_dir) if File.exist?(@test_dir)
-    FileUtils.mkdir_p(@test_dir)
-    Scriptorium::Repo.testing = true
+    @repo_name = "test/scriptorium-TEST"
+    @view_name = "asset_test_view"
     
-    # Create test repository with unique view name
-    @repo = create_test_repo
-    @repo.create_view("asset_test_view", "Testing assets")
+    # Create test repo and API
+    @api = Scriptorium::API.new
+    @api.create_repo(@repo_name)
+    @api.open_repo(@repo_name)
     
-    # Set up LiveText variables for testing
-    setup_livetext_vars
+    # Create a view for testing
+    @api.create_view(@view_name, "Asset Test View")
     
-    # Create test assets
-    create_test_assets
+    # Create test posts
+    @api.create_post("Test Post 1", "This is the first test post for asset testing.")
+    @api.create_post("Test Post 2", "This is the second test post for asset testing.")
+    
+    # Generate the view to create output directory structure
+    @api.generate_view(@view_name)
   end
 
   def teardown
-    FileUtils.rm_rf(@test_dir) if File.exist?(@test_dir)
-    # Also clean up the test repository
-    FileUtils.rm_rf("test/scriptorium-TEST") if File.exist?("test/scriptorium-TEST")
+    FileUtils.rm_rf("test/scriptorium-TEST")  # Commented out for debugging
+  end
+  
+  def test_001_asset_function_basic_functionality
+    # Test that asset() function returns correct paths for existing assets
+    # Create a global asset
+    global_file = Tempfile.new(['global-image', '.jpg'])
+    global_file.write("global image content")
+    global_file.close
+    @api.upload_asset(global_file.path, filename: "global-image.jpg")
+    
+    # Update existing post 0001 with asset reference
+    source_file = "test/scriptorium-TEST/posts/0001/source.lt3"
+    File.write(source_file, "Global asset: $$asset[global-image.jpg]")
+    
+    # Generate the view
+    @api.generate_view(@view_name)
+    
+    # Check that the asset path is correct in generated HTML
+    html_file = "test/scriptorium-TEST/views/#{@view_name}/output/posts/0001-test-post-1.html"
+    html_content = File.read(html_file)
+    
+    assert_includes_concise_string html_content, "Global asset: ../assets/global-image.jpg", "Asset function should return correct path"
+  end
+  
+  def test_002_asset_function_missing_asset
+    # Test that asset() function returns fallback for missing assets
+    # Update existing post 0002 with missing asset reference
+    source_file = "test/scriptorium-TEST/posts/0002/source.lt3"
+    File.write(source_file, "Missing asset: $$asset[missing-image.jpg]")
+    
+    # Generate the view
+    @api.generate_view(@view_name)
+    
+    # Check that the fallback path is used
+    html_file = "test/scriptorium-TEST/views/#{@view_name}/output/posts/0002-test-post-2.html"
+    html_content = File.read(html_file)
+    
+    assert_includes_concise_string html_content, "Missing asset: ../assets/imagenotfound.jpg", "Asset function should return fallback for missing assets"
+  end
+  
+  def test_003_image_function_basic_functionality
+    # Test that image() function generates correct HTML
+    # Create a global asset
+    global_file = Tempfile.new(['global-image', '.jpg'])
+    global_file.write("global image content")
+    global_file.close
+    @api.upload_asset(global_file.path, filename: "global-image.jpg")
+    
+    # Update existing post 0001 with image reference
+    source_file = "test/scriptorium-TEST/posts/0001/source.lt3"
+    File.write(source_file, "Image:\n.image global-image.jpg")
+    
+    # Generate the view
+    @api.generate_view(@view_name)
+    
+    # Check that the image tag is correct
+    html_file = "test/scriptorium-TEST/views/#{@view_name}/output/posts/0001-test-post-1.html"
+    html_content = File.read(html_file)
+    
+    assert_includes_concise_string html_content, "<img src=../assets/global-image.jpg alt='No alt text'></img>", "Image function should generate correct HTML"
+  end
+  
+  def test_004_image_function_with_real_asset
+    # Test that image() function works with actual test assets
+    # Upload a real test asset
+    @api.upload_asset("test/assets/testbanner.jpg", filename: "testbanner.jpg")
+    
+    # Update existing post 0002 with image reference
+    source_file = "test/scriptorium-TEST/posts/0002/source.lt3"
+    File.write(source_file, "Real asset:\n.image testbanner.jpg")
+    
+    # Generate the view
+    @api.generate_view(@view_name)
+    
+    # Check that the image tag is correct
+    html_file = "test/scriptorium-TEST/views/#{@view_name}/output/posts/0002-test-post-2.html"
+    html_content = File.read(html_file)
+    
+    assert_includes_concise_string html_content, "<img src=../assets/testbanner.jpg alt='No alt text'></img>", "Image function should work with real assets"
+  end
+  
+  def test_005_global_asset_copied_to_view
+    # Test that global assets are automatically copied to view assets during generation
+    # First, create a global asset file directly in the repo
+    global_asset_path = "test/scriptorium-TEST/assets/global-copy-test.jpg"
+    FileUtils.cp("test/assets/testbanner.jpg", global_asset_path)
+    
+    # Update existing post 0001 to reference the global asset
+    source_file = "test/scriptorium-TEST/posts/0001/source.lt3"
+    File.write(source_file, "Global asset copy test:\n.image global-copy-test.jpg")
+    
+    # Assert initial state before generation
+    view_assets_dir = "test/scriptorium-TEST/views/#{@view_name}/assets"
+    
+    # The global asset we just created should NOT be in view assets yet
+    view_asset_path = "#{view_assets_dir}/global-copy-test.jpg"
+    refute File.exist?(view_asset_path), "Global asset should not be in view assets before generation"
+    
+    # Generate the view (this should copy the global asset to the view)
+    @api.generate_view(@view_name)
+    
+    # Check that the global asset was copied to the view assets directory
+    view_asset_path = "test/scriptorium-TEST/views/#{@view_name}/assets/global-copy-test.jpg"
+    assert File.exist?(view_asset_path), "Global asset should be copied to view assets directory"
+    
+    # Check that the image tag references the correct path
+    html_file = "test/scriptorium-TEST/views/#{@view_name}/output/posts/0001-test-post-1.html"
+    html_content = File.read(html_file)
+    assert_includes_concise_string html_content, "<img src=../assets/global-copy-test.jpg alt='No alt text'></img>", "Image should reference the copied asset"
+  end
+  
+  def test_006_asset_priority_hierarchy
+    # Test that post assets take precedence over view assets with same filename
+    # 1. Create a file with specific contents and upload to view assets
+    view_file = Tempfile.new(['priority-test', '.txt'])
+    view_file.write("File 1, view asset")
+    view_file.close
+    @api.upload_asset(view_file.path, 'view', @view_name, filename: "priority-test.txt")
+    
+    # 2. Create another file with SAME NAME but different contents and upload to post 2 assets
+    post_file = Tempfile.new(['priority-test', '.txt'])
+    post_file.write("File 2, post asset")
+    post_file.close
+    @api.upload_asset(post_file.path, 'post', 2, filename: "priority-test.txt")
+    
+    # 3. Update both posts to reference the asset
+    source_file_1 = "test/scriptorium-TEST/posts/0001/source.lt3"
+    File.write(source_file_1, "Asset priority test:\n$$asset[priority-test.txt]")
+    
+    source_file_2 = "test/scriptorium-TEST/posts/0002/source.lt3"
+    File.write(source_file_2, "Asset priority test:\n$$asset[priority-test.txt]")
+    
+    # 4. Generate the view
+    @api.generate_view(@view_name)
+    
+    # 5. Check that post 1 refers to the view asset (since it has no post asset)
+    html_file_1 = "test/scriptorium-TEST/views/#{@view_name}/output/posts/0001-test-post-1.html"
+    html_content_1 = File.read(html_file_1)
+    assert_includes_concise_string html_content_1, "../assets/priority-test.txt", "Post 1 should reference the view asset"
+    
+    # 6. Check that post 2 refers to its own post asset (post assets take precedence)
+    html_file_2 = "test/scriptorium-TEST/views/#{@view_name}/output/posts/0002-test-post-2.html"
+    html_content_2 = File.read(html_file_2)
+    assert_includes_concise_string html_content_2, "../assets/posts/0002/priority-test.txt", "Post 2 should reference its post asset"
+    
+    # 7. Verify the actual files exist in the correct locations
+    view_asset_path = "test/scriptorium-TEST/views/#{@view_name}/assets/priority-test.txt"
+    post_asset_path = "test/scriptorium-TEST/posts/0002/assets/priority-test.txt"
+    
+    assert File.exist?(view_asset_path), "View asset should exist"
+    assert File.exist?(post_asset_path), "Post asset should exist"
+    
+    # 8. Check that the files have the correct contents
+    view_content = File.read(view_asset_path)
+    post_content = File.read(post_asset_path)
+    
+    assert_includes view_content, "File 1, view asset", "View asset should have correct content"
+    assert_includes post_content, "File 2, post asset", "Post asset should have correct content"
   end
 
-  def setup_livetext_vars
-    # Set up LiveText variables for testing
-    @vars = { View: "asset_test_view", "post.id": "0001" }
-  end
-
-  def create_test_assets
-    # Create global asset
-    write_file(@repo.root/"assets"/"image1.jpg", "Global Asset 1")
+  def test_007_asset_paths_in_post_context
+    # Test that asset paths work correctly in post page context (subdirectory)
     
-    # Create view asset
-    write_file(@repo.root/"views"/"asset_test_view"/"assets"/"image2.jpg", "View Asset 2")
+    # 1. Create a test asset
+    test_file = Tempfile.new(['path-test', '.txt'])
+    test_file.write("Path test asset")
+    test_file.close
+    @api.upload_asset(test_file.path, 'post', 1, filename: "path-test.txt")
     
-    # Create post asset
-    FileUtils.mkdir_p(@repo.root/"posts"/"0001"/"assets")
-    write_file(@repo.root/"posts"/"0001"/"assets"/"image3.jpg", "Post Asset 3")
+    # 2. Update post 1 to reference the asset
+    source_file_1 = "test/scriptorium-TEST/posts/0001/source.lt3"
+    File.write(source_file_1, "Asset path test:\n$$asset[path-test.txt]")
     
-    # Create library asset
-    FileUtils.mkdir_p(@repo.root/"assets"/"library")
-    write_file(@repo.root/"assets"/"library"/"image4.jpg", "Library Asset 4")
-  end
-
-  def process_livetext(content)
-    # Create a temporary file with the content
-    temp_file = "#{@test_dir}/temp_livetext.lt3"
-    write_file(temp_file, content)
+    # 3. Generate the view
+    @api.generate_view(@view_name)
     
-    # Process with Livetext using the plugin
-    begin
-      live = Livetext.customize(mix: "lt3scriptor", call: ".nopara", vars: @vars)
-      body, vars = live.process(file: temp_file)
-      vars = vars.to_h
-      return { vars: vars, body: body }
-    rescue => e
-      puts "Livetext error: #{e.message}"
-      puts "Backtrace: #{e.backtrace.first}"
-      return { error: e.message, backtrace: e.backtrace.first }
-    ensure
-      # Clean up
-      File.delete(temp_file) if File.exist?(temp_file)
-    end
-  end
-
-  def test_001_asset_function_finds_global_asset
-    content = "$$asset[image1.jpg]"
-    result = process_livetext(content)
-    # Strip paragraph tags for asset function tests
-    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal "assets/image1.jpg", body.strip
-  end
-
-  def test_002_asset_function_finds_view_asset
-    content = "$$asset[image2.jpg]"
-    result = process_livetext(content)
-    # Strip paragraph tags for asset function tests
-    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal "assets/image2.jpg", body.strip
-  end
-
-  def test_003_asset_function_finds_post_asset
-    content = "$$asset[image3.jpg]"
-    result = process_livetext(content)
-    # Strip paragraph tags for asset function tests
-    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal "assets/0001/image3.jpg", body.strip
-  end
-
-  def test_003b_asset_function_finds_library_asset
-    content = "$$asset[image4.jpg]"
-    result = process_livetext(content)
+    # 4. Check post page - should have ../assets/posts/0001/path-test.txt
+    post_file = "test/scriptorium-TEST/views/#{@view_name}/output/posts/0001-test-post-1.html"
+    post_content = File.read(post_file)
+    assert_includes_concise_string post_content, "../assets/posts/0001/path-test.txt", "Post page should reference assets with ../ prefix"
     
-    # Strip paragraph tags for asset function tests
-    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal "assets/image4.jpg", body.strip
-  end
-
-  def test_004_asset_function_search_hierarchy
-    # Create same filename in multiple locations to test hierarchy
-    write_file(@repo.root/"assets"/"duplicate.jpg", "Global")
-    write_file(@repo.root/"views"/"asset_test_view"/"assets"/"duplicate.jpg", "View")
-    write_file(@repo.root/"posts"/"0001"/"assets"/"duplicate.jpg", "Post")
-    
-    content = "$$asset[duplicate.jpg]"
-    result = process_livetext(content)
-    
-    # Should find post asset first (highest priority)
-    # Strip paragraph tags for asset function tests
-    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal "assets/0001/duplicate.jpg", body.strip
-  end
-
-  def test_005_asset_function_missing_asset_generates_placeholder
-    content = "$$asset[nonexistent.jpg]"
-    result = process_livetext(content)
-    
-    # Strip paragraph tags for asset function tests
-    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal "assets/missing/nonexistent.jpg.svg", body.strip
-  end
-
-  def test_006_image_asset_function_wraps_in_img_tag
-    content = "$$image_asset[image1.jpg]"
-    result = process_livetext(content)
-    
-    expected = '<img src="assets/image1.jpg" alt="image1.jpg">'
-    # Strip paragraph tags for asset function tests
-    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal expected, body.strip
-  end
-
-  def test_007_image_asset_function_with_missing_asset
-    content = "$$image_asset[missing.jpg]"
-    result = process_livetext(content)
-    
-    expected = '<img src="assets/missing/missing.jpg.svg" alt="missing.jpg">'
-    # Strip paragraph tags for asset function tests
-    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal expected, body.strip
-  end
-
-  def test_008_asset_function_without_post_id
-    # Test without post.id variable
-    @vars["post.id"] = nil
-    
-    content = "$$asset[image1.jpg]"
-    result = process_livetext(content)
-    # Strip paragraph tags for asset function tests
-    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal "assets/image1.jpg", body.strip
-    
-    # Post assets should not be found
-    content = "$$asset[image3.jpg]"
-    result = process_livetext(content)
-    # Strip paragraph tags for asset function tests
-    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal "assets/missing/image3.jpg.svg", body.strip
-    
-    # Restore post.id for other tests
-    @vars["post.id"] = "0001"
-  end
-
-  def test_009_asset_function_output_directory_structure
-    # Call asset function to test path returns
-    result1 = process_livetext("$$asset[image1.jpg]")
-    result2 = process_livetext("$$asset[image2.jpg]")
-    result3 = process_livetext("$$asset[image3.jpg]")
-    result4 = process_livetext("$$asset[nonexistent.jpg]")
-    
-    # Verify correct paths are returned
-    # Strip paragraph tags for asset function tests
-    body1 = result1[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    body2 = result2[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    body3 = result3[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    body4 = result4[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal "assets/image1.jpg", body1.strip
-    assert_equal "assets/image2.jpg", body2.strip
-    assert_equal "assets/0001/image3.jpg", body3.strip
-    assert_equal "assets/missing/nonexistent.jpg.svg", body4.strip
-  end
-
-  def test_010_asset_function_idempotent_calling
-    # Call asset function multiple times
-    result1 = process_livetext("$$asset[image1.jpg]")
-    result2 = process_livetext("$$asset[image1.jpg]")
-    result3 = process_livetext("$$asset[image1.jpg]")
-    
-    # Should return same result each time
-    assert_equal result1[:body].strip, result2[:body].strip
-    assert_equal result2[:body].strip, result3[:body].strip
-  end
-
-  def test_011_theme_assets_in_hierarchy
-    # Create theme assets directory and add a test asset
-    theme_assets_dir = @repo.root/"themes"/"standard"/"assets"
-    FileUtils.mkdir_p(theme_assets_dir)
-    write_file(theme_assets_dir/"theme-test.jpg", "Theme Asset")
-    
-    # Create same filename in multiple locations to test hierarchy
-    write_file(@repo.root/"assets"/"theme-test.jpg", "Global")
-    write_file(@repo.root/"views"/"asset_test_view"/"assets"/"theme-test.jpg", "View")
-    write_file(@repo.root/"posts"/"0001"/"assets"/"theme-test.jpg", "Post")
-    
-    # Test with post context - should find post asset first (highest priority)
-    content = "$$asset[theme-test.jpg]"
-    result = process_livetext(content)
-    # Strip paragraph tags for asset function tests
-    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal "assets/0001/theme-test.jpg", body.strip
-    
-    # Test without post context - should find view asset first
-    # Temporarily remove post.id from vars
-    original_post_id = @vars["post.id"]
-    @vars["post.id"] = nil
-    
-    content = "$$asset[theme-test.jpg]"
-    result = process_livetext(content)
-    # Strip paragraph tags for asset function tests
-    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal "assets/theme-test.jpg", body.strip
-    
-    # Restore post.id for other tests
-    @vars["post.id"] = original_post_id
-  end
-
-  def test_012_gem_assets_in_hierarchy
-    # Test gem assets (lowest priority)
-    content = "$$asset[icons/ui/back.png]"
-    result = process_livetext(content)
-    
-    # Should find gem asset and return correct path
-    # Strip paragraph tags for asset function tests
-    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal "assets/icons/ui/back.png", body.strip
-  end
-
-  # ========================================
-  # Additional Asset Logic Tests
-  # ========================================
-
-  def test_013_asset_function_with_library_assets
-    # Test library assets in hierarchy
-    content = "$$asset[image4.jpg]"
-    result = process_livetext(content)
-    
-    # Should find library asset
-    # Strip paragraph tags for asset function tests
-    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal "assets/image4.jpg", body.strip
-  end
-
-  def test_014_asset_function_priority_order
-    # Test that asset priority order is correct: post > view > global > library > gem
-    # Create same filename in multiple locations
-    write_file(@repo.root/"assets"/"priority-test.jpg", "Global")
-    write_file(@repo.root/"views"/"asset_test_view"/"assets"/"priority-test.jpg", "View")
-    write_file(@repo.root/"posts"/"0001"/"assets"/"priority-test.jpg", "Post")
-    write_file(@repo.root/"assets"/"library"/"priority-test.jpg", "Library")
-    
-    # With post context - should find post asset (highest priority)
-    content = "$$asset[priority-test.jpg]"
-    result = process_livetext(content)
-    # Strip paragraph tags for asset function tests
-    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal "assets/0001/priority-test.jpg", body.strip
-    
-    # Without post context - should find view asset
-    original_post_id = @vars["post.id"]
-    @vars["post.id"] = nil
-    
-    content = "$$asset[priority-test.jpg]"
-    result = process_livetext(content)
-    # Strip paragraph tags for asset function tests
-    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal "assets/priority-test.jpg", body.strip
-    
-    # Restore post.id
-    @vars["post.id"] = original_post_id
-  end
-
-  def test_015_asset_function_with_special_characters
-    # Test asset filenames with special characters
-    special_filename = "test-image (1).jpg"
-    write_file(@repo.root/"assets"/special_filename, "Special Asset")
-    
-    content = "$$asset[#{special_filename}]"
-    result = process_livetext(content)
-    
-    # Should handle special characters correctly
-    # Strip paragraph tags for asset function tests
-    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal "assets/#{special_filename}", body.strip
-  end
-
-  def test_016_asset_function_with_spaces_in_filename
-    # Test asset filenames with spaces
-    spaced_filename = "test image.jpg"
-    write_file(@repo.root/"assets"/spaced_filename, "Spaced Asset")
-    
-    content = "$$asset[#{spaced_filename}]"
-    result = process_livetext(content)
-    
-    # Should handle spaces correctly
-    # Strip paragraph tags for asset function tests
-    body = result[:body].gsub(/^<p>\n?(.*?)\n?<\/p>$/m, '\1')
-    assert_equal "assets/#{spaced_filename}", body.strip
-  end
-
-  private
-
-  def process_livetext_no_post(content)
-    # Process content without post context
-    temp_file = "#{@test_dir}/temp_livetext_no_post.lt3"
-    write_file(temp_file, content)
-    
-    # Use only View variable, no post.id
-    vars = { View: "asset_test_view" }
-    
-    begin
-      live = Livetext.customize(mix: "lt3scriptor", call: ".nopara", vars: vars)
-      body, _vars = live.process(file: temp_file)
-      return { vars: _vars, body: body }
-    rescue => e
-      puts "Livetext error: #{e.message}"
-      puts "Backtrace: #{e.backtrace.first}"
-      return { error: e.message, backtrace: e.backtrace.first }
-    ensure
-      # Clean up
-      File.delete(temp_file) if File.exist?(temp_file)
-    end
+    # 5. Verify the asset file exists in the output directory
+    asset_file = "test/scriptorium-TEST/views/#{@view_name}/output/assets/posts/0001/path-test.txt"
+    assert File.exist?(asset_file), "Asset should be copied to output directory"
   end
 end

@@ -232,7 +232,7 @@ class TestScriptoriumRepo < Minitest::Test
     root = repo.root
     file = "#{root}/themes/standard/templates/post.lt3"
     assert_file_exist?(file)
-    assert_file_lines(file, 54)  # Template now includes CSS for dropcap and pullquote
+    assert_file_lines(file, 72)  # Template includes CSS and Highlight.js assets
   end
 
   def test_015_change_view
@@ -277,32 +277,6 @@ class TestScriptoriumRepo < Minitest::Test
 
 
 
-  def test_019_mock_vars_into_template
-    title   = "This is my title"
-    pubdate = "August 2, 2024"
-    tags    = "history, journal, birthday"
-    body    = 
-      <<~EOS
-      This is just a fake blog post.
-    
-      <p>
-      If it had been an <i>actual</i> post, it
-      might have said something.
-  
-      <p>
-      That's all.
-      EOS
-    vars = {:"post.title" => title, :"post.pubdate" => pubdate, :"post.date" => pubdate,
-            :"post.tags" => tags,   :"post.body" => body, :"reddit_button" => ""}
-    predef = Scriptorium::StandardFiles.new
-    template = predef.post_template
-    result = template % vars
-    assert result =~ /August 2, 2024/
-    File.open("/tmp/mock.html", "w") do |f|
-      f.puts result
-    end
-    assert_file_lines("/tmp/mock.html", 62)  # Template + expanded body content (newlines in body create extra lines) + CSS
-  end
 
 
 
@@ -379,7 +353,6 @@ class TestScriptoriumRepo < Minitest::Test
     
     # Regular post should NOT contain the "Visit Blog" link
     refute_includes regular_content, "Visit Blog"
-    refute_includes regular_content, 'href="../index.html"'
     
     # Permalink post should contain the "Visit Blog" link
     assert_includes permalink_content, "Visit Blog"

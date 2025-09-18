@@ -1,5 +1,4 @@
 require 'fileutils'
-require_relative 'syntax_highlighter'
 
 class Scriptorium::View
   include Scriptorium::Exceptions
@@ -601,9 +600,9 @@ write output:      write the result to output/panes/header.html
     config = read_post_index_config
     vars = post.vars.merge(config)
     
-    # Add formatted_date to vars
+    # Add formatted_date to vars (use post.date to get pubdate/created fallback)
     date_format = config[:"entry.date.format"] || "month dd break yyyy"
-    vars[:formatted_date] = format_date(date_format, post.pubdate)
+    vars[:formatted_date] = format_date(date_format, post.date)
     
     entry = substitute(vars, template)
     entry
@@ -666,7 +665,7 @@ write output:      write the result to output/panes/header.html
       when "social"
         content << generate_social_meta_tags(args)
       when "highlight"
-        content << generate_highlight_css(view)
+        content << generate_highlight_css(view) # loads highlight_css.txt
       when "highlight_custom"
         content << support_data('highlight/custom.css')
       end
@@ -849,9 +848,9 @@ write output:      write the result to output/panes/header.html
       hover_text = subreddit.empty? ? "Share on Reddit" : "Share on r/#{subreddit}"
     end
     
-    # Generate button HTML
+    # Generate button HTML (use production-relative ../../assets for posts context)
     button_html = %[<a href="#{reddit_url}" target="_blank" title="#{hover_text}" style="text-decoration: none; margin-right: 8px;">
-      <img src="assets/reddit-logo.png" width="16" height="16" alt="Share on Reddit" style="vertical-align: middle;">
+      <img src="../../assets/icons/social/reddit.png" width="32" height="32" alt="Share on Reddit" style="vertical-align: middle;">
     </a>]
     
     button_html
@@ -896,8 +895,17 @@ write output:      write the result to output/panes/header.html
     out = self.dir/:output
     pages.each.with_index do |page, i|
       bar = pagination_bar(page, pages.size, i+1)
-      page << %[<div style="position: absolute; bottom: 0; width: 100%;">#{bar}</div>]
-      write_file(out/"page#{i+1}.html", page.join)
+      # Wrap rows in a table to preserve layout (match non-paginated index)
+      margin_top = config[:"index.margin.top"] || "0px"
+      cellpadding = config[:'entry.cellpadding']
+      table_open = %(<table width=100% cellpadding=#{cellpadding} style="margin-top: #{margin_top};">)
+      table_close = %(</table>)
+      html = String.new
+      html << table_open
+      html << page.join
+      html << table_close
+      html << %[<div style="position: absolute; bottom: 0; width: 100%;">#{bar}</div>]
+      write_file(out/"page#{i+1}.html", html)
     end
     # Remove existing link if it exists, then create new one
     post_index_link = out/"post_index.html"
@@ -930,13 +938,12 @@ write output:      write the result to output/panes/header.html
     HTML
 
     # Beautify HTML if HtmlBeautifier is available
-    # TEMPORARILY DISABLED FOR TESTING
-    # begin
-    #   full_html = ::HtmlBeautifier.beautify(full_html)
-    # rescue NameError, LoadError => e
-    #   # HtmlBeautifier not available, continue without beautification
-    #   # This is not critical for functionality
-    # end
+    begin
+      full_html = ::HtmlBeautifier.beautify(full_html)
+    rescue NameError, LoadError => e
+      # HtmlBeautifier not available, continue without beautification
+      # This is not critical for functionality
+    end
 
     # Write the main index file
     write_file(index_file, full_html)
@@ -961,8 +968,8 @@ write output:      write the result to output/panes/header.html
   end
 
   def generate_highlight_css(view = nil)
-    global_highlight = @root/:config/"prism_css.txt"
-    view_highlight   = @dir/:config/"prism_css.txt"
+    global_highlight = @root/:config/"highlight_css.txt"
+    view_highlight   = @dir/:config/"highlight_css.txt"
     highlight_file = view ? view_highlight : global_highlight
     lines = read_commented_file(highlight_file)
     href = rel = nil
@@ -979,8 +986,8 @@ write output:      write the result to output/panes/header.html
   end
 
   def generate_highlight_js(view = nil)
-    global_highlight = @root/:config/"prism_js.txt"
-    view_highlight   = @dir/:config/"prism_js.txt"
+    global_highlight = @root/:config/"highlight_js.txt"
+    view_highlight   = @dir/:config/"highlight_js.txt"
     highlight_file = view ? view_highlight : global_highlight
     lines = read_commented_file(highlight_file)
     src = nil
@@ -995,8 +1002,8 @@ write output:      write the result to output/panes/header.html
   end
 
   def generate_highlight_ruby_js(view = nil)
-    global_highlight = @root/:config/"prism_ruby_js.txt"
-    view_highlight   = @dir/:config/"prism_ruby_js.txt"
+    global_highlight = @root/:config/"highlight_ruby_js.txt"
+    view_highlight   = @dir/:config/"highlight_ruby_js.txt"
     highlight_file = view ? view_highlight : global_highlight
     lines = read_commented_file(highlight_file)
     src = nil

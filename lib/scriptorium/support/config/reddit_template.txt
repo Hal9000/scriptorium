@@ -1,0 +1,17 @@
+# Reddit config data
+
+# App information
+
+user_agent  Scriptorium Blog Bot 1.0 by /u/hal_fulton
+client_id   7UpmDm8vg6v-mzuwyGcSUg
+secret      BsIXzKihItxEP6PtxGVl9ThXi4qEYw
+
+# Your reddit login
+
+username    YOUR_REDDIT_USERNAME
+password    YOUR_REDDIT_PASSWORD
+
+# Community (subreddit) where you'll post
+
+subreddit   YOUR_SUBREDDIT_NAME
+

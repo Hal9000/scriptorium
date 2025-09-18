@@ -140,9 +140,20 @@ module WebTestHelper
   # Assert that response body includes text, with concise error message
   def assert_includes_concise(response, text, description)
     unless response.body.include?(text)
-      # Show first 200 chars of response for debugging
-      snippet = response.body[0, 200].gsub(/\s+/, ' ').strip
-      flunk "#{description} - Expected to find '#{text}' in response. Response snippet: #{snippet}..."
+      # Show response size and a snippet for debugging
+      size = response.body.size
+      snippet = response.body[0, 300].gsub(/\s+/, ' ').strip
+      flunk "#{description} - Expected to find '#{text}' in response (#{size} bytes). Response snippet: #{snippet}..."
+    end
+  end
+
+  # Assert that a string includes text, with concise error message
+  def assert_includes_concise_string(content, text, description)
+    unless content.include?(text)
+      # Show content size and a snippet for debugging
+      size = content.size
+      snippet = content[0, 300].gsub(/\s+/, ' ').strip
+      flunk "#{description} - Expected to find '#{text}' in content (#{size} bytes). Content snippet: #{snippet}..."
     end
   end
 
@@ -202,6 +213,6 @@ module WebTestHelper
     # For now, we verify by checking that no production data is visible
     response = get("/")
     assert_response_success(response, "Dashboard should load")
-    assert_includes response.body, "No repository found", "Should show no repository (test mode)"
+    assert_includes_concise response, "No repository found", "Should show no repository (test mode)"
   end
 end

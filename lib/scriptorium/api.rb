@@ -1,4 +1,5 @@
 
+require 'set'
 
 class Scriptorium::API
   include Scriptorium::Exceptions
@@ -208,24 +209,12 @@ class Scriptorium::API
     view ||= @repo.current_view&.name
     raise ViewTargetNil if view.nil?
     
-    # Get only published posts using the published parameter
-    posts = posts(view, published: true)
-    
-    # Generate the index content
-    str = ""
-    posts.each { |post| str << post_index_entry(post, view) }
-    
-    # Write the file
-    output_file = @repo.root/"views"/view/"output"/"post_index.html"
-    File.write(output_file, str)
+    # Delegate to the view/repo implementation to ensure correct table layout
+    # and formatted dates via View#post_index_entry and format_date
+    @repo.generate_post_index(view)
   end
   
-  private def post_index_entry(post, view)
-    # Get the view object to access its predef
-    view_obj = @repo.lookup_view(view)
-    template = support_data('templates/index_entry.lt3')
-    substitute(post, template)
-  end
+  # Note: post_index_entry handled by View#post_index_entry
   
   private def substitute(post, template)
     # Use the same substitution system as helpers - text % vars
@@ -813,14 +802,147 @@ class Scriptorium::API
     view ||= @repo.current_view&.name
     raise ViewTargetNil if view.nil?
     
+    # Copy all global assets to view assets
+    copy_global_assets_to_view(view)
+    
+    # Copy post assets to view assets
+    copy_post_assets_to_view(view)
+    
     # Check for stale posts and regenerate them before view generation
     regenerate_stale_posts(view)
     
+    # Copy view assets to output directory for web serving
+    copy_view_assets_to_output(view)
+    
+    # Generate post index (with correct table structure and formatted dates)
+    @repo.generate_post_index(view)
+
     @repo.generate_front_page(view)
     true
   end
 
+  def upload_asset(file_path, target = 'global', target_id = nil, filename: nil, **kwargs)
+    # Handle backward compatibility with keyword arguments
+    if kwargs.any?
+      target = kwargs[:target] || target
+      target_id = kwargs[:view] || target_id
+    end
+    unless File.exist?(file_path)
+      raise FileNotFoundError(file_path)
+    end
+    
+    filename ||= File.basename(file_path)
+    
+    # Determine target directory
+    target_dir = case target
+    when 'global'
+      @repo.root/"assets"
+    when 'library'
+      @repo.root/"assets"/"library"
+    when 'view'
+      target_id ||= @repo.current_view&.name
+      raise ViewTargetNil if target_id.nil?
+      @repo.root/"views"/target_id/"assets"
+    when 'post'
+      raise ArgumentError, "Post ID required for post uploads" if target_id.nil?
+      post_id = target_id.to_i
+      post_num = d4(post_id)
+      @repo.root/"posts"/post_num/"assets"
+    else
+      raise InvalidFormatError("target", target)
+    end
+    
+    # Create target directory if it doesn't exist
+    FileUtils.mkdir_p(target_dir)
+    
+    # Copy the file
+    target_file = target_dir/filename
+    FileUtils.cp(file_path, target_file)
+    
+    target_file
+  end
 
+  def copy_global_assets_to_view(view_name)
+    view = @repo.lookup_view(view_name)
+    return unless view
+    
+    view_assets_dir = view.dir/:assets
+    global_assets_dir = @repo.root/:assets
+    
+    # Ensure view assets directory exists
+    FileUtils.mkdir_p(view_assets_dir) unless Dir.exist?(view_assets_dir)
+    
+    # Copy all global assets (recursively) to view assets, preserving structure
+    if Dir.exist?(global_assets_dir)
+      Dir.glob("#{global_assets_dir}/**/*").each do |global_path|
+        next unless File.file?(global_path)
+        rel = Pathname.new(global_path).relative_path_from(Pathname.new(global_assets_dir))
+        dest = view_assets_dir/rel
+        FileUtils.mkdir_p(File.dirname(dest))
+        FileUtils.cp(global_path, dest) unless File.exist?(dest)
+      end
+    end
+  end
+
+  def copy_post_assets_to_view(view_name)
+    view = @repo.lookup_view(view_name)
+    return unless view
+    
+    view_assets_dir = view.dir/:assets
+    
+    # Get all posts associated with this view
+    posts = @repo.all_posts.select { |post| post.views&.include?(view_name) }
+    
+    posts.each do |post|
+      post_assets_dir = @repo.root/"posts"/post.num/"assets"
+      view_post_assets_dir = view_assets_dir/"posts"/post.num
+      
+      # Skip if post has no assets
+      next unless Dir.exist?(post_assets_dir)
+      
+      # Create view post assets directory
+      FileUtils.mkdir_p(view_post_assets_dir)
+      
+      # Copy all post assets to view post assets directory
+      Dir.glob("#{post_assets_dir}/*").each do |post_asset|
+        next unless File.file?(post_asset)
+        filename = File.basename(post_asset)
+        view_asset_path = view_post_assets_dir/filename
+        
+        # Copy if view asset doesn't exist (don't overwrite)
+        FileUtils.cp(post_asset, view_asset_path) unless File.exist?(view_asset_path)
+      end
+    end
+  end
+
+  def copy_view_assets_to_output(view_name)
+    view = @repo.lookup_view(view_name)
+    return unless view
+
+    view_assets_dir = view.dir/:assets
+    output_assets_dir = view.dir/:output/:assets
+
+    # Skip if view has no assets
+    return unless Dir.exist?(view_assets_dir)
+
+    # Create output assets directory
+    FileUtils.mkdir_p(output_assets_dir)
+
+    # Copy all view assets to output assets directory
+    Dir.glob("#{view_assets_dir}/**/*").each do |asset_path|
+      next unless File.file?(asset_path)
+      
+      # Calculate relative path from view_assets_dir
+      relative_path = Pathname.new(asset_path).relative_path_from(Pathname.new(view_assets_dir))
+      output_asset_path = output_assets_dir/relative_path
+      
+      # Create parent directory if needed
+      FileUtils.mkdir_p(File.dirname(output_asset_path))
+      
+      # Copy the asset
+      FileUtils.cp(asset_path, output_asset_path)
+    end
+  end
 
   # Draft management
   def drafts
@@ -879,6 +1001,20 @@ class Scriptorium::API
       # If source is newer than body, regenerate the post
       if source_mtime > body_mtime
         @repo.generate_post(post.id)
+        next
+      end
+      
+      # Check if any assets are newer than body file
+      assets_dir = post.dir/"assets"
+      if Dir.exist?(assets_dir)
+        asset_files = Dir.glob("#{assets_dir}/*")
+        asset_files.each do |asset_file|
+          next unless File.file?(asset_file)
+          if File.mtime(asset_file) > body_mtime
+            @repo.generate_post(post.id)
+            break
+          end
+        end
       end
     end
   end
@@ -1133,46 +1269,6 @@ class Scriptorium::API
     target_path
   end
   
-  def upload_asset(file_path, target = 'global', target_id = nil, **kwargs)
-    # Handle backward compatibility with keyword arguments
-    if kwargs.any?
-      target = kwargs[:target] || target
-      target_id = kwargs[:view] || target_id
-    end
-    unless File.exist?(file_path)
-      raise FileNotFoundError(file_path)
-    end
-    
-    filename = File.basename(file_path)
-    
-    # Determine target directory
-    target_dir = case target
-    when 'global'
-      @repo.root/"assets"
-    when 'library'
-      @repo.root/"assets"/"library"
-    when 'view'
-      target_id ||= @repo.current_view&.name
-      raise ViewTargetNil if target_id.nil?
-      @repo.root/"views"/target_id/"assets"
-    when 'post'
-      raise ArgumentError, "Post ID required for post uploads" if target_id.nil?
-      post_id = target_id.to_i
-      post_num = d4(post_id)
-      @repo.root/"posts"/post_num/"assets"
-    else
-      raise InvalidFormatError("target", target)
-    end
-    
-    # Create target directory if it doesn't exist
-    FileUtils.mkdir_p(target_dir)
-    
-    # Copy the file
-    target_file = target_dir/filename
-    FileUtils.cp(file_path, target_file)
-    
-    target_file
-  end
   
   def delete_asset(filename, target = 'global', target_id = nil, **kwargs)
     # Handle backward compatibility with keyword arguments

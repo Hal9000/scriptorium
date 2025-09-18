@@ -2,6 +2,7 @@
 # List one platform per line to enable social meta tags
 facebook
 twitter
+reddit
 
 # Note: No Facebook App ID or Twitter username required for basic meta tags
 # These are only needed if you want to add social sharing buttons later

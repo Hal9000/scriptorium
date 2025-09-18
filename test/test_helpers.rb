@@ -27,6 +27,16 @@ module TestHelpers
     assert lines.size == num, "Expected #{num} lines in #{file}; found #{lines.size}"
   end
 
+  # Assert that a string includes text, with concise error message
+  def assert_includes_concise_string(content, text, description)
+    unless content.include?(text)
+      # Show content size and a snippet for debugging
+      size = content.size
+      snippet = content[0, 300].gsub(/\s+/, ' ').strip
+      flunk "#{description} - Expected to find '#{text}' in content (#{size} bytes). Content snippet: #{snippet}..."
+    end
+  end
+
   def assert_file_newer?(f1, f2)
     assert File.mtime(f1) > File.mtime(f2), "File #{f1} is not newer than #{f2}"
   end

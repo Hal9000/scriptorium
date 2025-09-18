@@ -135,6 +135,20 @@ class Scriptorium::Theme
       if Dir.exist?(samples_gem_dir)
         FileUtils.cp_r("#{samples_gem_dir}/.", library_dir)
       end
+      
+      # Copy icons directory (needed for UI and social buttons)
+      icons_gem_dir = "#{gem_assets_dir}/icons"
+      if Dir.exist?(icons_gem_dir)
+        icons_dir = root/"assets"/"icons"
+        FileUtils.mkdir_p(icons_dir) unless Dir.exist?(icons_dir)
+        FileUtils.cp_r("#{icons_gem_dir}/.", icons_dir)
+      end
+      
+      # Copy missing image placeholder
+      missing_image_gem = "#{gem_assets_dir}/imagenotfound.jpg"
+      if File.exist?(missing_image_gem)
+        FileUtils.cp(missing_image_gem, root/"assets"/"imagenotfound.jpg")
+      end
     end
   rescue => e
     # If gem lookup fails, continue without copying gem assets

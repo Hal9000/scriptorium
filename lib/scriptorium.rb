@@ -21,7 +21,6 @@ require_relative "scriptorium/widgets/links"
 require_relative "scriptorium/widgets/pages"
 require_relative "scriptorium/widgets/featured_posts"
 require_relative "scriptorium/api"
-require_relative "scriptorium/syntax_highlighter"
 
 # Main Scriptorium class that provides backward compatibility
 class Scriptorium

@@ -1409,11 +1409,13 @@ class TestScriptoriumAPI < Minitest::Test
     
     assets = @api.list_assets(target: 'global')
     
-    assert_equal 2, assets.length
-    assert_equal "test1.jpg", assets[0][:filename]
-    assert_equal "test2.png", assets[1][:filename]
+    assert_equal 3, assets.length
+    # Check that our test assets are present (imagenotfound.jpg will also be there)
+    filenames = assets.map { |a| a[:filename] }
+    assert_includes filenames, "test1.jpg"
+    assert_includes filenames, "test2.png"
+    assert_includes filenames, "imagenotfound.jpg"
     assert_equal "image", assets[0][:type]
-    assert_equal "image", assets[1][:type]
     assert assets[0][:size] > 0
   end
   
@@ -1450,11 +1452,13 @@ class TestScriptoriumAPI < Minitest::Test
     
     assets = @api.list_assets(target: 'view', view: 'testview')
     
-    assert_equal 2, assets.length
-    assert_equal "view1.jpg", assets[0][:filename]
-    assert_equal "view2.svg", assets[1][:filename]
+    assert_equal 3, assets.length
+    # Check that our test assets are present (imagenotfound.jpg will also be there)
+    filenames = assets.map { |a| a[:filename] }
+    assert_includes filenames, "view1.jpg"
+    assert_includes filenames, "view2.svg"
+    assert_includes filenames, "imagenotfound.jpg"
     assert_equal "image", assets[0][:type]
-    assert_equal "image", assets[1][:type]
   end
   
   def test_1003_list_assets_gem

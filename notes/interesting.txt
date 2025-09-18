@@ -6,6 +6,7 @@ custom exceptions
 PTY tests
 Livetext
 Manual tests
+Manual/interactive shared code
 CodeMirror + toolbar + macros
 Livetext syntax highlighting
 AI assistant?

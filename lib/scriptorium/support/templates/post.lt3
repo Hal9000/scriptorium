@@ -38,8 +38,8 @@ body { font-family: verdana; line-height: 1.1 }
 }
 </style>
 
-<div align='right'><a style="text-decoration: none" href="index.html">
-  <img src="assets/back-icon.png" width=24 height=24 alt="Go to Index"></img></a>
+<div align='right'><a style="text-decoration: none;" href="../index.html">
+  <img src="../assets/icons/ui/back.png" width=32 height=32 alt="Go to Index" style="vertical-align: middle;"></img> Back to index</a>
 </div>
 <div style="display: flex; justify-content: space-between; align-items: baseline;">
   <span style="text-align: left; font-size: 1.5em;">%{post.title}</span>
@@ -52,3 +52,21 @@ body { font-family: verdana; line-height: 1.1 }
 <div style="text-align: center; margin-top: 20px;">
   <button onclick="copyPermalinkToClipboard()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Copy link</button>
 </div>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/ruby.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/elixir.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+<script>
+  if (typeof hljs !== 'undefined') { hljs.highlightAll(); }
+  
+  // If this post is injected into a container (SPA), try to highlight that container only
+  try {
+    if (typeof hljs !== 'undefined') {
+      var container = document.currentScript && document.currentScript.parentElement;
+      if (container) {
+        container.querySelectorAll('pre code').forEach(function(el){ hljs.highlightElement(el); });
+      }
+    }
+  } catch (e) {}
+</script>

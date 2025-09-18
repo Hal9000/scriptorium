@@ -4,7 +4,8 @@ require 'date'
 require 'find'
 require 'fileutils' # Added for FileUtils
 
-# require 'pathmagic'
+# require "./lib/scriptorium/helpers"
+
 # require 'processing'
 
 
@@ -142,7 +143,9 @@ end
   
 def dropcap(args, data, body)
   content = body.join(" ")
-  api.out %[<p class="dropcap">#{content}</p>]
+  first_char = content[0]
+  remaining_text = content[1..-1]
+  api.out %[<span class="dropcap">#{first_char}</span>#{remaining_text}]
   api.optional_blank_line
 end
   
@@ -264,14 +267,90 @@ end
 
 def image(args, data)   # primitive so far
   fname, alt = data.split(" ", 2)
-  path = "assets/#{fname}"
+  alt ||= "No alt text"
+  path = api.funcs.asset(fname)
+  # Assets are served from the root, so no path adjustment needed
   api.out "<img src=#{path} alt='#{alt}'></img>"
+  api.optional_blank_line
+end
+
+def asset(args, data)
+  # .asset <source_path> — copies file into current post's assets directory
+  # Side-effect only; no HTML output
+  source = (data || '').strip
+  return if source.empty?
+
+  # Determine repo root and post context
+  root = (Scriptorium::Repo.root rescue nil)
+  current_file = nil
+  begin
+    current_file = Livetext::Vars[:File] || api.vars[:File]
+  rescue
+    current_file = nil
+  end
+  # Derive repo root from current file path if needed
+  if root.nil? && current_file
+    begin
+      cf = current_file.to_s
+      idx = cf.index('/posts/')
+      if idx
+        candidate_root = cf[0...idx]
+        root = candidate_root if candidate_root && Dir.exist?(candidate_root)
+      end
+    rescue
+      # ignore
+    end
+  end
+
+  # Determine post id if missing
+  post_id = api.vars.to_h[:"post.id"]
+  if (post_id.nil? || post_id.to_s.empty?) && current_file
+    m = current_file.to_s.match(/\/posts\/(\d{4})\//)
+    post_id = m && m[1]
+  end
+  unless post_id && !post_id.to_s.empty?
+    api.out "<!-- .asset requires post context (post.id not set) -->"
+    api.optional_blank_line
+    return
+  end
+  unless root && Dir.exist?(root)
+    api.out "<!-- .asset cannot determine repo root; skipping copy for #{source} -->"
+    api.optional_blank_line
+    return
+  end
+
+  # Resolve source path: absolute, relative to current file, or repo root
+  candidates = []
+  candidates << source
+  if current_file
+    candidates << File.expand_path(source, File.dirname(current_file))
+  end
+  candidates << File.expand_path(source, root)
+
+  resolved = candidates.find { |p| File.exist?(p) }
+  unless resolved
+    api.out "<!-- .asset not found: #{source} -->"
+    api.optional_blank_line
+    return
+  end
+
+  # Copy to posts/<post>/assets/<basename>
+  num = ("%04d" % post_id.to_i)
+  dest_dir = File.join(root, 'posts', num, 'assets')
+  FileUtils.mkdir_p(dest_dir)
+  dest_path = File.join(dest_dir, File.basename(resolved))
+  FileUtils.cp(resolved, dest_path)
+  api.optional_blank_line
+rescue => e
+  api.out "<!-- .asset error: #{e.class}: #{e.message} -->"
   api.optional_blank_line
 end
 
 def image!(args, data)
   fname, w, h, factor, alt = data.split(" ", 5)
-  path = "assets/#{fname}"
+  alt ||= "No alt text"
+  path = api.funcs.asset(fname)
+  # Assets are served from the root, so no path adjustment needed
   alt.gsub!("'", "&apos;")
   alt.gsub!("\"", "&quot;")
   api.out <<-HTML
@@ -286,6 +365,13 @@ def image!(args, data)
   api.optional_blank_line
 end
 
+def center(args, data, body)
+  # Centers block content; functions in body are expanded via api.format
+  content = body && !body.empty? ? body.map { |line| api.format(line) }.join(" ") : api.format(data.to_s)
+  api.out %Q[<div style="text-align:center">#{content}</div>]
+  api.optional_blank_line
+end
+
 ### Functions
 
 class Livetext::Functions
@@ -294,48 +380,72 @@ class Livetext::Functions
     "&nbsp;" * param.to_i
   end
 
-  def asset(param)
-    begin
-      # Get view and post information
-      vname = @live.vars.to_h[:View]
-      postid = @live.vars.to_h[:"post.id"]   # search post first
-      num = d4(postid)
-      root = Scriptorium::Repo.root
-      search_paths = []
-      search_paths << ["#{root}/posts/#{num}/assets/#{param}", "assets/#{num}/#{param}"]
-      search_paths << ["#{root}/views/#{vname}/assets/#{param}", "assets/#{param}"]
-      search_paths << ["#{root}/assets/#{param}", "assets/#{param}"]
-      search_paths << ["#{root}/assets/library/#{param}", "assets/#{param}"]
-      
-      begin
-        gem_spec = Gem.loaded_specs['scriptorium']
-        if gem_spec
-          gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{param}"
-          search_paths << [gem_asset_path, "assets/#{param}"]
-        else
-          dev_gem_path = File.expand_path("assets/#{param}")
-          if File.exist?(dev_gem_path)
-            search_paths << [dev_gem_path, "assets/#{param}"]
-          end
-        end
-      rescue => e
-      end
-      
-      search_paths.each do |source_path, output_path|
-        if File.exist?(source_path)
-          return output_path
-        end
-      end
-      
-      return "assets/missing/#{param}.svg"
-    rescue => e
-      return "[Asset error: #{e.message}]"
-    end
+  def image(param)
+    resolved = asset(param)
+    "<img src=#{resolved} alt='No alt text'></img>"
   end
 
-  def image_asset(param)
-    asset_path = asset(param)
-    "<img src=\"#{asset_path}\" alt=\"#{param}\">"
+  def asset(param)
+    # Get view and post information
+    vname = api.vars.to_h[:View]
+    postid = api.vars.to_h[:"post.id"]   # search post first
+    num = d4(postid)
+    root = Scriptorium::Repo.root
+    
+    
+    search_paths = []
+    # If in view context, search view assets first
+    if vname
+      # Post assets in view (highest priority once copied)
+      search_paths << ["#{root}/views/#{vname}/assets/posts/#{num}/#{param}", "assets/posts/#{num}/#{param}"]
+      # View assets
+      search_paths << ["#{root}/views/#{vname}/assets/#{param}", "assets/#{param}"]
+      # Repo-level post assets (fallback if view copy hasn't happened yet)
+      search_paths << ["#{root}/posts/#{num}/assets/#{param}", "assets/posts/#{num}/#{param}"]
+      # Global assets
+      search_paths << ["#{root}/assets/#{param}", "assets/#{param}"]
+    else
+      # Global context - search post assets directly
+      search_paths << ["#{root}/posts/#{num}/assets/#{param}", "assets/posts/#{num}/#{param}"]
+      search_paths << ["#{root}/assets/#{param}", "assets/#{param}"]
+    end
+    search_paths << ["#{root}/assets/library/#{param}", "assets/#{param}"]
+    
+    begin
+      gem_spec = Gem.loaded_specs['scriptorium']
+      if gem_spec
+        gem_asset_path = "#{gem_spec.full_gem_path}/assets/#{param}"
+        search_paths << [gem_asset_path, "assets/#{param}"]
+      else
+        dev_gem_path = File.expand_path("assets/#{param}")
+        if File.exist?(dev_gem_path)
+          search_paths << [dev_gem_path, "assets/#{param}"]
+        end
+      end
+    rescue => e
+    end
+    
+    # Detect if we're rendering a post source/body (post context)
+    current_file = nil
+    begin
+      current_file = Livetext::Vars[:File] || api.vars[:File]
+    rescue
+      current_file = nil
+    end
+    # Consider it a post context when current file path is under /posts/ or explicit flag is set
+    in_post_context = !!(api.vars.to_h[:"post.context"] == "post" || (current_file && current_file.to_s.include?("/posts/")))
+
+    search_paths.each do |source_path, output_path|
+      if File.exist?(source_path)
+        # In post pages use ../assets/...; elsewhere use assets/...
+        return in_post_context ? ("../" + output_path) : output_path
+      end
+    end
+    
+    # Missing asset fallback
+    return in_post_context ? "../assets/imagenotfound.jpg" : "assets/imagenotfound.jpg"
+  rescue => e
+    return "[Asset error: #{e.message}]"  
   end
 
   def generate_missing_asset_svg(filename, width: 200, height: 150)
@@ -393,10 +503,6 @@ class Livetext::Functions
   def h5(param); "<h5>#{param}</h5>"; end
   def h6(param); "<h6>#{param}</h6>"; end
 
-  def image(param)
-    "<img src='#{param}'></img>"
-  end
-
   def post(param)
     # param = "36" (post ID)
     post_id = param.to_i
@@ -405,7 +511,7 @@ class Livetext::Functions
     # Get post metadata to find title and slug
     begin
       root = Scriptorium::Repo.root
-      view_name = @live.vars.to_h[:View]
+      view_name = api.vars.to_h[:View]
       
       # Look for post metadata
       metadata_file = "#{root}/posts/#{post_num}/meta.txt"
@@ -440,7 +546,7 @@ class Livetext::Functions
     
     begin
       root = Scriptorium::Repo.root
-      view_name = @live.vars.to_h[:View]
+      view_name = api.vars.to_h[:View]
       
       # Look for page in current view
       page_file = "#{root}/views/#{view_name}/pages/#{page_name}.lt3"
@@ -497,14 +603,6 @@ class Livetext::Functions
     
     "<a href=\"#{url}\"><img src=\"#{image_path}\" alt=\"#{alt_text}\"></a>"
   end
-
-  def foobar
-    "Hello, world!"
-  end
-
-  def testparam(param)
-    "Param received: '#{param}'"
-  end
 end
 
 # Removed old wordcount function - replaced with dot command below
@@ -524,24 +622,14 @@ def _passthru_noline(line)
 end
 
 def code(args, data, body)
-  language = args.first
+  language = (args.first || '').strip
   code_content = body.join("\n")
-  
-  # Use Rouge syntax highlighting if language is supported
-  if language && !language.empty?
-    begin
-      highlighter = Scriptorium::SyntaxHighlighter.new
-      highlighted_code = highlighter.highlight(code_content, language)
-      api.out %q[<pre><code class="language-#{language}">#{highlighted_code}</code></pre>]
-    rescue => e
-      # Fallback to unhighlighted code if highlighting fails
-      api.out %[<pre><code class="language-#{language}">#{code_content}</code></pre>]
-    end
+  # Emit raw code blocks that Highlight.js can process client-side
+  if language.empty?
+    api.out %Q[<pre><code>#{code_content}</code></pre>]
   else
-    # No language specified, output as plain text
-    api.out %[<pre><code>#{code_content}</code></pre>]
+    api.out %Q[<pre><code class="language-#{language}">#{code_content}</code></pre>]
   end
-  
   api.optional_blank_line
 end
 
@@ -1103,27 +1191,3 @@ end
 ##    %[href='#{url}' target='blank']
 ##  end
 ##  
-
-def syntax_css
-  log!(enter: __method__)
-  highlighter = Scriptorium::SyntaxHighlighter.new
-  css = highlighter.generate_css
-  api.out %[<style>\n#{css}\n</style>]
-rescue => e
-  # Fallback to basic CSS if highlighting fails
-  basic_css = <<~CSS
-    <style>
-    /* Basic syntax highlighting styles */
-    pre code {
-      font-family: 'Consolas', 'Monaco', 'Andale Mono', monospace;
-      font-size: 14px;
-      line-height: 1.4;
-      background: #f5f2f0;
-      padding: 1em;
-      border-radius: 4px;
-      overflow-x: auto;
-    }
-    </style>
-  CSS
-  api.out basic_css
-end

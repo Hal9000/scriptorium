@@ -4,13 +4,21 @@ manual_setup
 
 @repo.create_view("testview", "Test View", "A test view for manual inspection")
 
-# Enable syntax highlighting for this test by adding it to global-head.txt
+# Ensure Highlight.js is enabled via global-head.txt
 global_head_file = "test/scriptorium-TEST/views/testview/config/global-head.txt"
-File.open(global_head_file, "a") { |f| f.puts "syntax     # Enable Rouge syntax highlighting" }
+head_contents = File.exist?(global_head_file) ? File.read(global_head_file) : ""
+add_lines = []
+add_lines << "highlight      # Enable Highlight.js assets" unless head_contents.include?("\nhighlight")
+add_lines << "highlight_custom # Optional Highlight.js CSS overrides" unless head_contents.include?("\nhighlight_custom")
+unless add_lines.empty?
+  File.open(global_head_file, "a") { |f| add_lines.each { |ln| f.puts ln } }
+end
 
 # Post with comprehensive syntax highlighting tests
 draft_body = <<~'BODY'
-  .blurb Testing both Prism and Rouge syntax highlighting with multiple languages.
+  .blurb
+  Testing Highlight.js syntax highlighting with multiple languages.
+  .end
   This post tests the integrated syntax highlighters with Ruby, Elixir, JavaScript, and plain text.
 
   ## Ruby Code Example (Rouge)
@@ -62,7 +70,7 @@ draft_body = <<~'BODY'
   IO.puts("5 + 3 = 8")
   .end
 
-  ## JavaScript Code Example (Prism)
+  ## JavaScript Code Example (Highlight.js)
 
   .code javascript
   class TodoList {
@@ -98,7 +106,7 @@ draft_body = <<~'BODY'
   todoList.addTodo("Test multiple languages");
   .end
 
-  ## Simple Ruby Example (Prism)
+  ## Simple Ruby Example
 
   .code ruby
   def hello_world
@@ -122,10 +130,10 @@ draft_body = <<~'BODY'
 
   - **Ruby (Rouge)**: Keywords in red, strings in blue, variables in orange
   - **Elixir (Rouge)**: Functions in purple, atoms in green, strings in blue  
-  - **JavaScript (Prism)**: Keywords in red, functions in purple, strings in blue
+  - **JavaScript (Highlight.js)**: Keywords in red, functions in purple, strings in blue
   - **Plain text**: No highlighting, just code block formatting
 
-  Both Rouge and Prism highlighting should work automatically!
+  Rouge and Highlight.js highlighting should work automatically!
 BODY
 
 name = @repo.create_draft(title: "Comprehensive Syntax Highlighting Test", views: ["testview"], body: draft_body)
@@ -134,21 +142,26 @@ num = @repo.finish_draft(name)
 
 @repo.generate_front_page("testview")
 
+# Open the generated post directly (works under simple httpd without SPA)
+unless ARGV.include?("--automated")
+  post_url = "http://127.0.0.1:8000/scriptorium-TEST/views/testview/output/posts/0001-comprehensive-syntax-highlighting-test.html"
+  puts "Press Enter to open the post directly to verify highlighting."
+  STDIN.gets
+  system("open #{post_url}")
+end
+
 instruct <<~EOS
   Front page should have one post with comprehensive syntax highlighting.
   
-  Rouge highlighting (Ruby, Elixir):
-  - Ruby: Keywords red, strings blue, variables orange
-  - Elixir: Functions purple, atoms green, strings blue
-  
-  Prism highlighting (JavaScript, Ruby):
-  - JavaScript: Keywords red, functions purple, strings blue
-  - Ruby: Standard Prism Ruby highlighting
+  Highlight.js (Ruby, Elixir, JavaScript):
+  - Ruby/Elixir/JS: Token colors applied client-side
   
   Plain text: No highlighting, just code block formatting
   
-  Check that both Rouge CSS and Prism CSS/JS are included in the generated HTML.
+  Check that Highlight.js CSS/JS are included in the generated HTML.
   All code blocks should have proper token classes and syntax highlighting.
+  Then open the post directly to verify:
+  http://127.0.0.1:8000/scriptorium-TEST/views/testview/output/posts/0001-comprehensive-syntax-highlighting-test.html
 EOS
 
 examine("testview")

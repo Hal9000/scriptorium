@@ -36,6 +36,23 @@ class ScriptoriumWeb < Sinatra::Base
   set :views, File.join(__dir__, 'views')
   set :show_exceptions, false  # Disable Sinatra's default error display
   
+  # Configure static file serving for assets
+  configure do
+    # Set public folder to serve static files from the current view's output directory
+    # This will be updated dynamically based on the current view
+    set :public_folder, File.join(__dir__, '..', 'scriptorium-TEST', 'views', 'computing', 'output')
+  end
+  
+  # Update static file serving based on current view
+  before do
+    if @api&.current_view
+      public_path = @api.root/"views"/@api.current_view.name/"output"
+      if Dir.exist?(public_path)
+        settings.public_folder = public_path.to_s
+      end
+    end
+  end
+
   # Helper method to render dashboard with error/message
   def render_dashboard(error: nil, message: nil)
     @error = error
@@ -452,17 +469,8 @@ class ScriptoriumWeb < Sinatra::Base
       # Generate the view first to ensure it's up to date
       @api.generate_view(@current_view.name)
       
-      # Redirect to the generated index.html file
-      view_dir = @api.root/"views"/@current_view.name
-      index_file = view_dir/"output"/"index.html"
-      
-      if File.exist?(index_file)
-        # Return the HTML content directly for preview
-        content_type :html
-        read_file(index_file)
-      else
-        render_dashboard(error: "Preview file not found - view may not have been generated properly")
-      end
+      # Redirect to the index route under /preview/:view_name so relative links resolve
+      redirect "/preview/#{@current_view.name}/index.html"
     rescue => e
       render_dashboard(error: error_with_location(e, "Failed to preview view: #{e.message}"))
     end
@@ -496,6 +504,30 @@ class ScriptoriumWeb < Sinatra::Base
     end
   end
 
+  # Serve post_index.html fragment for SPA back navigation
+  get '/preview/:view_name/post_index.html' do
+    view_name = params[:view_name]
+    begin
+      if view_name.nil? || view_name.strip.empty?
+        status 400
+        return "Bad request: missing view name"
+      end
+      # Ensure view is generated
+      @api.generate_view(view_name)
+      fragment = @api.root/"views"/view_name/"output"/"post_index.html"
+      if File.exist?(fragment)
+        content_type :html
+        read_file(fragment)
+      else
+        status 404
+        "Not found"
+      end
+    rescue => e
+      status 500
+      "Error loading post_index: #{e.message}"
+    end
+  end
+
   # Serve post files for preview
   get '/preview/:view_name/posts/:filename' do
     view_name = params[:view_name]
@@ -507,44 +539,19 @@ class ScriptoriumWeb < Sinatra::Base
         return "File not found"
       end
       
+      # Check if view has been generated (index.html exists)
+      index_file = @api.root/"views"/view_name/"output"/"index.html"
+      unless File.exist?(index_file)
+        status 404
+        return "View '#{view_name}' has not been generated. Please generate the view first."
+      end
+      
       # Construct the file path
       post_file = @api.root/"views"/view_name/"output"/"posts"/filename
       
       if File.exist?(post_file)
         content_type :html
-        
-        # Read the post content
-        post_content = read_file(post_file)
-        
-        # Create wrapper with Close button and iframe
-        html = <<~HTML
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <title>Post Preview</title>
-            <style>
-              body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-              .header { background: #f8f9fa; border-bottom: 1px solid #dee2e6; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
-              .close-btn { background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; }
-              .close-btn:hover { background: #c82333; }
-              .iframe-container { height: calc(100vh - 60px); }
-              iframe { width: 100%; height: 100%; border: none; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h3 style="margin: 0;">Post Preview</h3>
-              <button class="close-btn" onclick="window.close()">Close</button>
-            </div>
-            <div class="iframe-container">
-              <iframe src="/preview/#{view_name}/posts/#{filename}/content"></iframe>
-            </div>
-          </body>
-          </html>
-        HTML
-        
-        html
+        read_file(post_file)
       else
         status 404
         "File not found: #{filename}"
@@ -575,14 +582,13 @@ class ScriptoriumWeb < Sinatra::Base
         # Read the post content
         post_content = read_file(post_file)
         
-        # Wrap in HTML document with syntax highlighting
+        # Wrap in HTML document with syntax highlighting (Highlight.js)
         html = <<~HTML
           <!DOCTYPE html>
           <html>
           <head>
             <meta charset="utf-8">
             <title>Post Content</title>
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
             <style>
               body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 20px; line-height: 1.6; }
@@ -592,13 +598,10 @@ class ScriptoriumWeb < Sinatra::Base
           </head>
           <body>
             #{post_content}
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
             <script>
               document.addEventListener('DOMContentLoaded', function() {
-                Prism.highlightAll();
-                hljs.highlightAll();
+                if (typeof hljs !== 'undefined') { hljs.highlightAll(); }
               });
             </script>
           </body>
@@ -627,6 +630,13 @@ class ScriptoriumWeb < Sinatra::Base
         return "File not found"
       end
       
+      # Check if view has been generated (index.html exists)
+      index_file = @api.root/"views"/view_name/"output"/"index.html"
+      unless File.exist?(index_file)
+        status 404
+        return "View '#{view_name}' has not been generated. Please generate the view first."
+      end
+      
       # Construct the file path
       permalink_file = @api.root/"views"/view_name/"output"/"permalink"/filename
       
@@ -640,6 +650,62 @@ class ScriptoriumWeb < Sinatra::Base
     rescue => e
       status 500
       "Error loading file: #{e.message}"
+    end
+  end
+
+  # Serve assets for preview
+  get '/preview/:view_name/assets/*' do
+    view_name = params[:view_name]
+    asset_path = params[:splat].first
+    
+    begin
+      if view_name.nil? || view_name.strip.empty? || asset_path.nil? || asset_path.strip.empty?
+        status 404
+        return "Asset not found"
+      end
+      
+      # Check if view has been generated (index.html exists)
+      index_file = @api.root/"views"/view_name/"output"/"index.html"
+      unless File.exist?(index_file)
+        status 404
+        return "View '#{view_name}' has not been generated. Please generate the view first."
+      end
+      
+      # Construct the asset file path (serve from generated output assets)
+      asset_file = @api.root/"views"/view_name/"output"/"assets"/asset_path
+      # Fallback: if not present in output assets, try view assets directly
+      unless File.exist?(asset_file)
+        fallback_asset = @api.root/"views"/view_name/"assets"/asset_path
+        asset_file = fallback_asset if File.exist?(fallback_asset)
+      end
+      
+      if File.exist?(asset_file)
+        # Set appropriate content type based on file extension
+        case File.extname(asset_file).downcase
+        when '.png'
+          content_type 'image/png'
+        when '.jpg', '.jpeg'
+          content_type 'image/jpeg'
+        when '.gif'
+          content_type 'image/gif'
+        when '.svg'
+          content_type 'image/svg+xml'
+        when '.css'
+          content_type 'text/css'
+        when '.js'
+          content_type 'application/javascript'
+        else
+          content_type 'application/octet-stream'
+        end
+        
+        read_file(asset_file)
+      else
+        status 404
+        "Asset not found: #{asset_path}"
+      end
+    rescue => e
+      status 500
+      "Error loading asset: #{e.message}"
     end
   end
 
@@ -1222,6 +1288,17 @@ class ScriptoriumWeb < Sinatra::Base
       @api.view(view_name)
       # @current_view = @api.current_view # This line is now redundant as @current_view is set above
       
+      # Auto-generate view if not already generated
+      index_file = @api.root/"views"/view_name/"output"/"index.html"
+      unless File.exist?(index_file)
+        begin
+          @api.generate_view(view_name)
+        rescue => e
+          # Log the error but don't fail the dashboard load
+          File.write('/tmp/dashboard_debug.log', "Auto-generation failed: #{e.message}\n", mode: 'a')
+        end
+      end
+      
       # Generate banner for display
       begin
         bsvg = Scriptorium::BannerSVG.new(@current_view.title, @current_view.subtitle)
@@ -1660,53 +1737,9 @@ class ScriptoriumWeb < Sinatra::Base
     end
   end
 
-  # Serve global assets
-  get '/assets/*' do
-    asset_path = params[:splat].first
-    asset_file = @api.root/"assets"/asset_path
-    
-    if File.exist?(asset_file) && File.file?(asset_file)
-      send_file asset_file
-    else
-      status 404
-      "Asset not found"
-    end
-  end
+  # Static files are now served directly by Sinatra from the public_folder
+  # No custom routes needed for assets
 
-  # Serve view-specific assets
-  get '/views/:view_name/assets/*' do
-    view_name = params[:view_name]
-    asset_path = params[:splat].first
-    asset_file = @api.root/"views"/view_name/"assets"/asset_path
-    
-    if File.exist?(asset_file) && File.file?(asset_file)
-      send_file asset_file
-    else
-      status 404
-      "Asset not found"
-    end
-  end
-
-  # Serve post-specific assets
-  get '/posts/:post_id/assets/*' do
-    post_id = params[:post_id]
-    asset_path = params[:splat].first
-    
-    # Validate post_id format (4 digits)
-    unless post_id.match?(/^\d{4}$/)
-      status 404
-      return "Invalid post ID format"
-    end
-    
-    asset_file = @api.root/"posts"/post_id/"assets"/asset_path
-    
-    if File.exist?(asset_file) && File.file?(asset_file)
-      send_file asset_file
-    else
-      status 404
-      "Asset not found"
-    end
-  end
 
   # Server status endpoint
   get '/status' do
@@ -1844,8 +1877,8 @@ class ScriptoriumWeb < Sinatra::Base
       filename = file[:filename]
       tempfile = file[:tempfile]
       
-      # Use the API to upload the asset
-      target_file = @api.upload_asset(tempfile.path, 'post', post_id)
+      # Use the API to upload the asset with original filename
+      target_file = @api.upload_asset(tempfile.path, 'post', post_id, filename: filename)
       
       redirect "/view/#{@current_view.name}?message=Asset '#{filename}' uploaded successfully to post ##{post_id}"
     rescue => e

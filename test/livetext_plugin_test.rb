@@ -2,6 +2,7 @@
 
 require 'minitest/autorun'
 require_relative '../lib/scriptorium'
+require 'tempfile'
 require_relative 'test_helpers'
 
 class LivetextPluginTest < Minitest::Test
@@ -105,9 +106,9 @@ class LivetextPluginTest < Minitest::Test
     
     body, vars = process_livetext(content)
     
-    # Check for dropcap formatting - should be a single paragraph with class
-    assert_match(/<p class="dropcap">/, body)
-    assert_match(/This is a dropcap test with multiple lines\./, body)
+    # Check for dropcap formatting - should be a span with class for first character
+    assert_match(/<span class="dropcap">/, body)
+    assert_match(/his is a dropcap test with multiple lines\./, body)
     assert_match(/The dropcap should apply to the first letter/, body)
     
     # Check for inset formatting
@@ -130,7 +131,53 @@ class LivetextPluginTest < Minitest::Test
     assert_match(/<br><br>/, body)
     assert_match(/<h1>Function Heading<\/h1>/, body)
     assert_match(/<h2>Sub Heading<\/h2>/, body)
-    assert_match(/<img src='test\.jpg'><\/img>/, body)
+    # In non-post context with no real file, $$image resolves to missing image
+    assert_match(/<img src=assets\/imagenotfound\.jpg alt='No alt text'><\/img>/, body)
+  end
+
+  def test_024_center_dot_command_with_image_function
+    content = <<~EOS
+      .center
+      $$image:test.jpg
+      .end
+    EOS
+
+    body, vars = process_livetext(content)
+
+    assert_match(/<div style="text-align:center">/, body)
+    # In non-post context with no real file, $$image resolves to missing image
+    assert_match(/<img src=assets\/imagenotfound\.jpg alt='No alt text'><\/img>/, body)
+  end
+
+  def test_023_asset_dot_command_copies_to_post_assets
+    # Create repo/view/post context
+    create_test_environment_with_content
+    # Create a temp file to copy
+    tmp = Tempfile.new(['sample', '.txt'])
+    tmp.write("hello")
+    tmp.close
+
+    repo_root = 'scriptorium-TEST'
+    source_path = File.join(repo_root, 'posts', '0001', 'source.lt3')
+    # Append .asset and a reference line to the post source
+    File.open(source_path, 'a') do |f|
+      f.puts ".asset #{tmp.path}"
+      f.puts "Copied path: $$asset[#{File.basename(tmp.path)}]"
+    end
+
+    # Generate the post so the snippet is rendered
+    api = Scriptorium::API.new(testmode: true)
+    api.open_repo(repo_root)
+    api.generate_post(1)
+
+    # Read body.html and verify both copy and rendered reference
+    body_file = File.join(repo_root, 'posts', '0001', 'body.html')
+    body = File.read(body_file)
+    post_asset_path = File.join(repo_root, 'posts', '0001', 'assets', File.basename(tmp.path))
+    assert File.exist?(post_asset_path), "Expected copied asset under post assets"
+    assert_includes body, "Copied path: ../assets/posts/0001/#{File.basename(tmp.path)}"
+  ensure
+    tmp.unlink if tmp && File.exist?(tmp.path)
   end
 
   def test_005_dropcap_command
@@ -145,8 +192,8 @@ class LivetextPluginTest < Minitest::Test
     body, vars = process_livetext(content)
     
     # Check dropcap formatting
-    assert_match(/<p class="dropcap">/, body)
-    assert_match(/Once upon a time there was a story/, body)
+    assert_match(/<span class="dropcap">/, body)
+    assert_match(/nce upon a time there was a story/, body)
     assert_match(/This is the rest of the paragraph/, body)
     
     # Should be a single paragraph, not split into multiple divs
@@ -199,7 +246,8 @@ class LivetextPluginTest < Minitest::Test
     
     # Check that image command worked
     assert_match(/<img/, body)
-    assert_match(/src=assets\/test\.jpg/, body)
+    assert_match(/src=assets\/imagenotfound\.jpg/, body)
+    assert_match(/alt='No alt text'/, body)
     assert_match(/This is the body content/, body)
     # Should not contain the literal ".image" if working
     refute_match(/\.image/, body)
@@ -217,7 +265,7 @@ class LivetextPluginTest < Minitest::Test
     
     # Check that image! command worked
     assert_match(/<img/, body)
-    assert_match(/src=assets\/featured\.jpg/, body)
+    assert_match(/src=assets\/imagenotfound\.jpg/, body)
     assert_match(/width=800/, body)
     assert_match(/height=600/, body)
     assert_match(/alt='Featured image with alt text'/, body)
@@ -238,7 +286,7 @@ class LivetextPluginTest < Minitest::Test
     
     # Check that image with alt text worked
     assert_match(/<img/, body)
-    assert_match(/src=assets\/test\.jpg/, body)
+    assert_match(/src=assets\/imagenotfound\.jpg/, body)
     assert_match(/alt='Alt text for image'/, body)
     assert_match(/This is the body content/, body)
   end

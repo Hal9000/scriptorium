@@ -32,7 +32,7 @@ class WebWorkflowTest < Minitest::Test
     # Step 1: Check initial state (no repository)
     response = get("/")
     assert_response_success(response, "Dashboard should load initially")
-    assert_includes response.body, "No repository loaded", "Should show no repository message"
+    assert_includes_concise response, "No repository loaded", "Should show no repository message"
     
     # Step 2: Create repository via web form
     response = post("/create_repo", {})
@@ -41,7 +41,7 @@ class WebWorkflowTest < Minitest::Test
     # Step 3: Verify repository was created
     response = get("/")
     assert_response_success(response, "Dashboard should load after repo creation")
-    assert_includes response.body, "scriptorium-TEST", "Should show repository name"
+    assert_includes_concise response, "scriptorium-TEST", "Should show repository name"
     
     # Complete repository setup workflow working
   end
@@ -64,7 +64,7 @@ class WebWorkflowTest < Minitest::Test
     # Step 3: Verify view was created
     response = get("/")
     assert_response_success(response, "Dashboard should load after view creation")
-    assert_includes response.body, "test-view", "Should show created view"
+    assert_includes_concise response, "test-view", "Should show created view"
     
     # View creation workflow working
   end
@@ -91,7 +91,7 @@ class WebWorkflowTest < Minitest::Test
     # Step 3: Verify post was created
     response = get("/view/test-view")
     assert_response_success(response, "View dashboard should load")
-    assert_includes response.body, "Test Post via Web", "Should show created post"
+    assert_includes_concise response, "Test Post via Web", "Should show created post"
     
     # Post creation workflow working
   end
@@ -170,11 +170,11 @@ class WebWorkflowTest < Minitest::Test
     # Step 2: Access asset management
     response = get("/asset_management")
     assert_response_success(response, "Asset management page should load")
-    assert_includes response.body, "Asset Management", "Should show asset management interface"
+    assert_includes_concise response, "Asset Management", "Should show asset management interface"
     
     # Step 3: Test asset upload (simulated)
     # Note: This would require file upload handling in a real test
-    assert_includes response.body, "upload", "Should have upload functionality"
+    assert_includes_concise response, "upload", "Should have upload functionality"
     
     # Asset management workflow accessible
   end
@@ -194,7 +194,7 @@ class WebWorkflowTest < Minitest::Test
     # Step 2: Access view configuration
     response = get("/configure_view/test-view")
     assert_response_success(response, "View configuration page should load")
-    assert_includes response.body, "Configure View", "Should show configuration interface"
+    assert_includes_concise response, "Configure View", "Should show configuration interface"
     
     # Step 3: Test configuration saving
     response = post("/save_view_config/test-view", {
@@ -222,7 +222,7 @@ class WebWorkflowTest < Minitest::Test
     # Step 2: Access deployment configuration
     response = get("/deploy_config")
     assert_response_success(response, "Deployment config page should load")
-    assert_includes response.body, "Deployment Configuration", "Should show deployment interface"
+    assert_includes_concise response, "Deployment Configuration", "Should show deployment interface"
     
     # Step 3: Test deployment configuration saving
     response = post("/deploy_config", {
@@ -263,7 +263,7 @@ class WebWorkflowTest < Minitest::Test
     # Verify the HTML shows the post as published
     response = get("/view/test-view")
     assert_response_success(response, "Should load view dashboard")
-    assert_includes response.body, "Published", "HTML should show 'Published' status"
+    assert_includes_concise response, "Published", "HTML should show 'Published' status"
     
     # Unpublish the post via web interface
     response = post("/toggle_post_status/#{post_id}", {})
@@ -277,7 +277,7 @@ class WebWorkflowTest < Minitest::Test
     # Verify the HTML shows the post as unpublished
     response = get("/view/test-view")
     assert_response_success(response, "Should load view dashboard")
-    assert_includes response.body, "unpublished", "HTML should show 'unpublished' status"
+    assert_includes_concise response, "unpublished", "HTML should show 'unpublished' status"
   end
 
   # Test delete/restore workflow via web
@@ -296,7 +296,7 @@ class WebWorkflowTest < Minitest::Test
     # Initially post should be visible
     response = get("/view/test-view")
     assert_response_success(response, "Should load view dashboard")
-    assert_includes response.body, "Test Delete Post", "HTML should show post title"
+    assert_includes_concise response, "Test Delete Post", "HTML should show post title"
     refute_includes response.body, "text-decoration: line-through", "Post should not be strikethrough"
     
     # Delete the post via web interface
@@ -306,8 +306,8 @@ class WebWorkflowTest < Minitest::Test
     # Verify the HTML shows the post as deleted (strikethrough)
     response = get("/view/test-view")
     assert_response_success(response, "Should load view dashboard")
-    assert_includes response.body, "Test Delete Post", "HTML should still show post title"
-    assert_includes response.body, "text-decoration: line-through", "Post should be strikethrough when deleted"
+    assert_includes_concise response, "Test Delete Post", "HTML should still show post title"
+    assert_includes_concise response, "text-decoration: line-through", "Post should be strikethrough when deleted"
     
     # Restore the post via web interface
     response = post("/restore_post/#{post_id}", {})
@@ -316,7 +316,7 @@ class WebWorkflowTest < Minitest::Test
     # Verify the HTML shows the post as restored (no strikethrough)
     response = get("/view/test-view")
     assert_response_success(response, "Should load view dashboard")
-    assert_includes response.body, "Test Delete Post", "HTML should show post title"
+    assert_includes_concise response, "Test Delete Post", "HTML should show post title"
     refute_includes response.body, "text-decoration: line-through", "Post should not be strikethrough when restored"
   end
 
@@ -347,9 +347,9 @@ class WebWorkflowTest < Minitest::Test
     # Test accessing backup management page
     response = get("/backup_management")
     assert_response_success(response, "Backup management page should load")
-    assert_includes response.body, "Backup Management", "Should show backup management title"
-    assert_includes response.body, "Create New Backup", "Should show backup creation form"
-    assert_includes response.body, "Available Backups", "Should show backups list section"
+    assert_includes_concise response, "Backup Management", "Should show backup management title"
+    assert_includes_concise response, "Create New Backup", "Should show backup creation form"
+    assert_includes_concise response, "Available Backups", "Should show backups list section"
   end
 
   # Test backup creation via web form
@@ -370,9 +370,9 @@ class WebWorkflowTest < Minitest::Test
     # Test accessing backup management page to verify backup was created
     response = get("/backup_management")
     assert_response_success(response, "Backup management page should load after backup creation")
-    assert_includes response.body, "Test full backup from web", "Should show created backup description"
-    assert_includes response.body, "full", "Should show backup type"
-    assert_includes response.body, "ago", "Should show human-readable age"
+    assert_includes_concise response, "Test full backup from web", "Should show created backup description"
+    assert_includes_concise response, "full", "Should show backup type"
+    assert_includes_concise response, "ago", "Should show human-readable age"
   end
 
   # Test incremental backup creation
@@ -397,9 +397,9 @@ class WebWorkflowTest < Minitest::Test
     # Verify both backups are listed
     response = get("/backup_management")
     assert_response_success(response, "Backup management page should load")
-    assert_includes response.body, "Initial full backup", "Should show full backup"
-    assert_includes response.body, "Incremental backup after changes", "Should show incremental backup"
-    assert_includes response.body, "incr", "Should show incremental type"
+    assert_includes_concise response, "Initial full backup", "Should show full backup"
+    assert_includes_concise response, "Incremental backup after changes", "Should show incremental backup"
+    assert_includes_concise response, "incr", "Should show incremental type"
   end
 
   # Test backup creation with empty description
@@ -417,7 +417,7 @@ class WebWorkflowTest < Minitest::Test
     # Verify backup was created
     response = get("/backup_management")
     assert_response_success(response, "Backup management page should load")
-    assert_includes response.body, "No description", "Should show no description message"
+    assert_includes_concise response, "No description", "Should show no description message"
   end
 
   # Test backup creation with invalid type
@@ -464,11 +464,11 @@ class WebWorkflowTest < Minitest::Test
     assert_response_success(response, "Backup management page should load")
     
     # Check for key UI elements
-    assert_includes response.body, "backup-form", "Should have backup form styling"
-    assert_includes response.body, "backups-table", "Should have backups table styling"
-    assert_includes response.body, "backup-type", "Should have backup type styling"
-    assert_includes response.body, "backup-age", "Should have backup age styling"
-    assert_includes response.body, "Back to Dashboard", "Should have back navigation link"
+    assert_includes_concise response, "backup-form", "Should have backup form styling"
+    assert_includes_concise response, "backups-table", "Should have backups table styling"
+    assert_includes_concise response, "backup-type", "Should have backup type styling"
+    assert_includes_concise response, "backup-age", "Should have backup age styling"
+    assert_includes_concise response, "Back to Dashboard", "Should have back navigation link"
   end
 
   # Test backup management page with multiple backups
@@ -501,13 +501,13 @@ class WebWorkflowTest < Minitest::Test
     assert_response_success(response, "Backup management page should load")
     
     # Check that all backups are present
-    assert_includes response.body, "First backup", "Should show first backup"
-    assert_includes response.body, "Second backup", "Should show second backup"
-    assert_includes response.body, "Third backup", "Should show third backup"
+    assert_includes_concise response, "First backup", "Should show first backup"
+    assert_includes_concise response, "Second backup", "Should show second backup"
+    assert_includes_concise response, "Third backup", "Should show third backup"
     
     # Check that backups are sorted by timestamp (newest first)
     # This is harder to test without parsing the HTML, but we can verify the structure
-    assert_includes response.body, "backups-table", "Should have backups table"
+    assert_includes_concise response, "backups-table", "Should have backups table"
   end
 
   # Test backup management page error handling

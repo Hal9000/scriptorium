@@ -60,6 +60,7 @@ test_files = %w[
   banner_svg/simple_helpers.rb
   banner_svg/unit.rb
   integration/integration_test.rb
+  integration/preview_flow_test.rb
   livetext_plugin_test.rb
   unit/core.rb
   unit/post_index_config_test.rb

@@ -50,11 +50,11 @@ class WebIntegrationTest < Minitest::Test
     # Test view creation form
     response = get("/")
     assert_response_success(response, "Dashboard should load")
-    assert_includes response.body, "Create Repository", "Should show create repository option"
+    assert_includes_concise response, "Create Repository", "Should show create repository option"
     
     # Test repository creation (this would be a POST request in real usage)
     # For now, we'll test that the form elements exist
-    assert_includes response.body, "create_repo", "Should have repository creation form"
+    assert_includes_concise response, "create_repo", "Should have repository creation form"
     
     # View creation workflow accessible
   end
@@ -69,7 +69,7 @@ class WebIntegrationTest < Minitest::Test
     # Test asset management page
     response = get("/asset_management")
     assert_response_success(response, "Asset management page should load")
-    assert_includes response.body, "Asset Management", "Should show asset management interface"
+    assert_includes_concise response, "Asset Management", "Should show asset management interface"
     
     # Asset management accessible
   end
@@ -84,7 +84,7 @@ class WebIntegrationTest < Minitest::Test
     # Test view configuration page
     response = get("/advanced_config")
     assert_response_success(response, "Advanced config page should load")
-    assert_includes response.body, "Advanced Configuration", "Should show configuration interface"
+    assert_includes_concise response, "Advanced Configuration", "Should show configuration interface"
     
     # View configuration accessible
   end
@@ -99,7 +99,7 @@ class WebIntegrationTest < Minitest::Test
     # Test deployment configuration page
     response = get("/deploy_config")
     assert_response_success(response, "Deploy config page should load")
-    assert_includes response.body, "Deployment Configuration", "Should show deployment interface"
+    assert_includes_concise response, "Deployment Configuration", "Should show deployment interface"
     
     # Deployment configuration accessible
   end

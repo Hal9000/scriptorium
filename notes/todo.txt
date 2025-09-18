@@ -1,6 +1,6 @@
 VERY SOON:
 ----------
-  reddit retro support
+  how to call asset()
   full reddit support
   title for pages
   manual test runner

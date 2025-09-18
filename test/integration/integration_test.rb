@@ -33,7 +33,7 @@ class IntegrationTest < Minitest::Test
     output = @sample_view.dir/:output/:panes/"header.html"
     assert File.exist?(output), "Expected header.html to exist"
     content = File.read(output)
-    assert_includes content, "<h1>", "Expected header content to include <h1>"
+    assert_includes_concise_string content, "<h1>", "Expected header content to include <h1>"
   end
 
   def test_002_posts_generated_and_indexed_across_multiple_views
@@ -63,7 +63,7 @@ class IntegrationTest < Minitest::Test
     posts_content = File.read(@repo.root/:views/"blog1"/:output/"index.html")
     posts = @repo.all_posts("blog1")
     posts.each do |post|
-      assert_includes posts_content, post.title
+      assert_includes_concise_string posts_content, post.title, "Post title should appear in index"
       month, day, year = post.pubdate_month_day_year
       assert_includes posts_content, month + " " + day
       assert_includes posts_content, year
@@ -95,9 +95,9 @@ class IntegrationTest < Minitest::Test
     @repo.all_posts("blog1").each do |post|
       next unless post.pubdate && post.title
       month, day, year = post.pubdate_month_day_year
-      assert_includes content, month + " " + day + ",", "Expected pubdate #{month} #{day} to appear"
-      assert_includes content, year + "</div>", "Expected year #{year} to appear"
-      assert_includes content, post.title,   "Expected title #{post.title} to appear"
+      assert_includes_concise_string content, month + " " + day + ",", "Expected pubdate #{month} #{day} to appear"
+      assert_includes_concise_string content, year + "</div>", "Expected year #{year} to appear"
+      assert_includes_concise_string content, post.title,   "Expected title #{post.title} to appear"
     end
   end
   

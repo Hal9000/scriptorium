@@ -204,7 +204,7 @@ class SocialTest < Minitest::Test
     # Should contain Reddit button HTML
     assert_includes button_html, 'href="https://reddit.com/submit'
     assert_includes button_html, 'title="Share on Reddit"'
-    assert_includes button_html, 'src="assets/reddit-logo.png"'
+    assert_includes button_html, 'src="../../assets/icons/social/reddit.png"'
     assert_includes button_html, 'alt="Share on Reddit"'
   end
 
@@ -320,8 +320,8 @@ class SocialTest < Minitest::Test
     assert File.exist?(post_file), "Generated post should exist"
     
     post_content = read_file(post_file)
-    assert_includes post_content, 'href="https://reddit.com/submit'
-    assert_includes post_content, 'src="assets/reddit-logo.png"'
+    assert_includes_concise_string post_content, 'href="https://reddit.com/submit', "Post should contain Reddit submit link"
+    assert_includes_concise_string post_content, 'src="../../assets/icons/social/reddit.png"', "Post should contain Reddit icon"
   end
 
   def test_014_reddit_button_missing_config_file_handling

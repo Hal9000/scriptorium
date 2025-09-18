@@ -21,7 +21,7 @@ class Scriptorium::StandardFiles
       javascript # See common.js 
       bootstrap  # See bootstrap.txt
       social     # See social.txt for configuration
-      highlight      # See prism_css.txt for syntax highlighting
+      highlight      # See highlight_css.txt for syntax highlighting
       highlight_custom # Custom CSS overrides for Highlight.js
     EOS
     str
@@ -95,10 +95,12 @@ class Scriptorium::StandardFiles
     EOS
   end
 
-
-
   def support_data(relative_path)
     read_file(support_file(relative_path))
+  end
+
+  def post_template
+    support_data('templates/post.lt3')
   end
 
   def svg_txt
