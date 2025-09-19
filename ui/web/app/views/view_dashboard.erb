@@ -194,11 +194,15 @@
             </div>
             
             <div class="config-buttons">
+                <a href="#" class="btn" style="background: #17a2b8;" title="Preview locally" onclick="try{ showPreviewPopup(); }catch(e){}; window.open('/preview','_blank'); return false;">Preview</a>
+                <form method="post" action="/generate_view" style="display: inline;" onsubmit="showGeneratingPopup()">
+                    <input type="hidden" name="view_name" value="<%= @current_view.name %>">
+                    <button type="submit" class="btn" style="background: #007bff;">Generate</button>
+                </form>
                 <button type="button" class="btn" onclick="showUploadAssetForm()" style="background: #6c757d;">Upload Asset</button>
                 <a href="/asset_management" class="btn">Asset Management</a>
                 <a href="/backup_management" class="btn" style="background: #fd7e14;" title="Backup and restore repository">Backup/Restore</a>
                 <a href="/deploy" class="btn" style="background: #28a745;" title="Deploy to server" onclick="showUploadingPopup()">Deploy</a>
-                <a href="/preview" class="btn" style="background: #17a2b8;" title="Preview locally">Preview</a>
                 <a href="/browse" class="btn" style="background: #6f42c1;" title="Browse deployed site">Browse</a>
                 <a href="/advanced_config" class="btn btn-secondary">Advanced Config</a>
             </div>
@@ -408,6 +412,20 @@
     
     <script>
         // Global functions accessible from HTML onclick attributes
+        function ensureOverlay(id, text, bg) {
+            var el = document.getElementById(id);
+            if (!el) {
+                el = document.createElement('div');
+                el.id = id;
+                el.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 16px 22px; border-radius: 8px; z-index: 9999; color: white; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
+                document.body.appendChild(el);
+            }
+            el.style.background = bg;
+            el.textContent = text;
+            el.style.display = 'block';
+            return el;
+        }
+        function showPreviewPopup() { try { ensureOverlay('preview-popup', 'Opening preview...', '#17a2b8'); } catch(e) {} }
         
         function toggleCreatePostForm() {
             console.log('toggleCreatePostForm called');

@@ -802,6 +802,72 @@ class Scriptorium::API
     view ||= @repo.current_view&.name
     raise ViewTargetNil if view.nil?
     
+    # Guard: skip regeneration if outputs are newer than inputs (simple mtime check)
+    begin
+      v = @repo.lookup_view(view)
+      view_dir = v.dir
+      output_dir = v.dir/:output
+      output_index = output_dir/:index.html
+      output_post_index = output_dir/:post_index.html
+
+      latest_input = Time.at(0)
+
+      # Posts: only count source.lt3 and post assets as inputs
+      posts_dir = @repo.root/:posts
+      if Dir.exist?(posts_dir)
+        Dir.glob("#{posts_dir}/[0-9][0-9][0-9][0-9]/source.lt3").each do |p|
+          m = File.mtime(p) rescue nil
+          latest_input = m if m && m > latest_input
+        end
+        Dir.glob("#{posts_dir}/[0-9][0-9][0-9][0-9]/assets/**/*").each do |p|
+          next unless File.file?(p)
+          m = File.mtime(p) rescue nil
+          latest_input = m if m && m > latest_input
+        end
+      end
+
+      # View inputs (exclude generated output/*)
+      if Dir.exist?(view_dir)
+        Dir.glob("#{view_dir}/**/*").each do |p|
+          next unless File.file?(p)
+          next if p.start_with?(output_dir.to_s)
+          m = File.mtime(p) rescue nil
+          latest_input = m if m && m > latest_input
+        end
+      end
+
+      # Global assets
+      global_assets = @repo.root/:assets
+      if Dir.exist?(global_assets)
+        Dir.glob("#{global_assets}/**/*").each do |p|
+          next unless File.file?(p)
+          m = File.mtime(p) rescue nil
+          latest_input = m if m && m > latest_input
+        end
+      end
+
+      # Themes (inputs that can affect templates)
+      themes_dir = @repo.root/:themes
+      if Dir.exist?(themes_dir)
+        Dir.glob("#{themes_dir}/**/*").each do |p|
+          next unless File.file?(p)
+          m = File.mtime(p) rescue nil
+          latest_input = m if m && m > latest_input
+        end
+      end
+
+      # Skip regeneration only if both primary outputs exist and are newer than inputs
+      if File.exist?(output_index) && File.exist?(output_post_index)
+        out_mtime = File.mtime(output_index) rescue nil
+        out2_mtime = File.mtime(output_post_index) rescue nil
+        if out_mtime && out2_mtime && out_mtime >= latest_input && out2_mtime >= latest_input
+          return true
+        end
+      end
+    rescue => _e
+      # If guard fails, fall through to full generation
+    end
+
     # Copy all global assets to view assets
     copy_global_assets_to_view(view)
     

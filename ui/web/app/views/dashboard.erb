@@ -20,7 +20,24 @@
     .posts-table .post-id { text-align: right !important; font-family: monospace; min-width: 40px; }
   </style>
   <script>
+    function ensureOverlay(id, text, bg) {
+      let el = document.getElementById(id);
+      if (!el) {
+        el = document.createElement('div');
+        el.id = id;
+        el.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 16px 22px; border-radius: 8px; z-index: 9999; color: white; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
+        document.body.appendChild(el);
+      }
+      el.style.background = bg;
+      el.textContent = text;
+      el.style.display = 'block';
+      return el;
+    }
+    function showGeneratingPopup() { ensureOverlay('gen-popup', 'Generating view...', '#007bff'); }
+    function showPreviewPopup() { ensureOverlay('preview-popup', 'Opening preview...', '#17a2b8'); }
     function previewView(viewName) {
+      // Show lightweight popup while the new tab loads
+      try { showPreviewPopup(); } catch(e) {}
       // Open preview in new tab with GET request
       window.open('/preview', '_blank');
     }
@@ -106,13 +123,6 @@
             <div style="margin-top: 15px; padding: 10px; background-color: #f0f8ff; border: 1px solid #b0d4f1; border-radius: 3px;">
               <strong>Current view:</strong> <%= @current_view.name %>
               <a href="/view/<%= @current_view.name %>" class="button" style="margin-left: 10px; text-decoration: none;">View Dashboard</a>
-              <form method="post" action="/generate_view" style="display: inline; margin-left: 5px;">
-                <input type="hidden" name="view_name" value="<%= @current_view.name %>">
-                <button type="submit" class="button">Generate</button>
-              </form>
-              <button type="button" class="button" onclick="previewView('<%= @current_view.name %>')" style="margin-left: 5px;">Preview</button>
-              <a href="/banner_config" class="button" style="margin-left: 5px; text-decoration: none;">Banner Config</a>
-              <a href="/navbar_config" class="button" style="margin-left: 5px; text-decoration: none;">Navbar Config</a>
               <a href="/asset_management" class="button" style="margin-left: 5px; text-decoration: none;">Asset Management</a>
               <a href="/theme_management" class="button" style="margin-left: 5px; text-decoration: none;">Theme Management</a>
             </div>

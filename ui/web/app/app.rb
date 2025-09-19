@@ -709,6 +709,8 @@ class ScriptoriumWeb < Sinatra::Base
     end
   end
 
+  # (timing route removed)
+
   # Serve post files relative to preview route
   get '/posts/:filename' do
     filename = params[:filename]

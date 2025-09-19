@@ -232,7 +232,13 @@ class TestScriptoriumRepo < Minitest::Test
     root = repo.root
     file = "#{root}/themes/standard/templates/post.lt3"
     assert_file_exist?(file)
-    assert_file_lines(file, 72)  # Template includes CSS and Highlight.js assets
+    content = read_file(file)
+    # Key sections expected in the post template
+    assert_includes content, 'href="../index.html"', "Back-to-index link missing"
+    assert_includes content, '%{reddit_button}', "Reddit button placeholder missing"
+    assert_includes content, 'Copy link', "Copy link button missing"
+    # Highlight.js assets are included via CDN
+    assert_includes content, 'cdnjs.cloudflare.com/ajax/libs/highlight.js', "Highlight.js CDN not referenced"
   end
 
   def test_015_change_view

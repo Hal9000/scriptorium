@@ -1,5 +1,5 @@
 class Scriptorium
 
-  VERSION = "0.6.1"
+  VERSION = "0.7.2"
 
 end
